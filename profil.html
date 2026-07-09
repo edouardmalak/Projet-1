@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Compléter votre profil</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--blanc:#FAFBF9;--menthe:#E7F2EC;--vert:#0B6E4F;--vert-fonce:#084C37;--encre:#1B2622;--gris:#5A6B63;--ambre:#C97B12;--ligne:#D5E3DB}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sans-serif;font-size:16px;line-height:1.55}
+.wrap{max-width:760px;margin:0 auto;padding:34px 20px 70px}
+.topo{display:flex;align-items:center;gap:12px;margin-bottom:26px;font-weight:600}
+.croix{width:30px;height:30px;display:grid;place-items:center;background:var(--vert);border-radius:7px}
+h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(24px,4vw,32px);letter-spacing:-.015em;margin-bottom:6px}
+.sous{color:var(--gris);font-size:15px;margin-bottom:24px}
+.tabs{display:flex;gap:8px;margin-bottom:20px}
+.tabs button{flex:1;border:1.5px solid var(--ligne);background:#fff;border-radius:8px;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:15px;padding:14px 8px;cursor:pointer;color:var(--gris)}
+.tabs button.on{border-color:var(--vert);background:var(--menthe);color:var(--vert-fonce)}
+.tabs button:focus-visible{outline:3px solid var(--ambre);outline-offset:2px}
+.panneau{background:#fff;border:1px solid var(--ligne);border-radius:12px;padding:26px;box-shadow:0 12px 34px rgba(8,76,55,.07)}
+.sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--vert);font-weight:600;margin:20px 0 12px;padding-top:16px;border-top:1px dashed var(--ligne)}
+.sec:first-child{margin-top:0;padding-top:0;border-top:none}
+.champ{margin-bottom:13px}
+.champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--gris);margin-bottom:5px}
+.champ input,.champ select{width:100%;font-family:'IBM Plex Mono',monospace;font-size:15px;background:var(--blanc);border:1px solid var(--ligne);border-radius:5px;padding:10px 11px;color:var(--encre)}
+.champ input:focus,.champ select:focus{outline:2px solid var(--vert);border-color:var(--vert)}
+.deux{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.trois{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.btn{width:100%;font-weight:600;font-size:16px;background:var(--vert);color:#fff;border:none;border-radius:7px;padding:15px;cursor:pointer;margin-top:12px;font-family:'Instrument Sans',sans-serif}
+.btn:hover{background:var(--vert-fonce)}
+.btn.ligne{background:#fff;color:var(--vert-fonce);border:1.5px solid var(--vert)}
+.aide{font-size:12.5px;color:var(--gris);margin-top:4px;line-height:1.5}
+.aide a{color:var(--vert)}
+.bascule{display:flex;align-items:center;gap:10px;background:var(--menthe);border:1px solid var(--ligne);border-radius:8px;padding:13px 15px;cursor:pointer;user-select:none}
+.bascule input{width:auto;accent-color:var(--vert);transform:scale(1.25)}
+.bascule b{color:var(--vert-fonce);font-size:15px}
+#zone-inc{display:block;margin-top:14px}
+#succes{display:none;text-align:center;padding:36px 26px}
+#succes b{color:var(--vert-fonce);font-size:18px}
+#succes p{margin-top:10px;color:var(--gris)}
+#succes .lien{margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--blanc);border:1px solid var(--ligne);border-radius:6px;padding:12px;word-break:break-all;text-align:left;display:none}
+.cache{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topo">
+    <div class="croix"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></div>
+    C-Direct · Profil
+  </div>
+
+  <h1>Compléter votre profil</h1>
+  <p class="sous">Une seule fois — ensuite, tout se génère automatiquement (demandes, contrats, factures).</p>
+
+  <div class="tabs">
+    <button id="t-pharmacie" class="on">Pharmacie</button>
+    <button id="t-pharmacien">Pharmacien remplaçant</button>
+  </div>
+
+  <!-- ================= PROFIL PHARMACIE ================= -->
+  <div class="panneau" id="f-pharmacie">
+    <div class="sec">Identification</div>
+    <div class="champ"><label>Nom de la pharmacie</label><input id="ph-nom" placeholder="Familiprix Terrebonne [la plaine]"></div>
+    <div class="deux">
+      <div class="champ"><label>Bannière</label><input id="ph-banniere" placeholder="Familiprix, Jean Coutu, indépendante…"></div>
+      <div class="champ"><label>Logiciel de laboratoire</label>
+        <select id="ph-logiciel"><option value="">—</option><option>Kroll</option><option>AssystRx</option><option>Mentor</option><option>PrioRx</option><option>Autre</option></select>
+      </div>
+    </div>
+    <div class="champ"><label>Adresse complète</label><input id="ph-adresse" placeholder="5661 Boulevard Laurier, Terrebonne, QC J6W 1X4"></div>
+    <p class="aide">L'adresse sert au calcul automatique des frais de déplacement — soyez précis.</p>
+
+    <div class="sec">Contact</div>
+    <div class="champ"><label>Nom du ou de la responsable</label><input id="ph-contact"></div>
+    <div class="deux">
+      <div class="champ"><label>Courriel</label><input id="ph-courriel" type="email"></div>
+      <div class="champ"><label>Téléphone</label><input id="ph-tel" type="tel"></div>
+    </div>
+
+    <button class="btn" id="btn-ph">Enregistrer mon profil</button>
+    <p class="aide">Après l'envoi, vous recevrez votre lien personnalisé — vos coordonnées seront préremplies à chaque nouvelle demande.</p>
+  </div>
+
+  <!-- ================= PROFIL PHARMACIEN ================= -->
+  <div class="panneau cache" id="f-pharmacien">
+    <div class="sec">Identification professionnelle</div>
+    <div class="champ"><label>Nom complet</label><input id="l-nom" placeholder="Prénom Nom"></div>
+    <div class="deux">
+      <div class="champ"><label>N° de membre OPQ</label><input id="l-opq"></div>
+      <div class="champ"><label>Années d'expérience</label><input id="l-exp" type="number"></div>
+    </div>
+    <div class="deux">
+      <div class="champ"><label>Courriel</label><input id="l-courriel" type="email"></div>
+      <div class="champ"><label>Téléphone</label><input id="l-tel" type="tel"></div>
+    </div>
+    <div class="champ"><label>Adresse du domicile</label><input id="l-domicile" placeholder="123 rue Exemple, Boucherville, QC"></div>
+    <p class="aide">Sert uniquement au calcul automatique de la distance domicile ↔ pharmacie (frais de déplacement). Jamais affichée publiquement.</p>
+    <div class="deux">
+      <div class="champ"><label>Régions desservies</label><input id="l-regions" placeholder="Montréal, Rive-Sud, régions éloignées"></div>
+      <div class="champ"><label>Logiciels maîtrisés</label><input id="l-logiciels" placeholder="Kroll, AssystRx…"></div>
+    </div>
+
+    <div class="sec">Vos conditions par défaut</div>
+    <div class="trois">
+      <div class="champ"><label>Taux horaire ($/h)</label><input id="l-taux" type="number" step="0.01" value="95"></div>
+      <div class="champ"><label>Per diem ($/jour)</label><input id="l-pd" type="number" step="0.01" value="125"></div>
+      <div class="champ"><label>Déplacement ($/km)</label><input id="l-km" type="number" step="0.01" value="0.70"></div>
+    </div>
+
+    <div class="sec">Paiement</div>
+    <div class="champ"><label>Courriel Interac (dépôt automatique)</label><input id="l-interac" type="email"></div>
+    <p class="aide">C'est ici que les pharmacies enverront vos paiements — directement dans votre compte. Activez le dépôt automatique dans votre application bancaire.</p>
+
+    <div class="sec">Statut fiscal</div>
+    <label class="bascule">
+      <input type="checkbox" id="l-inc" checked>
+      <span><b>Je suis incorporé(e)</b> — je facture par ma société professionnelle</span>
+    </label>
+    <div id="zone-inc">
+      <div class="champ"><label>Nom de la société</label><input id="l-corp" placeholder="Prénom Nom Pharmacien Inc."></div>
+      <div class="deux">
+        <div class="champ"><label>N° TPS</label><input id="l-tps" placeholder="845655646RT0001"></div>
+        <div class="champ"><label>N° TVQ</label><input id="l-tvq" placeholder="1219458181TQ0002"></div>
+      </div>
+      <p class="aide">Vos numéros TPS/TVQ apparaîtront sur chaque mandat, exactement comme sur vos factures actuelles.</p>
+    </div>
+
+    <div class="sec">Réception des demandes (optionnel)</div>
+    <div class="champ"><label>Clé Web3Forms (si déjà créée)</label><input id="l-cle" placeholder="a1b2c3d4-…"></div>
+    <p class="aide">Cette clé gratuite fait arriver les demandes des pharmacies directement dans votre courriel. Créez-la en 2 minutes sur <a href="https://web3forms.com" target="_blank" rel="noopener">web3forms.com</a> avec votre adresse — ou laissez vide, l'administrateur s'en occupera.</p>
+
+    <button class="btn" id="btn-l">Enregistrer mon profil</button>
+    <p class="aide">Votre profil est transmis à l'administrateur pour activation — généralement sous 24 h.</p>
+  </div>
+
+  <!-- ================= SUCCÈS ================= -->
+  <div class="panneau" id="succes">
+    <b id="s-titre">Profil transmis.</b>
+    <p id="s-texte"></p>
+    <div class="lien" id="s-lien"></div>
+    <button class="btn ligne" id="s-copier" style="display:none">Copier mon lien personnalisé</button>
+  </div>
+</div>
+
+<script>
+// ✏️ REMPLACER : votre clé Web3Forms d'administrateur (tous les profils arrivent dans VOTRE courriel)
+const CLE_ADMIN = "6d62e4bb-5cdd-42e9-8c64-5e9a9cf465eb";
+
+const $ = id => document.getElementById(id);
+const v = id => $(id).value.trim();
+
+/* tabs */
+$('t-pharmacie').onclick = ()=>{ bascule('pharmacie'); };
+$('t-pharmacien').onclick = ()=>{ bascule('pharmacien'); };
+function bascule(t){
+  $('t-pharmacie').classList.toggle('on', t==='pharmacie');
+  $('t-pharmacien').classList.toggle('on', t==='pharmacien');
+  $('f-pharmacie').classList.toggle('cache', t!=='pharmacie');
+  $('f-pharmacien').classList.toggle('cache', t!=='pharmacien');
+}
+
+/* incorporé : révéler société + TPS/TVQ */
+$('l-inc').addEventListener('change', ()=>{
+  $('zone-inc').style.display = $('l-inc').checked ? 'block' : 'none';
+});
+
+/* envoi générique */
+async function envoyer(sujet, message){
+  const fd = new FormData();
+  fd.append('access_key', CLE_ADMIN);
+  fd.append('subject', sujet);
+  fd.append('message', message);
+  const r = await fetch('https://api.web3forms.com/submit',{method:'POST',body:fd,headers:{'Accept':'application/json'}});
+  if(!r.ok) throw new Error();
+}
+
+/* ---------- PROFIL PHARMACIE ---------- */
+$('btn-ph').addEventListener('click', async ()=>{
+  if(!v('ph-nom')||!v('ph-adresse')||!v('ph-courriel')){ alert("Complétez au minimum : nom, adresse et courriel."); return; }
+  const lien = location.origin + location.pathname.replace('profil.html','demande.html')
+    + '?pn=' + encodeURIComponent(v('ph-nom'))
+    + '&pa=' + encodeURIComponent(v('ph-adresse'))
+    + '&pc=' + encodeURIComponent(v('ph-courriel'))
+    + '&pt=' + encodeURIComponent(v('ph-tel'));
+  const msg =
+`PROFIL PHARMACIE — à approuver
+
+Pharmacie : ${v('ph-nom')}
+Bannière : ${v('ph-banniere')}
+Logiciel : ${v('ph-logiciel')}
+Adresse : ${v('ph-adresse')}
+Responsable : ${v('ph-contact')}
+Courriel : ${v('ph-courriel')}
+Téléphone : ${v('ph-tel')}
+
+LIEN PERSONNALISÉ (préremplit ses demandes) :
+${lien}`;
+  $('btn-ph').disabled = true; $('btn-ph').textContent = "Envoi…";
+  try{
+    await envoyer("C-Direct — PROFIL PHARMACIE : "+v('ph-nom'), msg);
+    montrerSucces(
+      "Profil transmis.",
+      "Voici votre lien personnalisé — enregistrez-le dans vos favoris. À chaque nouvelle demande, vos coordonnées seront déjà remplies.",
+      lien, true
+    );
+  }catch(e){ $('btn-ph').disabled=false; $('btn-ph').textContent="Enregistrer mon profil"; alert("L'envoi a échoué. Réessayez."); }
+});
+
+/* ---------- PROFIL PHARMACIEN ---------- */
+$('btn-l').addEventListener('click', async ()=>{
+  if(!v('l-nom')||!v('l-opq')||!v('l-courriel')||!v('l-domicile')){ alert("Complétez au minimum : nom, n° OPQ, courriel et adresse du domicile."); return; }
+  const inc = $('l-inc').checked;
+  const corp = inc ? v('l-corp') : "—";
+  const tps  = inc ? v('l-tps')  : "—";
+  const tvq  = inc ? v('l-tvq')  : "—";
+  const interac = v('l-interac') || v('l-courriel');
+  const cle = v('l-cle') || "À_CRÉER";
+  const tH = v('l-taux')||"95", pD = v('l-pd')||"125", tK = v('l-km')||"0.70";
+
+  const fiche =
+`{
+  nom: "${v('l-nom')}",
+  courriel: "${v('l-courriel')}",
+  cle: "${cle}",
+  domicile: "${v('l-domicile')}",
+  corp: "${corp}",
+  tps: "${tps}", tvq: "${tvq}",
+  interac: "${interac}",
+  tauxH: ${tH}, perDiem: ${pD}, tauxKm: ${tK}
+},`;
+
+  const msg =
+`PROFIL PHARMACIEN — à approuver et activer
+
+Nom : ${v('l-nom')}
+N° OPQ : ${v('l-opq')}   (à vérifier au registre OPQ)
+Expérience : ${v('l-exp')} ans
+Courriel : ${v('l-courriel')} · Tél : ${v('l-tel')}
+Domicile : ${v('l-domicile')}
+Régions : ${v('l-regions')}
+Logiciels : ${v('l-logiciels')}
+Incorporé : ${inc ? "OUI" : "NON"}
+${inc ? "Société : "+corp+"\nTPS : "+tps+"\nTVQ : "+tvq : ""}
+Interac : ${interac}
+Clé Web3Forms : ${cle}
+
+=== À COLLER dans fiche.js (PHARMACIENS) — UN SEUL fichier à modifier ===
+${fiche}`;
+
+  $('btn-l').disabled = true; $('btn-l').textContent = "Envoi…";
+  try{
+    await envoyer("C-Direct — PROFIL PHARMACIEN : "+v('l-nom'), msg);
+    montrerSucces(
+      "Profil transmis à l'administrateur.",
+      "Votre fiche sera vérifiée (n° OPQ) puis activée — généralement sous 24 h. Vous recevrez la confirmation par courriel, et les demandes des pharmacies arriveront directement dans votre boîte.",
+      "", false
+    );
+  }catch(e){ $('btn-l').disabled=false; $('btn-l').textContent="Enregistrer mon profil"; alert("L'envoi a échoué. Réessayez."); }
+});
+
+/* ---------- succès ---------- */
+function montrerSucces(titre, texte, lien, avecLien){
+  $('f-pharmacie').classList.add('cache');
+  $('f-pharmacien').classList.add('cache');
+  document.querySelector('.tabs').style.display='none';
+  $('succes').style.display='block';
+  $('s-titre').textContent = titre;
+  $('s-texte').textContent = texte;
+  if(avecLien){
+    $('s-lien').textContent = lien;
+    $('s-lien').style.display='block';
+    $('s-copier').style.display='block';
+    $('s-copier').onclick = async ()=>{ try{ await navigator.clipboard.writeText(lien); $('s-copier').textContent="Lien copié ✓"; }catch(e){} };
+  }
+}
+</script>
+</body>
+</html>

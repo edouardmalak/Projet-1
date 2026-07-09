@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Générateur de mandats</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--blanc:#FAFBF9;--menthe:#E7F2EC;--vert:#0B6E4F;--vert-fonce:#084C37;--encre:#1B2622;--gris:#5A6B63;--ligne:#D5E3DB;--bande:#9DC3BE;--rouge:#C0392B}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sans-serif;font-size:16px;line-height:1.5}
+.wrap{max-width:1150px;margin:0 auto;padding:26px 20px 60px}
+h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:25px;margin-bottom:4px}
+.sous{color:var(--gris);font-size:14px;margin-bottom:24px}
+.grille{display:grid;grid-template-columns:390px 1fr;gap:26px;align-items:start}
+@media(max-width:940px){.grille{grid-template-columns:1fr}}
+
+/* ---------- panneau de saisie ---------- */
+.panneau{background:#fff;border:1px solid var(--ligne);border-radius:10px;padding:20px}
+.sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--vert);font-weight:600;margin:18px 0 10px;padding-top:14px;border-top:1px dashed var(--ligne)}
+.sec:first-child{margin-top:0;padding-top:0;border-top:none}
+.champ{margin-bottom:12px}
+.champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--gris);margin-bottom:4px}
+.champ input,.champ select{width:100%;font-family:'IBM Plex Mono',monospace;font-size:14.5px;background:var(--blanc);border:1px solid var(--ligne);border-radius:4px;padding:9px 10px;color:var(--encre)}
+.champ input:focus,.champ select:focus{outline:2px solid var(--vert);border-color:var(--vert)}
+.deux{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.trois{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.btn{width:100%;font-weight:600;font-size:16px;background:var(--vert);color:#fff;border:none;border-radius:6px;padding:14px;cursor:pointer;margin-top:14px;font-family:'Instrument Sans',sans-serif}
+.btn:hover{background:var(--vert-fonce)}
+.astuce{margin-top:10px;font-size:12.5px;color:var(--gris)}
+
+/* ---------- mandat (structure Belocum) ---------- */
+.mandat{background:#fff;border:1px solid #bbb;padding:34px 38px 30px;font-family:'Instrument Sans',sans-serif;font-size:13.5px;color:#111;box-shadow:0 14px 40px rgba(8,76,55,.08)}
+.mandat h2{font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:26px;letter-spacing:.5px;margin-bottom:14px}
+.m-haut{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.m-boite{border:1.5px solid #333;padding:12px 14px;line-height:1.6}
+.m-boite .etq{font-weight:700}
+.m-droite td{padding:1.5px 0;vertical-align:top}
+.m-droite td:first-child{color:#444;text-align:right;padding-right:12px;white-space:nowrap}
+.m-droite td:last-child{font-weight:600;text-align:right}
+.m-droite{width:100%;border-collapse:collapse}
+.m-recu{border:1.5px solid #333;padding:10px 14px;margin-top:12px}
+.m-recu table{width:100%;border-collapse:collapse}
+.m-recu td{padding:1.5px 0}
+.m-recu td:first-child{color:#444;text-align:right;padding-right:12px}
+.m-recu td:last-child{font-weight:600;text-align:right}
+.m-col-g{display:flex;flex-direction:column;gap:12px}
+
+table.m-tbl{width:100%;border-collapse:collapse;margin-top:20px;font-size:13.5px}
+table.m-tbl th{background:var(--bande);text-align:left;font-weight:700;padding:8px 10px;font-size:13px}
+table.m-tbl th.dr,table.m-tbl td.dr{text-align:right}
+table.m-tbl td{padding:9px 10px;border-bottom:1px solid #eee}
+table.m-tbl tr:last-child td{border-bottom:none}
+
+.m-totaux{margin-top:6px;display:flex;justify-content:flex-end}
+.m-totaux table{border-collapse:collapse;font-size:13.5px;min-width:280px}
+.m-totaux td{padding:4px 10px}
+.m-totaux td:first-child{text-align:right;color:#333}
+.m-totaux td:last-child{text-align:right;font-weight:600;min-width:110px}
+.m-totaux tr.sep td{border-top:2px solid #111;padding-top:8px}
+.m-paye{display:flex;justify-content:space-between;border-top:2px solid #111;margin-top:14px;padding:10px 10px 0;font-size:13.5px}
+.m-net{display:flex;justify-content:space-between;align-items:baseline;padding:10px 10px 0}
+.m-net .lab{color:var(--rouge);font-weight:800;font-size:20px;letter-spacing:.5px}
+.m-net .val{color:var(--rouge);font-weight:800;font-size:20px}
+
+.payer-box{margin-top:24px;background:var(--menthe);border:1px solid var(--ligne);border-radius:6px;padding:14px 18px;font-size:13px;line-height:1.7;font-family:'IBM Plex Mono',monospace}
+.payer-box .lab{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--vert);font-weight:600;margin-bottom:4px}
+.payer-box b{color:var(--vert-fonce)}
+.m-pied{margin-top:22px;display:flex;justify-content:space-between;font-size:11.5px;color:#666}
+.m-pied .cd{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;color:var(--vert-fonce)}
+
+@media print{
+  body{background:#fff}
+  .panneau,h1,.sous,.no-print{display:none!important}
+  .wrap{padding:0;max-width:none}
+  .grille{display:block}
+  .mandat{border:none;box-shadow:none;padding:10px 6px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Générateur de mandats C-Direct</h1>
+  <p class="sous">Choisissez le pharmacien (sa fiche est pré-enregistrée), entrez le mandat — la facture se génère automatiquement. Imprimer → PDF → courriel à la pharmacie.</p>
+
+  <div class="grille">
+    <!-- ============ SAISIE ============ -->
+    <div class="panneau no-print">
+      <div class="sec">Pharmacien</div>
+      <div class="champ"><select id="sel-ph"></select></div>
+
+      <div class="sec">Établissement (client)</div>
+      <div class="champ">
+        <label for="in-pharmacie">Nom de la pharmacie</label>
+        <input id="in-pharmacie" type="text" placeholder="Familiprix Terrebonne [la plaine]">
+      </div>
+      <div class="champ">
+        <label for="in-adresse">Adresse</label>
+        <input id="in-adresse" type="text" placeholder="5661 Boulevard Laurier, Terrebonne, QC">
+      </div>
+
+      <div class="sec">Mandat</div>
+      <div class="deux">
+        <div class="champ">
+          <label for="in-numero">N° de reçu</label>
+          <input id="in-numero" type="text" placeholder="QC000001">
+        </div>
+        <div class="champ">
+          <label for="in-date">Date du remplacement</label>
+          <input id="in-date" type="date">
+        </div>
+      </div>
+      <div class="deux">
+        <div class="champ">
+          <label for="in-debut">Heure début</label>
+          <input id="in-debut" type="time" value="09:00">
+        </div>
+        <div class="champ">
+          <label for="in-fin">Heure fin</label>
+          <input id="in-fin" type="time" value="17:00">
+        </div>
+      </div>
+
+      <div class="sec">Paramètre 1 — Taux horaire</div>
+      <div class="champ">
+        <label for="in-taux">Taux ($/h)</label>
+        <input id="in-taux" type="number" step="0.01">
+      </div>
+
+      <div class="sec">Paramètre 2 — Per diem</div>
+      <div class="deux">
+        <div class="champ">
+          <label for="in-pd-n">Nb de jours</label>
+          <input id="in-pd-n" type="number" step="1" value="0">
+        </div>
+        <div class="champ">
+          <label for="in-pd-t">Taux ($/jour)</label>
+          <input id="in-pd-t" type="number" step="0.01">
+        </div>
+      </div>
+
+      <div class="sec">Paramètre 3 — Frais de déplacement</div>
+      <div class="deux">
+        <div class="champ">
+          <label for="in-km">Distance (km)</label>
+          <input id="in-km" type="number" step="0.1" value="0">
+        </div>
+        <div class="champ">
+          <label for="in-km-t">Taux ($/km)</label>
+          <input id="in-km-t" type="number" step="0.01">
+        </div>
+      </div>
+
+      <div class="sec">Paramètre 4 — Hébergement</div>
+      <div class="champ">
+        <label for="in-heb">Hébergement ($ / nuit — 0 si non applicable)</label>
+        <input id="in-heb" type="number" step="0.01" value="0">
+      </div>
+
+      <button class="btn" onclick="window.print()">Imprimer / Enregistrer en PDF</button>
+      <p class="astuce">Sur tablette&nbsp;: Imprimer → «&nbsp;Enregistrer au format PDF&nbsp;». Le PDF est prêt à joindre au courriel de la pharmacie.</p>
+    </div>
+
+    <!-- ============ MANDAT ============ -->
+    <div class="mandat" id="mandat">
+      <h2>MANDAT</h2>
+
+      <div class="m-haut">
+        <div class="m-col-g">
+          <div class="m-boite">
+            <span class="etq">Facturé à :</span><br>
+            <span id="f-cl-nom">—</span><br>
+            <span id="f-cl-adresse">—</span>
+          </div>
+          <div class="m-boite" style="flex:1">
+            <span class="etq">Nom et adresse de l'établissement :</span><br>
+            <span id="f-cl-nom2">—</span><br><br>
+            <span id="f-cl-adresse2">—</span><br><br>
+            Commentaires :
+          </div>
+        </div>
+        <div class="m-col-g">
+          <div class="m-boite">
+            <table class="m-droite">
+              <tr><td></td><td style="font-weight:700">Facturé par :</td></tr>
+              <tr><td>Remplaçant :</td><td id="f-ph-nom">—</td></tr>
+              <tr><td>Profession :</td><td>Pharmacien</td></tr>
+              <tr><td>Statut :</td><td>Incorporé</td></tr>
+              <tr><td>Province :</td><td>Québec</td></tr>
+              <tr><td>TPS :</td><td id="f-ph-tps">—</td></tr>
+              <tr><td>TVQ :</td><td id="f-ph-tvq">—</td></tr>
+              <tr><td style="vertical-align:top">Société :</td><td id="f-ph-corp">—</td></tr>
+            </table>
+          </div>
+          <div class="m-recu">
+            <table>
+              <tr><td>N° de reçu :</td><td id="f-numero">—</td></tr>
+              <tr><td>Date d'émission :</td><td id="f-emission">—</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <table class="m-tbl">
+        <thead><tr><th>Date</th><th>Heure début</th><th>Heure fin</th><th class="dr">Heures</th></tr></thead>
+        <tbody><tr>
+          <td id="f-date">—</td><td id="f-debut">—</td><td id="f-fin">—</td><td class="dr" id="f-heures">—</td>
+        </tr></tbody>
+      </table>
+
+      <table class="m-tbl">
+        <thead><tr><th>Description</th><th class="dr">Qté</th><th class="dr">Prix unitaire</th><th class="dr">Montant</th></tr></thead>
+        <tbody>
+          <tr><td>Pharmacien</td><td class="dr" id="l1-q">—</td><td class="dr" id="l1-pu">—</td><td class="dr" id="l1-m">—</td></tr>
+          <tr id="ligne-pd" style="display:none"><td>Per diem</td><td class="dr" id="l2-q">—</td><td class="dr" id="l2-pu">—</td><td class="dr" id="l2-m">—</td></tr>
+          <tr id="ligne-km" style="display:none"><td>Frais de déplacement</td><td class="dr" id="l3-q">—</td><td class="dr" id="l3-pu">—</td><td class="dr" id="l3-m">—</td></tr>
+          <tr id="ligne-heb" style="display:none"><td>Hébergement</td><td class="dr" id="l4-q">—</td><td class="dr" id="l4-pu">—</td><td class="dr" id="l4-m">—</td></tr>
+        </tbody>
+      </table>
+
+      <div class="m-totaux">
+        <table>
+          <tr><td>Sous-total</td><td id="f-soustotal">—</td></tr>
+          <tr><td>TPS (5,000 %)</td><td id="f-tps">—</td></tr>
+          <tr><td>TVQ (9,975 %)</td><td id="f-tvq">—</td></tr>
+          <tr><td>Autre</td><td>0,00 $</td></tr>
+          <tr class="sep"><td>Total</td><td id="f-total">—</td></tr>
+        </table>
+      </div>
+
+      <div class="m-paye"><span>Payé</span><span>0,00 $</span></div>
+      <div class="m-net"><span class="lab">NET À PAYER :</span><span class="val" id="f-net">—</span></div>
+
+      <div class="payer-box">
+        <div class="lab">Paiement — Virement Interac (payable sur réception)</div>
+        Envoyez votre virement Interac directement au pharmacien&nbsp;: <b id="f-interac">—</b><br>
+        Dépôt automatique activé — aucune question de sécurité requise.
+      </div>
+
+      <div class="m-pied">
+        <span>Facture émise par le pharmacien de façon indépendante.</span>
+        <span>Généré par : <span class="cd">C-DIRECT</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="fiche.js"></script>
+<script>
+// PHARMACIENS et CLE_ADMIN sont chargés depuis fiche.js (fichier central unique)
+
+const $ = id => document.getElementById(id);
+const fmt = n => new Intl.NumberFormat('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0)+" $";
+
+PHARMACIENS.forEach((p,i)=>{
+  const o=document.createElement('option'); o.value=i; o.textContent=p.nom;
+  $('sel-ph').appendChild(o);
+});
+
+function chargerDefauts(){
+  const p = PHARMACIENS[$('sel-ph').value];
+  $('in-taux').value = p.tauxH;
+  $('in-pd-t').value = p.perDiem;
+  $('in-km-t').value = p.tauxKm;
+}
+
+function heures(){
+  const d=$('in-debut').value, f=$('in-fin').value;
+  if(!d||!f) return 0;
+  const [dh,dm]=d.split(':').map(Number), [fh,fm]=f.split(':').map(Number);
+  let mins=(fh*60+fm)-(dh*60+dm);
+  if(mins<0) mins+=24*60;
+  return mins/60;
+}
+const hhmm = h => {
+  const H=Math.floor(h), M=Math.round((h-H)*60);
+  return String(H).padStart(2,'0')+":"+String(M).padStart(2,'0');
+};
+
+function maj(){
+  const p = PHARMACIENS[$('sel-ph').value];
+  // facturé par
+  $('f-ph-nom').textContent = p.nom;
+  $('f-ph-corp').textContent = p.corp;
+  $('f-ph-tps').textContent = p.tps;
+  $('f-ph-tvq').textContent = p.tvq;
+  $('f-interac').textContent = p.interac;
+  // client
+  const cn = $('in-pharmacie').value || "—";
+  const ca = $('in-adresse').value || "—";
+  $('f-cl-nom').textContent = cn; $('f-cl-nom2').textContent = cn;
+  $('f-cl-adresse').textContent = ca; $('f-cl-adresse2').textContent = ca;
+  // reçu
+  $('f-numero').textContent = $('in-numero').value || "—";
+  $('f-emission').textContent = new Date().toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'});
+  // mandat
+  $('f-date').textContent = $('in-date').value || "—";
+  $('f-debut').textContent = $('in-debut').value || "—";
+  $('f-fin').textContent = $('in-fin').value || "—";
+  const h = heures();
+  $('f-heures').textContent = hhmm(h);
+
+  // Paramètre 1 — taux horaire
+  const t = parseFloat($('in-taux').value)||0;
+  const m1 = h*t;
+  $('l1-q').textContent = hhmm(h);
+  $('l1-pu').textContent = fmt(t).replace(" $","$/h");
+  $('l1-m').textContent = fmt(m1);
+
+  // Paramètre 2 — per diem
+  const pdN = parseFloat($('in-pd-n').value)||0;
+  const pdT = parseFloat($('in-pd-t').value)||0;
+  const m2 = pdN*pdT;
+  $('ligne-pd').style.display = m2>0 ? '' : 'none';
+  $('l2-q').textContent = pdN;
+  $('l2-pu').textContent = fmt(pdT).replace(" $","$/jour");
+  $('l2-m').textContent = fmt(m2);
+
+  // Paramètre 3 — déplacement
+  const km = parseFloat($('in-km').value)||0;
+  const kmT = parseFloat($('in-km-t').value)||0;
+  const m3 = km*kmT;
+  $('ligne-km').style.display = m3>0 ? '' : 'none';
+  $('l3-q').textContent = km;
+  $('l3-pu').textContent = fmt(kmT).replace(" $","$/km");
+  $('l3-m').textContent = fmt(m3);
+
+  // Paramètre 4 — hébergement
+  const m4 = parseFloat($('in-heb').value)||0;
+  $('ligne-heb').style.display = m4>0 ? '' : 'none';
+  $('l4-q').textContent = m4>0 ? 1 : "—";
+  $('l4-pu').textContent = fmt(m4).replace(" $","$/nuit");
+  $('l4-m').textContent = fmt(m4);
+
+  // totaux
+  const st = m1+m2+m3+m4;
+  const tps = st*0.05, tvq = st*0.09975;
+  $('f-soustotal').textContent = fmt(st);
+  $('f-tps').textContent = fmt(tps);
+  $('f-tvq').textContent = fmt(tvq);
+  $('f-total').textContent = fmt(st+tps+tvq);
+  $('f-net').textContent = fmt(st+tps+tvq);
+}
+
+$('sel-ph').addEventListener('change', ()=>{ chargerDefauts(); maj(); });
+document.querySelectorAll('input').forEach(i=>i.addEventListener('input',maj));
+chargerDefauts(); maj();
+
+/* =====================================================
+   MODE AUTOMATIQUE — facture générée depuis un contrat
+   accepté (demande.html). Le format du MANDAT est inchangé:
+   on remplit simplement les champs existants.
+===================================================== */
+const PARAMS = new URLSearchParams(location.search);
+if(PARAMS.get('auto')==='1'){
+  const g = k => PARAMS.get(k)||'';
+  if(g('ph')) $('sel-ph').value = g('ph');
+  chargerDefauts();
+  $('in-pharmacie').value = g('pn');
+  $('in-adresse').value  = g('pa');
+  $('in-numero').value   = g('n');
+  $('in-date').value     = g('d');
+  if(g('hd')) $('in-debut').value = g('hd');
+  if(g('hf')) $('in-fin').value   = g('hf');
+  if(g('t'))   $('in-taux').value = g('t');
+  if(g('pdn')) $('in-pd-n').value = g('pdn');
+  if(g('pdt')) $('in-pd-t').value = g('pdt');
+  if(g('km'))  $('in-km').value   = g('km');
+  if(g('kmt')) $('in-km-t').value = g('kmt');
+  if(g('heb')) $('in-heb').value   = g('heb');
+  maj();
+
+  // bouton « envoyer aux deux parties » (courriels du contrat)
+  const cp = g('pc'), cl = g('lc');
+  if(cp || cl){
+    const btnEnv = document.createElement('button');
+    btnEnv.className = 'btn';
+    btnEnv.style.background = 'var(--vert-fonce)';
+    btnEnv.textContent = 'Envoyer la facture par courriel aux deux parties';
+    btnEnv.onclick = ()=>{
+      const dest = [cp, cl].filter(Boolean).join(',');
+      const sujet = 'C-Direct — MANDAT / Facture · Contrat ' + g('n');
+      const corps =
+'Bonjour,\n\nLe contrat ' + g('n') + ' a été accepté par les deux parties.\n' +
+'La facture (MANDAT) est disponible ici — ouvrez le lien puis Imprimer / Enregistrer en PDF :\n\n' +
+window.location.href + '\n\n' +
+'Paiement : virement Interac directement au pharmacien, payable sur réception.\n\nC-Direct';
+      window.location.href = 'mailto:' + dest + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
+    };
+    document.querySelector('.panneau').appendChild(btnEnv);
+    const note = document.createElement('p');
+    note.className = 'astuce';
+    note.textContent = 'Contrat accepté — la facture ci-contre est générée automatiquement à partir des conditions convenues.';
+    document.querySelector('.panneau').appendChild(note);
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Contre-offre (pharmacie)</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--blanc:#FAFBF9;--menthe:#E7F2EC;--vert:#0B6E4F;--vert-fonce:#084C37;--encre:#1B2622;--gris:#5A6B63;--ambre:#C97B12;--ligne:#D5E3DB;--rouge:#C0392B}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sans-serif;font-size:16px;line-height:1.55}
+.wrap{max-width:820px;margin:0 auto;padding:34px 20px 70px}
+.topo{display:flex;align-items:center;gap:12px;margin-bottom:26px;font-weight:600}
+.croix{width:30px;height:30px;display:grid;place-items:center;background:var(--vert);border-radius:7px}
+h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(24px,4vw,32px);letter-spacing:-.015em;margin-bottom:6px}
+.sous{color:var(--gris);font-size:15px;margin-bottom:26px}
+.contrat-no{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--vert-fonce);background:var(--menthe);border:1px solid var(--ligne);display:inline-block;padding:6px 14px;border-radius:99px;margin-bottom:22px}
+.panneau{background:#fff;border:1px solid var(--ligne);border-radius:12px;padding:26px;box-shadow:0 12px 34px rgba(8,76,55,.07)}
+.sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--vert);font-weight:600;margin:20px 0 12px;padding-top:16px;border-top:1px dashed var(--ligne)}
+.sec:first-child{margin-top:0;padding-top:0;border-top:none}
+.champ{margin-bottom:13px}
+.champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--gris);margin-bottom:5px}
+.champ input,.champ select,.champ textarea{width:100%;font-family:'IBM Plex Mono',monospace;font-size:15px;background:var(--blanc);border:1px solid var(--ligne);border-radius:5px;padding:10px 11px;color:var(--encre)}
+.champ input:focus,.champ select:focus,.champ textarea:focus{outline:2px solid var(--vert);border-color:var(--vert)}
+.deux{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.trois{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.btn{width:100%;font-weight:600;font-size:16px;background:var(--vert);color:#fff;border:none;border-radius:7px;padding:15px;cursor:pointer;margin-top:10px;font-family:'Instrument Sans',sans-serif}
+.btn:hover{background:var(--vert-fonce)}
+.btn.ambre{background:var(--ambre)}
+.btn.ligne{background:#fff;color:var(--vert-fonce);border:1.5px solid var(--vert)}
+.btn.ligne:hover{background:var(--menthe)}
+.btn-dist{margin-top:0;padding:11px;font-size:14px}
+.note{margin-top:12px;font-size:13px;color:var(--gris);line-height:1.6}
+.resume{font-family:'IBM Plex Mono',monospace;font-size:14px}
+.resume .li{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px dashed var(--ligne)}
+.resume .li:last-child{border-bottom:none}
+.resume .li b{color:var(--vert-fonce);text-align:right}
+.total-est{background:var(--menthe);border-radius:8px;padding:14px 16px;margin-top:14px;display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--vert-fonce)}
+.badge-etape{display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--ambre);margin-bottom:14px}
+.badge-etape::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ambre)}
+#succes{display:none;text-align:center;padding:36px 26px;background:#fff;border:1px solid var(--ligne);border-radius:12px;box-shadow:0 12px 34px rgba(8,76,55,.07)}
+#succes b{color:var(--vert-fonce);font-size:18px}
+#succes .lien{margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--blanc);border:1px solid var(--ligne);border-radius:6px;padding:12px;word-break:break-all;text-align:left}
+.cache{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topo">
+    <div class="croix"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></div>
+    C-Direct · Espace pharmacie
+  </div>
+
+  <div id="vue-contre" class="vue">
+    <span class="badge-etape">Étape 3 — Contre-offre du pharmacien</span>
+    <h1>Contre-offre reçue</h1>
+    <p class="sous">Le pharmacien propose un taux horaire différent. Les autres conditions (déplacement, per diem, hébergement) restent fixées par le réseau. Si vous acceptez, la facture est générée immédiatement.</p>
+    <span class="contrat-no">N° de contrat : <b id="c-contrat">—</b></span>
+    <div class="panneau">
+      <div class="resume" id="c-resume"></div>
+      <div class="total-est"><span>Total estimé (avant taxes)</span><span id="c-estimation">—</span></div>
+      <button class="btn" id="btn-accepter-contre">✓ Accepter la contre-offre — générer la facture</button>
+      <button class="btn ligne" id="btn-refuser">Répondre au pharmacien par courriel</button>
+    </div>
+  </div>
+
+  <div id="succes">
+    <b id="s-titre">Envoyé.</b>
+    <p id="s-texte" style="margin-top:10px;color:var(--gris)"></p>
+    <div class="lien" id="s-lien"></div>
+    <button class="btn ligne" id="s-copier" style="margin-top:14px">Copier le lien</button>
+  </div>
+</div>
+
+<script src="fiche.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const fmt = n => new Intl.NumberFormat('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0)+" $";
+const P = new URLSearchParams(location.search);
+function heuresCalc(d,f){
+  if(!d||!f) return 0;
+  const [dh,dm]=d.split(':').map(Number),[fh,fm]=f.split(':').map(Number);
+  let m=(fh*60+fm)-(dh*60+dm); if(m<0)m+=1440; return m/60;
+}
+/* règles automatiques : per diem + hébergement si > seuil aller simple */
+function loinDeChezLui(kmAS){ return (parseFloat(kmAS)||0) > REGLES.seuilKmAllerSimple; }
+function appliquerRegles(o){
+  o.kmt = REGLES.tauxKm;
+  o.km = (parseFloat(o.kmAS)||0) * 2;            // facturé aller-retour, toujours
+  if(loinDeChezLui(o.kmAS)){
+    o.pdn = 1; o.pdt = REGLES.perDiemJour;
+    o.heb = REGLES.hebergementNuit;
+  } else {
+    o.pdn = 0; o.pdt = REGLES.perDiemJour; o.heb = 0;
+  }
+  return o;
+}
+function totalEstime(o){
+  return heuresCalc(o.hd,o.hf)*o.t + (o.pdn*o.pdt) + (o.km*o.kmt) + (parseFloat(o.heb)||0);
+}
+async function notifier(cle, sujet, message){
+  if(!cle || cle.indexOf("✏️")===0) return;
+  try{
+    const fd = new FormData();
+    fd.append('access_key', cle); fd.append('subject', sujet); fd.append('message', message);
+    await fetch('https://api.web3forms.com/submit',{method:'POST',body:fd,headers:{'Accept':'application/json'}});
+  }catch(e){}
+}
+function lireContrat(){
+  return {
+    n:P.get('n')||'', ph:parseInt(P.get('ph')||'0'),
+    pn:P.get('pn')||'', pa:P.get('pa')||'', pc:P.get('pc')||'', pt:P.get('pt')||'',
+    d:P.get('d')||'', hd:P.get('hd')||'', hf:P.get('hf')||'',
+    t:parseFloat(P.get('t')||'0'),
+    pdn:parseFloat(P.get('pdn')||'0'), pdt:parseFloat(P.get('pdt')||'0'),
+    kmAS:parseFloat(P.get('kmAS')||'0'), km:parseFloat(P.get('km')||'0'),
+    kmt:parseFloat(P.get('kmt')||'0.70'), heb:parseFloat(P.get('heb')||'0'),
+    note:P.get('note')||''
+  };
+}
+function paramsContrat(o){
+  const q = new URLSearchParams();
+  Object.entries(o).forEach(([k,v])=>q.set(k,v));
+  return q.toString();
+}
+function page(nom){ return location.origin + location.pathname.replace(/[^\/]+$/, nom); }
+function lienFacture(o){
+  const p = PHARMACIENS[o.ph];
+  const q = new URLSearchParams({
+    auto:'1', ph:o.ph, n:o.n, pn:o.pn, pa:o.pa, pc:o.pc,
+    d:o.d, hd:o.hd, hf:o.hf, t:o.t, pdn:o.pdn, pdt:o.pdt,
+    km:o.km, kmt:o.kmt, heb:o.heb, lc:p.courriel
+  });
+  return page('facture.html') + '?' + q.toString();
+}
+function resumeHTML(o){
+  const p = PHARMACIENS[o.ph];
+  const h = heuresCalc(o.hd,o.hf);
+  const loin = loinDeChezLui(o.kmAS);
+  return `
+  <div class="li"><span>Pharmacien</span><b>${p.nom}</b></div>
+  <div class="li"><span>Pharmacie</span><b>${o.pn}</b></div>
+  <div class="li"><span>Adresse</span><b>${o.pa}</b></div>
+  <div class="li"><span>Contact</span><b>${o.pc}${o.pt?(' · '+o.pt):''}</b></div>
+  <div class="li"><span>Date</span><b>${o.d} · ${o.hd}–${o.hf} (${h.toFixed(2)} h)</b></div>
+  <div class="li"><span>Taux horaire</span><b>${fmt(o.t)}/h (minimum réseau : ${fmt(REGLES.tauxMinimum)}/h)</b></div>
+  <div class="li"><span>Déplacement</span><b>${o.kmAS} km aller simple → facturé ${o.km} km × ${fmt(o.kmt)} (fixe)</b></div>
+  <div class="li"><span>Per diem</span><b>${loin ? '1 jour × '+fmt(REGLES.perDiemJour)+' — automatique (> '+REGLES.seuilKmAllerSimple+' km)' : 'Non applicable (≤ '+REGLES.seuilKmAllerSimple+' km aller simple)'}</b></div>
+  <div class="li"><span>Hébergement</span><b>${loin ? fmt(REGLES.hebergementNuit)+' — automatique, non modifiable' : 'Non applicable'}</b></div>
+  ${o.note?`<div class="li"><span>Note</span><b>${o.note}</b></div>`:''}`;
+}
+function montrerSucces(titre, texte, lien){
+  document.querySelectorAll('.vue').forEach(el=>el.classList.add('cache'));
+  $('succes').style.display='block';
+  $('s-titre').textContent = titre;
+  $('s-texte').textContent = texte;
+  $('s-lien').textContent = lien;
+  $('s-copier').onclick = async ()=>{ try{ await navigator.clipboard.writeText(lien); $('s-copier').textContent="Lien copié ✓"; }catch(e){} };
+}
+
+const o = appliquerRegles(lireContrat());
+if(o.t < REGLES.tauxMinimum) o.t = REGLES.tauxMinimum;   // plancher inviolable
+$('c-contrat').textContent = o.n;
+$('c-resume').innerHTML = resumeHTML(o);
+$('c-estimation').textContent = fmt(totalEstime(o));
+
+$('btn-accepter-contre').addEventListener('click', async ()=>{
+  const p = PHARMACIENS[o.ph];
+  const lf = lienFacture(o);
+  await notifier(p.cle, "C-Direct — contre-offre ACCEPTÉE · Contrat "+o.n, "La pharmacie a accepté votre taux de "+o.t+" $/h.\nFacture : "+lf);
+  await notifier(CLE_ADMIN, "C-Direct ADMIN — contrat "+o.n+" conclu (contre-offre acceptée à "+o.t+" $/h)", "Facture : "+lf);
+  window.location.href = lf;
+});
+$('btn-refuser').addEventListener('click', ()=>{
+  const p = PHARMACIENS[o.ph];
+  window.location.href = "mailto:"+p.courriel+"?subject="+encodeURIComponent("C-Direct — Contrat "+o.n)+"&body="+encodeURIComponent("Bonjour, au sujet de votre contre-offre (contrat "+o.n+") : ");
+});
+</script>
+</body>
+</html>

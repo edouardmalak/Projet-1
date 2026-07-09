@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Administration</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--blanc:#FAFBF9;--menthe:#E7F2EC;--vert:#0B6E4F;--vert-fonce:#084C37;--encre:#1B2622;--gris:#5A6B63;--ambre:#C97B12;--ligne:#D5E3DB}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sans-serif;font-size:16px;line-height:1.55}
+.wrap{max-width:860px;margin:0 auto;padding:34px 20px 70px}
+.topo{display:flex;align-items:center;gap:12px;margin-bottom:26px;font-weight:600}
+.croix{width:30px;height:30px;display:grid;place-items:center;background:var(--ambre);border-radius:7px}
+h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(24px,4vw,32px);letter-spacing:-.015em;margin-bottom:6px}
+.sous{color:var(--gris);font-size:15px;margin-bottom:26px}
+.panneau{background:#fff;border:1px solid var(--ligne);border-radius:12px;padding:26px;box-shadow:0 12px 34px rgba(8,76,55,.07);margin-bottom:20px}
+h2{font-family:'Bricolage Grotesque',sans-serif;font-size:19px;font-weight:700;color:var(--vert-fonce);margin-bottom:14px}
+.champ{margin-bottom:13px}
+.champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--gris);margin-bottom:5px}
+.champ input{width:100%;font-family:'IBM Plex Mono',monospace;font-size:15px;background:var(--blanc);border:1px solid var(--ligne);border-radius:5px;padding:10px 11px;color:var(--encre)}
+.champ input:focus{outline:2px solid var(--vert);border-color:var(--vert)}
+.deux{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{width:100%;font-weight:600;font-size:15px;background:var(--vert);color:#fff;border:none;border-radius:7px;padding:14px;cursor:pointer;margin-top:8px;font-family:'Instrument Sans',sans-serif}
+.btn:hover{background:var(--vert-fonce)}
+.btn.ambre{background:var(--ambre)}
+ol{padding-left:20px;font-size:14.5px;color:var(--gris)}
+ol li{margin-bottom:8px}
+ol b{color:var(--vert-fonce)}
+.liens{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.liens a{display:block;text-align:center;font-size:14px;font-weight:600;color:var(--vert-fonce);border:1.5px solid var(--vert);border-radius:7px;padding:12px;text-decoration:none}
+.liens a:hover{background:var(--menthe)}
+#porte{max-width:420px;margin:80px auto}
+#console{display:none}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:13px}
+@media(max-width:640px){.liens{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= PORTE ADMIN ================= -->
+  <div id="porte" class="panneau">
+    <div class="topo"><div class="croix"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></div>C-Direct · Administration</div>
+    <div class="champ"><label>Code administrateur</label><input id="code" type="password"></div>
+    <button class="btn ambre" id="entrer">Entrer</button>
+  </div>
+
+  <!-- ================= CONSOLE ================= -->
+  <div id="console">
+    <div class="topo"><div class="croix"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></div>C-Direct · Console d'administration</div>
+    <h1>Approbations</h1>
+    <p class="sous">Les demandes de profil arrivent dans votre courriel (via profil.html). Approuvez-les ici en 2 minutes.</p>
+
+    <!-- APPROUVER UN PHARMACIEN -->
+    <div class="panneau">
+      <h2>Approuver un pharmacien</h2>
+      <ol>
+        <li>Vérifiez son <b>n° OPQ</b> au registre de l'Ordre (reçu dans le courriel de profil)</li>
+        <li>Copiez son <b>bloc de fiche</b> (dans le même courriel) et collez-le dans <b>fiche.js</b>, puis re-téléversez le site</li>
+        <li>Envoyez-lui son courriel d'approbation ci-dessous</li>
+      </ol>
+      <div class="deux">
+        <div class="champ"><label>Nom du pharmacien</label><input id="ph-nom"></div>
+        <div class="champ"><label>Son courriel</label><input id="ph-courriel" type="email"></div>
+      </div>
+      <button class="btn" id="btn-appr-ph">Générer le courriel d'approbation</button>
+    </div>
+
+    <!-- APPROUVER UNE PHARMACIE -->
+    <div class="panneau">
+      <h2>Approuver une pharmacie</h2>
+      <ol>
+        <li>Validez le sérieux de la demande (bannière, adresse, téléphone)</li>
+        <li>Copiez son <b>lien personnalisé</b> depuis le courriel de profil et collez-le ci-dessous</li>
+        <li>Envoyez le courriel d'approbation</li>
+      </ol>
+      <div class="deux">
+        <div class="champ"><label>Nom de la pharmacie</label><input id="fa-nom"></div>
+        <div class="champ"><label>Son courriel</label><input id="fa-courriel" type="email"></div>
+      </div>
+      <div class="champ"><label>Lien personnalisé (du courriel de profil)</label><input id="fa-lien" placeholder="https://…/demande.html?pn=…"></div>
+      <button class="btn" id="btn-appr-fa">Générer le courriel d'approbation</button>
+    </div>
+
+    <!-- RÈGLES DU RÉSEAU -->
+    <div class="panneau">
+      <h2>Règles du réseau (appliquées à tous les contrats)</h2>
+      <div id="regles-liste" class="mono" style="line-height:2.1;color:var(--vert-fonce)"></div>
+      <p class="mono" style="margin-top:12px;color:var(--gris)">Pour modifier ces règles : éditez le bloc REGLES dans <b>fiche.js</b>, puis re-téléversez le site. La pharmacie et le pharmacien peuvent offrir un taux PLUS ÉLEVÉ que le minimum, jamais moins. Per diem et hébergement s'appliquent automatiquement au-delà du seuil — personne ne peut les modifier.</p>
+    </div>
+
+    <!-- OUTILS -->
+    <div class="panneau">
+      <h2>Outils rapides</h2>
+      <div class="liens">
+        <a href="facture.html">Générateur de mandats</a>
+        <a href="demande.html">Nouvelle demande (test)</a>
+        <a href="profil.html">Formulaire de profil</a>
+        <a href="pharmacies.html">Portail pharmacies</a>
+        <a href="espace-pharmacien.html">Espace pharmacien</a>
+        <a href="index.html">Page d'accueil</a>
+      </div>
+      <p class="mono" style="margin-top:16px;color:var(--gris)">Rappel : pour activer un pharmacien, UN SEUL fichier à modifier — fiche.js — puis re-téléverser le site sur Netlify.</p>
+    </div>
+  </div>
+</div>
+
+<script src="fiche.js"></script>
+<script>
+// CODES — doivent correspondre à ceux de index.html
+const CODE_ADMIN      = "CD-ADM-QQVV";
+const CODE_PHARMACIE  = "CD-PHCIE-X4YA";
+const CODE_PHARMACIEN = "CD-PHCEN-4BA2";
+
+const $ = id => document.getElementById(id);
+const site = location.origin + location.pathname.replace(/[^\/]+$/,'');
+
+$('entrer').onclick = ()=>{
+  if($('code').value.trim() === CODE_ADMIN){
+    $('porte').style.display='none';
+    $('console').style.display='block';
+  } else { alert("Code invalide."); }
+};
+$('code').addEventListener('keydown', e=>{ if(e.key==='Enter') $('entrer').click(); });
+
+/* ---- affichage des règles du réseau (fiche.js) ---- */
+try{
+  $('regles-liste').innerHTML =
+    "Taux horaire minimum : <b>"+REGLES.tauxMinimum.toFixed(2)+" $/h</b> (plancher — augmentable, jamais réductible)<br>"+
+    "Frais de déplacement : <b>"+REGLES.tauxKm.toFixed(2)+" $/km</b> — fixe, aller-retour facturé automatiquement<br>"+
+    "Per diem : <b>"+REGLES.perDiemJour.toFixed(2)+" $/jour</b> — automatique si > "+REGLES.seuilKmAllerSimple+" km aller simple<br>"+
+    "Hébergement : <b>"+REGLES.hebergementNuit.toFixed(2)+" $/nuit</b> — automatique si > "+REGLES.seuilKmAllerSimple+" km aller simple<br>"+
+    "Seuil de distance : <b>"+REGLES.seuilKmAllerSimple+" km aller simple</b> (domicile du pharmacien ↔ pharmacie)";
+}catch(e){}
+
+/* ---- approbation pharmacien ---- */
+$('btn-appr-ph').onclick = ()=>{
+  const nom = $('ph-nom').value.trim(), c = $('ph-courriel').value.trim();
+  if(!nom||!c){ alert("Nom et courriel requis."); return; }
+  const sujet = "C-Direct — Votre profil est approuvé ✓";
+  const corps =
+"Bonjour "+nom+",\n\n"+
+"Bonne nouvelle : votre profil C-Direct est approuvé et activé.\n\n"+
+"VOTRE CODE D'ACCÈS : "+CODE_PHARMACIEN+"\n"+
+"Connexion : "+site+"index.html (onglet Pharmacien remplaçant)\n\n"+
+"Comment ça fonctionne :\n"+
+"1. Les demandes des pharmacies arrivent directement dans votre courriel\n"+
+"2. Vous acceptez ou proposez une modification en un clic\n"+
+"3. Dès l'entente conclue, votre facture (MANDAT) est générée automatiquement à votre nom\n"+
+"4. Paiement Interac directement dans votre compte — vous ne faites aucune paperasse\n\n"+
+"Votre espace : "+site+"espace-pharmacien.html\n\n"+
+"Bienvenue dans le réseau,\nC-Direct";
+  window.location.href = "mailto:"+c+"?subject="+encodeURIComponent(sujet)+"&body="+encodeURIComponent(corps);
+};
+
+/* ---- approbation pharmacie ---- */
+$('btn-appr-fa').onclick = ()=>{
+  const nom = $('fa-nom').value.trim(), c = $('fa-courriel').value.trim(), lien = $('fa-lien').value.trim();
+  if(!nom||!c){ alert("Nom et courriel requis."); return; }
+  const sujet = "C-Direct — Votre compte est approuvé ✓";
+  const corps =
+"Bonjour,\n\n"+
+"Le compte C-Direct de "+nom+" est approuvé et actif.\n\n"+
+"VOTRE CODE D'ACCÈS : "+CODE_PHARMACIE+"\n"+
+"Connexion : "+site+"index.html (onglet Pharmacie)\n\n"+
+(lien?("VOTRE LIEN PERSONNALISÉ (vos coordonnées préremplies à chaque demande) :\n"+lien+"\n\n"):"")+
+"Comment ça fonctionne :\n"+
+"1. Choisissez le pharmacien, la date et vos conditions (taux, per diem, 0,70 $/km)\n"+
+"2. La distance se calcule automatiquement\n"+
+"3. Le pharmacien accepte ou propose une modification\n"+
+"4. Dès l'entente conclue, la facture est générée et transmise aux deux parties\n"+
+"5. Paiement : virement Interac directement au pharmacien — sans intermédiaire, sans commission\n\n"+
+"Bienvenue,\nC-Direct";
+  window.location.href = "mailto:"+c+"?subject="+encodeURIComponent(sujet)+"&body="+encodeURIComponent(corps);
+};
+</script>
+</body>
+</html>
