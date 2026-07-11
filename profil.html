@@ -87,7 +87,7 @@ h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(
     <div class="sec">Identification professionnelle</div>
     <div class="champ"><label>Nom complet</label><input id="l-nom" placeholder="Prénom Nom"></div>
     <div class="deux">
-      <div class="champ"><label>N° de membre OPQ</label><input id="l-opq"></div>
+      <div class="champ"><label>N° de membre OPQ</label><input id="l-opq" inputmode="numeric" maxlength="8"></div>
       <div class="champ"><label>Années d'expérience</label><input id="l-exp" type="number"></div>
     </div>
     <div class="deux">
@@ -167,13 +167,25 @@ $('l-inc').addEventListener('change', ()=>{
 
 /* envoi générique */
 async function envoyer(sujet, message){
-  const fd = new FormData();
-  fd.append('access_key', CLE_ADMIN);
-  fd.append('subject', sujet);
-  fd.append('message', message);
-  const r = await fetch('https://api.web3forms.com/submit',{method:'POST',body:fd,headers:{'Accept':'application/json'}});
+  // JSON UTF-8 : préserve les accents dans le courriel de notification
+  const r = await fetch('https://api.web3forms.com/submit',{
+    method:'POST',
+    headers:{'Content-Type':'application/json; charset=utf-8','Accept':'application/json'},
+    body: JSON.stringify({access_key: CLE_ADMIN, subject: sujet, from_name: "C-Direct", message: message})
+  });
   if(!r.ok) throw new Error();
 }
+
+/* ---- format automatique des téléphones : 514-555-0123 ---- */
+document.querySelectorAll('input[type=tel]').forEach(el=>{
+  el.addEventListener('input', ()=>{
+    const d = el.value.replace(/\D/g,'').slice(0,10);
+    el.value = d.length>6 ? d.slice(0,3)+'-'+d.slice(3,6)+'-'+d.slice(6)
+             : d.length>3 ? d.slice(0,3)+'-'+d.slice(3) : d;
+  });
+});
+/* ---- OPQ : chiffres seulement ---- */
+$('l-opq').addEventListener('input', ()=>{ $('l-opq').value = $('l-opq').value.replace(/\D/g,'').slice(0,8); });
 
 /* ---------- PROFIL PHARMACIE ---------- */
 $('btn-ph').addEventListener('click', async ()=>{

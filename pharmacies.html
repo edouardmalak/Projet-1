@@ -184,7 +184,7 @@ a:focus-visible,.btn:focus-visible{outline:3px solid var(--ambre);outline-offset
         <!-- La clé change automatiquement selon le pharmacien choisi -->
         <input type="hidden" name="access_key" id="cle-active" value="6d62e4bb-5cdd-42e9-8c64-5e9a9cf465eb">
         <input type="hidden" name="subject" value="Nouvelle demande de remplacement — C-Direct">
-        <input type="hidden" name="Pharmacien demandé" id="ph-demande" value="Robert Malak">
+        <input type="hidden" name="Pharmacien choisi" id="ph-demande" value="Robert Malak">
         <div class="champ">
           <label for="pharmacie">Pharmacie</label>
           <input id="pharmacie" name="Pharmacie" type="text" placeholder="Pharmacie Untel, Boucherville" required>
@@ -196,7 +196,7 @@ a:focus-visible,.btn:focus-visible{outline:3px solid var(--ambre);outline-offset
           </div>
           <div class="champ">
             <label for="telc">Téléphone</label>
-            <input id="telc" name="Téléphone" type="tel" required>
+            <input id="telc" name="Telephone" type="tel" required pattern="\d{3}-\d{3}-\d{4}" title="Format : 514-555-0123" placeholder="514-555-0123">
           </div>
         </div>
         <div class="deux">
@@ -302,13 +302,29 @@ document.querySelectorAll('.ph-carte').forEach(c=>{
   });
 });
 
+// Format automatique du téléphone : 514-555-0123
+document.querySelectorAll('input[type=tel]').forEach(el=>{
+  el.addEventListener('input', ()=>{
+    const d = el.value.replace(/\D/g,'').slice(0,10);
+    el.value = d.length>6 ? d.slice(0,3)+'-'+d.slice(3,6)+'-'+d.slice(6)
+             : d.length>3 ? d.slice(0,3)+'-'+d.slice(3) : d;
+  });
+});
+
 // Soumission sans quitter la page
 document.getElementById('rxform').addEventListener('submit', async function(e){
   e.preventDefault();
   const form = e.target, btn = form.querySelector('button');
   btn.disabled = true; btn.textContent = 'Envoi en cours…';
   try{
-    const r = await fetch(form.action,{method:'POST',body:new FormData(form),headers:{'Accept':'application/json'}});
+    // JSON UTF-8 : préserve les accents dans le courriel de notification
+    const data = Object.fromEntries(new FormData(form).entries());
+    data.from_name = "C-Direct";
+    const r = await fetch(form.action,{
+      method:'POST',
+      headers:{'Content-Type':'application/json; charset=utf-8','Accept':'application/json'},
+      body: JSON.stringify(data)
+    });
     if(r.ok){
       form.style.display='none';
       document.getElementById('confirmation').style.display='block';

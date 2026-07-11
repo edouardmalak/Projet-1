@@ -136,9 +136,11 @@ function totalEstime(o){
 async function notifier(cle, sujet, message){
   if(!cle || cle.indexOf("✏️")===0) return;
   try{
-    const fd = new FormData();
-    fd.append('access_key', cle); fd.append('subject', sujet); fd.append('message', message);
-    await fetch('https://api.web3forms.com/submit',{method:'POST',body:fd,headers:{'Accept':'application/json'}});
+    await fetch('https://api.web3forms.com/submit',{
+      method:'POST',
+      headers:{'Content-Type':'application/json; charset=utf-8','Accept':'application/json'},
+      body: JSON.stringify({access_key: cle, subject: sujet, from_name: "C-Direct", message: message})
+    });
   }catch(e){}
 }
 function lireContrat(){
@@ -232,6 +234,15 @@ function est(){
 }
 document.querySelectorAll('input').forEach(i=>i.addEventListener('input',est));
 defauts();
+
+/* ---- format automatique du téléphone : 514-555-0123 ---- */
+document.querySelectorAll('input[type=tel]').forEach(el=>{
+  el.addEventListener('input', ()=>{
+    const d = el.value.replace(/\D/g,'').slice(0,10);
+    el.value = d.length>6 ? d.slice(0,3)+'-'+d.slice(3,6)+'-'+d.slice(6)
+             : d.length>3 ? d.slice(0,3)+'-'+d.slice(3) : d;
+  });
+});
 
 /* ---- distance automatique ---- */
 async function geocoder(q){

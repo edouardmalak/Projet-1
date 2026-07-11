@@ -363,13 +363,13 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--ambre);outline-offs
           <input type="hidden" name="subject" value="C-Direct — INSCRIPTION PHARMACIE (à approuver)">
           <div class="champ"><label data-fr="Nom de la pharmacie" data-en="Pharmacy name">Nom de la pharmacie</label><input name="Pharmacie" required></div>
           <div class="deux">
-            <div class="champ"><label data-fr="Bannière" data-en="Banner">Bannière</label><input name="Bannière"></div>
+            <div class="champ"><label data-fr="Bannière" data-en="Banner">Bannière</label><input name="Banniere"></div>
             <div class="champ"><label data-fr="Ville" data-en="City">Ville</label><input name="Ville" required></div>
           </div>
           <div class="champ"><label data-fr="Nom du contact" data-en="Contact name">Nom du contact</label><input name="Contact" required></div>
           <div class="deux">
             <div class="champ"><label data-fr="Courriel" data-en="Email">Courriel</label><input name="Courriel" type="email" required></div>
-            <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input name="Téléphone" type="tel" required></div>
+            <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input name="Telephone" type="tel" required pattern="\d{3}-\d{3}-\d{4}" title="Format : 514-555-0123" placeholder="514-555-0123"></div>
           </div>
           <div class="champ">
             <label data-fr="Logiciel de laboratoire" data-en="Pharmacy software">Logiciel de laboratoire</label>
@@ -387,13 +387,13 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--ambre);outline-offs
           <input type="hidden" name="subject" value="C-Direct — INSCRIPTION PHARMACIEN (à approuver)">
           <div class="champ"><label data-fr="Nom complet" data-en="Full name">Nom complet</label><input name="Nom" required></div>
           <div class="deux">
-            <div class="champ"><label data-fr="N° de membre OPQ" data-en="OPQ member number">N° de membre OPQ</label><input name="OPQ" required></div>
-            <div class="champ"><label data-fr="Années d'expérience" data-en="Years of experience">Années d'expérience</label><input name="Expérience" type="number"></div>
+            <div class="champ"><label data-fr="N° de membre OPQ" data-en="OPQ member number">N° de membre OPQ</label><input name="OPQ" required inputmode="numeric" pattern="\d{4,8}" maxlength="8" title="Numéro de membre OPQ (chiffres seulement)"></div>
+            <div class="champ"><label data-fr="Années d'expérience" data-en="Years of experience">Années d'expérience</label><input name="Experience" type="number" min="0" max="60"></div>
           </div>
-          <div class="champ"><label data-fr="Régions desservies" data-en="Regions served">Régions desservies</label><input name="Régions" placeholder="ex. Montréal, Rive-Sud, régions éloignées"></div>
+          <div class="champ"><label data-fr="Régions desservies" data-en="Regions served">Régions desservies</label><input name="Regions" placeholder="ex. Montréal, Rive-Sud, régions éloignées"></div>
           <div class="deux">
             <div class="champ"><label data-fr="Courriel" data-en="Email">Courriel</label><input name="Courriel" type="email" required></div>
-            <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input name="Téléphone" type="tel" required></div>
+            <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input name="Telephone" type="tel" required pattern="\d{3}-\d{3}-\d{4}" title="Format : 514-555-0123" placeholder="514-555-0123"></div>
           </div>
           <button class="btn" type="submit" data-fr="Demander l'accès" data-en="Request access">Demander l'accès</button>
           <span class="approb" data-fr="Approbation requise par un administrateur" data-en="Administrator approval required">Approbation requise par un administrateur</span>
@@ -403,7 +403,8 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--ambre);outline-offs
       <!-- SUCCÈS -->
       <div class="succes" id="z-succes">
         <b data-fr="Demande envoyée." data-en="Request sent.">Demande envoyée.</b><br>
-        <span data-fr="Un administrateur examinera votre demande. Vous recevrez votre code d'accès par courriel après approbation — généralement sous 24 h." data-en="An administrator will review your request. You will receive your access code by email once approved — usually within 24 hours.">Un administrateur examinera votre demande. Vous recevrez votre code d'accès par courriel après approbation — généralement sous 24&nbsp;h.</span>
+        <span data-fr="Un administrateur examinera votre demande. Vous recevrez votre code d'accès par courriel après approbation — généralement sous 24 h." data-en="An administrator will review your request. You will receive your access code by email once approved — usually within 24 hours.">Un administrateur examinera votre demande. Vous recevrez votre code d'accès par courriel après approbation — généralement sous 24&nbsp;h.</span><br><br>
+        <a href="profil.html" style="color:var(--vert);font-weight:600" data-fr="Accélérez votre activation : complétez votre profil complet maintenant →" data-en="Speed up your activation: complete your full profile now →">Accélérez votre activation : complétez votre profil complet maintenant →</a>
       </div>
     </div>
   </div>
@@ -504,7 +505,14 @@ async function envoyer(e){
   btn.disabled = true;
   btn.textContent = lang==='fr' ? 'Envoi…' : 'Sending…';
   try{
-    const r = await fetch("https://api.web3forms.com/submit",{method:'POST',body:new FormData(form),headers:{'Accept':'application/json'}});
+    // JSON UTF-8 : préserve les accents dans le courriel de notification
+    const data = Object.fromEntries(new FormData(form).entries());
+    data.from_name = "C-Direct";
+    const r = await fetch("https://api.web3forms.com/submit",{
+      method:'POST',
+      headers:{'Content-Type':'application/json; charset=utf-8','Accept':'application/json'},
+      body: JSON.stringify(data)
+    });
     if(!r.ok) throw new Error();
     $('z-insc-pharmacie').style.display='none';
     $('z-insc-pharmacien').style.display='none';
@@ -517,6 +525,19 @@ async function envoyer(e){
 }
 $('f-pharmacie').addEventListener('submit', envoyer);
 $('f-pharmacien').addEventListener('submit', envoyer);
+
+/* ---- format automatique des téléphones : 514-555-0123 ---- */
+document.querySelectorAll('input[type=tel]').forEach(el=>{
+  el.addEventListener('input', ()=>{
+    const d = el.value.replace(/\D/g,'').slice(0,10);
+    el.value = d.length>6 ? d.slice(0,3)+'-'+d.slice(3,6)+'-'+d.slice(6)
+             : d.length>3 ? d.slice(0,3)+'-'+d.slice(3) : d;
+  });
+});
+/* ---- OPQ : chiffres seulement ---- */
+document.querySelectorAll('input[name=OPQ]').forEach(el=>{
+  el.addEventListener('input', ()=>{ el.value = el.value.replace(/\D/g,'').slice(0,8); });
+});
 
 /* ---- carrousel ---- */
 const slides = document.querySelectorAll('.slide');

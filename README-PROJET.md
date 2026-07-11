@@ -43,8 +43,10 @@ Netlify → Deploys → téléverser TOUS les fichiers ensemble (index.html obli
 Test complet : inscription fictive → approbation admin → demande → contre-offre → facture → envoi aux deux parties.
 
 ## Onboarding d'un nouveau pharmacien (2 min)
-profil.html rempli par lui → courriel admin contient SON BLOC prêt à coller → vérifier OPQ → coller dans fiche.js →
-re-téléverser → admin.html : générer courriel d'approbation avec code.
+profil.html rempli par lui → courriel reçu → admin.html Étape 1 : COLLER le courriel → Analyser →
+vérifier OPQ (bouton registre) → Télécharger fiche.js mis à jour → re-téléverser sur Netlify →
+Étape 2 : courriel d'approbation prérempli avec code. (Fonctionne aussi avec l'inscription rapide d'index.html —
+les champs manquants sont marqués ✏️ dans le bloc généré.)
 
 ## Phase 2 (quand traction réelle)
 Backend (Supabase) : vrais comptes, contrats stockés, tableau de bord. QuickBooks + Virement Interac par facture.
