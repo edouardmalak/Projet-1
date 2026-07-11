@@ -89,6 +89,12 @@ ol b{color:var(--vert-fonce)}
         <div class="champ"><label>Son courriel</label><input id="ph-courriel" type="email"></div>
       </div>
       <button class="btn" id="btn-appr-ph">Générer le courriel d'approbation</button>
+      <div id="zone-mail-ph" style="display:none;margin-top:14px">
+        <div class="champ"><label>Courriel prêt — envoyez-le par l'un des boutons</label>
+        <textarea id="txt-mail-ph" rows="8" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--blanc);border:1px solid var(--ligne);border-radius:5px;padding:10px"></textarea></div>
+        <a id="gmail-ph" href="#" target="_blank" rel="noopener" class="btn" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box">Ouvrir dans Gmail</a>
+        <button class="btn ambre" id="copier-ph" type="button">Copier le courriel</button>
+      </div>
     </div>
 
     <!-- APPROUVER UNE PHARMACIE -->
@@ -105,6 +111,12 @@ ol b{color:var(--vert-fonce)}
       </div>
       <div class="champ"><label>Lien personnalisé (du courriel de profil)</label><input id="fa-lien" placeholder="https://…/demande.html?pn=…"></div>
       <button class="btn" id="btn-appr-fa">Générer le courriel d'approbation</button>
+      <div id="zone-mail-fa" style="display:none;margin-top:14px">
+        <div class="champ"><label>Courriel prêt — envoyez-le par l'un des boutons</label>
+        <textarea id="txt-mail-fa" rows="8" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--blanc);border:1px solid var(--ligne);border-radius:5px;padding:10px"></textarea></div>
+        <a id="gmail-fa" href="#" target="_blank" rel="noopener" class="btn" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box">Ouvrir dans Gmail</a>
+        <button class="btn ambre" id="copier-fa" type="button">Copier le courriel</button>
+      </div>
     </div>
 
     <!-- RÈGLES DU RÉSEAU -->
@@ -311,7 +323,7 @@ $('btn-appr-ph').onclick = ()=>{
 "4. Paiement Interac directement dans votre compte — vous ne faites aucune paperasse\n\n"+
 "Votre espace : "+site+"espace-pharmacien.html\n\n"+
 "Bienvenue dans le réseau,\nC-Direct";
-  window.location.href = "mailto:"+c+"?subject="+encodeURIComponent(sujet)+"&body="+encodeURIComponent(corps);
+  afficherCourriel('ph', c, sujet, corps);
 };
 
 /* ---- approbation pharmacie ---- */
@@ -332,8 +344,28 @@ $('btn-appr-fa').onclick = ()=>{
 "4. Dès l'entente conclue, la facture est générée et transmise aux deux parties\n"+
 "5. Paiement : virement Interac directement au pharmacien — sans intermédiaire, sans commission\n\n"+
 "Bienvenue,\nC-Direct";
-  window.location.href = "mailto:"+c+"?subject="+encodeURIComponent(sujet)+"&body="+encodeURIComponent(corps);
+  afficherCourriel('fa', c, sujet, corps);
 };
+
+/* ---- affichage du courriel prêt : Gmail + copie + mailto ----
+   (mailto seul ne fait RIEN si aucune app courriel n'est configurée) */
+function afficherCourriel(type, dest, sujet, corps){
+  $('zone-mail-'+type).style.display = 'block';
+  $('txt-mail-'+type).value = "À : "+dest+"\nObjet : "+sujet+"\n\n"+corps;
+  $('gmail-'+type).href = "https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent(dest)+
+    "&su="+encodeURIComponent(sujet)+"&body="+encodeURIComponent(corps);
+  $('copier-'+type).onclick = async ()=>{
+    try{
+      await navigator.clipboard.writeText($('txt-mail-'+type).value);
+      $('copier-'+type).textContent = "Copié ✓";
+      setTimeout(()=>{ $('copier-'+type).textContent = "Copier le courriel"; }, 2000);
+    }catch(e){ $('txt-mail-'+type).select(); document.execCommand('copy'); }
+  };
+  // tentative mailto en dernier recours (ne bloque pas si rien ne s'ouvre)
+  const a = document.createElement('a');
+  a.href = "mailto:"+dest+"?subject="+encodeURIComponent(sujet)+"&body="+encodeURIComponent(corps);
+  a.click();
+}
 </script>
 </body>
 </html>
