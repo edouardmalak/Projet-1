@@ -469,6 +469,7 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--ambre);outline-offs
         <button id="tab-pharmacien" data-fr="Pharmacien remplaçant" data-en="Relief pharmacist">Pharmacien remplaçant</button>
         <button id="tab-admin">Admin</button>
       </div>
+      <button id="chg-role" style="display:none;background:none;border:none;color:var(--gris);font-size:13px;cursor:pointer;text-decoration:underline;padding:10px 16px 0;font-family:'Instrument Sans',sans-serif" data-fr="← Je ne suis pas au bon endroit — changer de rôle" data-en="← Wrong place — change role">← Je ne suis pas au bon endroit — changer de rôle</button>
       <div class="modes">
         <button id="m-conn" class="on" data-fr="Connexion" data-en="Log in">Connexion</button>
         <button id="m-insc" data-fr="Inscription" data-en="Sign up">Inscription</button>
@@ -599,10 +600,14 @@ $('fr').onclick = ()=>setLang('fr');
 $('en').onclick = ()=>setLang('en');
 
 /* ---- rôles & modes ---- */
+let roleVerrou = false; /* quand un rôle est choisi via un bouton « Je suis… », on masque l'autre rôle */
 function render(){
   $('tab-pharmacie').classList.toggle('on', role==='pharmacie');
   $('tab-pharmacien').classList.toggle('on', role==='pharmacien');
   $('tab-admin').classList.toggle('on', role==='admin');
+  $('tab-pharmacie').style.display = (roleVerrou && role!=='pharmacie') ? 'none' : '';
+  $('tab-pharmacien').style.display = (roleVerrou && role!=='pharmacien') ? 'none' : '';
+  $('chg-role').style.display = roleVerrou ? 'block' : 'none';
   $('m-conn').classList.toggle('on', mode==='conn');
   $('m-insc').classList.toggle('on', mode==='insc');
   document.querySelector('.modes').style.display = role==='admin' ? 'none' : 'flex';
@@ -618,10 +623,11 @@ $('tab-pharmacien').onclick = ()=>{ role='pharmacien'; render(); };
 $('tab-admin').onclick = ()=>{ role='admin'; mode='conn'; render(); };
 $('m-conn').onclick = ()=>{ mode='conn'; render(); };
 $('m-insc').onclick = ()=>{ mode='insc'; render(); };
+$('chg-role').onclick = ()=>{ roleVerrou = false; render(); };
 
 /* ---- CTA de rôle (héro et cartes) ---- */
 function allerAcces(r){
-  role = r; mode = 'insc'; render();
+  role = r; mode = 'insc'; roleVerrou = true; render();
   document.getElementById('acces').scrollIntoView({behavior:'smooth'});
 }
 
@@ -635,7 +641,7 @@ $('logo').addEventListener('click', ()=>{
 });
 function revelerAdmin(){
   $('tab-admin').style.display = '';
-  role='admin'; mode='conn'; render();
+  role='admin'; mode='conn'; roleVerrou = false; render();
   document.getElementById('acces').scrollIntoView({behavior:'smooth'});
 }
 if(location.hash === '#admin') revelerAdmin();
