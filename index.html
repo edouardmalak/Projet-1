@@ -108,6 +108,13 @@ section.bloc{padding:70px 0}
 #acces .titre-acces{text-align:center;margin-bottom:8px}
 #acces .sous-acces{text-align:center;color:var(--gris);margin-bottom:34px}
 .auth{max-width:560px;margin:0 auto;background:#fff;border:1px solid var(--ligne);border-radius:14px;box-shadow:0 18px 50px rgba(8,76,55,.10);overflow:hidden}
+#acces-menu{padding:30px 26px}
+#acces-menu .menu-q{text-align:center;color:var(--gris);font-size:14.5px;margin-bottom:18px}
+.menu-role{display:block;width:100%;font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:16px;border-radius:10px;padding:18px;cursor:pointer;margin-bottom:12px;background:var(--vert);color:#fff;border:none;transition:transform .12s ease}
+.menu-role:hover{background:var(--vert-fonce)}
+.menu-role:active{transform:translateY(1px)}
+.menu-role.vide{background:#fff;color:var(--vert-fonce);border:2px solid var(--vert)}
+.menu-role.vide:hover{background:var(--menthe)}
 .roles{display:flex;border-bottom:1px solid var(--ligne)}
 .roles button{flex:1;border:none;background:var(--blanc);font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:15px;padding:16px 8px;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent}
 .roles button.on{color:var(--vert-fonce);background:#fff;border-bottom-color:var(--vert)}
@@ -464,12 +471,17 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--ambre);outline-offs
     <p class="sous-acces" data-fr="Chaque compte est vérifié et approuvé par un administrateur, généralement sous 24 h." data-en="Every account is verified and approved by an administrator, usually within 24 hours.">Chaque compte est vérifié et approuvé par un administrateur, généralement sous 24&nbsp;h.</p>
 
     <div class="auth">
+      <div id="acces-menu">
+        <p class="menu-q" data-fr="Vous êtes… ?" data-en="You are…?">Vous êtes…&nbsp;?</p>
+        <button class="menu-role" id="mr-pharmacien" data-fr="Pharmacien remplaçant →" data-en="Relief pharmacist →">Pharmacien remplaçant →</button>
+        <button class="menu-role vide" id="mr-pharmacie" data-fr="Une pharmacie →" data-en="A pharmacy →">Une pharmacie →</button>
+      </div>
       <div class="roles">
         <button id="tab-pharmacie" class="on" data-fr="Pharmacie" data-en="Pharmacy">Pharmacie</button>
         <button id="tab-pharmacien" data-fr="Pharmacien remplaçant" data-en="Relief pharmacist">Pharmacien remplaçant</button>
         <button id="tab-admin">Admin</button>
       </div>
-      <button id="chg-role" style="display:none;background:none;border:none;color:var(--gris);font-size:13px;cursor:pointer;text-decoration:underline;padding:10px 16px 0;font-family:'Instrument Sans',sans-serif" data-fr="← Je ne suis pas au bon endroit — changer de rôle" data-en="← Wrong place — change role">← Je ne suis pas au bon endroit — changer de rôle</button>
+      <button id="chg-role" style="display:none;background:none;border:none;color:var(--gris);font-size:13px;cursor:pointer;text-decoration:underline;padding:10px 16px 0;font-family:'Instrument Sans',sans-serif" data-fr="← Retour au menu — choisir un autre rôle" data-en="← Back to menu — choose another role">← Retour au menu — choisir un autre rôle</button>
       <div class="modes">
         <button id="m-conn" class="on" data-fr="Connexion" data-en="Log in">Connexion</button>
         <button id="m-insc" data-fr="Inscription" data-en="Sign up">Inscription</button>
@@ -600,21 +612,24 @@ $('fr').onclick = ()=>setLang('fr');
 $('en').onclick = ()=>setLang('en');
 
 /* ---- rôles & modes ---- */
-let roleVerrou = false; /* quand un rôle est choisi via un bouton « Je suis… », on masque l'autre rôle */
+let vue = 'menu'; /* 'menu' = choix du rôle ; 'form' = connexion/inscription du rôle choisi */
 function render(){
+  const f = (vue==='form');
+  $('acces-menu').style.display = f ? 'none' : '';
+  document.querySelector('.roles').style.display = f ? 'flex' : 'none';
+  $('chg-role').style.display = f ? 'block' : 'none';
   $('tab-pharmacie').classList.toggle('on', role==='pharmacie');
   $('tab-pharmacien').classList.toggle('on', role==='pharmacien');
   $('tab-admin').classList.toggle('on', role==='admin');
-  $('tab-pharmacie').style.display = (roleVerrou && role!=='pharmacie') ? 'none' : '';
-  $('tab-pharmacien').style.display = (roleVerrou && role!=='pharmacien') ? 'none' : '';
-  $('chg-role').style.display = roleVerrou ? 'block' : 'none';
+  $('tab-pharmacie').style.display = role==='pharmacie' ? '' : 'none';
+  $('tab-pharmacien').style.display = role==='pharmacien' ? '' : 'none';
   $('m-conn').classList.toggle('on', mode==='conn');
   $('m-insc').classList.toggle('on', mode==='insc');
-  document.querySelector('.modes').style.display = role==='admin' ? 'none' : 'flex';
+  document.querySelector('.modes').style.display = (f && role!=='admin') ? 'flex' : 'none';
   const conn = (mode==='conn' || role==='admin');
-  $('z-connexion').style.display = conn ? '' : 'none';
-  $('z-insc-pharmacie').style.display = (!conn && role==='pharmacie') ? '' : 'none';
-  $('z-insc-pharmacien').style.display = (!conn && role==='pharmacien') ? '' : 'none';
+  $('z-connexion').style.display = (f && conn) ? '' : 'none';
+  $('z-insc-pharmacie').style.display = (f && !conn && role==='pharmacie') ? '' : 'none';
+  $('z-insc-pharmacien').style.display = (f && !conn && role==='pharmacien') ? '' : 'none';
   $('z-succes').style.display = 'none';
   $('err').style.display = 'none';
 }
@@ -623,11 +638,13 @@ $('tab-pharmacien').onclick = ()=>{ role='pharmacien'; render(); };
 $('tab-admin').onclick = ()=>{ role='admin'; mode='conn'; render(); };
 $('m-conn').onclick = ()=>{ mode='conn'; render(); };
 $('m-insc').onclick = ()=>{ mode='insc'; render(); };
-$('chg-role').onclick = ()=>{ roleVerrou = false; render(); };
+$('chg-role').onclick = ()=>{ vue='menu'; render(); };
+$('mr-pharmacien').onclick = ()=>{ role='pharmacien'; mode='conn'; vue='form'; render(); };
+$('mr-pharmacie').onclick = ()=>{ role='pharmacie'; mode='conn'; vue='form'; render(); };
 
 /* ---- CTA de rôle (héro et cartes) ---- */
 function allerAcces(r){
-  role = r; mode = 'insc'; roleVerrou = true; render();
+  role = r; mode = 'insc'; vue = 'form'; render();
   document.getElementById('acces').scrollIntoView({behavior:'smooth'});
 }
 
@@ -641,7 +658,7 @@ $('logo').addEventListener('click', ()=>{
 });
 function revelerAdmin(){
   $('tab-admin').style.display = '';
-  role='admin'; mode='conn'; roleVerrou = false; render();
+  role='admin'; mode='conn'; vue='form'; render();
   document.getElementById('acces').scrollIntoView({behavior:'smooth'});
 }
 if(location.hash === '#admin') revelerAdmin();
