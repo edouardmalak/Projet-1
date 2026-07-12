@@ -1,6 +1,9 @@
 # Instructions for Claude — Projet 1
 
-This folder is a git repository synced to GitHub: https://github.com/edouardmalak/projet1 (branch `main`). The remote URL in `.git/config` already includes credentials, so `git push` works without prompts.
+This folder is a git repository synced to GitHub: https://github.com/edouardmalak/Projet-1 (branch `main`). The remote URL in `.git/config` already includes credentials, so `git push` works without prompts.
+
+Pushing to `main` automatically deploys the live site via Cloudflare Pages: https://projet-1-1yi.pages.dev
+(The other repo `edouardmalak/projet1` is unused/obsolete.)
 
 ## Rule: auto-sync after every change
 
