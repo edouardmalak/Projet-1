@@ -160,6 +160,27 @@ footer .bas{max-width:1180px;margin:26px auto 0;padding-top:18px;border-top:1px 
 #sw .crawl .ep{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:clamp(26px,4.6vw,64px);letter-spacing:.16em;margin-bottom:70px}
 #sw .crawl p{margin-bottom:70px}
 #sw .fondu{position:absolute;top:0;left:0;right:0;height:26vh;background:linear-gradient(#000 12%,transparent);z-index:2;pointer-events:none}
+/* finale : la commission à la poubelle */
+#sw .finale{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:2}
+#sw.fin .scene,#sw.fin .intro-ligne{display:none}
+#sw.fin .finale{display:flex}
+#sw .scene-fin{position:relative;text-align:center;animation:sw-app .5s ease}
+@keyframes sw-app{from{opacity:0}to{opacity:1}}
+#sw .papier{position:absolute;left:50%;top:-10px;margin-left:-80px;width:160px;padding:16px 10px;background:#FFE81F;color:#000;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;border-radius:48% 42% 55% 45%/52% 48% 42% 58%;transform:translate(-46vw,-30vh) rotate(-25deg);animation:sw-jete 1.5s .4s cubic-bezier(.45,-.05,.65,1) forwards;z-index:2}
+@keyframes sw-jete{
+  0%{transform:translate(-46vw,-30vh) rotate(-25deg) scale(1.15);opacity:1}
+  55%{transform:translate(-60px,-120px) rotate(120deg) scale(.85);opacity:1}
+  85%{transform:translate(-6px,10px) rotate(220deg) scale(.4);opacity:1}
+  100%{transform:translate(0,60px) rotate(260deg) scale(.15);opacity:0}
+}
+#sw .poubelle{display:block;margin:0 auto;overflow:visible;animation:sw-secoue .5s 1.9s ease}
+@keyframes sw-secoue{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}60%{transform:rotate(3deg)}}
+#sw .couvercle{transform-origin:22px 30px;animation:sw-couv 2.4s ease forwards}
+@keyframes sw-couv{0%,20%{transform:rotate(0)}38%,68%{transform:rotate(-52deg)}84%,100%{transform:rotate(0)}}
+#sw .fin-txt{margin-top:34px;color:#FFE81F;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(30px,5.4vw,64px);letter-spacing:-.01em;opacity:0;animation:sw-pop .6s 2.3s cubic-bezier(.2,.8,.3,1.2) forwards}
+#sw .fin-sous{margin-top:12px;color:#4BD5EE;font-family:'IBM Plex Mono',monospace;font-size:clamp(14px,2vw,20px);letter-spacing:.14em;opacity:0;animation:sw-pop .6s 2.8s ease forwards}
+@keyframes sw-pop{from{opacity:0;transform:translateY(18px) scale(.94)}to{opacity:1;transform:none}}
+
 #sw-passer{position:absolute;bottom:26px;right:28px;z-index:3;background:rgba(255,255,255,.06);border:1px solid rgba(255,232,31,.45);color:#FFE81F;font-family:'IBM Plex Mono',monospace;font-size:13px;padding:10px 18px;border-radius:99px;cursor:pointer}
 #sw-passer:hover{background:rgba(255,232,31,.14)}
 
@@ -199,6 +220,25 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--ambre);outline-offs
       <p data-fr="Mais une nouvelle alliance est née. Une plateforme rebelle, sans intermédiaire et sans commission, relie désormais les pharmacies directement à leurs remplaçants." data-en="But a new alliance has risen. A rebel platform, with no middleman and no commission, now links pharmacies directly to their relief pharmacists.">Mais une nouvelle alliance est née. Une plateforme rebelle, sans intermédiaire et sans commission, relie désormais les pharmacies directement à leurs remplaçants.</p>
       <p data-fr="Le taux convenu est le taux payé. La facture se génère toute seule. Le paiement arrive directement, par Interac." data-en="The agreed rate is the paid rate. Invoices generate themselves. Payment arrives directly, by Interac.">Le taux convenu est le taux payé. La facture se génère toute seule. Le paiement arrive directement, par Interac.</p>
       <p data-fr="Que la Force du lien direct soit avec vous…" data-en="May the Force of the direct link be with you…">Que la Force du lien direct soit avec vous…</p>
+    </div>
+  </div>
+  <div class="finale">
+    <div class="scene-fin">
+      <div class="papier">COMMISSION<br>−15&nbsp;%</div>
+      <svg class="poubelle" width="190" height="230" viewBox="0 0 190 230" xmlns="http://www.w3.org/2000/svg">
+        <g class="couvercle">
+          <rect x="70" y="14" width="50" height="12" rx="6" fill="#0B6E4F"/>
+          <rect x="22" y="26" width="146" height="18" rx="9" fill="#0B6E4F"/>
+        </g>
+        <path d="M38 56 h114 l-11 152 q-46 14 -92 0 Z" fill="#0d8560"/>
+        <path d="M38 56 h114 l-2.5 34 h-109 Z" fill="#084C37" opacity=".45"/>
+        <line x1="72" y1="72" x2="76" y2="196" stroke="#E7F2EC" stroke-width="6" stroke-linecap="round" opacity=".5"/>
+        <line x1="95" y1="72" x2="95" y2="198" stroke="#E7F2EC" stroke-width="6" stroke-linecap="round" opacity=".5"/>
+        <line x1="118" y1="72" x2="114" y2="196" stroke="#E7F2EC" stroke-width="6" stroke-linecap="round" opacity=".5"/>
+        <path d="M80 120 h30 v8 h-10 v22 h-10 v-22 h-10 Z" fill="#fff" opacity="0"/>
+      </svg>
+      <p class="fin-txt" data-fr="Les commissions ? À la poubelle." data-en="Commissions? Straight to the trash.">Les commissions&nbsp;? À la poubelle.</p>
+      <p class="fin-sous" data-fr="C-DIRECT · 0 % commission — pour toujours" data-en="C-DIRECT · 0% commission — forever">C-DIRECT · 0&nbsp;% commission — pour toujours</p>
     </div>
   </div>
   <button id="sw-passer" data-fr="Passer l'intro →" data-en="Skip intro →">Passer l'intro →</button>
@@ -596,7 +636,9 @@ function montrerBienvenue(){
   sw.classList.add('on');
   $('sw-passer').onclick = finIntro;
   document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !fini && document.body.contains(sw)) finIntro(); });
-  setTimeout(finIntro, 4600 + 46000 + 1500); /* ligne bleue + défilement + marge */
+  const finCrawl = 4600 + 58000;
+  setTimeout(()=>{ if(!fini) sw.classList.add('fin'); }, finCrawl - 6000); /* la poubelle arrive sur la fin du défilement */
+  setTimeout(finIntro, finCrawl - 6000 + 5200);
 })();
 </script>
 </body>
