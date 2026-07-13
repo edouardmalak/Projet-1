@@ -154,11 +154,11 @@ footer .bas{max-width:1180px;margin:26px auto 0;padding-top:18px;border-top:1px 
 #sw .intro-ligne{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:28px;color:#4BD5EE;font-family:'Instrument Sans',sans-serif;font-size:clamp(26px,4.6vw,46px);font-weight:600;text-align:center;opacity:0;animation:sw-ligne 4.6s ease forwards}
 @keyframes sw-ligne{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}
 #sw .scene{position:absolute;inset:0;overflow:hidden;perspective:350px}
-#sw .crawl{position:absolute;top:100%;left:0;right:0;margin:0 auto;width:min(820px,90vw);transform-origin:50% 100%;color:#FFE81F;text-align:justify;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:clamp(26px,4.2vw,42px);line-height:1.6;animation:sw-crawl 48s linear 4.6s forwards}
-@keyframes sw-crawl{0%{top:100%;transform:rotateX(20deg) translateZ(0)}100%{top:-200%;transform:rotateX(24deg) translateZ(-1700px)}}
-#sw .crawl h3{text-align:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(56px,11vw,110px);letter-spacing:.04em;margin-bottom:12px}
-#sw .crawl .ep{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:clamp(17px,2.6vw,26px);letter-spacing:.18em;margin-bottom:44px}
-#sw .crawl p{margin-bottom:38px}
+#sw .crawl{position:absolute;top:100%;left:0;right:0;margin:0 auto;width:92vw;max-width:none;transform-origin:50% 100%;color:#FFE81F;text-align:justify;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:clamp(30px,5.6vw,72px);line-height:1.55;animation:sw-crawl 52s linear 4.6s forwards}
+@keyframes sw-crawl{0%{top:100%;transform:rotateX(20deg) translateZ(0)}100%{top:-250%;transform:rotateX(24deg) translateZ(-1900px)}}
+#sw .crawl h3{text-align:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(70px,16vw,200px);letter-spacing:.04em;margin-bottom:14px}
+#sw .crawl .ep{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:clamp(20px,3.4vw,40px);letter-spacing:.18em;margin-bottom:54px}
+#sw .crawl p{margin-bottom:52px}
 #sw .fondu{position:absolute;top:0;left:0;right:0;height:26vh;background:linear-gradient(#000 12%,transparent);z-index:2;pointer-events:none}
 #sw-passer{position:absolute;bottom:26px;right:28px;z-index:3;background:rgba(255,255,255,.06);border:1px solid rgba(255,232,31,.45);color:#FFE81F;font-family:'IBM Plex Mono',monospace;font-size:13px;padding:10px 18px;border-radius:99px;cursor:pointer}
 #sw-passer:hover{background:rgba(255,232,31,.14)}
