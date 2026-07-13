@@ -235,8 +235,7 @@ body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sa
       <!-- INSCRIPTION PHARMACIE -->
       <div class="zone" id="z-insc-pharmacie">
         <form id="f-pharmacie">
-          <input type="hidden" name="access_key" value="6d62e4bb-5cdd-42e9-8c64-5e9a9cf465eb">
-          <input type="hidden" name="subject" value="C-Direct — INSCRIPTION PHARMACIE (à approuver)">
+          <input type="hidden" name="_subject" value="C-Direct — INSCRIPTION PHARMACIE (à approuver)">
           <div class="champ"><label data-fr="Nom de la pharmacie" data-en="Pharmacy name">Nom de la pharmacie</label><input name="Pharmacie" required></div>
           <div class="deux">
             <div class="champ"><label data-fr="Bannière" data-en="Banner">Bannière</label><input name="Banniere"></div>
@@ -244,7 +243,7 @@ body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sa
           </div>
           <div class="champ"><label data-fr="Nom du contact" data-en="Contact name">Nom du contact</label><input name="Contact" required></div>
           <div class="deux">
-            <div class="champ"><label data-fr="Courriel" data-en="Email">Courriel</label><input name="Courriel" type="email" required></div>
+            <div class="champ"><label data-fr="Courriel" data-en="Email">Courriel</label><input name="email" type="email" required></div>
             <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input name="Telephone" type="tel" required pattern="\d{3}-\d{3}-\d{4}" title="Format : 514-555-0123" placeholder="514-555-0123"></div>
           </div>
           <div class="champ">
@@ -260,8 +259,7 @@ body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sa
       <!-- INSCRIPTION PHARMACIEN -->
       <div class="zone" id="z-insc-pharmacien">
         <form id="f-pharmacien">
-          <input type="hidden" name="access_key" value="6d62e4bb-5cdd-42e9-8c64-5e9a9cf465eb">
-          <input type="hidden" name="subject" value="C-Direct — INSCRIPTION PHARMACIEN (à approuver)">
+          <input type="hidden" name="_subject" value="C-Direct — INSCRIPTION PHARMACIEN (à approuver)">
           <div class="champ"><label data-fr="Nom complet" data-en="Full name">Nom complet</label><input name="Nom" required></div>
           <div class="deux">
             <div class="champ"><label data-fr="N° de membre OPQ" data-en="OPQ member number">N° de membre OPQ</label><input name="OPQ" required inputmode="numeric" pattern="\d{4,8}" maxlength="8" title="Numéro de membre OPQ (chiffres seulement)"></div>
@@ -269,7 +267,7 @@ body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sa
           </div>
           <div class="champ"><label data-fr="Régions desservies" data-en="Regions served">Régions desservies</label><input name="Regions" placeholder="ex. Montréal, Rive-Sud, régions éloignées"></div>
           <div class="deux">
-            <div class="champ"><label data-fr="Courriel" data-en="Email">Courriel</label><input name="Courriel" type="email" required></div>
+            <div class="champ"><label data-fr="Courriel" data-en="Email">Courriel</label><input name="email" type="email" required></div>
             <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input name="Telephone" type="tel" required pattern="\d{3}-\d{3}-\d{4}" title="Format : 514-555-0123" placeholder="514-555-0123"></div>
           </div>
           <button class="btn" type="submit" data-fr="Demander l'accès" data-en="Request access">Demander l'accès</button>
@@ -281,7 +279,7 @@ body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sa
       <!-- SUCCÈS -->
       <div class="succes" id="z-succes">
         <b data-fr="Demande envoyée." data-en="Request sent.">Demande envoyée.</b><br>
-        <span data-fr="Un administrateur examinera votre demande. Vous recevrez votre code d'accès par courriel après approbation — généralement sous 24 h." data-en="An administrator will review your request. You will receive your access code by email once approved — usually within 24 hours.">Un administrateur examinera votre demande. Vous recevrez votre code d'accès par courriel après approbation — généralement sous 24&nbsp;h.</span><br><br>
+        <span data-fr="Un courriel de confirmation vient de vous être envoyé (vérifiez vos indésirables). Un administrateur examinera votre demande et vous recevrez votre code d'accès par courriel après approbation — généralement sous 24 h." data-en="A confirmation email has just been sent to you (check your spam folder). An administrator will review your request and you will receive your access code by email once approved — usually within 24 hours.">Un courriel de confirmation vient de vous être envoyé (vérifiez vos indésirables). Un administrateur examinera votre demande et vous recevrez votre code d'accès par courriel après approbation — généralement sous 24&nbsp;h.</span><br><br>
         <a href="profil.html" data-fr="Accélérez votre activation : complétez votre profil maintenant →" data-en="Speed up your activation: complete your profile now →">Accélérez votre activation : complétez votre profil maintenant →</a>
       </div>
     </div>
@@ -397,7 +395,7 @@ $('btn-connexion').onclick = ()=>{
 };
 $('c-code').addEventListener('keydown', e=>{ if(e.key==='Enter') $('btn-connexion').click(); });
 
-/* ---- inscriptions (Web3Forms → courriel admin) ---- */
+/* ---- inscriptions (FormSubmit → courriel admin + confirmation automatique au demandeur) ---- */
 async function envoyer(e){
   e.preventDefault();
   const form = e.target, btn = form.querySelector('button[type=submit]');
@@ -405,8 +403,12 @@ async function envoyer(e){
   btn.textContent = lang==='fr' ? 'Envoi…' : 'Sending…';
   try{
     const data = Object.fromEntries(new FormData(form).entries());
-    data.from_name = "C-Direct";
-    const r = await fetch("https://api.web3forms.com/submit",{
+    data._template = 'table';
+    data._captcha = 'false';
+    data._autoresponse = lang==='fr'
+      ? "Merci ! Votre demande d'inscription à C-Direct a bien été reçue. Un administrateur vérifiera votre profil et vous recevrez votre code d'accès par courriel après approbation — généralement sous 24 h. Vous pouvez accélérer votre activation en complétant votre profil : https://projet-1-1yi.pages.dev/profil.html — L'équipe C-Direct"
+      : "Thank you! Your C-Direct registration request has been received. An administrator will verify your profile and you will receive your access code by email once approved — usually within 24 hours. You can speed up your activation by completing your profile: https://projet-1-1yi.pages.dev/profil.html — The C-Direct team";
+    const r = await fetch("https://formsubmit.co/ajax/edouardmalak@gmail.com",{
       method:'POST',
       headers:{'Content-Type':'application/json; charset=utf-8','Accept':'application/json'},
       body: JSON.stringify(data)
