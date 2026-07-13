@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Connexion / Inscription</title>
+<meta name="description" content="Connectez-vous ou créez votre compte C-Direct — pharmacies et pharmaciens remplaçants au Québec. 0 % commission.">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--blanc:#FAFBF9;--menthe:#E7F2EC;--vert:#0B6E4F;--vert-fonce:#084C37;--encre:#1B2622;--gris:#5A6B63;--ambre:#C97B12;--ligne:#D5E3DB}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.split{display:grid;grid-template-columns:1.05fr .95fr;min-height:100vh}
+
+/* ---------- panneau gauche : pitch ---------- */
+.gauche{padding:36px 56px 56px;display:flex;flex-direction:column}
+.brand{display:inline-flex;align-items:center;gap:12px;font-weight:600;color:var(--encre);text-decoration:none;width:max-content}
+.croix{width:32px;height:32px;display:grid;place-items:center;background:var(--vert);border-radius:8px;flex:none}
+.retour{font-size:13.5px;color:var(--gris);text-decoration:none;margin-top:6px;display:inline-block;width:max-content}
+.retour:hover{color:var(--vert-fonce)}
+.illu{margin:26px auto 8px;max-width:430px;width:100%}
+.illu svg{display:block;width:100%;height:auto}
+.gauche h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(22px,2.4vw,29px);line-height:1.15;letter-spacing:-.015em;margin-top:10px}
+.gauche h1 em{font-style:normal;color:var(--vert)}
+.pitch{color:var(--gris);font-size:15.5px;margin-top:10px;max-width:56ch}
+.groupe{margin-top:22px}
+.groupe h3{font-family:'Bricolage Grotesque',sans-serif;font-size:15.5px;font-weight:700;color:var(--vert-fonce);margin-bottom:8px}
+.groupe ul{list-style:none}
+.groupe li{padding:5px 0 5px 28px;position:relative;font-size:14.5px}
+.groupe li::before{content:"";position:absolute;left:0;top:9px;width:16px;height:16px;border-radius:50%;background:var(--menthe);border:1.5px solid var(--vert)}
+.groupe li::after{content:"✓";position:absolute;left:4px;top:5px;font-size:11px;color:var(--vert-fonce);font-weight:700}
+.chips{margin-top:24px;display:flex;gap:10px;flex-wrap:wrap}
+.chips span{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--vert-fonce);background:var(--menthe);border:1px solid var(--ligne);padding:6px 12px;border-radius:99px;font-weight:600}
+
+/* ---------- panneau droit : carte ---------- */
+.droite{background:radial-gradient(1100px 700px at 80% -10%, #0d5c44 0%, var(--vert-fonce) 55%);position:relative;display:flex;align-items:center;justify-content:center;padding:76px 40px 48px}
+.droite::before{content:"";position:absolute;inset:0;opacity:.06;background-image:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44"><path d="M18 8h8v10h10v8H26v10h-8V26H8v-8h10z" fill="white"/></svg>');background-size:44px 44px}
+.lang{position:absolute;top:22px;right:24px;display:flex;border:1px solid rgba(255,255,255,.35);border-radius:99px;overflow:hidden;z-index:3}
+.lang button{border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;padding:7px 14px;cursor:pointer;color:rgba(255,255,255,.75)}
+.lang button.on{background:#fff;color:var(--vert-fonce)}
+
+.carte{position:relative;z-index:2;background:#fff;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);width:100%;max-width:460px;padding:38px 38px 30px;animation:pose .45s cubic-bezier(.2,.7,.3,1)}
+@keyframes pose{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.carte .logo{width:58px;height:58px;border-radius:14px;background:var(--vert);display:grid;place-items:center;margin:0 auto 18px;box-shadow:0 8px 22px rgba(8,76,55,.35)}
+.carte h2{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.015em;text-align:center}
+.carte .sous{text-align:center;color:var(--gris);font-size:14.5px;margin-top:6px}
+
+/* bascule connexion / inscription */
+.modes{display:flex;background:var(--menthe);border-radius:99px;padding:4px;margin:22px 0 20px}
+.modes button{flex:1;border:none;border-radius:99px;padding:10px;font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:14.5px;cursor:pointer;background:transparent;color:var(--gris);transition:all .18s ease}
+.modes button.on{background:var(--vert);color:#fff;box-shadow:0 4px 12px rgba(8,76,55,.3)}
+
+/* étape 1 : rôle */
+.role-btn{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:#fff;border:2px solid var(--ligne);border-radius:14px;padding:15px 18px;cursor:pointer;margin-bottom:12px;font-family:'Instrument Sans',sans-serif;transition:border-color .15s ease, transform .12s ease, box-shadow .15s ease}
+.role-btn:hover{border-color:var(--vert);box-shadow:0 8px 22px rgba(8,76,55,.12);transform:translateY(-1px)}
+.role-btn:active{transform:none}
+.role-btn .ico{width:46px;height:46px;border-radius:12px;background:var(--menthe);display:grid;place-items:center;flex:none}
+.role-btn b{display:block;font-size:16px}
+.role-btn small{display:block;color:var(--gris);font-size:13px;margin-top:1px}
+.role-btn .fleche{margin-left:auto;color:var(--vert);font-weight:700;font-size:18px}
+
+/* étape 2 : formulaire */
+.role-actuel{display:flex;align-items:center;gap:10px;background:var(--menthe);border:1px solid var(--ligne);border-radius:10px;padding:9px 14px;margin-bottom:18px;font-size:14px}
+.role-actuel b{color:var(--vert-fonce)}
+.role-actuel button{margin-left:auto;background:none;border:none;color:var(--vert);font-weight:600;font-size:13px;cursor:pointer;text-decoration:underline;font-family:'Instrument Sans',sans-serif}
+.champ{margin-bottom:14px}
+.champ label{display:block;font-size:13px;font-weight:600;color:var(--gris);margin-bottom:5px}
+.champ input,.champ select{width:100%;border:1.5px solid var(--ligne);border-radius:9px;padding:11px 13px;font-size:15px;font-family:'Instrument Sans',sans-serif;background:#fff;color:var(--encre);transition:border-color .15s ease}
+.champ input:focus,.champ select:focus{outline:none;border-color:var(--vert);box-shadow:0 0 0 3px rgba(11,110,79,.12)}
+.deux{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{width:100%;background:var(--vert);color:#fff;border:none;border-radius:10px;padding:14px;font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:15.5px;cursor:pointer;margin-top:6px;transition:background .15s ease, transform .12s ease}
+.btn:hover{background:var(--vert-fonce)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.6;cursor:default}
+.erreur{display:none;background:#FBEAEA;color:#8C2B2B;border:1px solid #E8C5C5;border-radius:9px;padding:10px 13px;font-size:13.5px;margin-top:12px}
+.note{font-size:13px;color:var(--gris);text-align:center;margin-top:16px}
+.note a,.note button{color:var(--vert);font-weight:600;cursor:pointer;background:none;border:none;font-size:13px;font-family:'Instrument Sans',sans-serif;text-decoration:underline}
+.approb{display:block;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--gris);margin-top:12px}
+.succes{display:none;text-align:center;background:var(--menthe);border:1px solid var(--ligne);border-radius:12px;padding:22px;font-size:14.5px}
+.succes b{color:var(--vert-fonce)}
+.succes a{color:var(--vert);font-weight:600}
+.oeil{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gris);font-size:13px;padding:2px}
+.rel{position:relative}
+
+.zone{display:none}
+.zone.on{display:block;animation:glisse .3s ease}
+@keyframes glisse{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+
+/* ---------- responsive ---------- */
+@media(max-width:900px){
+  .split{grid-template-columns:1fr}
+  .droite{order:-1;padding:72px 20px 40px;min-height:auto}
+  .gauche{padding:32px 24px 48px}
+  .illu{max-width:330px}
+  .carte{padding:30px 24px 24px}
+}
+</style>
+</head>
+<body>
+
+<div class="split">
+
+  <!-- ============ GAUCHE : pourquoi C-Direct ============ -->
+  <div class="gauche">
+    <a class="brand" href="index.html" title="C-Direct — accueil">
+      <span class="croix"><svg width="17" height="17" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></span>
+      C-Direct
+    </a>
+    <a class="retour" href="index.html" data-fr="← Retour au site" data-en="← Back to site">← Retour au site</a>
+
+    <div class="illu" aria-hidden="true">
+      <svg viewBox="0 0 430 260" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="215" cy="238" rx="180" ry="14" fill="#E7F2EC"/>
+        <!-- pharmacie -->
+        <rect x="36" y="96" width="150" height="130" rx="10" fill="#fff" stroke="#D5E3DB" stroke-width="2"/>
+        <rect x="28" y="78" width="166" height="30" rx="8" fill="#0B6E4F"/>
+        <path d="M28 108h166l-10 14H38z" fill="#084C37" opacity=".25"/>
+        <rect x="56" y="130" width="44" height="40" rx="6" fill="#E7F2EC"/>
+        <rect x="120" y="130" width="44" height="40" rx="6" fill="#E7F2EC"/>
+        <rect x="92" y="182" width="38" height="44" rx="5" fill="#0B6E4F"/>
+        <circle cx="122" cy="204" r="3" fill="#fff"/>
+        <path d="M100 88h22v6h-22zM100 94h6v6h-6z" fill="#fff" opacity="0"/>
+        <path d="M106 84h10v7h7v10h-7v7h-10v-7h-7V91h7z" fill="#fff"/>
+        <!-- pharmacien -->
+        <circle cx="330" cy="120" r="26" fill="#F2C9A8"/>
+        <path d="M304 118c0-18 12-30 26-30s26 12 26 30c-8-10-14-14-26-14s-18 4-26 14z" fill="#3E4A45"/>
+        <rect x="296" y="146" width="68" height="80" rx="20" fill="#fff" stroke="#D5E3DB" stroke-width="2"/>
+        <path d="M322 150h16v12h12v14h-12v12h-16v-12h-12v-14h12z" fill="#0B6E4F" opacity=".14"/>
+        <path d="M325 153h10v10h10v10h-10v10h-10v-10h-10v-10h10z" fill="#0B6E4F"/>
+        <!-- lien direct -->
+        <path d="M196 150 C 232 128, 258 128, 288 150" stroke="#0B6E4F" stroke-width="3.5" fill="none" stroke-dasharray="1 10" stroke-linecap="round"/>
+        <circle cx="242" cy="132" r="17" fill="#0B6E4F"/>
+        <path d="M235 132l5 5 9-10" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- pastilles flottantes -->
+        <g>
+          <rect x="196" y="60" width="92" height="30" rx="15" fill="#fff" stroke="#D5E3DB" stroke-width="2"/>
+          <text x="242" y="80" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="13" font-weight="600" fill="#084C37">0 %</text>
+        </g>
+        <g>
+          <rect x="356" y="52" width="52" height="30" rx="15" fill="#fff" stroke="#D5E3DB" stroke-width="2"/>
+          <text x="382" y="72" text-anchor="middle" font-size="15">💊</text>
+        </g>
+        <g>
+          <rect x="20" y="40" width="52" height="30" rx="15" fill="#fff" stroke="#D5E3DB" stroke-width="2"/>
+          <text x="46" y="61" text-anchor="middle" font-size="15">📅</text>
+        </g>
+      </svg>
+    </div>
+
+    <h1><span data-fr="Bienvenue sur C-Direct — le lien " data-en="Welcome to C-Direct — the ">Bienvenue sur C-Direct — le lien </span><em data-fr="direct" data-en="direct">direct</em><span data-fr=" entre pharmacies et pharmaciens remplaçants." data-en=" link between pharmacies and relief pharmacists."> entre pharmacies et pharmaciens remplaçants.</span></h1>
+    <p class="pitch" data-fr="Pas de commission, pas d'intermédiaire, pas de points à accumuler. Le pharmacien garde 100 % de son taux — la pharmacie réserve en 2 minutes." data-en="No commission, no middleman, no points to collect. Pharmacists keep 100% of their rate — pharmacies book in 2 minutes.">Pas de commission, pas d'intermédiaire, pas de points à accumuler. Le pharmacien garde 100&nbsp;% de son taux — la pharmacie réserve en 2 minutes.</p>
+
+    <div class="groupe">
+      <h3 data-fr="Pour les pharmaciens remplaçants :" data-en="For relief pharmacists:">Pour les pharmaciens remplaçants :</h3>
+      <ul>
+        <li data-fr="Parcourez et acceptez les remplacements qui conviennent à votre horaire." data-en="Browse and accept shifts that fit your schedule.">Parcourez et acceptez les remplacements qui conviennent à votre horaire.</li>
+        <li data-fr="Gardez 100 % de votre taux — 0 % commission." data-en="Keep 100% of your rate — 0% commission.">Gardez 100&nbsp;% de votre taux — 0&nbsp;% commission.</li>
+        <li data-fr="Facturation automatique et paiement Interac direct." data-en="Automatic invoicing and direct Interac payment.">Facturation automatique et paiement Interac direct.</li>
+        <li data-fr="Communiquez directement avec les pharmacies — sans intermédiaire." data-en="Communicate directly with pharmacies — no middlemen.">Communiquez directement avec les pharmacies — sans intermédiaire.</li>
+      </ul>
+    </div>
+    <div class="groupe">
+      <h3 data-fr="Pour les pharmacies :" data-en="For pharmacies:">Pour les pharmacies :</h3>
+      <ul>
+        <li data-fr="Publiez un besoin de remplacement en quelques secondes." data-en="Post a staffing need in seconds.">Publiez un besoin de remplacement en quelques secondes.</li>
+        <li data-fr="Accédez à un bassin de pharmaciens vérifiés (OPQ)." data-en="Access a pool of verified (OPQ) pharmacists.">Accédez à un bassin de pharmaciens vérifiés (OPQ).</li>
+        <li data-fr="Comblez les remplacements de dernière minute ou récurrents." data-en="Fill last-minute or recurring shifts.">Comblez les remplacements de dernière minute ou récurrents.</li>
+        <li data-fr="Payez le taux du pharmacien — rien de plus." data-en="Pay the pharmacist's rate — nothing more.">Payez le taux du pharmacien — rien de plus.</li>
+      </ul>
+    </div>
+
+    <div class="chips">
+      <span data-fr="0 % commission" data-en="0% commission">0&nbsp;% commission</span>
+      <span data-fr="Profils vérifiés OPQ" data-en="OPQ-verified profiles">Profils vérifiés OPQ</span>
+      <span data-fr="Approbation sous 24 h" data-en="Approved within 24 h">Approbation sous 24&nbsp;h</span>
+    </div>
+  </div>
+
+  <!-- ============ DROITE : carte d'accès ============ -->
+  <div class="droite">
+    <div class="lang" role="group" aria-label="Langue / Language">
+      <button id="fr" class="on">FR</button>
+      <button id="en">EN</button>
+    </div>
+
+    <div class="carte">
+      <div class="logo" id="logo"><svg width="26" height="26" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></div>
+      <h2 id="titre">Créez votre compte — c'est gratuit&nbsp;!</h2>
+      <p class="sous" id="sous-titre">Vous êtes… ?</p>
+
+      <div class="modes">
+        <button id="m-conn" data-fr="Connexion" data-en="Log in">Connexion</button>
+        <button id="m-insc" class="on" data-fr="Inscription" data-en="Sign up">Inscription</button>
+      </div>
+
+      <!-- Étape 1 : choix du rôle (même menu pour connexion ET inscription) -->
+      <div class="zone on" id="z-role">
+        <button class="role-btn" id="r-pharmacien">
+          <span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#0B6E4F" stroke-width="2"/><path d="M4 20c0-3.3 3.6-5 8-5s8 1.7 8 5" stroke="#0B6E4F" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span><b data-fr="Pharmacien remplaçant" data-en="Relief pharmacist">Pharmacien remplaçant</b><small data-fr="Je cherche des remplacements" data-en="I'm looking for shifts">Je cherche des remplacements</small></span>
+          <span class="fleche">→</span>
+        </button>
+        <button class="role-btn" id="r-pharmacie">
+          <span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 9l1.5-5h13L20 9" stroke="#0B6E4F" stroke-width="2" stroke-linejoin="round"/><path d="M5 9v11h14V9" stroke="#0B6E4F" stroke-width="2" stroke-linejoin="round"/><path d="M10 20v-6h4v6" stroke="#0B6E4F" stroke-width="2" stroke-linejoin="round"/></svg></span>
+          <span><b data-fr="Une pharmacie" data-en="A pharmacy">Une pharmacie</b><small data-fr="Je cherche un remplaçant" data-en="I need a relief pharmacist">Je cherche un remplaçant</small></span>
+          <span class="fleche">→</span>
+        </button>
+      </div>
+
+      <!-- Étape 2 : rappel du rôle choisi -->
+      <div class="role-actuel" id="role-actuel" style="display:none">
+        <span data-fr="Vous êtes :" data-en="You are:">Vous êtes&nbsp;:</span>&nbsp;<b id="role-nom"></b>
+        <button id="chg-role" data-fr="changer" data-en="change">changer</button>
+      </div>
+
+      <!-- CONNEXION -->
+      <div class="zone" id="z-connexion">
+        <div class="champ">
+          <label data-fr="Courriel" data-en="Email">Courriel</label>
+          <input id="c-courriel" type="email" autocomplete="email">
+        </div>
+        <div class="champ rel">
+          <label data-fr="Code d'accès" data-en="Access code">Code d'accès</label>
+          <input id="c-code" type="password" autocomplete="off" style="padding-right:64px">
+          <button class="oeil" id="voir-code" type="button" data-fr="afficher" data-en="show" style="top:auto;bottom:11px">afficher</button>
+        </div>
+        <button class="btn" id="btn-connexion" data-fr="Se connecter" data-en="Log in">Se connecter</button>
+        <div class="erreur" id="err" data-fr="Code d'accès invalide. Vérifiez le code reçu après votre approbation." data-en="Invalid access code. Check the code you received upon approval.">Code d'accès invalide. Vérifiez le code reçu après votre approbation.</div>
+        <p class="note"><span data-fr="Pas encore de code ?" data-en="No code yet?">Pas encore de code&nbsp;?</span> <button id="vers-insc" data-fr="Inscrivez-vous — c'est gratuit" data-en="Sign up — it's free">Inscrivez-vous — c'est gratuit</button></p>
+      </div>
+
+      <!-- INSCRIPTION PHARMACIE -->
+      <div class="zone" id="z-insc-pharmacie">
+        <form id="f-pharmacie">
+          <input type="hidden" name="access_key" value="6d62e4bb-5cdd-42e9-8c64-5e9a9cf465eb">
+          <input type="hidden" name="subject" value="C-Direct — INSCRIPTION PHARMACIE (à approuver)">
+          <div class="champ"><label data-fr="Nom de la pharmacie" data-en="Pharmacy name">Nom de la pharmacie</label><input name="Pharmacie" required></div>
+          <div class="deux">
+            <div class="champ"><label data-fr="Bannière" data-en="Banner">Bannière</label><input name="Banniere"></div>
+            <div class="champ"><label data-fr="Ville" data-en="City">Ville</label><input name="Ville" required></div>
+          </div>
+          <div class="champ"><label data-fr="Nom du contact" data-en="Contact name">Nom du contact</label><input name="Contact" required></div>
+          <div class="deux">
+            <div class="champ"><label data-fr="Courriel" data-en="Email">Courriel</label><input name="Courriel" type="email" required></div>
+            <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input name="Telephone" type="tel" required pattern="\d{3}-\d{3}-\d{4}" title="Format : 514-555-0123" placeholder="514-555-0123"></div>
+          </div>
+          <div class="champ">
+            <label data-fr="Logiciel de laboratoire" data-en="Pharmacy software">Logiciel de laboratoire</label>
+            <select name="Logiciel"><option value="">—</option><option>Kroll</option><option>AssystRx</option><option>Mentor</option><option>PrioRx</option><option>Autre</option></select>
+          </div>
+          <button class="btn" type="submit" data-fr="Demander l'accès" data-en="Request access">Demander l'accès</button>
+          <span class="approb" data-fr="Approbation requise par un administrateur — généralement sous 24 h" data-en="Administrator approval required — usually within 24 h">Approbation requise par un administrateur — généralement sous 24&nbsp;h</span>
+        </form>
+        <p class="note"><span data-fr="Déjà un compte ?" data-en="Have an account?">Déjà un compte&nbsp;?</span> <button class="vers-conn" data-fr="Connectez-vous" data-en="Log in">Connectez-vous</button></p>
+      </div>
+
+      <!-- INSCRIPTION PHARMACIEN -->
+      <div class="zone" id="z-insc-pharmacien">
+        <form id="f-pharmacien">
+          <input type="hidden" name="access_key" value="6d62e4bb-5cdd-42e9-8c64-5e9a9cf465eb">
+          <input type="hidden" name="subject" value="C-Direct — INSCRIPTION PHARMACIEN (à approuver)">
+          <div class="champ"><label data-fr="Nom complet" data-en="Full name">Nom complet</label><input name="Nom" required></div>
+          <div class="deux">
+            <div class="champ"><label data-fr="N° de membre OPQ" data-en="OPQ member number">N° de membre OPQ</label><input name="OPQ" required inputmode="numeric" pattern="\d{4,8}" maxlength="8" title="Numéro de membre OPQ (chiffres seulement)"></div>
+            <div class="champ"><label data-fr="Années d'expérience" data-en="Years of experience">Années d'expérience</label><input name="Experience" type="number" min="0" max="60"></div>
+          </div>
+          <div class="champ"><label data-fr="Régions desservies" data-en="Regions served">Régions desservies</label><input name="Regions" placeholder="ex. Montréal, Rive-Sud, régions éloignées"></div>
+          <div class="deux">
+            <div class="champ"><label data-fr="Courriel" data-en="Email">Courriel</label><input name="Courriel" type="email" required></div>
+            <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input name="Telephone" type="tel" required pattern="\d{3}-\d{3}-\d{4}" title="Format : 514-555-0123" placeholder="514-555-0123"></div>
+          </div>
+          <button class="btn" type="submit" data-fr="Demander l'accès" data-en="Request access">Demander l'accès</button>
+          <span class="approb" data-fr="Approbation requise par un administrateur — généralement sous 24 h" data-en="Administrator approval required — usually within 24 h">Approbation requise par un administrateur — généralement sous 24&nbsp;h</span>
+        </form>
+        <p class="note"><span data-fr="Déjà un compte ?" data-en="Have an account?">Déjà un compte&nbsp;?</span> <button class="vers-conn" data-fr="Connectez-vous" data-en="Log in">Connectez-vous</button></p>
+      </div>
+
+      <!-- SUCCÈS -->
+      <div class="succes" id="z-succes">
+        <b data-fr="Demande envoyée." data-en="Request sent.">Demande envoyée.</b><br>
+        <span data-fr="Un administrateur examinera votre demande. Vous recevrez votre code d'accès par courriel après approbation — généralement sous 24 h." data-en="An administrator will review your request. You will receive your access code by email once approved — usually within 24 hours.">Un administrateur examinera votre demande. Vous recevrez votre code d'accès par courriel après approbation — généralement sous 24&nbsp;h.</span><br><br>
+        <a href="profil.html" data-fr="Accélérez votre activation : complétez votre profil maintenant →" data-en="Speed up your activation: complete your profile now →">Accélérez votre activation : complétez votre profil maintenant →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================
+// ✏️ CODES D'ACCÈS — remis par vous après approbation.
+// (Portillon simple pour la phase de démarrage — doivent
+// correspondre à admin.html.)
+// =====================================================
+const CODES = {
+  pharmacie:  "CD-PHCIE-X4YA",
+  pharmacien: "CD-PHCEN-4BA2",
+  admin:      "CD-ADM-QQVV"
+};
+const DESTINATIONS = {
+  pharmacie: "pharmacies.html",
+  pharmacien: "espace-pharmacien.html",
+  admin: "admin.html"
+};
+
+const $ = id => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+
+let lang = 'fr';
+try{ lang = localStorage.getItem('cd-lang') || 'fr'; }catch(e){}
+let mode = params.get('mode') === 'conn' ? 'conn' : 'insc';
+let role = ['pharmacien','pharmacie'].includes(params.get('role')) ? params.get('role') : null;
+
+/* ---- textes dynamiques ---- */
+const T = {
+  titreConn:   {fr:"Content de vous revoir !", en:"Welcome back!"},
+  titreInsc:   {fr:"Créez votre compte — c'est gratuit !", en:"Create an account — it's free!"},
+  titreAdmin:  {fr:"Accès administrateur", en:"Administrator access"},
+  sousRole:    {fr:"Vous êtes… ?", en:"You are…?"},
+  sousConn:    {fr:"Entrez votre courriel et votre code d'accès.", en:"Enter your email and access code."},
+  sousInsc:    {fr:"Compte vérifié et approuvé sous 24 h.", en:"Account verified and approved within 24 h."},
+  pharmacien:  {fr:"Pharmacien remplaçant", en:"Relief pharmacist"},
+  pharmacie:   {fr:"Une pharmacie", en:"A pharmacy"},
+  admin:       {fr:"Administrateur", en:"Administrator"}
+};
+
+/* ---- langue ---- */
+function setLang(l){
+  lang = l;
+  document.documentElement.lang = l;
+  try{ localStorage.setItem('cd-lang', l); }catch(e){}
+  $('fr').classList.toggle('on', l==='fr');
+  $('en').classList.toggle('on', l==='en');
+  document.querySelectorAll('[data-fr]').forEach(el=>{ el.innerHTML = el.dataset[l]; });
+  render();
+}
+$('fr').onclick = ()=>setLang('fr');
+$('en').onclick = ()=>setLang('en');
+
+/* ---- rendu ---- */
+function render(){
+  const enForm = !!role;
+  $('titre').textContent = role==='admin' ? T.titreAdmin[lang] : (mode==='conn' ? T.titreConn[lang] : T.titreInsc[lang]);
+  $('sous-titre').textContent = !enForm ? T.sousRole[lang] : (mode==='conn' || role==='admin' ? T.sousConn[lang] : T.sousInsc[lang]);
+  $('m-conn').classList.toggle('on', mode==='conn');
+  $('m-insc').classList.toggle('on', mode==='insc');
+  document.querySelector('.modes').style.display = role==='admin' ? 'none' : '';
+  $('z-role').classList.toggle('on', !enForm);
+  $('role-actuel').style.display = (enForm && role!=='admin') ? 'flex' : 'none';
+  if(enForm && role!=='admin') $('role-nom').textContent = T[role][lang];
+  const conn = (mode==='conn' || role==='admin');
+  $('z-connexion').classList.toggle('on', enForm && conn);
+  $('z-insc-pharmacie').classList.toggle('on', enForm && !conn && role==='pharmacie');
+  $('z-insc-pharmacien').classList.toggle('on', enForm && !conn && role==='pharmacien');
+  $('z-succes').style.display = 'none';
+  $('err').style.display = 'none';
+}
+
+/* ---- navigation ---- */
+$('r-pharmacien').onclick = ()=>{ role='pharmacien'; render(); };
+$('r-pharmacie').onclick  = ()=>{ role='pharmacie';  render(); };
+$('chg-role').onclick     = ()=>{ role=null; render(); };
+$('m-conn').onclick       = ()=>{ mode='conn'; render(); };
+$('m-insc').onclick       = ()=>{ mode='insc'; render(); };
+$('vers-insc').onclick    = ()=>{ mode='insc'; render(); };
+document.querySelectorAll('.vers-conn').forEach(b=> b.onclick = ()=>{ mode='conn'; render(); });
+
+/* ---- afficher / masquer le code ---- */
+$('voir-code').onclick = ()=>{
+  const c = $('c-code');
+  const visible = c.type === 'text';
+  c.type = visible ? 'password' : 'text';
+  $('voir-code').textContent = visible ? (lang==='fr'?'afficher':'show') : (lang==='fr'?'masquer':'hide');
+};
+
+/* ---- porte cachée admin : 5 clics sur le logo, ou #admin ---- */
+let clics = 0, minuteur = null;
+$('logo').addEventListener('click', ()=>{
+  clics++;
+  clearTimeout(minuteur);
+  minuteur = setTimeout(()=>clics=0, 2500);
+  if(clics>=5){ role='admin'; mode='conn'; render(); clics=0; }
+});
+if(location.hash === '#admin'){ role='admin'; mode='conn'; }
+
+/* ---- connexion ---- */
+$('btn-connexion').onclick = ()=>{
+  const roleConn = role==='admin' ? 'admin' : role;
+  const code = $('c-code').value.trim();
+  if(code && code === CODES[roleConn]){
+    window.location.href = DESTINATIONS[roleConn];
+  } else {
+    $('err').style.display = 'block';
+  }
+};
+$('c-code').addEventListener('keydown', e=>{ if(e.key==='Enter') $('btn-connexion').click(); });
+
+/* ---- inscriptions (Web3Forms → courriel admin) ---- */
+async function envoyer(e){
+  e.preventDefault();
+  const form = e.target, btn = form.querySelector('button[type=submit]');
+  btn.disabled = true;
+  btn.textContent = lang==='fr' ? 'Envoi…' : 'Sending…';
+  try{
+    const data = Object.fromEntries(new FormData(form).entries());
+    data.from_name = "C-Direct";
+    const r = await fetch("https://api.web3forms.com/submit",{
+      method:'POST',
+      headers:{'Content-Type':'application/json; charset=utf-8','Accept':'application/json'},
+      body: JSON.stringify(data)
+    });
+    if(!r.ok) throw new Error();
+    $('z-insc-pharmacie').classList.remove('on');
+    $('z-insc-pharmacien').classList.remove('on');
+    $('role-actuel').style.display = 'none';
+    $('z-succes').style.display = 'block';
+  }catch(err){
+    btn.disabled = false;
+    btn.textContent = lang==='fr' ? "Demander l'accès" : "Request access";
+    alert(lang==='fr' ? "L'envoi a échoué. Réessayez." : "Sending failed. Please try again.");
+  }
+}
+$('f-pharmacie').addEventListener('submit', envoyer);
+$('f-pharmacien').addEventListener('submit', envoyer);
+
+/* ---- format automatique des téléphones : 514-555-0123 ---- */
+document.querySelectorAll('input[type=tel]').forEach(el=>{
+  el.addEventListener('input', ()=>{
+    const d = el.value.replace(/\D/g,'').slice(0,10);
+    el.value = d.length>6 ? d.slice(0,3)+'-'+d.slice(3,6)+'-'+d.slice(6)
+             : d.length>3 ? d.slice(0,3)+'-'+d.slice(3) : d;
+  });
+});
+/* ---- OPQ : chiffres seulement ---- */
+document.querySelectorAll('input[name=OPQ]').forEach(el=>{
+  el.addEventListener('input', ()=>{ el.value = el.value.replace(/\D/g,'').slice(0,8); });
+});
+
+setLang(lang);
+</script>
+</body>
+</html>
