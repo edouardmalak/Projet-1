@@ -160,25 +160,35 @@ footer .bas{max-width:1180px;margin:26px auto 0;padding-top:18px;border-top:1px 
 #sw .crawl .ep{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:clamp(26px,4.6vw,64px);letter-spacing:.16em;margin-bottom:70px}
 #sw .crawl p{margin-bottom:70px}
 #sw .fondu{position:absolute;top:0;left:0;right:0;height:26vh;background:linear-gradient(#000 12%,transparent);z-index:2;pointer-events:none}
-/* finale : la commission à la poubelle */
+/* finale : le vaisseau C-Direct vaporise les commissions */
 #sw .finale{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:2}
 #sw.fin .scene,#sw.fin .intro-ligne{display:none}
 #sw.fin .finale{display:flex}
-#sw .scene-fin{position:relative;text-align:center;animation:sw-app .5s ease}
+#sw .scene-fin{position:relative;width:min(1100px,96vw);text-align:center;animation:sw-app .5s ease}
 @keyframes sw-app{from{opacity:0}to{opacity:1}}
-#sw .papier{position:absolute;left:50%;top:-10px;margin-left:-80px;width:160px;padding:16px 10px;background:#FFE81F;color:#000;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;border-radius:48% 42% 55% 45%/52% 48% 42% 58%;transform:translate(-46vw,-30vh) rotate(-25deg);animation:sw-jete 1.5s .4s cubic-bezier(.45,-.05,.65,1) forwards;z-index:2}
-@keyframes sw-jete{
-  0%{transform:translate(-46vw,-30vh) rotate(-25deg) scale(1.15);opacity:1}
-  55%{transform:translate(-60px,-120px) rotate(120deg) scale(.85);opacity:1}
-  85%{transform:translate(-6px,10px) rotate(220deg) scale(.4);opacity:1}
-  100%{transform:translate(0,60px) rotate(260deg) scale(.15);opacity:0}
-}
-#sw .poubelle{display:block;margin:0 auto;overflow:visible;animation:sw-secoue .5s 1.9s ease}
-@keyframes sw-secoue{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}60%{transform:rotate(3deg)}}
-#sw .couvercle{transform-origin:22px 30px;animation:sw-couv 2.4s ease forwards}
-@keyframes sw-couv{0%,20%{transform:rotate(0)}38%,68%{transform:rotate(-52deg)}84%,100%{transform:rotate(0)}}
-#sw .fin-txt{margin-top:34px;color:#FFE81F;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(30px,5.4vw,64px);letter-spacing:-.01em;opacity:0;animation:sw-pop .6s 2.3s cubic-bezier(.2,.8,.3,1.2) forwards}
-#sw .fin-sous{margin-top:12px;color:#4BD5EE;font-family:'IBM Plex Mono',monospace;font-size:clamp(14px,2vw,20px);letter-spacing:.14em;opacity:0;animation:sw-pop .6s 2.8s ease forwards}
+#sw .bataille{display:block;width:100%;height:auto}
+#sw .vaisseau{animation:sw-arrive 1s ease-out backwards,sw-flotte 3.2s 1s ease-in-out infinite}
+@keyframes sw-arrive{from{transform:translateX(-460px)}to{transform:translateX(0)}}
+@keyframes sw-flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+#sw .flamme{animation:sw-flamme .16s linear infinite alternate}
+@keyframes sw-flamme{from{opacity:.5}to{opacity:1}}
+#sw .laser{stroke-dasharray:1;stroke-dashoffset:1;opacity:0}
+#sw .l1{animation:sw-tir .5s 1.2s linear forwards}
+#sw .l2{animation:sw-tir .5s 2.1s linear forwards}
+#sw .l3{animation:sw-tir .5s 3.0s linear forwards}
+@keyframes sw-tir{0%{opacity:1;stroke-dashoffset:1}55%{opacity:1;stroke-dashoffset:0}100%{opacity:0;stroke-dashoffset:0}}
+#sw .cible{transform-box:fill-box;transform-origin:center}
+#sw .c1{animation:sw-boum .55s 1.55s ease-out forwards}
+#sw .c2{animation:sw-boum .55s 2.45s ease-out forwards}
+#sw .c3{animation:sw-boum .55s 3.35s ease-out forwards}
+@keyframes sw-boum{0%{transform:scale(1);opacity:1}30%{transform:scale(1.3);opacity:1}100%{transform:scale(2.1);opacity:0}}
+#sw .boum{transform-box:fill-box;transform-origin:center;opacity:0}
+#sw .b1{animation:sw-eclat .65s 1.55s ease-out forwards}
+#sw .b2{animation:sw-eclat .65s 2.45s ease-out forwards}
+#sw .b3{animation:sw-eclat .65s 3.35s ease-out forwards}
+@keyframes sw-eclat{0%{opacity:1;transform:scale(.3)}100%{opacity:0;transform:scale(2.6)}}
+#sw .fin-txt{margin-top:10px;color:#FFE81F;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(30px,5.4vw,64px);letter-spacing:-.01em;opacity:0;animation:sw-pop .6s 4.1s cubic-bezier(.2,.8,.3,1.2) forwards}
+#sw .fin-sous{margin-top:12px;color:#4BD5EE;font-family:'IBM Plex Mono',monospace;font-size:clamp(14px,2vw,20px);letter-spacing:.14em;opacity:0;animation:sw-pop .6s 4.6s ease forwards}
 @keyframes sw-pop{from{opacity:0;transform:translateY(18px) scale(.94)}to{opacity:1;transform:none}}
 
 #sw-passer{position:absolute;bottom:26px;right:28px;z-index:3;background:rgba(255,255,255,.06);border:1px solid rgba(255,232,31,.45);color:#FFE81F;font-family:'IBM Plex Mono',monospace;font-size:13px;padding:10px 18px;border-radius:99px;cursor:pointer}
@@ -224,20 +234,61 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--ambre);outline-offs
   </div>
   <div class="finale">
     <div class="scene-fin">
-      <div class="papier">COMMISSION<br>−15&nbsp;%</div>
-      <svg class="poubelle" width="190" height="230" viewBox="0 0 190 230" xmlns="http://www.w3.org/2000/svg">
-        <g class="couvercle">
-          <rect x="70" y="14" width="50" height="12" rx="6" fill="#0B6E4F"/>
-          <rect x="22" y="26" width="146" height="18" rx="9" fill="#0B6E4F"/>
+      <svg class="bataille" viewBox="0 0 1000 520" xmlns="http://www.w3.org/2000/svg">
+        <!-- lasers -->
+        <line class="laser l1" x1="338" y1="252" x2="560" y2="118" pathLength="1" stroke="#FF3D3D" stroke-width="8" stroke-linecap="round"/>
+        <line class="laser l2" x1="338" y1="258" x2="738" y2="258" pathLength="1" stroke="#FF3D3D" stroke-width="8" stroke-linecap="round"/>
+        <line class="laser l3" x1="338" y1="264" x2="566" y2="408" pathLength="1" stroke="#FF3D3D" stroke-width="8" stroke-linecap="round"/>
+        <!-- cibles : les commissions -->
+        <g class="cible c1">
+          <ellipse cx="630" cy="112" rx="92" ry="48" fill="#FFE81F" stroke="#C97B12" stroke-width="4"/>
+          <text x="630" y="108" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="20" font-weight="700" fill="#1B2622">COMMISSION</text>
+          <text x="630" y="134" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="22" font-weight="700" fill="#1B2622">−15 %</text>
         </g>
-        <path d="M38 56 h114 l-11 152 q-46 14 -92 0 Z" fill="#0d8560"/>
-        <path d="M38 56 h114 l-2.5 34 h-109 Z" fill="#084C37" opacity=".45"/>
-        <line x1="72" y1="72" x2="76" y2="196" stroke="#E7F2EC" stroke-width="6" stroke-linecap="round" opacity=".5"/>
-        <line x1="95" y1="72" x2="95" y2="198" stroke="#E7F2EC" stroke-width="6" stroke-linecap="round" opacity=".5"/>
-        <line x1="118" y1="72" x2="114" y2="196" stroke="#E7F2EC" stroke-width="6" stroke-linecap="round" opacity=".5"/>
-        <path d="M80 120 h30 v8 h-10 v22 h-10 v-22 h-10 Z" fill="#fff" opacity="0"/>
+        <g class="cible c2">
+          <ellipse cx="810" cy="258" rx="92" ry="48" fill="#FFE81F" stroke="#C97B12" stroke-width="4"/>
+          <text x="810" y="254" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="20" font-weight="700" fill="#1B2622">COMMISSION</text>
+          <text x="810" y="280" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="22" font-weight="700" fill="#1B2622">−12 %</text>
+        </g>
+        <g class="cible c3">
+          <ellipse cx="636" cy="412" rx="92" ry="48" fill="#FFE81F" stroke="#C97B12" stroke-width="4"/>
+          <text x="636" y="408" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="20" font-weight="700" fill="#1B2622">COMMISSION</text>
+          <text x="636" y="434" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="22" font-weight="700" fill="#1B2622">−18 %</text>
+        </g>
+        <!-- explosions -->
+        <g class="boum b1" stroke="#FFE81F" stroke-width="7" stroke-linecap="round">
+          <circle cx="630" cy="112" r="34" fill="#fff" stroke="none"/>
+          <line x1="630" y1="52" x2="630" y2="24"/><line x1="630" y1="172" x2="630" y2="200"/>
+          <line x1="556" y1="112" x2="528" y2="112"/><line x1="704" y1="112" x2="732" y2="112"/>
+          <line x1="580" y1="66" x2="560" y2="46"/><line x1="680" y1="158" x2="700" y2="178"/>
+          <line x1="680" y1="66" x2="700" y2="46"/><line x1="580" y1="158" x2="560" y2="178"/>
+        </g>
+        <g class="boum b2" stroke="#FFE81F" stroke-width="7" stroke-linecap="round">
+          <circle cx="810" cy="258" r="34" fill="#fff" stroke="none"/>
+          <line x1="810" y1="198" x2="810" y2="170"/><line x1="810" y1="318" x2="810" y2="346"/>
+          <line x1="736" y1="258" x2="708" y2="258"/><line x1="884" y1="258" x2="912" y2="258"/>
+          <line x1="760" y1="212" x2="740" y2="192"/><line x1="860" y1="304" x2="880" y2="324"/>
+          <line x1="860" y1="212" x2="880" y2="192"/><line x1="760" y1="304" x2="740" y2="324"/>
+        </g>
+        <g class="boum b3" stroke="#FFE81F" stroke-width="7" stroke-linecap="round">
+          <circle cx="636" cy="412" r="34" fill="#fff" stroke="none"/>
+          <line x1="636" y1="352" x2="636" y2="324"/><line x1="636" y1="472" x2="636" y2="500"/>
+          <line x1="562" y1="412" x2="534" y2="412"/><line x1="710" y1="412" x2="738" y2="412"/>
+          <line x1="586" y1="366" x2="566" y2="346"/><line x1="686" y1="458" x2="706" y2="478"/>
+          <line x1="686" y1="366" x2="706" y2="346"/><line x1="586" y1="458" x2="566" y2="478"/>
+        </g>
+        <!-- vaisseau C-Direct -->
+        <g class="vaisseau">
+          <path class="flamme" d="M64 248 L6 258 L64 272 Z" fill="#C97B12"/>
+          <path class="flamme" d="M64 252 L30 259 L64 267 Z" fill="#FFE81F"/>
+          <path d="M62 232 Q210 204 336 258 Q210 312 62 286 Q84 259 62 232 Z" fill="#0B6E4F" stroke="#E7F2EC" stroke-width="3"/>
+          <path d="M128 238 L100 188 L162 228 Z" fill="#084C37"/>
+          <path d="M128 280 L100 330 L162 290 Z" fill="#084C37"/>
+          <ellipse cx="252" cy="256" rx="27" ry="14" fill="#4BD5EE" opacity=".92"/>
+          <text x="152" y="265" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="19" font-weight="700" fill="#fff" letter-spacing="2">C-DIRECT</text>
+        </g>
       </svg>
-      <p class="fin-txt" data-fr="Les commissions ? À la poubelle." data-en="Commissions? Straight to the trash.">Les commissions&nbsp;? À la poubelle.</p>
+      <p class="fin-txt" data-fr="Les commissions ? Vaporisées." data-en="Commissions? Vaporized.">Les commissions&nbsp;? Vaporisées.</p>
       <p class="fin-sous" data-fr="C-DIRECT · 0 % commission — pour toujours" data-en="C-DIRECT · 0% commission — forever">C-DIRECT · 0&nbsp;% commission — pour toujours</p>
     </div>
   </div>
@@ -638,7 +689,7 @@ function montrerBienvenue(){
   document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !fini && document.body.contains(sw)) finIntro(); });
   const finCrawl = 4600 + 58000;
   setTimeout(()=>{ if(!fini) sw.classList.add('fin'); }, finCrawl - 6000); /* la poubelle arrive sur la fin du défilement */
-  setTimeout(finIntro, finCrawl - 6000 + 5200);
+  setTimeout(finIntro, finCrawl - 6000 + 7200);
 })();
 </script>
 </body>
