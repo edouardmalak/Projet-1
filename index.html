@@ -33,6 +33,8 @@ nav.liens a:hover{color:var(--vert-fonce)}
 .lang button.on{background:var(--vert);color:#fff}
 .btn-top{font-weight:600;font-size:14.5px;color:#fff;background:var(--vert);text-decoration:none;padding:10px 20px;border-radius:7px;white-space:nowrap}
 .btn-top:hover{background:var(--vert-fonce)}
+.btn-top.ligne{background:#fff;color:var(--vert-fonce);border:2px solid var(--vert);padding:8px 18px}
+.btn-top.ligne:hover{background:var(--menthe)}
 @media(max-width:860px){nav.liens{display:none}}
 
 /* hero */
@@ -232,7 +234,8 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--ambre);outline-offs
         <button id="fr" class="on">FR</button>
         <button id="en">EN</button>
       </div>
-      <a class="btn-top" href="#acces" data-fr="Connexion" data-en="Log in">Connexion</a>
+      <a class="btn-top ligne" id="top-conn" href="#acces" data-fr="Connexion" data-en="Log in">Connexion</a>
+      <a class="btn-top" id="top-insc" href="#acces" data-fr="Inscription" data-en="Sign up">Inscription</a>
     </div>
   </div>
 </div>
@@ -467,12 +470,12 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--ambre);outline-offs
 <!-- ================= ACCÈS ================= -->
 <section id="acces">
   <div class="in">
-    <h2 class="titre-acces" data-fr="Créez votre compte — c'est gratuit" data-en="Create your account — it's free">Créez votre compte — c'est gratuit</h2>
-    <p class="sous-acces" data-fr="Chaque compte est vérifié et approuvé par un administrateur, généralement sous 24 h." data-en="Every account is verified and approved by an administrator, usually within 24 hours.">Chaque compte est vérifié et approuvé par un administrateur, généralement sous 24&nbsp;h.</p>
+    <h2 class="titre-acces" id="acces-titre" data-fr="Créez votre compte — c'est gratuit" data-en="Create your account — it's free">Créez votre compte — c'est gratuit</h2>
+    <p class="sous-acces" id="acces-sous" data-fr="Chaque compte est vérifié et approuvé par un administrateur, généralement sous 24 h." data-en="Every account is verified and approved by an administrator, usually within 24 hours.">Chaque compte est vérifié et approuvé par un administrateur, généralement sous 24&nbsp;h.</p>
 
     <div class="auth">
       <div id="acces-menu">
-        <p class="menu-q" data-fr="Vous êtes… ?" data-en="You are…?">Vous êtes…&nbsp;?</p>
+        <p class="menu-q" id="menu-q" data-fr="Inscription — Vous êtes… ?" data-en="Sign up — You are…?">Inscription — Vous êtes…&nbsp;?</p>
         <button class="menu-role" id="mr-pharmacien" data-fr="Pharmacien remplaçant →" data-en="Relief pharmacist →">Pharmacien remplaçant →</button>
         <button class="menu-role vide" id="mr-pharmacie" data-fr="Une pharmacie →" data-en="A pharmacy →">Une pharmacie →</button>
       </div>
@@ -572,8 +575,8 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--ambre);outline-offs
     </div>
     <div>
       <h5 data-fr="Compte" data-en="Account">Compte</h5>
-      <a href="#acces" data-fr="Connexion" data-en="Log in">Connexion</a>
-      <a href="#acces" data-fr="Inscription" data-en="Sign up">Inscription</a>
+      <a href="#acces" onclick="ouvrirAcces('conn')" data-fr="Connexion" data-en="Log in">Connexion</a>
+      <a href="#acces" onclick="ouvrirAcces('insc')" data-fr="Inscription" data-en="Sign up">Inscription</a>
       <a href="profil.html" data-fr="Compléter mon profil" data-en="Complete my profile">Compléter mon profil</a>
     </div>
   </div>
@@ -613,6 +616,28 @@ $('en').onclick = ()=>setLang('en');
 
 /* ---- rôles & modes ---- */
 let vue = 'menu'; /* 'menu' = choix du rôle ; 'form' = connexion/inscription du rôle choisi */
+let intent = 'insc'; /* intention venue du menu : 'conn' ou 'insc' — même menu de rôle dans les deux cas */
+const TEXTES_ACCES = {
+  conn:{
+    titre:{fr:"Connexion", en:"Log in"},
+    sous:{fr:"Choisissez votre profil, puis entrez votre courriel et votre code d'accès.", en:"Choose your profile, then enter your email and access code."},
+    q:{fr:"Connexion — Vous êtes… ?", en:"Log in — You are…?"}
+  },
+  insc:{
+    titre:{fr:"Créez votre compte — c'est gratuit", en:"Create your account — it's free"},
+    sous:{fr:"Chaque compte est vérifié et approuvé par un administrateur, généralement sous 24 h.", en:"Every account is verified and approved by an administrator, usually within 24 hours."},
+    q:{fr:"Inscription — Vous êtes… ?", en:"Sign up — You are…?"}
+  }
+};
+function majIntent(){
+  const t = TEXTES_ACCES[intent];
+  [['acces-titre',t.titre],['acces-sous',t.sous],['menu-q',t.q]].forEach(([id,v])=>{
+    const el = $(id); el.dataset.fr = v.fr; el.dataset.en = v.en; el.innerHTML = v[lang];
+  });
+}
+function ouvrirAcces(i){ intent = i; mode = i; vue = 'menu'; majIntent(); render(); }
+$('top-conn').onclick = ()=>ouvrirAcces('conn');
+$('top-insc').onclick = ()=>ouvrirAcces('insc');
 function render(){
   const f = (vue==='form');
   $('acces-menu').style.display = f ? 'none' : '';
@@ -639,12 +664,12 @@ $('tab-admin').onclick = ()=>{ role='admin'; mode='conn'; render(); };
 $('m-conn').onclick = ()=>{ mode='conn'; render(); };
 $('m-insc').onclick = ()=>{ mode='insc'; render(); };
 $('chg-role').onclick = ()=>{ vue='menu'; render(); };
-$('mr-pharmacien').onclick = ()=>{ role='pharmacien'; mode='conn'; vue='form'; render(); };
-$('mr-pharmacie').onclick = ()=>{ role='pharmacie'; mode='conn'; vue='form'; render(); };
+$('mr-pharmacien').onclick = ()=>{ role='pharmacien'; mode=intent; vue='form'; render(); };
+$('mr-pharmacie').onclick = ()=>{ role='pharmacie'; mode=intent; vue='form'; render(); };
 
 /* ---- CTA de rôle (héro et cartes) ---- */
 function allerAcces(r){
-  role = r; mode = 'insc'; vue = 'form'; render();
+  role = r; intent = 'insc'; mode = 'insc'; vue = 'form'; majIntent(); render();
   document.getElementById('acces').scrollIntoView({behavior:'smooth'});
 }
 
