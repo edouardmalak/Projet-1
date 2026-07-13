@@ -147,6 +147,22 @@ footer a:hover{color:#fff}
 footer .op{opacity:.75;line-height:1.6}
 footer .bas{max-width:1180px;margin:26px auto 0;padding-top:18px;border-top:1px solid rgba(255,255,255,.14);text-align:center;opacity:.6;font-size:12px}
 @media(max-width:700px){footer .in{grid-template-columns:1fr;gap:22px}}
+/* intro style Star Wars */
+#sw{position:fixed;inset:0;background:#000;z-index:100;overflow:hidden;display:none}
+#sw.on{display:block}
+#sw .e1,#sw .e2{position:absolute;top:0;left:0;width:1px;height:1px;background:transparent}
+#sw .intro-ligne{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:28px;color:#4BD5EE;font-family:'Instrument Sans',sans-serif;font-size:clamp(20px,3.4vw,34px);font-weight:600;text-align:center;opacity:0;animation:sw-ligne 4.6s ease forwards}
+@keyframes sw-ligne{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}
+#sw .scene{position:absolute;inset:0;overflow:hidden;perspective:350px}
+#sw .crawl{position:absolute;top:100%;left:50%;width:min(660px,84vw);margin-left:min(-330px,-42vw);transform-origin:50% 100%;color:#FFE81F;text-align:justify;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:clamp(19px,3vw,29px);line-height:1.65;animation:sw-crawl 46s linear 4.6s forwards}
+@keyframes sw-crawl{0%{top:100%;transform:rotateX(21deg) translateZ(0)}100%{top:-190%;transform:rotateX(25deg) translateZ(-2200px)}}
+#sw .crawl h3{text-align:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(46px,9vw,86px);letter-spacing:.04em;margin-bottom:10px}
+#sw .crawl .ep{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:clamp(14px,2vw,20px);letter-spacing:.18em;margin-bottom:36px}
+#sw .crawl p{margin-bottom:30px}
+#sw .fondu{position:absolute;top:0;left:0;right:0;height:26vh;background:linear-gradient(#000 12%,transparent);z-index:2;pointer-events:none}
+#sw-passer{position:absolute;bottom:26px;right:28px;z-index:3;background:rgba(255,255,255,.06);border:1px solid rgba(255,232,31,.45);color:#FFE81F;font-family:'IBM Plex Mono',monospace;font-size:13px;padding:10px 18px;border-radius:99px;cursor:pointer}
+#sw-passer:hover{background:rgba(255,232,31,.14)}
+
 /* fenêtre de bienvenue */
 #bienvenue{position:fixed;inset:0;background:rgba(8,38,28,.55);backdrop-filter:blur(3px);z-index:50;display:none;align-items:center;justify-content:center;padding:20px}
 #bienvenue.on{display:flex}
@@ -168,6 +184,25 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--ambre);outline-offs
 </style>
 </head>
 <body>
+
+<!-- ================= INTRO STYLE STAR WARS ================= -->
+<div id="sw" aria-hidden="true">
+  <div class="e1"></div><div class="e2"></div>
+  <div class="fondu"></div>
+  <p class="intro-ligne" data-fr="Il y a peu de temps, dans une pharmacie près de chez vous…" data-en="Not so long ago, in a pharmacy near you…">Il y a peu de temps, dans une pharmacie près de chez vous…</p>
+  <div class="scene">
+    <div class="crawl">
+      <h3>C-DIRECT</h3>
+      <p class="ep" data-fr="ÉPISODE I · LE LIEN DIRECT" data-en="EPISODE I · THE DIRECT LINK">ÉPISODE I · LE LIEN DIRECT</p>
+      <p data-fr="Depuis trop longtemps, la galaxie des pharmacies du Québec vit sous l'emprise des agences de placement et de leurs commissions impériales." data-en="For too long, the galaxy of Quebec pharmacies has lived under the grip of staffing agencies and their imperial commissions.">Depuis trop longtemps, la galaxie des pharmacies du Québec vit sous l'emprise des agences de placement et de leurs commissions impériales.</p>
+      <p data-fr="Aux quatre coins de la province, des pharmaciens remplaçants luttent pour garder ce qui leur revient : 100 % de leur taux." data-en="Across the province, relief pharmacists struggle to keep what is rightfully theirs: 100% of their rate.">Aux quatre coins de la province, des pharmaciens remplaçants luttent pour garder ce qui leur revient : 100 % de leur taux.</p>
+      <p data-fr="Mais une nouvelle alliance est née. Une plateforme rebelle, sans intermédiaire et sans commission, relie désormais les pharmacies directement à leurs remplaçants." data-en="But a new alliance has risen. A rebel platform, with no middleman and no commission, now links pharmacies directly to their relief pharmacists.">Mais une nouvelle alliance est née. Une plateforme rebelle, sans intermédiaire et sans commission, relie désormais les pharmacies directement à leurs remplaçants.</p>
+      <p data-fr="Le taux convenu est le taux payé. La facture se génère toute seule. Le paiement arrive directement, par Interac." data-en="The agreed rate is the paid rate. Invoices generate themselves. Payment arrives directly, by Interac.">Le taux convenu est le taux payé. La facture se génère toute seule. Le paiement arrive directement, par Interac.</p>
+      <p data-fr="Que la Force du lien direct soit avec vous…" data-en="May the Force of the direct link be with you…">Que la Force du lien direct soit avec vous…</p>
+    </div>
+  </div>
+  <button id="sw-passer" data-fr="Passer l'intro →" data-en="Skip intro →">Passer l'intro →</button>
+</div>
 
 <!-- ================= BIENVENUE ================= -->
 <div id="bienvenue" role="dialog" aria-modal="true" aria-labelledby="bv-titre">
@@ -524,11 +559,45 @@ $('bv-pharmacien').onclick = ()=>{ fermerBienvenue(); allerAcces('pharmacien'); 
 $('bv-pharmacie').onclick = ()=>{ fermerBienvenue(); allerAcces('pharmacie'); };
 $('bienvenue').addEventListener('click', e=>{ if(e.target.id==='bienvenue') fermerBienvenue(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && $('bienvenue').classList.contains('on')) fermerBienvenue(); });
-try{
-  if(!localStorage.getItem('cd-bienvenue-vu') && !location.hash){
-    $('bienvenue').classList.add('on');
+function montrerBienvenue(){
+  try{
+    if(!localStorage.getItem('cd-bienvenue-vu') && !location.hash){
+      $('bienvenue').classList.add('on');
+    }
+  }catch(e){}
+}
+
+/* ---- intro style Star Wars (première visite, ou ?intro pour revoir) ---- */
+(function(){
+  const sw = $('sw');
+  let fini = false;
+  function finIntro(){
+    if(fini) return; fini = true;
+    try{ localStorage.setItem('cd-intro-vu','1'); }catch(e){}
+    sw.style.transition = 'opacity .9s ease';
+    sw.style.opacity = '0';
+    setTimeout(()=>{ sw.remove(); montrerBienvenue(); }, 900);
   }
-}catch(e){}
+  const rejouer = /[?&#]intro/.test(location.search + location.hash);
+  let deja = '1';
+  try{ deja = localStorage.getItem('cd-intro-vu') || ''; }catch(e){}
+  const reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if((deja && !rejouer) || reduit || (location.hash && location.hash !== '#intro')){
+    sw.remove(); montrerBienvenue(); return;
+  }
+  /* champ d'étoiles */
+  function etoiles(n){
+    let t = [];
+    for(let i=0;i<n;i++) t.push((Math.random()*100).toFixed(2)+'vw '+(Math.random()*100).toFixed(2)+'vh 0 '+(Math.random()<.25?'1px':'0')+' rgba(255,255,255,'+(0.4+Math.random()*0.6).toFixed(2)+')');
+    return t.join(',');
+  }
+  sw.querySelector('.e1').style.boxShadow = etoiles(160);
+  sw.querySelector('.e2').style.boxShadow = etoiles(90);
+  sw.classList.add('on');
+  $('sw-passer').onclick = finIntro;
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !fini && document.body.contains(sw)) finIntro(); });
+  setTimeout(finIntro, 4600 + 46000 + 1500); /* ligne bleue + défilement + marge */
+})();
 </script>
 </body>
 </html>
