@@ -41,6 +41,20 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
 .btn{width:100%;background:var(--vert);color:#04130C;border:none;border-radius:5px;padding:14px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:20px;transition:background .1s ease}
 .btn:hover{background:var(--vert-vif)}
 .btn:disabled{opacity:.55;cursor:default}
+.btn-sec{width:100%;background:transparent;color:var(--vert-vif);border:1px solid var(--ligne2);border-radius:5px;padding:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:10px;transition:border-color .1s ease}
+.btn-sec:hover{border-color:var(--vert)}
+.btn-sec:disabled{opacity:.55;cursor:default}
+.indice-btn{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--sourd);text-align:center;margin-top:6px;letter-spacing:.04em}
+.f-offre{display:none;border:1px solid var(--ligne2);border-radius:6px;background:var(--panneau2);padding:16px;margin-top:14px}
+.f-offre.on{display:block;animation:glisse .18s ease}
+@keyframes glisse{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.f-offre .titre{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:12px}
+.champ{margin-bottom:11px}
+.champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--sourd);margin-bottom:4px}
+.champ input,.champ textarea{width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:10px 11px;font-size:14px;font-family:'IBM Plex Mono',monospace;background:#0A100D;color:var(--texte)}
+.champ input:focus,.champ textarea:focus{outline:none;border-color:var(--vert);box-shadow:0 0 0 2px rgba(18,169,110,.18)}
+.deux-p{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.deux-p{grid-template-columns:1fr}}
 .msg{display:none;border-radius:4px;padding:11px 13px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-top:14px}
 .msg.ok{background:rgba(18,169,110,.1);color:var(--vert-vif);border:1px solid var(--ligne2);border-left:3px solid var(--vert)}
 .msg.ko{background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge)}
@@ -96,7 +110,21 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
       <div class="notes" id="notes"></div>
     </div>
 
-    <button class="btn" id="btn-postuler" style="display:none">Postuler</button>
+    <div id="zone-postuler" style="display:none">
+      <button class="btn" id="btn-instant">Postuler au tarif affiché</button>
+      <div class="indice-btn">Acceptation en un geste par la pharmacie — le plus rapide l'emporte</div>
+      <button class="btn-sec" id="btn-offrir">Faire une offre</button>
+      <form class="f-offre" id="f-offre">
+        <div class="titre">Mon offre</div>
+        <div class="champ"><label>Tarif proposé ($/h)</label><input id="o-tarif" type="number" step="0.01" min="0" required></div>
+        <div class="deux-p">
+          <div class="champ"><label>Début proposé (optionnel)</label><input id="o-debut" type="time"></div>
+          <div class="champ"><label>Fin proposée (optionnel)</label><input id="o-fin" type="time"></div>
+        </div>
+        <div class="champ"><label>Message (optionnel)</label><textarea id="o-message" rows="2" placeholder="Ex. : disponible dès 10 h, expérience Kroll 5 ans…"></textarea></div>
+        <button class="btn" type="submit" id="btn-envoyer" style="margin-top:6px">Envoyer mon offre</button>
+      </form>
+    </div>
     <div class="msg" id="msg"></div>
   </div>
 </div>
@@ -104,6 +132,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js"></script>
 <script src="/auth.js"></script>
+<script src="/outils.js"></script>
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
@@ -175,34 +204,58 @@ function msg(texte, type){
   }
   if(k.notes){ $('bloc-notes').style.display=''; $('notes').textContent = k.notes; }
 
-  /* ---- Postuler (pharmacien · contrat ouvert · pas déjà postulé) ---- */
+  /* ---- Candidature deux vitesses (pharmacien · contrat ouvert) ---- */
   if(profil.role === 'pharmacien'){
     if(k.ma_candidature_statut){
       const libelles = {propose:'Candidature envoyée — en attente de la pharmacie.',
-                        contre_offre:'Contre-offre en cours.',
+                        contre_offre:'Contre-offre reçue de la pharmacie.',
                         accepte:'Votre candidature a été ACCEPTÉE. La pharmacie vous contactera.',
                         refuse:'Candidature non retenue.'};
       msg(libelles[k.ma_candidature_statut] || k.ma_candidature_statut,
           k.ma_candidature_statut === 'accepte' ? 'ok' : 'info');
     } else if(k.statut === 'ouvert'){
-      const btn = $('btn-postuler');
-      btn.style.display = '';
-      btn.onclick = async ()=>{
-        btn.disabled = true;
-        const { error: e } = await sb.from('candidatures').insert({
-          contrat_id: k.id,
-          pharmacien_id: profil.id,
-          statut: 'propose',
-          tarif_propose: k.tarif_horaire
-        });
+      $('zone-postuler').style.display = '';
+      $('o-tarif').value = k.tarif_horaire;
+
+      async function postuler(payload, apres){
+        ['btn-instant','btn-offrir','btn-envoyer'].forEach(b=>{ $(b).disabled = true; });
+        const { error: e } = await sb.from('candidatures').insert(payload);
         if(e){
-          btn.disabled = false;
+          ['btn-instant','btn-offrir','btn-envoyer'].forEach(b=>{ $(b).disabled = false; });
           msg(e.code === '23505' ? 'Vous avez déjà postulé à ce contrat.' : 'Erreur : ' + e.message, 'ko');
           return;
         }
-        btn.style.display = 'none';
-        msg('Candidature envoyée au tarif affiché (' + cdArgent(k.tarif_horaire) + '/h). La pharmacie a été notifiée.', 'ok');
-      };
+        $('zone-postuler').style.display = 'none';
+        msg(apres, 'ok');
+      }
+
+      /* vitesse 1 : tarif affiché, horaire affiché — acceptation en un geste */
+      $('btn-instant').onclick = ()=> postuler({
+        contrat_id: k.id, pharmacien_id: profil.id,
+        statut: 'propose', type_candidature: 'instantanee',
+        tarif_propose: k.tarif_horaire,
+        message: cdJalonAjouter(null, {etape:'candidature', par:'pharmacien',
+          type:'instantanee', tarif:k.tarif_horaire, hd:k.heure_debut, hf:k.heure_fin})
+      }, 'Candidature envoyée au tarif affiché (' + cdArgent(k.tarif_horaire) + '/h). La pharmacie peut accepter en un geste.');
+
+      /* vitesse 2 : offre négociée */
+      $('btn-offrir').onclick = ()=>{ $('f-offre').classList.toggle('on'); };
+      $('f-offre').addEventListener('submit', e=>{
+        e.preventDefault();
+        const tarif = parseFloat($('o-tarif').value);
+        const hd = $('o-debut').value || null, hf = $('o-fin').value || null;
+        if((hd && !hf) || (!hd && hf)){ msg('Précisez le début ET la fin de l’horaire proposé.', 'ko'); return; }
+        if(hd && hf && hf <= hd){ msg('La fin proposée doit suivre le début.', 'ko'); return; }
+        const texte = $('o-message').value.trim() || null;
+        postuler({
+          contrat_id: k.id, pharmacien_id: profil.id,
+          statut: 'propose', type_candidature: 'negociee',
+          tarif_propose: tarif,
+          heure_debut_proposee: hd, heure_fin_proposee: hf,
+          message: cdJalonAjouter(null, {etape:'candidature', par:'pharmacien',
+            type:'negociee', tarif:tarif, hd:hd||k.heure_debut, hf:hf||k.heure_fin, message:texte})
+        }, 'Offre envoyée (' + cdArgent(tarif) + '/h' + (hd?', horaire proposé '+cdHeure(hd)+' – '+cdHeure(hf):'') + '). La pharmacie vous répondra.');
+      });
     } else {
       msg('Ce contrat n’est plus ouvert aux candidatures.', 'info');
     }
