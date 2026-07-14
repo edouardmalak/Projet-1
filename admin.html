@@ -3,370 +3,215 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>C-Direct — Administration</title>
+<title>C-Direct — Console d'administration</title>
+<meta name="robots" content="noindex,nofollow">
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--blanc:#FAFBF9;--menthe:#E7F2EC;--vert:#0B6E4F;--vert-fonce:#084C37;--encre:#1B2622;--gris:#5A6B63;--ambre:#C97B12;--ligne:#D5E3DB}
+:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849;--rouge:#E5484D}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sans-serif;font-size:16px;line-height:1.55}
-.wrap{max-width:860px;margin:0 auto;padding:34px 20px 70px}
-.topo{display:flex;align-items:center;gap:12px;margin-bottom:26px;font-weight:600}
-.croix{width:30px;height:30px;display:grid;place-items:center;background:var(--ambre);border-radius:7px}
-h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(24px,4vw,32px);letter-spacing:-.015em;margin-bottom:6px}
-.sous{color:var(--gris);font-size:15px;margin-bottom:26px}
-.panneau{background:#fff;border:1px solid var(--ligne);border-radius:12px;padding:26px;box-shadow:0 12px 34px rgba(8,76,55,.07);margin-bottom:20px}
-h2{font-family:'Bricolage Grotesque',sans-serif;font-size:19px;font-weight:700;color:var(--vert-fonce);margin-bottom:14px}
-.champ{margin-bottom:13px}
-.champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--gris);margin-bottom:5px}
-.champ input{width:100%;font-family:'IBM Plex Mono',monospace;font-size:15px;background:var(--blanc);border:1px solid var(--ligne);border-radius:5px;padding:10px 11px;color:var(--encre)}
-.champ input:focus{outline:2px solid var(--vert);border-color:var(--vert)}
-.deux{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.btn{width:100%;font-weight:600;font-size:15px;background:var(--vert);color:#fff;border:none;border-radius:7px;padding:14px;cursor:pointer;margin-top:8px;font-family:'Instrument Sans',sans-serif}
-.btn:hover{background:var(--vert-fonce)}
-.btn.ambre{background:var(--ambre)}
-ol{padding-left:20px;font-size:14.5px;color:var(--gris)}
-ol li{margin-bottom:8px}
-ol b{color:var(--vert-fonce)}
-.liens{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-.liens a{display:block;text-align:center;font-size:14px;font-weight:600;color:var(--vert-fonce);border:1.5px solid var(--vert);border-radius:7px;padding:12px;text-decoration:none}
-.liens a:hover{background:var(--menthe)}
-#porte{max-width:420px;margin:80px auto}
-#console{display:none}
-.mono{font-family:'IBM Plex Mono',monospace;font-size:13px}
-@media(max-width:640px){.liens{grid-template-columns:1fr}}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+background-image:linear-gradient(rgba(232,184,73,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(232,184,73,.03) 1px,transparent 1px);background-size:44px 44px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1000px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--jaune);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:14px;color:var(--sourd)}
+.wrap{max-width:1000px;margin:0 auto;padding:36px 18px 70px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+h1 b{color:var(--jaune)}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:24px;position:relative;margin-bottom:20px}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--jaune),transparent)}
+.sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--jaune);margin-bottom:14px}
+.sec small{color:var(--sourd);text-transform:none;letter-spacing:.04em;margin-left:8px}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+th{padding:9px 11px;text-align:left;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--sourd);border-bottom:1px solid var(--ligne);white-space:nowrap}
+td{padding:10px 11px;border-bottom:1px solid var(--ligne);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+.ref{color:var(--vert-vif);font-weight:700}
+.ref a{color:inherit;text-decoration:none}
+.ref a:hover{text-decoration:underline}
+.role{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd)}
+.role.admin{color:var(--jaune);border-color:rgba(232,184,73,.4)}
+.role.pharmacie{color:var(--vert-vif);border-color:rgba(23,201,128,.4)}
+.role.pharmacien{color:var(--texte)}
+.badge{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd)}
+.badge.ouvert{color:var(--vert-vif);border-color:rgba(23,201,128,.4)}
+.badge.attribue{color:var(--jaune);border-color:rgba(232,184,73,.4)}
+.champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--sourd);margin-bottom:4px}
+.champ input{width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:9px 11px;font-size:13.5px;font-family:'IBM Plex Mono',monospace;background:#0A100D;color:var(--texte)}
+.champ input:focus{outline:none;border-color:var(--jaune);box-shadow:0 0 0 2px rgba(232,184,73,.15)}
+.grille-regles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.btn{width:100%;background:var(--jaune);color:#1A1405;border:none;border-radius:5px;padding:12px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:16px}
+.btn:hover{filter:brightness(1.1)}
+.btn:disabled{opacity:.55;cursor:default}
+.msg{display:none;border-radius:4px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:12px}
+.msg.ok{background:rgba(18,169,110,.1);color:var(--vert-vif);border:1px solid var(--ligne2);border-left:3px solid var(--vert)}
+.msg.ko{background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge)}
+.vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:16px 0}
+@media(max-width:720px){.grille-regles{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.grille-regles{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <!-- ================= PORTE ADMIN ================= -->
-  <div id="porte" class="panneau">
-    <div class="topo"><div class="croix"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></div>C-Direct · Administration</div>
-    <div class="champ"><label>Code administrateur</label><input id="code" type="password"></div>
-    <button class="btn ambre" id="entrer">Entrer</button>
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html">
+      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#1A1405"/></svg></span>
+      C-DIRECT
+    </a>
+    <div class="droite"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>Console <b>·</b> Administration</h1>
+  <p class="sous" id="sous">Accès restreint — rôle administrateur vérifié en base (RLS)</p>
+
+  <!-- RÈGLES DU RÉSEAU -->
+  <div class="carte">
+    <div class="sec">Règles du réseau<small>appliquées à tous les contrats</small></div>
+    <form id="f-regles">
+      <div class="grille-regles">
+        <div class="champ"><label>Tarif horaire minimum ($/h)</label><input id="tarif_horaire_minimum" type="number" step="0.01" min="0" required></div>
+        <div class="champ"><label>Taux km ($/km)</label><input id="taux_km" type="number" step="0.01" min="0" required></div>
+        <div class="champ"><label>Per diem ($/jour)</label><input id="per_diem_jour" type="number" step="0.01" min="0" required></div>
+        <div class="champ"><label>Hébergement ($/jour)</label><input id="hebergement_jour" type="number" step="0.01" min="0" required></div>
+        <div class="champ"><label>Seuil per diem (km, aller simple)</label><input id="seuil_per_diem_km" type="number" min="0" required></div>
+        <div class="champ"><label>Seuil hébergement (km, aller simple)</label><input id="seuil_hebergement_km" type="number" min="0" required></div>
+        <div class="champ"><label>Pénalité annulation &lt; 7 j (%)</label><input id="penalite_annulation_7j_pct" type="number" min="0" max="100" required></div>
+        <div class="champ"><label>Pénalité annulation &lt; 48 h (%)</label><input id="penalite_annulation_48h_pct" type="number" min="0" max="100" required></div>
+        <div class="champ"><label>Délai de paiement (jours)</label><input id="delai_paiement_jours" type="number" min="0" required></div>
+      </div>
+      <button class="btn" type="submit" id="btn-regles">Enregistrer les règles</button>
+      <div class="msg" id="msg-regles"></div>
+    </form>
   </div>
 
-  <!-- ================= CONSOLE ================= -->
-  <div id="console">
-    <div class="topo"><div class="croix"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></div>C-Direct · Console d'administration</div>
-    <h1>Approbations</h1>
-    <p class="sous">Les demandes arrivent dans votre courriel. Collez le courriel reçu ci-dessous — tout le reste se remplit automatiquement.</p>
-
-    <!-- ÉTAPE 1 : TRAITER UNE INSCRIPTION -->
-    <div class="panneau" style="border:2px solid var(--vert)">
-      <h2>Étape 1 — Traiter une demande reçue</h2>
-      <div class="champ">
-        <label>Collez ici le contenu du courriel d'inscription ou de profil</label>
-        <textarea id="colle" rows="8" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--blanc);border:1px solid var(--ligne);border-radius:5px;padding:10px 11px;color:var(--encre)"></textarea>
-      </div>
-      <button class="btn" id="btn-analyser">Analyser le courriel</button>
-      <div id="analyse" style="display:none;margin-top:16px">
-        <div id="analyse-resume" class="mono" style="line-height:1.9;background:var(--menthe);border:1px solid var(--ligne);border-radius:8px;padding:14px 16px;color:var(--vert-fonce)"></div>
-        <div id="analyse-opq" style="display:none;margin-top:12px">
-          <a id="lien-opq" href="https://www.opq.org/trouver-un-pharmacien/" target="_blank" rel="noopener" style="display:inline-block;font-weight:600;color:var(--ambre);border:1.5px solid var(--ambre);border-radius:7px;padding:10px 16px;text-decoration:none">① Vérifier le n° OPQ au registre de l'Ordre →</a>
-        </div>
-        <div id="analyse-fiche" style="display:none;margin-top:12px">
-          <div class="champ">
-            <label>Bloc fiche.js généré (vérifiez, complétez les ✏️ s'il y en a)</label>
-            <textarea id="bloc-fiche" rows="10" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--blanc);border:1px solid var(--ligne);border-radius:5px;padding:10px 11px;color:var(--encre)"></textarea>
-          </div>
-          <button class="btn ambre" id="btn-telecharger">② Télécharger fiche.js mis à jour (pharmacien inclus)</button>
-          <p class="mono" style="margin-top:10px;color:var(--gris)">③ Re-téléversez ce fiche.js sur Netlify (avec les autres fichiers), puis envoyez le courriel d'approbation ci-dessous (déjà prérempli).</p>
-        </div>
-      </div>
+  <!-- UTILISATEURS -->
+  <div class="carte">
+    <div class="sec">Utilisateurs<small id="n-users"></small></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Rôle</th><th>Nom</th><th>Courriel</th><th>Téléphone</th><th>Ville</th><th>SMS</th><th>Inscrit le</th></tr></thead>
+        <tbody id="t-users"><tr><td colspan="7" class="vide">Chargement…</td></tr></tbody>
+      </table>
     </div>
+  </div>
 
-    <!-- APPROUVER UN PHARMACIEN -->
-    <div class="panneau">
-      <h2>Étape 2a — Approuver un pharmacien</h2>
-      <ol>
-        <li>Vérifiez son <b>n° OPQ</b> au registre de l'Ordre (bouton à l'étape 1)</li>
-        <li>Téléchargez le <b>fiche.js mis à jour</b> (étape 1) et re-téléversez le site sur Netlify</li>
-        <li>Envoyez-lui son courriel d'approbation ci-dessous (prérempli par l'analyse)</li>
-      </ol>
-      <div class="deux">
-        <div class="champ"><label>Nom du pharmacien</label><input id="ph-nom"></div>
-        <div class="champ"><label>Son courriel</label><input id="ph-courriel" type="email"></div>
-      </div>
-      <button class="btn" id="btn-appr-ph">Générer le courriel d'approbation</button>
-      <div id="zone-mail-ph" style="display:none;margin-top:14px">
-        <div class="champ"><label>Courriel prêt — envoyez-le par l'un des boutons</label>
-        <textarea id="txt-mail-ph" rows="8" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--blanc);border:1px solid var(--ligne);border-radius:5px;padding:10px"></textarea></div>
-        <a id="gmail-ph" href="#" target="_blank" rel="noopener" class="btn" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box">Ouvrir dans Gmail</a>
-        <button class="btn ambre" id="copier-ph" type="button">Copier le courriel</button>
-      </div>
-    </div>
-
-    <!-- APPROUVER UNE PHARMACIE -->
-    <div class="panneau">
-      <h2>Étape 2b — Approuver une pharmacie</h2>
-      <ol>
-        <li>Validez le sérieux de la demande (bannière, adresse, téléphone)</li>
-        <li>Le <b>lien personnalisé</b> est rempli automatiquement par l'analyse (étape 1) s'il était dans le courriel</li>
-        <li>Envoyez le courriel d'approbation</li>
-      </ol>
-      <div class="deux">
-        <div class="champ"><label>Nom de la pharmacie</label><input id="fa-nom"></div>
-        <div class="champ"><label>Son courriel</label><input id="fa-courriel" type="email"></div>
-      </div>
-      <div class="champ"><label>Lien personnalisé (du courriel de profil)</label><input id="fa-lien" placeholder="https://…/demande.html?pn=…"></div>
-      <button class="btn" id="btn-appr-fa">Générer le courriel d'approbation</button>
-      <div id="zone-mail-fa" style="display:none;margin-top:14px">
-        <div class="champ"><label>Courriel prêt — envoyez-le par l'un des boutons</label>
-        <textarea id="txt-mail-fa" rows="8" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--blanc);border:1px solid var(--ligne);border-radius:5px;padding:10px"></textarea></div>
-        <a id="gmail-fa" href="#" target="_blank" rel="noopener" class="btn" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box">Ouvrir dans Gmail</a>
-        <button class="btn ambre" id="copier-fa" type="button">Copier le courriel</button>
-      </div>
-    </div>
-
-    <!-- RÈGLES DU RÉSEAU -->
-    <div class="panneau">
-      <h2>Règles du réseau (appliquées à tous les contrats)</h2>
-      <div id="regles-liste" class="mono" style="line-height:2.1;color:var(--vert-fonce)"></div>
-      <p class="mono" style="margin-top:12px;color:var(--gris)">Pour modifier ces règles : éditez le bloc REGLES dans <b>fiche.js</b>, puis re-téléversez le site. La pharmacie et le pharmacien peuvent offrir un taux PLUS ÉLEVÉ que le minimum, jamais moins. Per diem et hébergement s'appliquent automatiquement au-delà du seuil — personne ne peut les modifier.</p>
-    </div>
-
-    <!-- OUTILS -->
-    <div class="panneau">
-      <h2>Outils rapides</h2>
-      <div class="liens">
-        <a href="facture.html">Générateur de mandats</a>
-        <a href="demande.html">Nouvelle demande (test)</a>
-        <a href="profil.html">Formulaire de profil</a>
-        <a href="pharmacies.html">Portail pharmacies</a>
-        <a href="espace-pharmacien.html">Espace pharmacien</a>
-        <a href="index.html">Page d'accueil</a>
-      </div>
-      <p class="mono" style="margin-top:16px;color:var(--gris)">Rappel : pour activer un pharmacien, UN SEUL fichier à modifier — fiche.js — puis re-téléverser le site sur Netlify.</p>
+  <!-- CONTRATS -->
+  <div class="carte">
+    <div class="sec">Contrats<small id="n-contrats"></small></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Référence</th><th>Date</th><th>Heures</th><th>Tarif</th><th>Statut</th><th>Créé le</th></tr></thead>
+        <tbody id="t-contrats"><tr><td colspan="6" class="vide">Chargement…</td></tr></tbody>
+      </table>
     </div>
   </div>
 </div>
 
-<script src="fiche.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/auth.js"></script>
 <script>
-// CODES — doivent correspondre à ceux de index.html
-const CODE_ADMIN      = "CD-ADM-QQVV";
-const CODE_PHARMACIE  = "CD-PHCIE-X4YA";
-const CODE_PHARMACIEN = "CD-PHCEN-4BA2";
-
+const sb = window.sbClient;
 const $ = id => document.getElementById(id);
-const site = location.origin + location.pathname.replace(/[^\/]+$/,'');
+const REGLES_CHAMPS = ['tarif_horaire_minimum','taux_km','per_diem_jour','hebergement_jour',
+  'seuil_per_diem_km','seuil_hebergement_km','penalite_annulation_7j_pct',
+  'penalite_annulation_48h_pct','delai_paiement_jours'];
 
-$('entrer').onclick = ()=>{
-  if($('code').value.trim() === CODE_ADMIN){
-    $('porte').style.display='none';
-    $('console').style.display='block';
-  } else { alert("Code invalide."); }
-};
-$('code').addEventListener('keydown', e=>{ if(e.key==='Enter') $('entrer').click(); });
-
-/* ---- affichage des règles du réseau (fiche.js) ---- */
-try{
-  $('regles-liste').innerHTML =
-    "Taux horaire minimum : <b>"+REGLES.tauxMinimum.toFixed(2)+" $/h</b> (plancher — augmentable, jamais réductible)<br>"+
-    "Frais de déplacement : <b>"+REGLES.tauxKm.toFixed(2)+" $/km</b> — fixe, aller-retour facturé automatiquement<br>"+
-    "Per diem : <b>"+REGLES.perDiemJour.toFixed(2)+" $/jour</b> — automatique si > "+REGLES.seuilKmAllerSimple+" km aller simple<br>"+
-    "Hébergement : <b>"+REGLES.hebergementNuit.toFixed(2)+" $/nuit</b> — automatique si > "+REGLES.seuilKmAllerSimple+" km aller simple<br>"+
-    "Seuil de distance : <b>"+REGLES.seuilKmAllerSimple+" km aller simple</b> (domicile du pharmacien ↔ pharmacie)";
-}catch(e){}
-
-/* =====================================================
-   ANALYSE D'UN COURRIEL D'INSCRIPTION / DE PROFIL
-   Colle → analyse → fiche.js prêt + champs préremplis
-===================================================== */
-
-/* répare les accents cassés (mojibake UTF-8→Latin-1) des anciens courriels */
-function reparerAccents(t){
-  const map = {"Ã©":"é","Ã¨":"è","Ãª":"ê","Ã«":"ë","Ã ":"à","Ã¢":"â","Ã®":"î","Ã¯":"ï","Ã´":"ô","Ã¶":"ö","Ã¹":"ù","Ã»":"û","Ã§":"ç","Ã‰":"É","Ãˆ":"È","Ã€":"À","Ã‡":"Ç","Ã”":"Ô","Å“":"œ","Â·":"·","Â°":"°","â€”":"—","â€“":"–","â€™":"'","Â«":"«","Â»":"»","Â":""};
-  Object.keys(map).forEach(k=>{ t = t.split(k).join(map[k]); });
-  return t;
+function msg(id, texte, ok){
+  const el=$(id); el.textContent=texte;
+  el.className='msg '+(ok?'ok':'ko'); el.style.display='block';
+  if(ok) setTimeout(()=>{ el.style.display='none'; }, 3500);
 }
 
-/* extrait la valeur d'une étiquette : « Étiquette : valeur » ou étiquette seule sur sa ligne, valeur sur la suivante */
-function extraire(texte, etiquettes){
-  const lignes = texte.split('\n').map(l=>l.trim());
-  for(const et of etiquettes){
-    const re = new RegExp('^'+et+'\\s*:\\s*(.+)$','i');
-    for(let i=0;i<lignes.length;i++){
-      const m = lignes[i].match(re);
-      if(m) return m[1].trim();
-      if(lignes[i].toLowerCase() === et.toLowerCase()){
-        for(let j=i+1;j<lignes.length;j++){ if(lignes[j]) return lignes[j]; }
-      }
-    }
+(async function(){
+  /* Garde réelle : session Supabase + rôle admin. La RLS reste la
+     vraie barrière — un non-admin ne recevrait aucune donnée. */
+  const profil = await cdExigerConnexion(['admin']);
+  if(profil.role !== 'admin'){ location.replace(cdAccueilPourRole(profil.role)); return; }
+  cdEnteteConnecte();
+
+  /* ---- règles ---- */
+  const { data: regles } = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle();
+  if(regles) REGLES_CHAMPS.forEach(k=>{ $(k).value = regles[k]; });
+
+  $('f-regles').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const maj = {};
+    REGLES_CHAMPS.forEach(k=>{ maj[k] = $(k).value; });
+    $('btn-regles').disabled = true;
+    const { error } = await sb.from('regles_reseau').update(maj).eq('id',1);
+    $('btn-regles').disabled = false;
+    if(error){ msg('msg-regles', error.message, false); return; }
+    msg('msg-regles','Règles du réseau enregistrées ✓', true);
+  });
+
+  /* ---- utilisateurs (lecture seule) ---- */
+  const { data: users, error: eu } = await sb.from('profiles')
+    .select('role,nom,prenom,courriel,telephone,ville,ville_base,nom_pharmacie,sms_optin,created_at')
+    .order('created_at',{ascending:false});
+  const tu = $('t-users');
+  if(eu){ tu.innerHTML = '<tr><td colspan="7" class="vide">Erreur : '+eu.message+'</td></tr>'; }
+  else if(!users || !users.length){ tu.innerHTML = '<tr><td colspan="7" class="vide">Aucun utilisateur.</td></tr>'; }
+  else{
+    $('n-users').textContent = users.length + ' compte' + (users.length>1?'s':'');
+    tu.innerHTML = '';
+    users.forEach(u=>{
+      const tr = document.createElement('tr');
+      const td = (t)=>{ const c=document.createElement('td'); c.textContent=t; return c; };
+      const role = document.createElement('td');
+      role.innerHTML = '<span class="role '+(u.role||'')+'">'+(u.role||'—')+'</span>';
+      tr.append(
+        role,
+        td(u.role==='pharmacie' ? (u.nom_pharmacie || ((u.prenom||'')+' '+(u.nom||'')).trim() || '—')
+                                : (((u.prenom||'')+' '+(u.nom||'')).trim() || '—')),
+        td(u.courriel||'—'),
+        td(cdTelAffiche(u.telephone)||'—'),
+        td(u.ville || u.ville_base || '—'),
+        td(u.sms_optin ? 'Oui' : 'Non'),
+        td(u.created_at ? new Date(u.created_at).toLocaleDateString('fr-CA') : '—')
+      );
+      tu.appendChild(tr);
+    });
   }
-  return "";
-}
 
-const s = v => '"'+String(v||"").replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'"';
-function blocPharmacien(p){
-  return `  {
-    nom: ${s(p.nom)},
-    courriel: ${s(p.courriel)},
-    cle: ${s(p.cle)},
-    domicile: ${s(p.domicile)},
-    corp: ${s(p.corp)},
-    tps: ${s(p.tps)},
-    tvq: ${s(p.tvq)},
-    interac: ${s(p.interac)},
-    tauxH: ${p.tauxH}, perDiem: ${p.perDiem}, tauxKm: ${p.tauxKm}
-  }`;
-}
-
-function genererFicheJS(nouveau){
-  const tous = PHARMACIENS.map(blocPharmacien);
-  if(nouveau) tous.push(nouveau.trim().replace(/,\s*$/,''));
-  return `// =====================================================
-// ✏️ FICHE CENTRALE DES PHARMACIENS — C-Direct
-// UN SEUL fichier à modifier pour activer un pharmacien.
-// (Utilisé par : demande.html, reponse.html,
-//  contre-offre.html et facture.html)
-// Généré par la console admin le ${new Date().toLocaleDateString('fr-CA')}.
-// =====================================================
-const PHARMACIENS = [
-${tous.join(",\n")}
-  // ← coller les nouveaux pharmaciens ici (ou utiliser la console admin)
-];
-
-
-// =====================================================
-// ✏️ RÈGLES DU RÉSEAU — fixées par l'administrateur
-// =====================================================
-const REGLES = {
-  tauxMinimum: ${REGLES.tauxMinimum},          // $/h — plancher réseau
-  tauxKm: ${REGLES.tauxKm},             // $/km — fixe
-  perDiemJour: ${REGLES.perDiemJour},         // $/jour — fixe, automatique
-  hebergementNuit: ${REGLES.hebergementNuit},     // $/nuit — fixe, automatique
-  seuilKmAllerSimple: ${REGLES.seuilKmAllerSimple}   // km aller simple déclenchant per diem + hébergement
-};
-
-// ✏️ Votre clé Web3Forms d'administrateur (copies de toutes les étapes)
-const CLE_ADMIN = "${CLE_ADMIN}";
-`;
-}
-
-$('btn-analyser').onclick = ()=>{
-  let t = reparerAccents($('colle').value);
-  if(!t.trim()){ alert("Collez d'abord le contenu du courriel reçu."); return; }
-
-  const opq = extraire(t, ["N° OPQ","No OPQ","OPQ"]).replace(/\D.*$/,'').trim();
-  const estPharmacien = !!opq || /PHARMACIEN/i.test(t) && !/INSCRIPTION PHARMACIE\b|PROFIL PHARMACIE\b/i.test(t);
-  const nom = extraire(t, estPharmacien ? ["Nom complet","Nom"] : ["Pharmacie","Nom de la pharmacie"]);
-  let courriel = extraire(t, ["Courriel"]).split('·')[0].trim();
-  const cm = courriel.match(/\S+@\S+\.\S+/) || t.match(/\S+@\S+\.\S+/);
-  courriel = cm ? cm[0] : "";
-  const tel = extraire(t, ["Téléphone","Telephone","Tél","Tel"]);
-
-  $('analyse').style.display = 'block';
-
-  if(estPharmacien){
-    const domicile = extraire(t, ["Domicile","Adresse du domicile"]) || "✏️ DOMICILE À COMPLÉTER";
-    const corp = extraire(t, ["Société","Societe"]) || "—";
-    const tps = extraire(t, ["TPS","N° TPS"]) || "—";
-    const tvq = extraire(t, ["TVQ","N° TVQ"]) || "—";
-    const interac = extraire(t, ["Interac","Courriel Interac"]) || courriel;
-    let cle = extraire(t, ["Clé Web3Forms","Cle Web3Forms"]);
-    if(!cle || /CR[ÉE]ER/i.test(cle)) cle = "✏️ CLÉ WEB3FORMS À CRÉER (web3forms.com avec son courriel)";
-    const num = re => { const m = t.match(re); return m ? m[1] : null; };
-    const tauxH = num(/tauxH:\s*([\d.]+)/) || num(/Taux horaire[^\d]*([\d.]+)/i) || REGLES.tauxMinimum;
-    const perDiem = num(/perDiem:\s*([\d.]+)/) || REGLES.perDiemJour;
-    const tauxKm = num(/tauxKm:\s*([\d.]+)/) || REGLES.tauxKm;
-
-    $('analyse-resume').innerHTML =
-      "Type : <b>PHARMACIEN</b><br>"+
-      "Nom : <b>"+(nom||"—")+"</b><br>"+
-      "N° OPQ : <b>"+(opq||"⚠️ ABSENT — à exiger avant d'approuver")+"</b><br>"+
-      "Courriel : <b>"+(courriel||"—")+"</b>"+(tel?("<br>Téléphone : <b>"+tel+"</b>"):"");
-    $('analyse-opq').style.display = 'block';
-    $('analyse-fiche').style.display = 'block';
-    $('bloc-fiche').value = blocPharmacien({nom,courriel,cle,domicile,corp,tps,tvq,interac,tauxH,perDiem,tauxKm})+",";
-    $('ph-nom').value = nom; $('ph-courriel').value = courriel;
-  } else {
-    const lienM = t.match(/https?:\/\/\S*demande\.html\S*/);
-    $('analyse-resume').innerHTML =
-      "Type : <b>PHARMACIE</b><br>"+
-      "Nom : <b>"+(nom||"—")+"</b><br>"+
-      "Courriel : <b>"+(courriel||"—")+"</b>"+(tel?("<br>Téléphone : <b>"+tel+"</b>"):"")+
-      (lienM?"<br>Lien personnalisé : <b>détecté ✓</b>":"<br>Lien personnalisé : absent (demandez-lui de remplir profil.html)");
-    $('analyse-opq').style.display = 'none';
-    $('analyse-fiche').style.display = 'none';
-    $('fa-nom').value = nom; $('fa-courriel').value = courriel;
-    if(lienM) $('fa-lien').value = lienM[0];
+  /* ---- contrats (lecture seule) ---- */
+  const { data: contrats, error: ec } = await sb.from('contrats')
+    .select('numero_reference,date_contrat,heure_debut,heure_fin,tarif_horaire,statut,created_at')
+    .order('created_at',{ascending:false});
+  const tc = $('t-contrats');
+  if(ec){ tc.innerHTML = '<tr><td colspan="6" class="vide">Erreur : '+ec.message+'</td></tr>'; }
+  else if(!contrats || !contrats.length){ tc.innerHTML = '<tr><td colspan="6" class="vide">Aucun contrat.</td></tr>'; }
+  else{
+    $('n-contrats').textContent = contrats.length + ' contrat' + (contrats.length>1?'s':'');
+    tc.innerHTML = '';
+    contrats.forEach(k=>{
+      const tr = document.createElement('tr');
+      const td = (t)=>{ const c=document.createElement('td'); c.textContent=t; return c; };
+      const ref = document.createElement('td');
+      ref.className='ref';
+      ref.innerHTML = '<a href="/c/'+encodeURIComponent(k.numero_reference)+'">'+k.numero_reference+'</a>';
+      const st = document.createElement('td');
+      st.innerHTML = '<span class="badge '+k.statut+'">'+k.statut+'</span>';
+      tr.append(
+        ref,
+        td(cdDate(k.date_contrat)),
+        td(cdHeure(k.heure_debut)+'–'+cdHeure(k.heure_fin)),
+        td(cdArgent(k.tarif_horaire)+'/h'),
+        st,
+        td(new Date(k.created_at).toLocaleDateString('fr-CA'))
+      );
+      tc.appendChild(tr);
+    });
   }
-  document.querySelectorAll('.panneau')[estPharmacien?1:2].scrollIntoView({behavior:'smooth'});
-};
-
-$('btn-telecharger').onclick = ()=>{
-  const contenu = genererFicheJS($('bloc-fiche').value);
-  const blob = new Blob([contenu], {type:'text/javascript;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'fiche.js';
-  a.click();
-  URL.revokeObjectURL(a.href);
-};
-
-/* ---- approbation pharmacien ---- */
-$('btn-appr-ph').onclick = ()=>{
-  const nom = $('ph-nom').value.trim(), c = $('ph-courriel').value.trim();
-  if(!nom||!c){ alert("Nom et courriel requis."); return; }
-  const sujet = "C-Direct — Votre profil est approuvé ✓";
-  const corps =
-"Bonjour "+nom+",\n\n"+
-"Bonne nouvelle : votre profil C-Direct est approuvé et activé.\n\n"+
-"VOTRE CODE D'ACCÈS : "+CODE_PHARMACIEN+"\n"+
-"Connexion : "+site+"index.html (onglet Pharmacien remplaçant)\n\n"+
-"Comment ça fonctionne :\n"+
-"1. Les demandes des pharmacies arrivent directement dans votre courriel\n"+
-"2. Vous acceptez ou proposez une modification en un clic\n"+
-"3. Dès l'entente conclue, votre facture (MANDAT) est générée automatiquement à votre nom\n"+
-"4. Paiement Interac directement dans votre compte — vous ne faites aucune paperasse\n\n"+
-"Votre espace : "+site+"espace-pharmacien.html\n\n"+
-"Bienvenue dans le réseau,\nC-Direct";
-  afficherCourriel('ph', c, sujet, corps);
-};
-
-/* ---- approbation pharmacie ---- */
-$('btn-appr-fa').onclick = ()=>{
-  const nom = $('fa-nom').value.trim(), c = $('fa-courriel').value.trim(), lien = $('fa-lien').value.trim();
-  if(!nom||!c){ alert("Nom et courriel requis."); return; }
-  const sujet = "C-Direct — Votre compte est approuvé ✓";
-  const corps =
-"Bonjour,\n\n"+
-"Le compte C-Direct de "+nom+" est approuvé et actif.\n\n"+
-"VOTRE CODE D'ACCÈS : "+CODE_PHARMACIE+"\n"+
-"Connexion : "+site+"index.html (onglet Pharmacie)\n\n"+
-(lien?("VOTRE LIEN PERSONNALISÉ (vos coordonnées préremplies à chaque demande) :\n"+lien+"\n\n"):"")+
-"Comment ça fonctionne :\n"+
-"1. Choisissez le pharmacien, la date et vos conditions (taux, per diem, 0,70 $/km)\n"+
-"2. La distance se calcule automatiquement\n"+
-"3. Le pharmacien accepte ou propose une modification\n"+
-"4. Dès l'entente conclue, la facture est générée et transmise aux deux parties\n"+
-"5. Paiement : virement Interac directement au pharmacien — sans intermédiaire, sans commission\n\n"+
-"Bienvenue,\nC-Direct";
-  afficherCourriel('fa', c, sujet, corps);
-};
-
-/* ---- affichage du courriel prêt : Gmail + copie + mailto ----
-   (mailto seul ne fait RIEN si aucune app courriel n'est configurée) */
-function afficherCourriel(type, dest, sujet, corps){
-  $('zone-mail-'+type).style.display = 'block';
-  $('txt-mail-'+type).value = "À : "+dest+"\nObjet : "+sujet+"\n\n"+corps;
-  $('gmail-'+type).href = "https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent(dest)+
-    "&su="+encodeURIComponent(sujet)+"&body="+encodeURIComponent(corps);
-  $('copier-'+type).onclick = async ()=>{
-    try{
-      await navigator.clipboard.writeText($('txt-mail-'+type).value);
-      $('copier-'+type).textContent = "Copié ✓";
-      setTimeout(()=>{ $('copier-'+type).textContent = "Copier le courriel"; }, 2000);
-    }catch(e){ $('txt-mail-'+type).select(); document.execCommand('copy'); }
-  };
-  // tentative mailto en dernier recours (ne bloque pas si rien ne s'ouvre)
-  const a = document.createElement('a');
-  a.href = "mailto:"+dest+"?subject="+encodeURIComponent(sujet)+"&body="+encodeURIComponent(corps);
-  a.click();
-}
+})();
 </script>
 </body>
 </html>
