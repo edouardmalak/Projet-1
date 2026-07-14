@@ -64,9 +64,40 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 .candidat .etat{font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd)}
 .candidat .etat.accepte{color:var(--vert-vif);border-color:rgba(23,201,128,.4)}
 .candidat .etat.refuse{color:var(--rouge);border-color:rgba(229,72,77,.35)}
-.btn-mini{margin-left:auto;background:var(--vert);color:#04130C;border:none;border-radius:4px;padding:7px 14px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.btn-mini{background:var(--vert);color:#04130C;border:none;border-radius:4px;padding:7px 14px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
 .btn-mini:hover{background:var(--vert-vif)}
 .btn-mini:disabled{opacity:.55;cursor:default}
+.btn-mini.jaune{background:transparent;color:var(--jaune);border:1px solid rgba(232,184,73,.5)}
+.btn-mini.jaune:hover{background:rgba(232,184,73,.08)}
+.btn-mini.rouge{background:transparent;color:var(--rouge);border:1px solid rgba(229,72,77,.5)}
+.btn-mini.rouge:hover{background:rgba(229,72,77,.08)}
+.actions{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.type-c{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd)}
+.type-c.instantanee{color:var(--vert-vif);border-color:rgba(23,201,128,.4)}
+.bloc-candidat{border-bottom:1px dashed var(--ligne);padding:12px 0}
+.bloc-candidat:last-child{border-bottom:none}
+.f-contre{display:none;background:#0A100D;border:1px solid var(--ligne2);border-radius:5px;padding:12px;margin-top:10px}
+.f-contre.on{display:block}
+.f-contre .rangee{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.f-contre input,.f-contre textarea{width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:8px 10px;font-size:13px;font-family:'IBM Plex Mono',monospace;background:var(--panneau);color:var(--texte)}
+.f-contre label{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);margin-bottom:3px}
+.entente{background:rgba(18,169,110,.08);border:1px solid rgba(23,201,128,.4);border-radius:6px;padding:12px 14px;margin:10px 0;font-family:'IBM Plex Mono',monospace}
+.entente small{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:3px}
+.entente b{font-size:14px}
+.fil{margin-top:10px;border-left:2px solid var(--ligne2);padding-left:14px;display:flex;flex-direction:column;gap:10px}
+.jalon{position:relative;font-family:'IBM Plex Mono',monospace}
+.jalon::before{content:"";position:absolute;left:-19px;top:4px;width:7px;height:7px;border-radius:50%;background:var(--sourd)}
+.jalon.candidature::before{background:var(--vert)}
+.jalon.contre_offre::before{background:var(--jaune)}
+.jalon.accepte::before{background:var(--vert-vif);box-shadow:0 0 6px var(--vert-vif)}
+.jalon.refuse::before{background:var(--rouge)}
+.jalon-tete{display:flex;justify-content:space-between;gap:10px;font-size:11.5px}
+.jalon-tete span{color:var(--sourd);font-size:10.5px;white-space:nowrap}
+.jalon-termes{color:var(--vert-vif);font-size:12px;font-weight:600;margin-top:1px}
+.jalon-message{color:var(--sourd);font-size:11.5px;font-style:italic;margin-top:1px;font-family:'Instrument Sans',sans-serif}
+.lien-fil{background:none;border:none;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:0;margin-top:6px}
+.lien-fil:hover{color:var(--vert-vif)}
+.attente{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--jaune);letter-spacing:.06em;text-transform:uppercase;margin-left:auto}
 .aucun{padding:10px 0;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px}
 .vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:20px 0}
 @media(max-width:560px){.deux,.trois,.coches{grid-template-columns:1fr}}
@@ -131,6 +162,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js"></script>
 <script src="/auth.js"></script>
+<script src="/outils.js"></script>
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
@@ -243,7 +275,7 @@ async function chargerContrats(){
   });
 }
 
-/* ---- candidats d'un contrat (RPC : nom/prénom/ville seulement) ---- */
+/* ---- candidats d'un contrat : négociation 3 étapes ---- */
 async function chargerCandidats(k, zone){
   zone.innerHTML = '<div class="aucun">Chargement…</div>';
   const { data, error } = await sb.rpc('get_candidats', { p_contrat: k.id });
@@ -251,33 +283,131 @@ async function chargerCandidats(k, zone){
   if(!data || !data.length){ zone.innerHTML = '<div class="aucun">Aucune candidature pour l’instant.</div>'; return; }
 
   zone.innerHTML = '';
-  const etats = {propose:'Proposé', contre_offre:'Contre-offre', accepte:'Accepté', refuse:'Refusé'};
+
+  /* entente finale en tête une fois le contrat attribué */
+  const gagnante = data.find(c=>c.statut==='accepte');
+  if(gagnante){
+    const e = document.createElement('div');
+    e.className = 'entente';
+    e.innerHTML = '<small>Entente finale</small>';
+    const b = document.createElement('b');
+    b.textContent = cdEntenteTexte({tarif_propose:gagnante.tarif_propose,
+      heure_debut_proposee:gagnante.heure_debut_proposee,
+      heure_fin_proposee:gagnante.heure_fin_proposee}, k) +
+      ' — ' + (gagnante.prenom||'') + ' ' + (gagnante.nom||'');
+    e.appendChild(b);
+    zone.appendChild(e);
+  }
+
+  const etats = {propose:'Proposé', contre_offre:'Contre-offre envoyée', accepte:'Accepté', refuse:'Refusé'};
   data.forEach(c=>{
+    const bloc = document.createElement('div');
+    bloc.className = 'bloc-candidat';
+
     const row = document.createElement('div');
-    row.className = 'candidat';
+    row.className = 'candidat'; row.style.border = 'none'; row.style.padding = '0';
     const nom = document.createElement('span');
     nom.className='nom'; nom.textContent = (c.prenom||'')+' '+(c.nom||'');
+    const type = document.createElement('span');
+    type.className = 'type-c ' + (c.type_candidature||'');
+    type.textContent = c.type_candidature === 'instantanee' ? 'Tarif affiché' : 'Négociée';
     const det = document.createElement('span');
     det.className='detail';
-    det.textContent = (c.ville_base||'—') + ' · ' + cdArgent(c.tarif_propose) + '/h';
+    const horaire = (c.heure_debut_proposee && c.heure_fin_proposee)
+      ? ' · ' + cdHeure(c.heure_debut_proposee) + '–' + cdHeure(c.heure_fin_proposee) : '';
+    det.textContent = (c.ville_base||'—') + ' · ' + cdArgent(c.tarif_propose) + '/h' + horaire;
     const etat = document.createElement('span');
     etat.className = 'etat '+c.statut; etat.textContent = etats[c.statut]||c.statut;
-    row.append(nom, det, etat);
+    row.append(nom, type, det, etat);
+    bloc.appendChild(row);
 
-    if(c.statut === 'propose' && k.statut === 'ouvert'){
-      const btn = document.createElement('button');
-      btn.className='btn-mini'; btn.textContent='Accepter';
-      btn.onclick = async ev=>{
-        ev.stopPropagation();
-        if(!confirm('Accepter '+nom.textContent+' pour '+k.numero_reference+' ? Les autres candidatures seront refusées.')) return;
-        btn.disabled = true;
-        const { error: e } = await sb.rpc('accepter_candidature', { p_candidature: c.candidature_id });
-        if(e){ btn.disabled=false; alert('Erreur : '+e.message); return; }
+    /* actions */
+    if(k.statut === 'ouvert' && (c.statut === 'propose' || c.statut === 'contre_offre')){
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+
+      if(c.statut === 'propose'){
+        const bA = document.createElement('button');
+        bA.className='btn-mini'; bA.textContent='Accepter';
+        bA.onclick = async ()=>{
+          if(!confirm('Accepter '+nom.textContent+' ('+cdArgent(c.tarif_propose)+'/h'+horaire+') pour '+k.numero_reference+' ? Les autres candidatures seront refusées.')) return;
+          bA.disabled = true;
+          const { error: e } = await sb.rpc('accepter_candidature', { p_candidature: c.candidature_id });
+          if(e){ bA.disabled=false; alert('Erreur : '+e.message); return; }
+          chargerContrats();
+        };
+        const bC = document.createElement('button');
+        bC.className='btn-mini jaune'; bC.textContent='Contre-offre';
+        actions.append(bA, bC);
+
+        /* formulaire de contre-offre */
+        const f = document.createElement('form');
+        f.className = 'f-contre';
+        f.innerHTML =
+          '<div class="rangee">'+
+            '<div><label>Tarif ($/h)</label><input name="tarif" type="number" step="0.01" min="0" required></div>'+
+            '<div><label>Début (opt.)</label><input name="hd" type="time"></div>'+
+            '<div><label>Fin (opt.)</label><input name="hf" type="time"></div>'+
+          '</div>'+
+          '<label>Message (optionnel)</label><textarea name="texte" rows="2"></textarea>'+
+          '<button class="btn-mini jaune" type="submit" style="margin-top:8px">Envoyer la contre-offre</button>';
+        f.tarif.value = c.tarif_propose;
+        bC.onclick = ev=>{ ev.preventDefault(); f.classList.toggle('on'); };
+        f.addEventListener('submit', async ev=>{
+          ev.preventDefault();
+          const hd = f.hd.value || null, hf = f.hf.value || null;
+          if((hd && !hf) || (!hd && hf)){ alert('Précisez le début ET la fin.'); return; }
+          const tarif = parseFloat(f.tarif.value);
+          const { error: e } = await sb.from('candidatures').update({
+            statut: 'contre_offre',
+            tarif_propose: tarif,
+            heure_debut_proposee: hd, heure_fin_proposee: hf,
+            message: cdJalonAjouter(c.message, {etape:'contre_offre', par:'pharmacie',
+              tarif: tarif, hd: hd||k.heure_debut, hf: hf||k.heure_fin,
+              message: f.texte.value.trim()||null})
+          }).eq('id', c.candidature_id);
+          if(e){ alert('Erreur : '+e.message); return; }
+          chargerContrats();
+        });
+        bloc.appendChild(actions);
+        bloc.appendChild(f);
+      } else {
+        const att = document.createElement('span');
+        att.className = 'attente'; att.textContent = 'En attente du pharmacien';
+        actions.append(att);
+        bloc.appendChild(actions);
+      }
+
+      const bR = document.createElement('button');
+      bR.className='btn-mini rouge'; bR.textContent='Refuser';
+      bR.onclick = async ()=>{
+        if(!confirm('Refuser la candidature de '+nom.textContent+' ?')) return;
+        bR.disabled = true;
+        const { error: e } = await sb.from('candidatures').update({
+          statut: 'refuse',
+          message: cdJalonAjouter(c.message, {etape:'refuse', par:'pharmacie'})
+        }).eq('id', c.candidature_id);
+        if(e){ bR.disabled=false; alert('Erreur : '+e.message); return; }
         chargerContrats();
       };
-      row.appendChild(btn);
+      actions.appendChild(bR);
     }
-    zone.appendChild(row);
+
+    /* fil chronologique */
+    const lien = document.createElement('button');
+    lien.className = 'lien-fil'; lien.type = 'button'; lien.textContent = 'Voir le fil de la négociation';
+    const conteneurFil = document.createElement('div');
+    conteneurFil.style.display = 'none';
+    conteneurFil.appendChild(cdFilNegociation(c.message));
+    lien.onclick = ()=>{
+      const ouvert = conteneurFil.style.display !== 'none';
+      conteneurFil.style.display = ouvert ? 'none' : '';
+      lien.textContent = ouvert ? 'Voir le fil de la négociation' : 'Masquer le fil';
+    };
+    bloc.appendChild(lien);
+    bloc.appendChild(conteneurFil);
+
+    zone.appendChild(bloc);
   });
 }
 </script>

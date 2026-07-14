@@ -55,6 +55,27 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
 .champ input:focus,.champ textarea:focus{outline:none;border-color:var(--vert);box-shadow:0 0 0 2px rgba(18,169,110,.18)}
 .deux-p{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:480px){.deux-p{grid-template-columns:1fr}}
+
+/* ---- fil de négociation ---- */
+.fil{margin-top:8px;border-left:2px solid var(--ligne2);padding-left:16px;display:flex;flex-direction:column;gap:12px}
+.jalon{position:relative;font-family:'IBM Plex Mono',monospace}
+.jalon::before{content:"";position:absolute;left:-21px;top:5px;width:8px;height:8px;border-radius:50%;background:var(--sourd)}
+.jalon.candidature::before{background:var(--vert)}
+.jalon.contre_offre::before{background:var(--jaune)}
+.jalon.accepte::before{background:var(--vert-vif);box-shadow:0 0 6px var(--vert-vif)}
+.jalon.refuse::before{background:var(--rouge)}
+.jalon-tete{display:flex;justify-content:space-between;gap:10px;font-size:12px}
+.jalon-tete b{letter-spacing:.03em}
+.jalon-tete span{color:var(--sourd);font-size:11px;white-space:nowrap}
+.jalon-termes{color:var(--vert-vif);font-size:12.5px;font-weight:600;margin-top:2px}
+.jalon-message{color:var(--sourd);font-size:12px;font-style:italic;margin-top:2px;font-family:'Instrument Sans',sans-serif}
+.entente{background:rgba(18,169,110,.08);border:1px solid rgba(23,201,128,.4);border-radius:6px;padding:14px 16px;margin-top:16px;font-family:'IBM Plex Mono',monospace}
+.entente small{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:4px}
+.entente b{font-size:15px}
+.deux-btn{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-refus{width:100%;background:transparent;color:var(--rouge);border:1px solid rgba(229,72,77,.5);border-radius:5px;padding:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;margin-top:20px}
+.btn-refus:hover{background:rgba(229,72,77,.1)}
+.btn-refus:disabled{opacity:.55;cursor:default}
 .msg{display:none;border-radius:4px;padding:11px 13px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-top:14px}
 .msg.ok{background:rgba(18,169,110,.1);color:var(--vert-vif);border:1px solid var(--ligne2);border-left:3px solid var(--vert)}
 .msg.ko{background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge)}
@@ -108,6 +129,22 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
     <div id="bloc-notes" style="display:none">
       <div class="sec">Notes de la pharmacie</div>
       <div class="notes" id="notes"></div>
+    </div>
+
+    <div id="bloc-entente" style="display:none">
+      <div class="entente"><small>Entente finale</small><b id="entente-termes">—</b></div>
+    </div>
+
+    <div id="bloc-fil" style="display:none">
+      <div class="sec">Fil de la négociation</div>
+      <div id="fil-conteneur"></div>
+    </div>
+
+    <div id="bloc-contre" style="display:none">
+      <div class="deux-btn">
+        <button class="btn" id="btn-accepter-co" style="margin-top:20px">Accepter la contre-offre</button>
+        <button class="btn-refus" id="btn-refuser-co">Refuser</button>
+      </div>
     </div>
 
     <div id="zone-postuler" style="display:none">
@@ -204,15 +241,62 @@ function msg(texte, type){
   }
   if(k.notes){ $('bloc-notes').style.display=''; $('notes').textContent = k.notes; }
 
+  /* ---- Pharmacie propriétaire : entente finale une fois attribué ---- */
+  if(k.est_ma_pharmacie && k.statut !== 'ouvert'){
+    const { data: cands } = await sb.rpc('get_candidats', { p_contrat: k.id });
+    const gagnante = (cands||[]).find(c=>c.statut==='accepte');
+    if(gagnante){
+      $('bloc-entente').style.display = '';
+      $('entente-termes').textContent = cdEntenteTexte(gagnante, k) + ' — ' +
+        (gagnante.prenom||'') + ' ' + (gagnante.nom||'');
+      $('bloc-fil').style.display = '';
+      $('fil-conteneur').appendChild(cdFilNegociation(gagnante.message));
+    }
+  }
+
   /* ---- Candidature deux vitesses (pharmacien · contrat ouvert) ---- */
   if(profil.role === 'pharmacien'){
     if(k.ma_candidature_statut){
       const libelles = {propose:'Candidature envoyée — en attente de la pharmacie.',
-                        contre_offre:'Contre-offre reçue de la pharmacie.',
+                        contre_offre:'Contre-offre reçue de la pharmacie — répondez ci-dessous.',
                         accepte:'Votre candidature a été ACCEPTÉE. La pharmacie vous contactera.',
                         refuse:'Candidature non retenue.'};
       msg(libelles[k.ma_candidature_statut] || k.ma_candidature_statut,
           k.ma_candidature_statut === 'accepte' ? 'ok' : 'info');
+
+      /* fil chronologique + réponse à la contre-offre */
+      const { data: ma } = await sb.from('candidatures').select('*')
+        .eq('contrat_id', k.id).eq('pharmacien_id', profil.id).maybeSingle();
+      if(ma){
+        $('bloc-fil').style.display = '';
+        $('fil-conteneur').appendChild(cdFilNegociation(ma.message));
+
+        if(ma.statut === 'accepte'){
+          $('bloc-entente').style.display = '';
+          $('entente-termes').textContent = cdEntenteTexte(ma, k);
+        }
+
+        if(ma.statut === 'contre_offre' && k.statut === 'ouvert'){
+          $('bloc-contre').style.display = '';
+          $('btn-accepter-co').onclick = async ()=>{
+            if(!confirm('Accepter la contre-offre (' + cdEntenteTexte(ma, k) + ') ? Le contrat vous sera attribué.')) return;
+            $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = true;
+            const { error: e } = await sb.rpc('accepter_contre_offre', { p_candidature: ma.id });
+            if(e){ $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = false; msg('Erreur : '+e.message,'ko'); return; }
+            location.reload();
+          };
+          $('btn-refuser-co').onclick = async ()=>{
+            if(!confirm('Refuser la contre-offre ? Votre candidature sera close.')) return;
+            $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = true;
+            const { error: e } = await sb.from('candidatures').update({
+              statut: 'refuse',
+              message: cdJalonAjouter(ma.message, {etape:'refuse', par:'pharmacien'})
+            }).eq('id', ma.id);
+            if(e){ $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = false; msg('Erreur : '+e.message,'ko'); return; }
+            location.reload();
+          };
+        }
+      }
     } else if(k.statut === 'ouvert'){
       $('zone-postuler').style.display = '';
       $('o-tarif').value = k.tarif_horaire;

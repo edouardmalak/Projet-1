@@ -59,4 +59,44 @@ window.cdJalonTermes = function(j){
   if(j.hd && j.hf) t.push(cdHeure(j.hd) + ' – ' + cdHeure(j.hf));
   return t.join(' · ');
 };
+
+/* ---- fil chronologique (DOM sûr — le message vient de l'utilisateur) ----
+   Nécessite le CSS .fil / .jalon / .jalon-* (voir pages).             */
+window.cdFilNegociation = function(texteJournal){
+  const frag = document.createElement('div');
+  frag.className = 'fil';
+  cdJalons(texteJournal).forEach(j=>{
+    if(j.auto) return;                       // refus automatique : bruit
+    const el = document.createElement('div');
+    el.className = 'jalon ' + (j.etape || '');
+    const tete = document.createElement('div');
+    tete.className = 'jalon-tete';
+    const lib = document.createElement('b');
+    lib.textContent = cdJalonLibelle(j);
+    const quand = document.createElement('span');
+    quand.textContent = cdQuand(j.quand);
+    tete.append(lib, quand);
+    el.appendChild(tete);
+    const termes = cdJalonTermes(j);
+    if(termes){
+      const t = document.createElement('div');
+      t.className = 'jalon-termes'; t.textContent = termes;
+      el.appendChild(t);
+    }
+    if(j.message){
+      const m = document.createElement('div');
+      m.className = 'jalon-message'; m.textContent = '« ' + j.message + ' »';
+      el.appendChild(m);
+    }
+    frag.appendChild(el);
+  });
+  return frag;
+};
+
+/* ---- entente finale : termes convenus d'une candidature acceptée ---- */
+window.cdEntenteTexte = function(c, contrat){
+  const hd = c.heure_debut_proposee || contrat.heure_debut;
+  const hf = c.heure_fin_proposee || contrat.heure_fin;
+  return cdArgent(c.tarif_propose) + '/h · ' + cdHeure(hd) + ' – ' + cdHeure(hf);
+};
 })();
