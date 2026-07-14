@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Fiche contrat</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849;--rouge:#E5484D}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar .in{max-width:760px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:14px;color:var(--sourd)}
+.wrap{max-width:640px;margin:0 auto;padding:36px 18px 70px}
+.retour{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;margin-bottom:16px}
+.retour:hover{color:var(--vert-vif)}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:26px;position:relative;margin-bottom:18px}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vert),transparent)}
+.entete{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-spacing:.1em;color:var(--vert-vif)}
+.badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:3px;border:1px solid var(--ligne2);white-space:nowrap}
+.badge.ouvert{color:var(--vert-vif);border-color:rgba(23,201,128,.4);background:rgba(18,169,110,.08)}
+.badge.attribue{color:var(--jaune);border-color:rgba(232,184,73,.4);background:rgba(232,184,73,.07)}
+.badge.autre{color:var(--sourd)}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:18px}
+.grille{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--ligne);border:1px solid var(--ligne);border-radius:6px;overflow:hidden;margin-bottom:16px}
+.cellule{background:var(--panneau2);padding:12px 14px}
+.cellule small{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--sourd);margin-bottom:3px}
+.cellule b{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600}
+.cellule b.vert{color:var(--vert-vif)}
+.sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert-vif);margin:18px 0 10px}
+.puces{display:flex;flex-wrap:wrap;gap:7px}
+.puce{font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.04em;background:var(--panneau2);border:1px solid var(--ligne2);border-radius:3px;padding:5px 10px}
+.notes{background:var(--panneau2);border:1px solid var(--ligne2);border-left:3px solid var(--vert);border-radius:4px;padding:12px 14px;font-size:13.5px;color:var(--texte);white-space:pre-wrap}
+.btn{width:100%;background:var(--vert);color:#04130C;border:none;border-radius:5px;padding:14px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:20px;transition:background .1s ease}
+.btn:hover{background:var(--vert-vif)}
+.btn:disabled{opacity:.55;cursor:default}
+.msg{display:none;border-radius:4px;padding:11px 13px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-top:14px}
+.msg.ok{background:rgba(18,169,110,.1);color:var(--vert-vif);border:1px solid var(--ligne2);border-left:3px solid var(--vert)}
+.msg.ko{background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge)}
+.msg.info{background:rgba(232,184,73,.07);color:var(--jaune);border:1px solid rgba(232,184,73,.35);border-left:3px solid var(--jaune)}
+.chargement{padding:60px 20px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.chargement i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--vert-vif);box-shadow:0 0 6px var(--vert-vif);animation:pulse 1.2s ease infinite;margin-right:8px;vertical-align:1px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@media(max-width:480px){.grille{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html">
+      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></span>
+      C-DIRECT
+    </a>
+    <div class="droite"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <a class="retour" href="/contrats.html" id="lien-retour">← Retour aux contrats</a>
+
+  <div class="chargement" id="chargement"><i></i>Chargement de la fiche…</div>
+
+  <div class="carte" id="fiche" style="display:none">
+    <div class="entete">
+      <h1 id="ref">CD-______</h1>
+      <span class="badge" id="badge">—</span>
+    </div>
+    <p class="sous" id="sous">—</p>
+
+    <div class="grille">
+      <div class="cellule"><small>Date</small><b id="date">—</b></div>
+      <div class="cellule"><small>Heures</small><b id="heures">—</b></div>
+      <div class="cellule"><small>Tarif horaire</small><b class="vert" id="tarif">—</b></div>
+      <div class="cellule"><small>Logiciel</small><b id="logiciel">—</b></div>
+      <div class="cellule"><small>Rx / jour (semaine)</small><b id="rx_sem">—</b></div>
+      <div class="cellule"><small>Rx / jour (weekend)</small><b id="rx_we">—</b></div>
+      <div class="cellule"><small>Seul(e) pharmacien(ne)</small><b id="seul">—</b></div>
+      <div class="cellule"><small>ATP présente</small><b id="atp">—</b></div>
+    </div>
+
+    <div id="bloc-services" style="display:none">
+      <div class="sec">Services</div>
+      <div class="puces" id="services"></div>
+    </div>
+
+    <div id="bloc-notes" style="display:none">
+      <div class="sec">Notes de la pharmacie</div>
+      <div class="notes" id="notes"></div>
+    </div>
+
+    <button class="btn" id="btn-postuler" style="display:none">Postuler</button>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/auth.js"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+
+/* Référence : /c/CD-100001 (réécriture Cloudflare Pages) ou ?ref=CD-100001 */
+function refDepuisUrl(){
+  const m = location.pathname.match(/\/c\/(CD-\d+)/i);
+  if(m) return m[1].toUpperCase();
+  const q = new URLSearchParams(location.search).get('ref');
+  return q ? q.toUpperCase() : null;
+}
+
+function msg(texte, type){
+  const el = $('msg');
+  el.textContent = texte; el.className = 'msg ' + type; el.style.display = 'block';
+}
+
+(async function(){
+  const profil = await cdExigerConnexion();
+  cdEnteteConnecte();
+  if(profil.role === 'pharmacie') $('lien-retour').href = '/espace-pharmacie.html';
+  if(profil.role === 'admin')     $('lien-retour').href = '/admin.html';
+
+  const ref = refDepuisUrl();
+  if(!ref){
+    $('chargement').innerHTML = 'Référence manquante — utilisez /c/CD-XXXXXX';
+    return;
+  }
+
+  const { data, error } = await sb.rpc('get_contrat_fiche', { p_ref: ref });
+  $('chargement').style.display = 'none';
+  $('fiche').style.display = '';
+
+  if(error || !data || !data.length){
+    $('ref').textContent = ref;
+    $('badge').style.display = 'none';
+    $('sous').textContent = 'Fiche introuvable';
+    msg(error ? 'Erreur : ' + error.message
+              : 'Contrat introuvable ou non accessible avec votre compte.', 'ko');
+    return;
+  }
+
+  const k = data[0];
+  $('ref').textContent = k.numero_reference;
+  document.title = 'C-Direct — ' + k.numero_reference;
+
+  const badges = {ouvert:['ouvert','OUVERT'], attribue:['attribue','ATTRIBUÉ'],
+                  complete:['autre','COMPLÉTÉ'], annule:['autre','ANNULÉ']};
+  const b = badges[k.statut] || ['autre', k.statut];
+  $('badge').className = 'badge ' + b[0]; $('badge').textContent = b[1];
+
+  $('sous').textContent = (k.ville || 'Ville non précisée') + ' · publié le ' +
+    new Date(k.created_at).toLocaleDateString('fr-CA');
+  $('date').textContent = cdDate(k.date_contrat);
+  $('heures').textContent = cdHeure(k.heure_debut) + ' – ' + cdHeure(k.heure_fin);
+  $('tarif').textContent = cdArgent(k.tarif_horaire) + '/h';
+  $('logiciel').textContent = k.logiciel || '—';
+  $('rx_sem').textContent = k.rx_jour_semaine ?? '—';
+  $('rx_we').textContent = k.rx_jour_weekend ?? '—';
+  $('seul').textContent = k.seul_pharmacien ? 'Oui' : 'Non';
+  $('atp').textContent = k.atp_presente ? 'Oui' : 'Non';
+
+  if(k.services && k.services.length){
+    $('bloc-services').style.display = '';
+    k.services.forEach(s=>{
+      const d = document.createElement('span'); d.className='puce'; d.textContent=s;
+      $('services').appendChild(d);
+    });
+  }
+  if(k.notes){ $('bloc-notes').style.display=''; $('notes').textContent = k.notes; }
+
+  /* ---- Postuler (pharmacien · contrat ouvert · pas déjà postulé) ---- */
+  if(profil.role === 'pharmacien'){
+    if(k.ma_candidature_statut){
+      const libelles = {propose:'Candidature envoyée — en attente de la pharmacie.',
+                        contre_offre:'Contre-offre en cours.',
+                        accepte:'Votre candidature a été ACCEPTÉE. La pharmacie vous contactera.',
+                        refuse:'Candidature non retenue.'};
+      msg(libelles[k.ma_candidature_statut] || k.ma_candidature_statut,
+          k.ma_candidature_statut === 'accepte' ? 'ok' : 'info');
+    } else if(k.statut === 'ouvert'){
+      const btn = $('btn-postuler');
+      btn.style.display = '';
+      btn.onclick = async ()=>{
+        btn.disabled = true;
+        const { error: e } = await sb.from('candidatures').insert({
+          contrat_id: k.id,
+          pharmacien_id: profil.id,
+          statut: 'propose',
+          tarif_propose: k.tarif_horaire
+        });
+        if(e){
+          btn.disabled = false;
+          msg(e.code === '23505' ? 'Vous avez déjà postulé à ce contrat.' : 'Erreur : ' + e.message, 'ko');
+          return;
+        }
+        btn.style.display = 'none';
+        msg('Candidature envoyée au tarif affiché (' + cdArgent(k.tarif_horaire) + '/h). La pharmacie a été notifiée.', 'ok');
+      };
+    } else {
+      msg('Ce contrat n’est plus ouvert aux candidatures.', 'info');
+    }
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Contrats ouverts</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849;--rouge:#E5484D}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1000px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:14px;color:var(--sourd)}
+.topbar .droite a.nav{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
+.topbar .droite a.nav:hover{color:var(--vert-vif)}
+.wrap{max-width:1000px;margin:0 auto;padding:36px 18px 70px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;position:relative;overflow:hidden}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vert),transparent)}
+table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:13px}
+th{padding:12px 14px;text-align:left;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--sourd);border-bottom:1px solid var(--ligne);white-space:nowrap}
+td{padding:13px 14px;border-bottom:1px solid var(--ligne);white-space:nowrap;vertical-align:middle}
+tbody tr{cursor:pointer;transition:background .1s ease}
+tbody tr:hover{background:var(--panneau2)}
+tbody tr:last-child td{border-bottom:none}
+.ref{color:var(--vert-vif);font-weight:700;letter-spacing:.06em}
+.tarif{font-weight:700}
+.badge{display:inline-block;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:3px;border:1px solid var(--ligne2)}
+.badge.ouvert{color:var(--vert-vif);border-color:rgba(23,201,128,.4);background:rgba(18,169,110,.08)}
+.badge.postule{color:var(--jaune);border-color:rgba(232,184,73,.4);background:rgba(232,184,73,.07)}
+.vide{padding:48px 20px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:13px}
+.vide b{color:var(--texte);display:block;margin-bottom:6px;letter-spacing:.08em}
+.chargement{padding:48px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.chargement i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--vert-vif);box-shadow:0 0 6px var(--vert-vif);animation:pulse 1.2s ease infinite;margin-right:8px;vertical-align:1px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.erreur{display:none;background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge);border-radius:4px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:14px}
+@media(max-width:720px){
+  .cache-mobile{display:none}
+  td,th{padding:11px 10px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html">
+      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></span>
+      C-DIRECT
+    </a>
+    <div class="droite"><a class="nav" href="/profil.html">Profil</a></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>Contrats ouverts</h1>
+  <p class="sous" id="sous">Réseau C-Direct · 0 % commission</p>
+
+  <div class="carte">
+    <div class="chargement" id="chargement"><i></i>Interrogation du réseau…</div>
+    <table id="tableau" style="display:none">
+      <thead>
+        <tr>
+          <th>Référence</th>
+          <th>Date</th>
+          <th>Heures</th>
+          <th class="cache-mobile">Ville</th>
+          <th class="cache-mobile">Logiciel</th>
+          <th>Tarif</th>
+          <th>Statut</th>
+        </tr>
+      </thead>
+      <tbody id="lignes"></tbody>
+    </table>
+    <div class="vide" id="vide" style="display:none">
+      <b>AUCUN CONTRAT OUVERT</b>
+      Les nouveaux contrats apparaissent ici dès leur publication.
+    </div>
+  </div>
+  <div class="erreur" id="err"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/auth.js"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+
+(async function(){
+  const profil = await cdExigerConnexion(['pharmacien']);
+  cdEnteteConnecte();
+  if(profil.role === 'admin'){
+    document.querySelector('.droite').insertAdjacentHTML('afterbegin',
+      '<a class="nav" href="/admin.html">Console</a>');
+  }
+
+  const { data, error } = await sb.rpc('get_contrats_ouverts');
+  $('chargement').style.display = 'none';
+  if(error){ $('err').textContent = 'Erreur : ' + error.message; $('err').style.display='block'; return; }
+
+  if(!data || !data.length){ $('vide').style.display = 'block'; return; }
+
+  $('sous').textContent = data.length + ' contrat' + (data.length>1?'s':'') + ' ouvert' + (data.length>1?'s':'') + ' · 0 % commission';
+  const tb = $('lignes');
+  data.forEach(k=>{
+    const tr = document.createElement('tr');
+    tr.onclick = ()=>{ location.href = '/c/' + encodeURIComponent(k.numero_reference); };
+    const cel = (html, cls)=>{ const td=document.createElement('td'); if(cls) td.className=cls; td.innerHTML=html; return td; };
+    const txt = (t, cls)=>{ const td=document.createElement('td'); if(cls) td.className=cls; td.textContent=t; return td; };
+    tr.append(
+      txt(k.numero_reference, 'ref'),
+      txt(cdDate(k.date_contrat)),
+      txt(cdHeure(k.heure_debut) + ' – ' + cdHeure(k.heure_fin)),
+      txt(k.ville || '—', 'cache-mobile'),
+      txt(k.logiciel || '—', 'cache-mobile'),
+      txt(cdArgent(k.tarif_horaire) + '/h', 'tarif'),
+      cel(k.deja_postule
+        ? '<span class="badge postule">Postulé</span>'
+        : '<span class="badge ouvert">Ouvert</span>')
+    );
+    tb.appendChild(tr);
+  });
+  $('tableau').style.display = '';
+})();
+</script>
+</body>
+</html>

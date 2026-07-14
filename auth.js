@@ -23,10 +23,12 @@ window.cdProfil = async function(force){
 };
 
 /* ---- accueil selon le rôle ---- */
+/* Chemins ABSOLUS : la fiche contrat vit sous /c/CD-XXXXXX (réécriture
+   Cloudflare Pages) — les chemins relatifs y seraient cassés. */
 window.cdAccueilPourRole = function(role){
-  if(role === 'admin') return 'admin.html';
-  if(role === 'pharmacie') return 'espace-pharmacie.html';
-  return 'contrats.html'; // pharmacien
+  if(role === 'admin') return '/admin.html';
+  if(role === 'pharmacie') return '/espace-pharmacie.html';
+  return '/contrats.html'; // pharmacien
 };
 
 /* ---- garde : exige une connexion (et optionnellement des rôles) ----
@@ -35,14 +37,14 @@ window.cdExigerConnexion = async function(roles){
   const s = await cdSession();
   if(!s){
     try{ localStorage.setItem('cd-suite', location.pathname + location.search); }catch(e){}
-    location.replace('acces.html?mode=conn');
+    location.replace('/acces.html?mode=conn');
     return new Promise(()=>{});
   }
   const p = await cdProfil();
   if(!p || !p.role || !p.consentement_date){
     // compte OAuth (Google) incomplet : rôle / consentement manquants
     try{ localStorage.setItem('cd-suite', location.pathname + location.search); }catch(e){}
-    location.replace('acces.html?mode=completer');
+    location.replace('/acces.html?mode=completer');
     return new Promise(()=>{});
   }
   if(roles && roles.length && !roles.includes(p.role) && p.role !== 'admin'){
@@ -63,7 +65,7 @@ window.cdReprendreSuite = function(role){
 window.cdDeconnexion = async function(){
   await sb.auth.signOut();
   _profil = null;
-  location.href = 'index.html';
+  location.href = '/index.html';
 };
 
 /* ---- en-tête connecté : injecte « PRÉNOM · DÉCONNEXION » dans la topbar ---- */
@@ -87,7 +89,7 @@ window.cdEnteteConnecte = async function(){
     el.append(nom, sep, btn);
     conteneur.appendChild(el);
     // masquer les liens Connexion/Inscription éventuels
-    document.querySelectorAll('a[href^="acces.html"]').forEach(a=>{
+    document.querySelectorAll('a[href^="acces.html"],a[href^="/acces.html"]').forEach(a=>{
       if(/mode=(conn|insc)/.test(a.getAttribute('href'))) a.style.display = 'none';
     });
   }
