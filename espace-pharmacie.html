@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Espace pharmacie</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849;--rouge:#E5484D}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar .in{max-width:900px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:14px;color:var(--sourd)}
+.topbar .droite a.nav{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
+.topbar .droite a.nav:hover{color:var(--vert-vif)}
+.wrap{max-width:760px;margin:0 auto;padding:36px 18px 70px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:24px;position:relative;margin-bottom:20px}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vert),transparent)}
+.sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:14px}
+.champ{margin-bottom:12px}
+.champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--sourd);margin-bottom:5px}
+.champ input,.champ textarea{width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:11px 12px;font-size:14px;font-family:'IBM Plex Mono',monospace;background:#0A100D;color:var(--texte)}
+.champ input:focus,.champ textarea:focus{outline:none;border-color:var(--vert);box-shadow:0 0 0 2px rgba(18,169,110,.18)}
+.deux{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.trois{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.coches{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.coches label{display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--texte);background:var(--panneau2);border:1px solid var(--ligne2);border-radius:4px;padding:8px 10px;cursor:pointer}
+.coches input{accent-color:var(--vert)}
+.indice{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd);margin-top:4px}
+.indice b{color:var(--vert-vif)}
+.btn{width:100%;background:var(--vert);color:#04130C;border:none;border-radius:5px;padding:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:6px}
+.btn:hover{background:var(--vert-vif)}
+.btn:disabled{opacity:.55;cursor:default}
+.msg{display:none;border-radius:4px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:12px}
+.msg.ok{background:rgba(18,169,110,.1);color:var(--vert-vif);border:1px solid var(--ligne2);border-left:3px solid var(--vert)}
+.msg.ko{background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge)}
+
+/* liste des contrats */
+.contrat{border:1px solid var(--ligne2);border-radius:6px;background:var(--panneau2);margin-bottom:10px;overflow:hidden}
+.contrat .tete{display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:13px;flex-wrap:wrap}
+.contrat .tete:hover{background:#12201A}
+.contrat .ref{color:var(--vert-vif);font-weight:700;letter-spacing:.05em}
+.contrat .ref:hover{text-decoration:underline}
+.contrat .meta{color:var(--sourd);font-size:12px}
+.badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:3px;border:1px solid var(--ligne2);margin-left:auto}
+.badge.ouvert{color:var(--vert-vif);border-color:rgba(23,201,128,.4);background:rgba(18,169,110,.08)}
+.badge.attribue{color:var(--jaune);border-color:rgba(232,184,73,.4);background:rgba(232,184,73,.07)}
+.badge.autre{color:var(--sourd)}
+.compteur{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd)}
+.compteur b{color:var(--texte)}
+.candidats{display:none;border-top:1px solid var(--ligne);padding:6px 14px 12px}
+.candidat{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--ligne);font-family:'IBM Plex Mono',monospace;font-size:12.5px;flex-wrap:wrap}
+.candidat:last-child{border-bottom:none}
+.candidat .nom{font-weight:600}
+.candidat .detail{color:var(--sourd);font-size:11.5px}
+.candidat .etat{font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd)}
+.candidat .etat.accepte{color:var(--vert-vif);border-color:rgba(23,201,128,.4)}
+.candidat .etat.refuse{color:var(--rouge);border-color:rgba(229,72,77,.35)}
+.btn-mini{margin-left:auto;background:var(--vert);color:#04130C;border:none;border-radius:4px;padding:7px 14px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.btn-mini:hover{background:var(--vert-vif)}
+.btn-mini:disabled{opacity:.55;cursor:default}
+.aucun{padding:10px 0;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px}
+.vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:20px 0}
+@media(max-width:560px){.deux,.trois,.coches{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html">
+      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></span>
+      C-DIRECT
+    </a>
+    <div class="droite"><a class="nav" href="/profil.html">Profil</a></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>Espace pharmacie</h1>
+  <p class="sous" id="sous">—</p>
+
+  <!-- PUBLIER -->
+  <div class="carte">
+    <div class="sec">Publier un contrat</div>
+    <form id="f">
+      <div class="trois">
+        <div class="champ"><label>Date</label><input id="date_contrat" type="date" required></div>
+        <div class="champ"><label>Début</label><input id="heure_debut" type="time" required value="09:00"></div>
+        <div class="champ"><label>Fin</label><input id="heure_fin" type="time" required value="17:00"></div>
+      </div>
+      <div class="champ">
+        <label>Tarif horaire ($/h)</label>
+        <input id="tarif_horaire" type="number" step="0.01" required>
+        <div class="indice">Plancher réseau : <b id="plancher">—</b></div>
+      </div>
+      <div class="deux">
+        <div class="champ"><label>Rx / jour (semaine)</label><input id="rx_jour_semaine" type="number" min="0"></div>
+        <div class="champ"><label>Rx / jour (weekend)</label><input id="rx_jour_weekend" type="number" min="0"></div>
+      </div>
+      <div class="champ"><label>Conditions</label>
+        <div class="coches">
+          <label><input type="checkbox" id="seul_pharmacien" checked> Seul(e) pharmacien(ne)</label>
+          <label><input type="checkbox" id="atp_presente" checked> ATP présente</label>
+        </div>
+      </div>
+      <div class="champ"><label>Services requis</label>
+        <div class="coches" id="coches-services"></div>
+      </div>
+      <div class="champ"><label>Notes (accès, consignes…)</label><textarea id="notes" rows="2"></textarea></div>
+      <button class="btn" type="submit" id="btn-pub">Publier le contrat</button>
+      <div class="msg" id="msg-pub"></div>
+    </form>
+  </div>
+
+  <!-- MES CONTRATS -->
+  <div class="carte">
+    <div class="sec">Mes contrats</div>
+    <div id="liste"><div class="vide">Chargement…</div></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/auth.js"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+const SERVICES = ['Bill 31','Bill 41','Dispills','INR','Préparations non stériles',
+                  'Suboxone','Méthadone','Vaccination','Santé voyage','Administration de médicaments'];
+let profil = null, regles = null;
+
+function msg(id, texte, ok){
+  const el=$(id); el.textContent=texte;
+  el.className='msg '+(ok?'ok':'ko'); el.style.display='block';
+  if(ok) setTimeout(()=>{ el.style.display='none'; }, 4000);
+}
+
+(async function(){
+  profil = await cdExigerConnexion(['pharmacie']);
+  cdEnteteConnecte();
+  $('sous').textContent = (profil.nom_pharmacie || 'Pharmacie') + (profil.ville ? ' · ' + profil.ville : '');
+
+  /* services */
+  $('coches-services').innerHTML = SERVICES.map(s=>
+    '<label><input type="checkbox" value="'+s.replace(/"/g,'&quot;')+'"> '+s+'</label>').join('');
+
+  /* règles réseau (plancher tarifaire lu de la base) */
+  const r = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle();
+  regles = r.data;
+  if(regles){
+    $('tarif_horaire').min = regles.tarif_horaire_minimum;
+    $('plancher').textContent = cdArgent(regles.tarif_horaire_minimum) + '/h';
+    if(!$('tarif_horaire').value) $('tarif_horaire').value = regles.tarif_horaire_minimum;
+  }
+
+  /* pré-remplissage depuis le profil */
+  if(profil.rx_jour_semaine != null) $('rx_jour_semaine').value = profil.rx_jour_semaine;
+  if(profil.rx_jour_weekend != null) $('rx_jour_weekend').value = profil.rx_jour_weekend;
+  $('date_contrat').min = new Date().toISOString().slice(0,10);
+
+  /* publication */
+  $('f').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const tarif = parseFloat($('tarif_horaire').value);
+    if(regles && tarif < parseFloat(regles.tarif_horaire_minimum)){
+      msg('msg-pub','Tarif sous le plancher du réseau ('+cdArgent(regles.tarif_horaire_minimum)+'/h).',false);
+      return;
+    }
+    if($('heure_fin').value <= $('heure_debut').value){
+      msg('msg-pub','L’heure de fin doit suivre l’heure de début.',false);
+      return;
+    }
+    $('btn-pub').disabled = true;
+    const { data, error } = await sb.from('contrats').insert({
+      pharmacie_id: profil.id,
+      date_contrat: $('date_contrat').value,
+      heure_debut: $('heure_debut').value,
+      heure_fin: $('heure_fin').value,
+      tarif_horaire: tarif,
+      rx_jour_semaine: $('rx_jour_semaine').value || null,
+      rx_jour_weekend: $('rx_jour_weekend').value || null,
+      seul_pharmacien: $('seul_pharmacien').checked,
+      atp_presente: $('atp_presente').checked,
+      services: [...document.querySelectorAll('#coches-services input:checked')].map(i=>i.value),
+      notes: $('notes').value.trim() || null
+    }).select('numero_reference').single();
+    $('btn-pub').disabled = false;
+    if(error){ msg('msg-pub', error.message, false); return; }
+    msg('msg-pub','Contrat '+data.numero_reference+' publié ✓', true);
+    $('notes').value='';
+    chargerContrats();
+  });
+
+  chargerContrats();
+})();
+
+/* ---- liste des contrats + compteurs de candidatures ---- */
+async function chargerContrats(){
+  const [{ data: contrats, error }, { data: cands }] = await Promise.all([
+    sb.from('contrats').select('*').eq('pharmacie_id', profil.id).order('created_at',{ascending:false}),
+    sb.from('candidatures').select('contrat_id,statut')
+  ]);
+  const liste = $('liste');
+  if(error){ liste.innerHTML = '<div class="vide">Erreur : '+error.message+'</div>'; return; }
+  if(!contrats || !contrats.length){
+    liste.innerHTML = '<div class="vide">Aucun contrat publié pour l’instant.</div>'; return;
+  }
+  const compte = {};
+  (cands||[]).forEach(c=>{ compte[c.contrat_id] = (compte[c.contrat_id]||0)+1; });
+
+  liste.innerHTML = '';
+  const badges = {ouvert:['ouvert','OUVERT'], attribue:['attribue','ATTRIBUÉ'],
+                  complete:['autre','COMPLÉTÉ'], annule:['autre','ANNULÉ']};
+  contrats.forEach(k=>{
+    const n = compte[k.id]||0;
+    const b = badges[k.statut] || ['autre', k.statut];
+    const div = document.createElement('div');
+    div.className = 'contrat';
+    div.innerHTML =
+      '<div class="tete">'+
+        '<a class="ref" href="/c/'+encodeURIComponent(k.numero_reference)+'" onclick="event.stopPropagation()">'+k.numero_reference+'</a>'+
+        '<span class="meta">'+cdDate(k.date_contrat)+' · '+cdHeure(k.heure_debut)+'–'+cdHeure(k.heure_fin)+' · '+cdArgent(k.tarif_horaire)+'/h</span>'+
+        '<span class="compteur"><b>'+n+'</b> candidature'+(n>1?'s':'')+'</span>'+
+        '<span class="badge '+b[0]+'">'+b[1]+'</span>'+
+      '</div>'+
+      '<div class="candidats"></div>';
+    const zone = div.querySelector('.candidats');
+    div.querySelector('.tete').onclick = ()=>{
+      const ouverte = zone.style.display === 'block';
+      zone.style.display = ouverte ? 'none' : 'block';
+      if(!ouverte) chargerCandidats(k, zone);
+    };
+    $('liste').appendChild(div);
+  });
+}
+
+/* ---- candidats d'un contrat (RPC : nom/prénom/ville seulement) ---- */
+async function chargerCandidats(k, zone){
+  zone.innerHTML = '<div class="aucun">Chargement…</div>';
+  const { data, error } = await sb.rpc('get_candidats', { p_contrat: k.id });
+  if(error){ zone.innerHTML = '<div class="aucun">Erreur : '+error.message+'</div>'; return; }
+  if(!data || !data.length){ zone.innerHTML = '<div class="aucun">Aucune candidature pour l’instant.</div>'; return; }
+
+  zone.innerHTML = '';
+  const etats = {propose:'Proposé', contre_offre:'Contre-offre', accepte:'Accepté', refuse:'Refusé'};
+  data.forEach(c=>{
+    const row = document.createElement('div');
+    row.className = 'candidat';
+    const nom = document.createElement('span');
+    nom.className='nom'; nom.textContent = (c.prenom||'')+' '+(c.nom||'');
+    const det = document.createElement('span');
+    det.className='detail';
+    det.textContent = (c.ville_base||'—') + ' · ' + cdArgent(c.tarif_propose) + '/h';
+    const etat = document.createElement('span');
+    etat.className = 'etat '+c.statut; etat.textContent = etats[c.statut]||c.statut;
+    row.append(nom, det, etat);
+
+    if(c.statut === 'propose' && k.statut === 'ouvert'){
+      const btn = document.createElement('button');
+      btn.className='btn-mini'; btn.textContent='Accepter';
+      btn.onclick = async ev=>{
+        ev.stopPropagation();
+        if(!confirm('Accepter '+nom.textContent+' pour '+k.numero_reference+' ? Les autres candidatures seront refusées.')) return;
+        btn.disabled = true;
+        const { error: e } = await sb.rpc('accepter_candidature', { p_candidature: c.candidature_id });
+        if(e){ btn.disabled=false; alert('Erreur : '+e.message); return; }
+        chargerContrats();
+      };
+      row.appendChild(btn);
+    }
+    zone.appendChild(row);
+  });
+}
+</script>
+</body>
+</html>
