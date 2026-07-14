@@ -21,9 +21,6 @@ background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),line
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
 .croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
 .topbar .droite{display:flex;align-items:center;gap:14px}
-.lang{display:flex;border:1px solid var(--ligne2);border-radius:4px;overflow:hidden}
-.lang button{border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;padding:6px 12px;cursor:pointer;color:var(--sourd)}
-.lang button.on{background:var(--vert);color:#04130C}
 .retour{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em}
 .retour:hover{color:var(--vert-vif)}
 
@@ -55,9 +52,8 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
 .ou::before,.ou::after{content:"";flex:1;height:1px;background:var(--ligne)}
 .btn-google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--panneau2);border:1px solid var(--ligne2);border-radius:5px;padding:12px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12.5px;letter-spacing:.04em;color:var(--texte);cursor:pointer;transition:border-color .1s ease}
 .btn-google:hover{border-color:var(--vert)}
-.gnote{display:none;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--jaune);margin-top:8px}
 .note{font-size:12.5px;color:var(--sourd);text-align:center;margin-top:16px}
-.note button{color:var(--vert-vif);font-weight:600;cursor:pointer;background:none;border:none;font-size:12.5px;font-family:'Instrument Sans',sans-serif;text-decoration:underline;text-underline-offset:3px}
+.note button,.note a{color:var(--vert-vif);font-weight:600;cursor:pointer;background:none;border:none;font-size:12.5px;font-family:'Instrument Sans',sans-serif;text-decoration:underline;text-underline-offset:3px}
 .cgv{margin-top:16px;padding-top:12px;border-top:1px solid var(--ligne);font-size:11px;color:var(--sourd);text-align:center;line-height:1.6}
 .cgv a{color:var(--vert-vif);text-decoration:underline;text-underline-offset:2px}
 
@@ -83,13 +79,17 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
 .champ input::placeholder{color:#3D4F47}
 .deux{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .erreur{display:none;background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge);border-radius:4px;padding:9px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:10px}
-.approb{display:block;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:var(--jaune);margin-top:12px;text-transform:uppercase}
 .succes{display:none;text-align:center;background:rgba(18,169,110,.07);border:1px solid var(--ligne2);border-left:3px solid var(--vert);border-radius:5px;padding:20px;font-size:13.5px}
 .succes b{color:var(--vert-vif);font-family:'IBM Plex Mono',monospace;letter-spacing:.06em}
 .succes a{color:var(--vert-vif)}
 .oeil{position:absolute;right:10px;bottom:10px;background:none;border:none;cursor:pointer;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px;text-transform:uppercase;letter-spacing:.06em}
 .oeil:hover{color:var(--texte)}
 .rel{position:relative}
+
+/* consentement */
+.consent{display:flex;align-items:flex-start;gap:10px;background:var(--panneau2);border:1px solid var(--ligne2);border-radius:4px;padding:11px 12px;margin-bottom:12px;cursor:pointer;font-size:12.5px;line-height:1.55;color:var(--sourd)}
+.consent input{width:16px;height:16px;margin-top:2px;accent-color:var(--vert);flex:none;cursor:pointer}
+.consent a{color:var(--vert-vif);text-decoration:underline;text-underline-offset:2px}
 
 .zone{display:none}
 .zone.on{display:block;animation:glisse .18s ease}
@@ -110,11 +110,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
       C-DIRECT
     </a>
     <div class="droite">
-      <a class="retour" href="index.html" data-fr="← RETOUR AU SITE" data-en="← BACK TO SITE">← RETOUR AU SITE</a>
-      <div class="lang" role="group" aria-label="Langue / Language">
-        <button id="fr" class="on">FR</button>
-        <button id="en">EN</button>
-      </div>
+      <a class="retour" href="index.html">← RETOUR AU SITE</a>
     </div>
   </div>
 </div>
@@ -123,277 +119,262 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
   <div class="colonne">
 
     <div class="statut">
-      <span><i></i><b data-fr="RÉSEAU VÉRIFIÉ OPQ" data-en="OPQ-VERIFIED NETWORK">RÉSEAU VÉRIFIÉ OPQ</b></span>
-      <span><i></i><b data-fr="0 % COMMISSION" data-en="0% COMMISSION">0 % COMMISSION</b></span>
-      <span><i></i><b data-fr="APPROBATION &lt; 24 H" data-en="APPROVAL &lt; 24 H">APPROBATION &lt; 24 H</b></span>
+      <span><i></i><b>RÉSEAU VÉRIFIÉ OPQ</b></span>
+      <span><i></i><b>0 % COMMISSION</b></span>
+      <span><i></i><b>CONNEXION CHIFFRÉE</b></span>
     </div>
 
     <div class="carte">
       <div class="logo" id="logo"><svg width="20" height="20" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></div>
       <h2 id="titre">Créer un compte</h2>
-      <p class="sous" id="sous-titre">Gratuit. Vérifié. Approuvé sous 24 h.</p>
+      <p class="sous" id="sous-titre">Gratuit. Vérifié. Sécurisé.</p>
 
-      <!-- Étape 0 : entrée — identique pour connexion ET inscription -->
-      <div class="zone on entree-espace" id="z-entree">
+      <!-- Étape 0 : entrée -->
+      <div class="zone entree-espace" id="z-entree">
         <button class="btn" id="btn-courriel">S'inscrire par courriel</button>
-        <div class="ou"><span data-fr="Ou" data-en="Or">Ou</span></div>
+        <div class="ou"><span>Ou</span></div>
         <button class="btn-google" id="btn-google" type="button">
           <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.2 5.2C37 39.1 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
-          <span data-fr="Gmail — s'inscrire ou se connecter" data-en="Gmail — sign up or log in">Gmail — s'inscrire ou se connecter</span>
+          <span>Continuer avec Google</span>
         </button>
-        <p class="gnote" id="g-note" data-fr="Bientôt disponible — utilisez votre courriel." data-en="Coming soon — please use your email.">Bientôt disponible — utilisez votre courriel.</p>
-        <p class="note" id="bascule-insc"><span data-fr="Déjà un compte ?" data-en="Have an account?">Déjà un compte&nbsp;?</span> <button class="vers-conn" data-fr="Connexion" data-en="Log in">Connexion</button></p>
-        <p class="note" id="bascule-conn" style="display:none"><span data-fr="Pas de compte ?" data-en="No account?">Pas de compte&nbsp;?</span> <button class="vers-insc" data-fr="Inscrivez-vous — c'est gratuit" data-en="Sign up — it's free">Inscrivez-vous — c'est gratuit</button></p>
-        <p class="cgv"><span data-fr="En continuant, vous acceptez nos " data-en="By continuing, you agree to our ">En continuant, vous acceptez nos </span><a href="conditions.html" data-fr="Conditions d'utilisation" data-en="Terms & Conditions">Conditions d'utilisation</a><span data-fr=" et notre " data-en=" and our "> et notre </span><a href="confidentialite.html" data-fr="Politique de confidentialité" data-en="Privacy Policy">Politique de confidentialité</a><span data-fr="." data-en=".">.</span></p>
+        <p class="note" id="bascule-insc"><span>Déjà un compte&nbsp;?</span> <button class="vers-conn">Connexion</button></p>
+        <p class="note" id="bascule-conn" style="display:none"><span>Pas de compte&nbsp;?</span> <button class="vers-insc">Inscrivez-vous — c'est gratuit</button></p>
+        <p class="cgv">En continuant, vous acceptez nos <a href="conditions.html">Conditions d'utilisation</a> et notre <a href="confidentialite.html">Politique de confidentialité</a>.</p>
       </div>
 
-      <!-- Étape 1 : choix du rôle (même menu pour connexion ET inscription) -->
+      <!-- Étape 1 : choix du rôle (inscription / complétion Google) -->
       <div class="zone" id="z-role" style="margin-top:22px">
         <button class="role-btn" id="r-pharmacien">
           <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#12A96E" stroke-width="2"/><path d="M4 20c0-3.3 3.6-5 8-5s8 1.7 8 5" stroke="#12A96E" stroke-width="2" stroke-linecap="round"/></svg></span>
-          <span><b data-fr="Pharmacien remplaçant" data-en="Relief pharmacist">Pharmacien remplaçant</b><small data-fr="RECHERCHE DE REMPLACEMENTS" data-en="LOOKING FOR SHIFTS">RECHERCHE DE REMPLACEMENTS</small></span>
+          <span><b>Pharmacien(ne) remplaçant(e)</b><small>RECHERCHE DE REMPLACEMENTS</small></span>
           <span class="fleche">&gt;</span>
         </button>
         <button class="role-btn" id="r-pharmacie">
           <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 9l1.5-5h13L20 9" stroke="#12A96E" stroke-width="2" stroke-linejoin="round"/><path d="M5 9v11h14V9" stroke="#12A96E" stroke-width="2" stroke-linejoin="round"/><path d="M10 20v-6h4v6" stroke="#12A96E" stroke-width="2" stroke-linejoin="round"/></svg></span>
-          <span><b data-fr="Une pharmacie" data-en="A pharmacy">Une pharmacie</b><small data-fr="RECHERCHE D'UN REMPLAÇANT" data-en="NEEDS A RELIEF PHARMACIST">RECHERCHE D'UN REMPLAÇANT</small></span>
+          <span><b>Une pharmacie</b><small>RECHERCHE D'UN REMPLAÇANT</small></span>
           <span class="fleche">&gt;</span>
         </button>
-        <button class="retour-carte" id="retour-entree" data-fr="← Retour" data-en="← Back">← Retour</button>
+        <button class="retour-carte" id="retour-entree">← Retour</button>
       </div>
 
-      <!-- Étape 2 : rappel du rôle choisi -->
+      <!-- Rappel du rôle choisi -->
       <div class="role-actuel" id="role-actuel" style="display:none">
-        <span data-fr="PROFIL :" data-en="PROFILE:">PROFIL&nbsp;:</span>&nbsp;<b id="role-nom"></b>
-        <button id="chg-role" data-fr="changer" data-en="change">changer</button>
+        <span>PROFIL&nbsp;:</span>&nbsp;<b id="role-nom"></b>
+        <button id="chg-role">changer</button>
       </div>
 
       <!-- CONNEXION -->
       <div class="zone" id="z-connexion">
         <div class="champ">
-          <label data-fr="Courriel" data-en="Email">Courriel</label>
+          <label>Courriel</label>
           <input id="c-courriel" type="email" autocomplete="email">
         </div>
         <div class="champ rel">
-          <label data-fr="Code d'accès" data-en="Access code">Code d'accès</label>
-          <input id="c-code" type="password" autocomplete="off" style="padding-right:74px">
-          <button class="oeil" id="voir-code" type="button" data-fr="afficher" data-en="show">afficher</button>
+          <label>Mot de passe</label>
+          <input id="c-mdp" type="password" autocomplete="current-password" style="padding-right:74px">
+          <button class="oeil" data-cible="c-mdp" type="button">afficher</button>
         </div>
-        <button class="btn" id="btn-connexion" data-fr="Se connecter" data-en="Log in">Se connecter</button>
-        <div class="erreur" id="err" data-fr="CODE INVALIDE — vérifiez le code reçu après votre approbation." data-en="INVALID CODE — check the code you received upon approval.">CODE INVALIDE — vérifiez le code reçu après votre approbation.</div>
-        <p class="note"><span data-fr="Pas encore de code ?" data-en="No code yet?">Pas encore de code&nbsp;?</span> <button class="vers-insc" data-fr="Inscrivez-vous — c'est gratuit" data-en="Sign up — it's free">Inscrivez-vous — c'est gratuit</button></p>
+        <button class="btn" id="btn-connexion">Se connecter</button>
+        <div class="erreur" id="err-conn"></div>
+        <p class="note"><button id="lien-oubli">Mot de passe oublié&nbsp;?</button></p>
+        <p class="note"><span>Pas de compte&nbsp;?</span> <button class="vers-insc">Inscrivez-vous — c'est gratuit</button></p>
       </div>
 
-      <!-- INSCRIPTION PHARMACIE -->
-      <div class="zone" id="z-insc-pharmacie">
-        <form id="f-pharmacie">
-          <input type="hidden" name="_subject" value="C-Direct — INSCRIPTION PHARMACIE (à approuver)">
-          <div class="champ"><label data-fr="Nom de la pharmacie" data-en="Pharmacy name">Nom de la pharmacie</label><input name="Pharmacie" required></div>
+      <!-- INSCRIPTION (courriel + mot de passe) -->
+      <div class="zone" id="z-inscription">
+        <form id="f-inscription">
           <div class="deux">
-            <div class="champ"><label data-fr="Bannière" data-en="Banner">Bannière</label><input name="Banniere"></div>
-            <div class="champ"><label data-fr="Ville" data-en="City">Ville</label><input name="Ville" required></div>
+            <div class="champ"><label>Prénom</label><input id="i-prenom" autocomplete="given-name" required></div>
+            <div class="champ"><label>Nom</label><input id="i-nom" autocomplete="family-name" required></div>
           </div>
-          <div class="champ"><label data-fr="Nom du contact" data-en="Contact name">Nom du contact</label><input name="Contact" required></div>
-          <div class="deux">
-            <div class="champ"><label data-fr="Courriel" data-en="Email">Courriel</label><input name="email" type="email" required></div>
-            <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input name="Telephone" type="tel" required pattern="\d{3}-\d{3}-\d{4}" title="Format : 514-555-0123" placeholder="514-555-0123"></div>
+          <div class="champ"><label>Courriel</label><input id="i-courriel" type="email" autocomplete="email" required></div>
+          <div class="champ"><label>Téléphone</label><input id="i-tel" type="tel" required placeholder="514-555-0123"></div>
+          <div class="champ rel">
+            <label>Mot de passe (8 caractères min.)</label>
+            <input id="i-mdp" type="password" autocomplete="new-password" minlength="8" required style="padding-right:74px">
+            <button class="oeil" data-cible="i-mdp" type="button">afficher</button>
           </div>
-          <div class="champ">
-            <label data-fr="Logiciel de laboratoire" data-en="Pharmacy software">Logiciel de laboratoire</label>
-            <select name="Logiciel"><option value="">—</option><option>Kroll</option><option>AssystRx</option><option>Mentor</option><option>PrioRx</option><option>Autre</option></select>
-          </div>
-          <button class="btn" type="submit" data-fr="Demander l'accès" data-en="Request access">Demander l'accès</button>
-          <span class="approb" data-fr="Approbation administrateur requise — &lt; 24 h" data-en="Administrator approval required — &lt; 24 h">Approbation administrateur requise — &lt; 24&nbsp;h</span>
+          <label class="consent">
+            <input type="checkbox" id="i-consent" required>
+            <span>J'accepte la <a href="confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a> et le traitement de mes renseignements personnels</span>
+          </label>
+          <button class="btn" type="submit" id="btn-inscription">Créer mon compte</button>
+          <div class="erreur" id="err-insc"></div>
         </form>
-        <p class="note"><span data-fr="Déjà un compte ?" data-en="Have an account?">Déjà un compte&nbsp;?</span> <button class="vers-conn" data-fr="Connectez-vous" data-en="Log in">Connectez-vous</button></p>
+        <p class="note"><span>Déjà un compte&nbsp;?</span> <button class="vers-conn">Connectez-vous</button></p>
       </div>
 
-      <!-- INSCRIPTION PHARMACIEN -->
-      <div class="zone" id="z-insc-pharmacien">
-        <form id="f-pharmacien">
-          <input type="hidden" name="_subject" value="C-Direct — INSCRIPTION PHARMACIEN (à approuver)">
-          <div class="champ"><label data-fr="Nom complet" data-en="Full name">Nom complet</label><input name="Nom" required></div>
+      <!-- MOT DE PASSE OUBLIÉ -->
+      <div class="zone" id="z-oubli">
+        <div class="champ">
+          <label>Courriel du compte</label>
+          <input id="o-courriel" type="email" autocomplete="email">
+        </div>
+        <button class="btn" id="btn-oubli">Envoyer le lien de réinitialisation</button>
+        <div class="erreur" id="err-oubli"></div>
+        <p class="note"><button class="vers-conn">← Retour à la connexion</button></p>
+      </div>
+
+      <!-- NOUVEAU MOT DE PASSE (après lien reçu) -->
+      <div class="zone" id="z-reset">
+        <div class="champ rel">
+          <label>Nouveau mot de passe (8 caractères min.)</label>
+          <input id="rz-mdp" type="password" autocomplete="new-password" minlength="8" style="padding-right:74px">
+          <button class="oeil" data-cible="rz-mdp" type="button">afficher</button>
+        </div>
+        <button class="btn" id="btn-reset">Enregistrer le mot de passe</button>
+        <div class="erreur" id="err-reset"></div>
+      </div>
+
+      <!-- COMPLÉTER LE PROFIL (comptes Google) -->
+      <div class="zone" id="z-completer">
+        <form id="f-completer">
           <div class="deux">
-            <div class="champ"><label data-fr="N° de membre OPQ" data-en="OPQ member number">N° de membre OPQ</label><input name="OPQ" required inputmode="numeric" pattern="\d{4,8}" maxlength="8" title="Numéro de membre OPQ (chiffres seulement)"></div>
-            <div class="champ"><label data-fr="Années d'expérience" data-en="Years of experience">Années d'expérience</label><input name="Experience" type="number" min="0" max="60"></div>
+            <div class="champ"><label>Prénom</label><input id="g-prenom" autocomplete="given-name" required></div>
+            <div class="champ"><label>Nom</label><input id="g-nom" autocomplete="family-name" required></div>
           </div>
-          <div class="champ"><label data-fr="Régions desservies" data-en="Regions served">Régions desservies</label><input name="Regions" placeholder="ex. Montréal, Rive-Sud, régions éloignées"></div>
-          <div class="deux">
-            <div class="champ"><label data-fr="Courriel" data-en="Email">Courriel</label><input name="email" type="email" required></div>
-            <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input name="Telephone" type="tel" required pattern="\d{3}-\d{3}-\d{4}" title="Format : 514-555-0123" placeholder="514-555-0123"></div>
-          </div>
-          <button class="btn" type="submit" data-fr="Demander l'accès" data-en="Request access">Demander l'accès</button>
-          <span class="approb" data-fr="Vérification OPQ + approbation — &lt; 24 h" data-en="OPQ verification + approval — &lt; 24 h">Vérification OPQ + approbation — &lt; 24&nbsp;h</span>
+          <div class="champ"><label>Téléphone</label><input id="g-tel" type="tel" required placeholder="514-555-0123"></div>
+          <label class="consent">
+            <input type="checkbox" id="g-consent" required>
+            <span>J'accepte la <a href="confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a> et le traitement de mes renseignements personnels</span>
+          </label>
+          <button class="btn" type="submit" id="btn-completer">Continuer</button>
+          <div class="erreur" id="err-completer"></div>
         </form>
-        <p class="note"><span data-fr="Déjà un compte ?" data-en="Have an account?">Déjà un compte&nbsp;?</span> <button class="vers-conn" data-fr="Connectez-vous" data-en="Log in">Connectez-vous</button></p>
       </div>
 
       <!-- SUCCÈS -->
       <div class="succes" id="z-succes">
-        <b data-fr="DEMANDE TRANSMISE." data-en="REQUEST SENT.">DEMANDE TRANSMISE.</b><br><br>
-        <span data-fr="Courriel de confirmation envoyé (vérifiez vos indésirables). Un administrateur examinera votre demande — code d'accès par courriel après approbation, généralement sous 24 h." data-en="Confirmation email sent (check your spam folder). An administrator will review your request — access code by email once approved, usually within 24 hours.">Courriel de confirmation envoyé (vérifiez vos indésirables). Un administrateur examinera votre demande — code d'accès par courriel après approbation, généralement sous 24&nbsp;h.</span><br><br>
-        <a href="profil.html" data-fr="Accélérez votre activation : complétez votre profil →" data-en="Speed up your activation: complete your profile →">Accélérez votre activation : complétez votre profil →</a>
+        <b id="succes-titre"></b><br><br>
+        <span id="succes-texte"></span>
       </div>
     </div>
 
-    <p class="pied" data-fr="C-DIRECT // ACCÈS SÉCURISÉ · QUÉBEC" data-en="C-DIRECT // SECURE ACCESS · QUEBEC">C-DIRECT // ACCÈS SÉCURISÉ · QUÉBEC</p>
+    <p class="pied">C-DIRECT // ACCÈS SÉCURISÉ · QUÉBEC</p>
   </div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="auth.js"></script>
 <script>
-// =====================================================
-// ✏️ CODES D'ACCÈS — remis par vous après approbation.
-// (Portillon simple pour la phase de démarrage — doivent
-// correspondre à admin.html.)
-// =====================================================
-const CODES = {
-  pharmacie:  "CD-PHCIE-X4YA",
-  pharmacien: "CD-PHCEN-4BA2",
-  admin:      "CD-ADM-QQVV"
-};
-const DESTINATIONS = {
-  pharmacie: "pharmacies.html",
-  pharmacien: "espace-pharmacien.html",
-  admin: "admin.html"
-};
-
+const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 
-let lang = 'fr';
-try{ lang = localStorage.getItem('cd-lang') || 'fr'; }catch(e){}
-let mode = params.get('mode') === 'conn' ? 'conn' : 'insc';
+let mode = params.get('mode') || 'insc';   /* insc | conn | oubli | reset | completer | suite */
 let role = ['pharmacien','pharmacie'].includes(params.get('role')) ? params.get('role') : null;
-let etape = role ? 'form' : 'entree'; /* 'entree' → 'role' → 'form' */
+let etape = 'entree';
+if(mode==='conn') etape='form';
+if(mode==='insc' && role) etape='form';
 
-/* ---- textes dynamiques ---- */
-const T = {
-  titreConn:   {fr:"Accès sécurisé", en:"Secure access"},
-  titreInsc:   {fr:"Créer un compte", en:"Create account"},
-  titreAdmin:  {fr:"Accès administrateur", en:"Administrator access"},
-  sousEntreeConn:{fr:"Identifiez-vous pour accéder à votre espace.", en:"Identify yourself to access your space."},
-  sousEntreeInsc:{fr:"Gratuit. Vérifié. Approuvé sous 24 h.", en:"Free. Verified. Approved within 24 h."},
-  btnEmailConn:{fr:"Se connecter par courriel", en:"Log in with email"},
-  btnEmailInsc:{fr:"S'inscrire par courriel", en:"Sign up with email"},
-  sousRole:    {fr:"Identifiez votre profil :", en:"Identify your profile:"},
-  sousConn:    {fr:"Courriel + code d'accès.", en:"Email + access code."},
-  sousInsc:    {fr:"Vérification et approbation sous 24 h.", en:"Verified and approved within 24 h."},
-  pharmacien:  {fr:"PHARMACIEN REMPLAÇANT", en:"RELIEF PHARMACIST"},
-  pharmacie:   {fr:"PHARMACIE", en:"PHARMACY"},
-  admin:       {fr:"ADMINISTRATEUR", en:"ADMINISTRATOR"}
-};
+const NOM_ROLE = { pharmacien:'PHARMACIEN(NE) REMPLAÇANT(E)', pharmacie:'PHARMACIE' };
 
-/* ---- langue ---- */
-function setLang(l){
-  lang = l;
-  document.documentElement.lang = l;
-  try{ localStorage.setItem('cd-lang', l); }catch(e){}
-  $('fr').classList.toggle('on', l==='fr');
-  $('en').classList.toggle('on', l==='en');
-  document.querySelectorAll('[data-fr]').forEach(el=>{ el.innerHTML = el.dataset[l]; });
-  render();
+/* ---------- rendu ---------- */
+function cacherTout(){
+  ['z-entree','z-role','z-connexion','z-inscription','z-oubli','z-reset','z-completer'].forEach(z=>$(z).classList.remove('on'));
+  $('z-succes').style.display='none';
+  $('role-actuel').style.display='none';
+  document.querySelectorAll('.erreur').forEach(e=>e.style.display='none');
 }
-$('fr').onclick = ()=>setLang('fr');
-$('en').onclick = ()=>setLang('en');
+function montrer(zone){ cacherTout(); if(zone) $(zone).classList.add('on'); }
 
-/* ---- rendu ---- */
 function render(){
-  const enForm = (etape==='form');
-  $('titre').textContent = role==='admin' ? T.titreAdmin[lang] : (mode==='conn' ? T.titreConn[lang] : T.titreInsc[lang]);
-  let sous;
-  if(etape==='entree')    sous = mode==='conn' ? T.sousEntreeConn[lang] : T.sousEntreeInsc[lang];
-  else if(etape==='role') sous = T.sousRole[lang];
-  else                    sous = (mode==='conn' || role==='admin') ? T.sousConn[lang] : T.sousInsc[lang];
-  $('sous-titre').textContent = sous;
-  $('z-entree').classList.toggle('on', etape==='entree');
-  $('btn-courriel').textContent = mode==='conn' ? T.btnEmailConn[lang] : T.btnEmailInsc[lang];
-  $('bascule-insc').style.display = mode==='insc' ? '' : 'none';
-  $('bascule-conn').style.display = mode==='conn' ? '' : 'none';
-  $('g-note').style.display = 'none';
-  $('z-role').classList.toggle('on', etape==='role');
-  $('role-actuel').style.display = (enForm && role!=='admin') ? 'flex' : 'none';
-  if(enForm && role && role!=='admin') $('role-nom').textContent = T[role][lang];
-  const conn = (mode==='conn' || role==='admin');
-  $('z-connexion').classList.toggle('on', enForm && conn);
-  $('z-insc-pharmacie').classList.toggle('on', enForm && !conn && role==='pharmacie');
-  $('z-insc-pharmacien').classList.toggle('on', enForm && !conn && role==='pharmacien');
-  $('z-succes').style.display = 'none';
-  $('err').style.display = 'none';
+  if(mode==='reset'){
+    $('titre').textContent='Nouveau mot de passe';
+    $('sous-titre').textContent='Choisissez votre nouveau mot de passe.';
+    montrer('z-reset'); return;
+  }
+  if(mode==='oubli'){
+    $('titre').textContent='Mot de passe oublié';
+    $('sous-titre').textContent='Recevez un lien de réinitialisation par courriel.';
+    montrer('z-oubli'); return;
+  }
+  if(mode==='completer'){
+    $('titre').textContent='Compléter votre profil';
+    if(!role){
+      $('sous-titre').textContent='Identifiez votre profil :';
+      montrer('z-role');
+    }else{
+      $('sous-titre').textContent='Une dernière étape.';
+      montrer('z-completer');
+      $('role-actuel').style.display='flex';
+      $('role-nom').textContent=NOM_ROLE[role];
+    }
+    return;
+  }
+  if(mode==='conn'){
+    $('titre').textContent='Accès sécurisé';
+    if(etape==='entree'){
+      $('sous-titre').textContent='Identifiez-vous pour accéder à votre espace.';
+      $('btn-courriel').textContent='Se connecter par courriel';
+      $('bascule-insc').style.display='none'; $('bascule-conn').style.display='';
+      montrer('z-entree');
+    }else{
+      $('sous-titre').textContent='Courriel + mot de passe.';
+      montrer('z-connexion');
+    }
+    return;
+  }
+  /* inscription */
+  $('titre').textContent='Créer un compte';
+  if(etape==='entree'){
+    $('sous-titre').textContent='Gratuit. Vérifié. Sécurisé.';
+    $('btn-courriel').textContent="S'inscrire par courriel";
+    $('bascule-insc').style.display=''; $('bascule-conn').style.display='none';
+    montrer('z-entree');
+  }else if(etape==='role' || !role){
+    $('sous-titre').textContent='Identifiez votre profil :';
+    montrer('z-role');
+  }else{
+    $('sous-titre').textContent='Vos renseignements de base.';
+    montrer('z-inscription');
+    $('role-actuel').style.display='flex';
+    $('role-nom').textContent=NOM_ROLE[role];
+  }
 }
 
-/* ---- navigation ---- */
-$('btn-courriel').onclick = ()=>{ etape='role'; render(); };
-$('btn-google').onclick   = ()=>{ render(); $('g-note').style.display='block'; };
-$('retour-entree').onclick= ()=>{ etape='entree'; render(); };
+function succes(titre, texte){
+  cacherTout();
+  $('titre').textContent='C-Direct';
+  $('sous-titre').textContent='';
+  $('succes-titre').textContent=titre;
+  $('succes-texte').innerHTML=texte;
+  $('z-succes').style.display='block';
+}
+function erreur(id, msg){ $(id).textContent=msg; $(id).style.display='block'; }
+
+function messageErreur(e){
+  const m = (e && e.message || '').toLowerCase();
+  if(m.includes('invalid login')) return 'Courriel ou mot de passe invalide.';
+  if(m.includes('not confirmed')) return 'Courriel non confirmé — cliquez le lien reçu par courriel (vérifiez vos indésirables).';
+  if(m.includes('already registered')) return 'Un compte existe déjà avec ce courriel. Connectez-vous.';
+  if(m.includes('at least')) return 'Mot de passe trop court (8 caractères minimum).';
+  if(m.includes('rate limit')) return 'Trop de tentatives — réessayez dans quelques minutes.';
+  return e && e.message ? e.message : 'Une erreur est survenue. Réessayez.';
+}
+
+/* ---------- navigation ---------- */
+$('btn-courriel').onclick = ()=>{ etape = (mode==='conn') ? 'form' : (role ? 'form' : 'role'); render(); };
+$('retour-entree').onclick= ()=>{ if(mode==='completer'){return;} etape='entree'; render(); };
 $('r-pharmacien').onclick = ()=>{ role='pharmacien'; etape='form'; render(); };
 $('r-pharmacie').onclick  = ()=>{ role='pharmacie';  etape='form'; render(); };
 $('chg-role').onclick     = ()=>{ role=null; etape='role'; render(); };
-document.querySelectorAll('.vers-insc').forEach(b=> b.onclick = ()=>{ mode='insc'; render(); });
-document.querySelectorAll('.vers-conn').forEach(b=> b.onclick = ()=>{ mode='conn'; render(); });
+document.querySelectorAll('.vers-insc').forEach(b=> b.onclick = ()=>{ mode='insc'; etape='entree'; render(); });
+document.querySelectorAll('.vers-conn').forEach(b=> b.onclick = ()=>{ mode='conn'; etape='form'; render(); });
+$('lien-oubli').onclick = ()=>{ mode='oubli'; $('o-courriel').value=$('c-courriel').value; render(); };
 
-/* ---- afficher / masquer le code ---- */
-$('voir-code').onclick = ()=>{
-  const c = $('c-code');
-  const visible = c.type === 'text';
-  c.type = visible ? 'password' : 'text';
-  $('voir-code').textContent = visible ? (lang==='fr'?'afficher':'show') : (lang==='fr'?'masquer':'hide');
-};
-
-/* ---- porte cachée admin : 5 clics sur le logo, ou #admin ---- */
-let clics = 0, minuteur = null;
-$('logo').addEventListener('click', ()=>{
-  clics++;
-  clearTimeout(minuteur);
-  minuteur = setTimeout(()=>clics=0, 2500);
-  if(clics>=5){ role='admin'; mode='conn'; etape='form'; render(); clics=0; }
+/* afficher / masquer les mots de passe */
+document.querySelectorAll('.oeil').forEach(o=>{
+  o.onclick = ()=>{
+    const c = $(o.dataset.cible);
+    const visible = c.type==='text';
+    c.type = visible ? 'password' : 'text';
+    o.textContent = visible ? 'afficher' : 'masquer';
+  };
 });
-if(location.hash === '#admin'){ role='admin'; mode='conn'; etape='form'; }
 
-/* ---- connexion ---- */
-$('btn-connexion').onclick = ()=>{
-  const roleConn = role==='admin' ? 'admin' : role;
-  const code = $('c-code').value.trim();
-  if(code && code === CODES[roleConn]){
-    window.location.href = DESTINATIONS[roleConn];
-  } else {
-    $('err').style.display = 'block';
-  }
-};
-$('c-code').addEventListener('keydown', e=>{ if(e.key==='Enter') $('btn-connexion').click(); });
-
-/* ---- inscriptions (FormSubmit → courriel admin + confirmation automatique au demandeur) ---- */
-async function envoyer(e){
-  e.preventDefault();
-  const form = e.target, btn = form.querySelector('button[type=submit]');
-  btn.disabled = true;
-  btn.textContent = lang==='fr' ? 'Envoi…' : 'Sending…';
-  try{
-    const data = Object.fromEntries(new FormData(form).entries());
-    data._template = 'table';
-    data._captcha = 'false';
-    data._autoresponse = lang==='fr'
-      ? "Merci ! Votre demande d'inscription à C-Direct a bien été reçue. Un administrateur vérifiera votre profil et vous recevrez votre code d'accès par courriel après approbation — généralement sous 24 h. Vous pouvez accélérer votre activation en complétant votre profil : https://projet-1-1yi.pages.dev/profil.html — L'équipe C-Direct"
-      : "Thank you! Your C-Direct registration request has been received. An administrator will verify your profile and you will receive your access code by email once approved — usually within 24 hours. You can speed up your activation by completing your profile: https://projet-1-1yi.pages.dev/profil.html — The C-Direct team";
-    const r = await fetch("https://formsubmit.co/ajax/edouardmalak@gmail.com",{
-      method:'POST',
-      headers:{'Content-Type':'application/json; charset=utf-8','Accept':'application/json'},
-      body: JSON.stringify(data)
-    });
-    if(!r.ok) throw new Error();
-    $('z-insc-pharmacie').classList.remove('on');
-    $('z-insc-pharmacien').classList.remove('on');
-    $('role-actuel').style.display = 'none';
-    $('z-succes').style.display = 'block';
-  }catch(err){
-    btn.disabled = false;
-    btn.textContent = lang==='fr' ? "Demander l'accès" : "Request access";
-    alert(lang==='fr' ? "L'envoi a échoué. Réessayez." : "Sending failed. Please try again.");
-  }
-}
-$('f-pharmacie').addEventListener('submit', envoyer);
-$('f-pharmacien').addEventListener('submit', envoyer);
-
-/* ---- format automatique des téléphones : 514-555-0123 ---- */
+/* format téléphone : 514-555-0123 */
 document.querySelectorAll('input[type=tel]').forEach(el=>{
   el.addEventListener('input', ()=>{
     const d = el.value.replace(/\D/g,'').slice(0,10);
@@ -401,12 +382,140 @@ document.querySelectorAll('input[type=tel]').forEach(el=>{
              : d.length>3 ? d.slice(0,3)+'-'+d.slice(3) : d;
   });
 });
-/* ---- OPQ : chiffres seulement ---- */
-document.querySelectorAll('input[name=OPQ]').forEach(el=>{
-  el.addEventListener('input', ()=>{ el.value = el.value.replace(/\D/g,'').slice(0,8); });
+
+/* ---------- Google OAuth ---------- */
+$('btn-google').onclick = async ()=>{
+  const { error } = await sb.auth.signInWithOAuth({
+    provider:'google',
+    options:{ redirectTo: location.origin + location.pathname + '?mode=suite' }
+  });
+  if(error) alert(messageErreur(error));
+};
+
+/* ---------- connexion ---------- */
+$('btn-connexion').onclick = async ()=>{
+  const b=$('btn-connexion'); b.disabled=true;
+  const { error } = await sb.auth.signInWithPassword({
+    email:$('c-courriel').value.trim(), password:$('c-mdp').value
+  });
+  b.disabled=false;
+  if(error){ erreur('err-conn', messageErreur(error)); return; }
+  await apresConnexion();
+};
+$('c-mdp').addEventListener('keydown', e=>{ if(e.key==='Enter') $('btn-connexion').click(); });
+
+/* ---------- inscription ---------- */
+$('f-inscription').addEventListener('submit', async e=>{
+  e.preventDefault();
+  if(!role){ etape='role'; render(); return; }
+  const tel = cdE164($('i-tel').value);
+  if(!tel){ erreur('err-insc','Téléphone invalide — 10 chiffres requis.'); return; }
+  if(!$('i-consent').checked){ erreur('err-insc','Le consentement est requis.'); return; }
+  const b=$('btn-inscription'); b.disabled=true; b.textContent='Création…';
+  const { data, error } = await sb.auth.signUp({
+    email: $('i-courriel').value.trim(),
+    password: $('i-mdp').value,
+    options:{
+      emailRedirectTo: location.origin + location.pathname + '?mode=conn',
+      data:{
+        role, nom:$('i-nom').value.trim(), prenom:$('i-prenom').value.trim(),
+        telephone: tel, consentement:'true', consentement_date:new Date().toISOString()
+      }
+    }
+  });
+  b.disabled=false; b.textContent='Créer mon compte';
+  if(error){ erreur('err-insc', messageErreur(error)); return; }
+  if(data.session){ await apresConnexion(); return; }
+  succes('COMPTE CRÉÉ.',
+    "Un courriel de confirmation vient de vous être envoyé (vérifiez vos indésirables).<br><br>Cliquez le lien pour activer votre compte, puis connectez-vous.");
 });
 
-setLang(lang);
+/* ---------- mot de passe oublié ---------- */
+$('btn-oubli').onclick = async ()=>{
+  const c=$('o-courriel').value.trim();
+  if(!c){ erreur('err-oubli','Entrez votre courriel.'); return; }
+  const b=$('btn-oubli'); b.disabled=true;
+  const { error } = await sb.auth.resetPasswordForEmail(c, {
+    redirectTo: location.origin + location.pathname + '?mode=reset'
+  });
+  b.disabled=false;
+  if(error){ erreur('err-oubli', messageErreur(error)); return; }
+  succes('COURRIEL ENVOYÉ.',
+    "Si un compte existe pour <b>"+c.replace(/</g,'&lt;')+"</b>, un lien de réinitialisation vient d'être envoyé.");
+};
+
+/* ---------- nouveau mot de passe ---------- */
+$('btn-reset').onclick = async ()=>{
+  const mdp=$('rz-mdp').value;
+  if(mdp.length<8){ erreur('err-reset','8 caractères minimum.'); return; }
+  const b=$('btn-reset'); b.disabled=true;
+  const { error } = await sb.auth.updateUser({ password: mdp });
+  b.disabled=false;
+  if(error){ erreur('err-reset', messageErreur(error)); return; }
+  await apresConnexion();
+};
+
+/* ---------- compléter le profil (Google) ---------- */
+$('f-completer').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const tel = cdE164($('g-tel').value);
+  if(!tel){ erreur('err-completer','Téléphone invalide — 10 chiffres requis.'); return; }
+  if(!$('g-consent').checked){ erreur('err-completer','Le consentement est requis.'); return; }
+  if(!role){ etape='role'; render(); return; }
+  const s = await cdSession();
+  if(!s){ mode='conn'; etape='form'; render(); return; }
+  const b=$('btn-completer'); b.disabled=true;
+  const maj = {
+    prenom:$('g-prenom').value.trim(), nom:$('g-nom').value.trim(),
+    telephone: tel, consentement_date:new Date().toISOString(), courriel:s.user.email
+  };
+  const actuel = await cdProfil(true);
+  if(!actuel || !actuel.role) maj.role = role;
+  let error;
+  if(actuel){
+    ({ error } = await sb.from('profiles').update(maj).eq('id', s.user.id));
+  }else{
+    maj.id = s.user.id; maj.role = role;
+    ({ error } = await sb.from('profiles').insert(maj));
+  }
+  b.disabled=false;
+  if(error){ erreur('err-completer', messageErreur(error)); return; }
+  const p = await cdProfil(true);
+  cdReprendreSuite(p.role);
+});
+
+/* ---------- après connexion : profil complet ? puis reprendre l'URL visée ---------- */
+async function apresConnexion(){
+  const p = await cdProfil(true);
+  if(!p || !p.role || !p.consentement_date){
+    mode='completer';
+    role = p && p.role ? p.role : null;
+    const s = await cdSession();
+    const meta = s && s.user.user_metadata || {};
+    if(meta.full_name){
+      const morceaux = meta.full_name.split(' ');
+      $('g-prenom').value = morceaux[0]||''; $('g-nom').value = morceaux.slice(1).join(' ');
+    }
+    render(); return;
+  }
+  cdReprendreSuite(p.role);
+}
+
+/* ---------- amorçage ---------- */
+(async function(){
+  /* lien de réinitialisation : Supabase émet PASSWORD_RECOVERY */
+  sb.auth.onAuthStateChange((evt)=>{ if(evt==='PASSWORD_RECOVERY'){ mode='reset'; render(); } });
+
+  const s = await cdSession();
+  if(mode==='reset'){ render(); return; }
+  if(s){
+    /* retour OAuth ou déjà connecté */
+    await apresConnexion();
+    return;
+  }
+  if(mode==='suite' || mode==='completer'){ mode='conn'; etape='form'; }
+  render();
+})();
 </script>
 </body>
 </html>
