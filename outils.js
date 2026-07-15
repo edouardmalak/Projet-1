@@ -99,4 +99,22 @@ window.cdEntenteTexte = function(c, contrat){
   const hf = c.heure_fin_proposee || contrat.heure_fin;
   return cdArgent(c.tarif_propose) + '/h · ' + cdHeure(hd) + ' – ' + cdHeure(hf);
 };
+
+/* ---- alerte admin (Web3Forms) sur les évènements de candidature ----
+   NOTE : la clé Web3Forms livre TOUJOURS à la boîte courriel de son
+   propriétaire (Robert) — elle ne peut pas notifier dynamiquement le
+   pharmacien ou la pharmacie eux-mêmes. C'est un correctif temporaire
+   « alerte admin » en attendant la vraie solution par utilisateur
+   (voir sql/06-notifications-email.sql, Resend + pg_net).
+   Best-effort : échoue en silence si hors-ligne. ---- */
+const CLE_ADMIN_ALERTE = "6d62e4bb-5cdd-42e9-8c64-5e9a9cf465eb";
+window.cdAlerteAdmin = async function(sujet, message){
+  try{
+    await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json; charset=utf-8','Accept':'application/json'},
+      body: JSON.stringify({access_key: CLE_ADMIN_ALERTE, subject: '[C-Direct] ' + sujet, from_name: 'C-Direct', message: message})
+    });
+  }catch(e){ /* best-effort, ne bloque jamais le flux */ }
+};
 })();

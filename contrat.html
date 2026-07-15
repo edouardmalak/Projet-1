@@ -283,6 +283,8 @@ function msg(texte, type){
             $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = true;
             const { error: e } = await sb.rpc('accepter_contre_offre', { p_candidature: ma.id });
             if(e){ $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = false; msg('Erreur : '+e.message,'ko'); return; }
+            cdAlerteAdmin('Contre-offre acceptée — ' + k.numero_reference,
+              (profil.prenom||profil.courriel||'Un pharmacien') + ' a accepté la contre-offre pour ' + k.numero_reference + ' (' + cdEntenteTexte(ma, k) + ').');
             location.reload();
           };
           $('btn-refuser-co').onclick = async ()=>{
@@ -293,6 +295,8 @@ function msg(texte, type){
               message: cdJalonAjouter(ma.message, {etape:'refuse', par:'pharmacien'})
             }).eq('id', ma.id);
             if(e){ $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = false; msg('Erreur : '+e.message,'ko'); return; }
+            cdAlerteAdmin('Contre-offre refusée — ' + k.numero_reference,
+              (profil.prenom||profil.courriel||'Un pharmacien') + ' a refusé la contre-offre pour ' + k.numero_reference + '.');
             location.reload();
           };
         }
@@ -301,7 +305,7 @@ function msg(texte, type){
       $('zone-postuler').style.display = '';
       $('o-tarif').value = k.tarif_horaire;
 
-      async function postuler(payload, apres){
+      async function postuler(payload, apres, sujetAlerte, messageAlerte){
         ['btn-instant','btn-offrir','btn-envoyer'].forEach(b=>{ $(b).disabled = true; });
         const { error: e } = await sb.from('candidatures').insert(payload);
         if(e){
@@ -311,6 +315,7 @@ function msg(texte, type){
         }
         $('zone-postuler').style.display = 'none';
         msg(apres, 'ok');
+        cdAlerteAdmin(sujetAlerte, messageAlerte);
       }
 
       /* vitesse 1 : tarif affiché, horaire affiché — acceptation en un geste */
@@ -320,7 +325,9 @@ function msg(texte, type){
         tarif_propose: k.tarif_horaire,
         message: cdJalonAjouter(null, {etape:'candidature', par:'pharmacien',
           type:'instantanee', tarif:k.tarif_horaire, hd:k.heure_debut, hf:k.heure_fin})
-      }, 'Candidature envoyée au tarif affiché (' + cdArgent(k.tarif_horaire) + '/h). La pharmacie peut accepter en un geste.');
+      }, 'Candidature envoyée au tarif affiché (' + cdArgent(k.tarif_horaire) + '/h). La pharmacie peut accepter en un geste.',
+      'Nouvelle candidature — ' + k.numero_reference,
+      (profil.prenom||profil.courriel||'Un pharmacien') + ' a postulé au tarif affiché (' + cdArgent(k.tarif_horaire) + '/h) sur ' + k.numero_reference + '.');
 
       /* vitesse 2 : offre négociée */
       $('btn-offrir').onclick = ()=>{ $('f-offre').classList.toggle('on'); };
@@ -338,7 +345,9 @@ function msg(texte, type){
           heure_debut_proposee: hd, heure_fin_proposee: hf,
           message: cdJalonAjouter(null, {etape:'candidature', par:'pharmacien',
             type:'negociee', tarif:tarif, hd:hd||k.heure_debut, hf:hf||k.heure_fin, message:texte})
-        }, 'Offre envoyée (' + cdArgent(tarif) + '/h' + (hd?', horaire proposé '+cdHeure(hd)+' – '+cdHeure(hf):'') + '). La pharmacie vous répondra.');
+        }, 'Offre envoyée (' + cdArgent(tarif) + '/h' + (hd?', horaire proposé '+cdHeure(hd)+' – '+cdHeure(hf):'') + '). La pharmacie vous répondra.',
+        'Nouvelle offre négociée — ' + k.numero_reference,
+        (profil.prenom||profil.courriel||'Un pharmacien') + ' propose ' + cdArgent(tarif) + '/h' + (hd?' ('+cdHeure(hd)+'–'+cdHeure(hf)+')':'') + ' sur ' + k.numero_reference + (texte?' — « '+texte+' »':'') + '.');
       });
     } else {
       msg('Ce contrat n’est plus ouvert aux candidatures.', 'info');
