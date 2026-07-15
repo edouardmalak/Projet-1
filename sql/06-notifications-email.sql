@@ -29,10 +29,10 @@
 --         select vault.update_secret(
 --           (select id from vault.decrypted_secrets where name = 'resend_api_key'),
 --           'nouvelle_cle');)
---   5. Remplacer ci-dessous EXPEDITEUR_EMAIL par une adresse de VOTRE
---      domaine vérifié (ex. 'C-Direct <notifications@votredomaine.com>').
---      Tant que ce n'est pas fait, laisser 'onboarding@resend.dev' —
---      ça fonctionnera seulement en envoi vers vous-même pour tester.
+--   5. FAIT : l'adresse d'expédition ci-dessous est déjà réglée sur
+--      'notifications@c-direct.ca' (domaine c-direct.ca). Ce domaine DOIT
+--      être vérifié dans Resend → Domains AVANT d'exécuter ce fichier,
+--      sinon Resend rejettera tous les envois.
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
@@ -70,7 +70,7 @@ begin
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object(
-      'from', 'C-Direct <onboarding@resend.dev>',   -- ✏️ remplacer par votre domaine vérifié
+      'from', 'C-Direct <notifications@c-direct.ca>',   -- domaine vérifié dans Resend
       'to', array[p_a],
       'subject', p_sujet,
       'html', p_html
