@@ -18,6 +18,8 @@ export default {
         return await routeTest(request, env);
       if (request.method === 'POST' && url.pathname === '/webhook')
         return await routeWebhook(request, env);
+      if (request.method === 'POST' && url.pathname === '/twilio-inbound')
+        return await routeTwilioInbound(request, env);
       return json({ erreur: 'Route inconnue' }, 404);
     } catch (e) {
       console.error('Erreur worker:', e.stack || e.message);
@@ -234,6 +236,63 @@ async function routeWebhook(request, env) {
     sms_envoyes: nEnvoyes,
     confirmation_pharmacie: confirmation ? confirmation.ok : 'aucun téléphone au profil',
   });
+}
+
+/* =====================================================================
+   POST /twilio-inbound — SMS entrants (webhook du numéro Twilio).
+   Twilio poste en application/x-www-form-urlencoded : From, Body, …
+   · ARRET / STOP / UNSUBSCRIBE / DESABONNER (+ variantes accentuées)
+     → profiles.sms_optin = false pour ce numéro E.164 + journal.
+     (Twilio bloque déjà ARRET/STOP côté opérateur sur les longs codes
+      canadiens — ici on synchronise NOTRE base en plus.)
+   · Tout autre message : journalisé pour lecture admin, AUCUNE réponse.
+===================================================================== */
+const MOTS_OPTOUT = ['ARRET', 'ARRÊT', 'STOP', 'UNSUBSCRIBE', 'DESABONNER', 'DÉSABONNER', 'STOPALL'];
+
+async function routeTwilioInbound(request, env) {
+  const form = await request.formData().catch(() => null);
+  const de = form ? String(form.get('From') || '') : '';
+  const corps = form ? String(form.get('Body') || '') : '';
+  const sid = form ? String(form.get('MessageSid') || '') : null;
+
+  /* réponse TwiML vide = aucune réponse automatique */
+  const twimlVide = new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
+    { headers: { 'Content-Type': 'text/xml' } });
+
+  if (!de) return twimlVide;
+
+  const premierMot = corps.trim().toUpperCase().split(/\s+/)[0] || '';
+  const estOptout = MOTS_OPTOUT.includes(premierMot);
+
+  /* profil correspondant à ce numéro (peut être absent) */
+  const profils = await sbSelect(env,
+    `profiles?select=id,sms_optin&telephone=eq.${encodeURIComponent(de)}&limit=1`);
+  const profil = profils[0] || null;
+
+  if (estOptout) {
+    if (profil) {
+      await sbUpdate(env, `profiles?id=eq.${profil.id}`, { sms_optin: false, sms_optin_date: null });
+    }
+    await loggerSms(env, {
+      profile_id: profil ? profil.id : null,
+      type: 'optout',
+      to_number: de,
+      body: corps.slice(0, 300),
+      twilio_sid: sid,
+      statut: profil ? 'optout_applique' : 'optout_numero_inconnu',
+    });
+  } else {
+    await loggerSms(env, {
+      profile_id: profil ? profil.id : null,
+      type: 'inbound',
+      to_number: de,
+      body: corps.slice(0, 300),
+      twilio_sid: sid,
+      statut: 'recu',
+    });
+  }
+
+  return twimlVide;
 }
 
 /* =====================================================================
