@@ -148,6 +148,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
       </div>
       <div class="champ"><label>Notes (accès, consignes…)</label><textarea id="notes" rows="2"></textarea></div>
       <button class="btn" type="submit" id="btn-pub">Publier le contrat</button>
+      <div class="indice" style="margin-top:8px">En publiant, vous acceptez les <a href="/regles.html" target="_blank" rel="noopener" style="color:var(--vert-vif)">règles du réseau</a> — dont la protection d'annulation (50&nbsp;% à moins de 7&nbsp;jours, 100&nbsp;% à moins de 48&nbsp;h).</div>
       <div class="msg" id="msg-pub"></div>
     </form>
   </div>
@@ -323,6 +324,13 @@ async function chargerContrats(){
         '<span class="badge '+b[0]+'">'+b[1]+'</span>'+
       '</div>'+
       '<div class="candidats"></div>';
+    /* annulation d'un contrat encore ouvert (aucune pénalité) */
+    if(k.statut === 'ouvert'){
+      const bX = document.createElement('button');
+      bX.className='btn-mini rouge'; bX.textContent='Annuler';
+      bX.onclick = ev=>{ ev.stopPropagation(); annulerContrat(k, bX); };
+      div.querySelector('.tete').appendChild(bX);
+    }
     const zone = div.querySelector('.candidats');
     div.querySelector('.tete').onclick = ()=>{
       const ouverte = zone.style.display === 'block';
@@ -331,6 +339,32 @@ async function chargerContrats(){
     };
     $('liste').appendChild(div);
   });
+}
+
+/* ---- Phase 3 : annulation par la pharmacie (protection du réseau) ---- */
+async function annulerContrat(k, btn){
+  const p7  = regles ? regles.penalite_annulation_7j_pct  : 50;
+  const p48 = regles ? regles.penalite_annulation_48h_pct : 100;
+  const texte = k.statut === 'attribue'
+    ? 'ANNULER le contrat ' + k.numero_reference + ' (attribué) ?\n\n' +
+      'Règle du réseau — protection d\'annulation :\n' +
+      '· moins de 7 jours avant le début : pénalité de ' + p7 + ' % des heures × tarif convenus\n' +
+      '· moins de 48 heures avant le début : ' + p48 + ' %\n\n' +
+      'Si l\'annulation tombe dans une fenêtre de pénalité, la facture est générée et envoyée AUTOMATIQUEMENT au pharmacien. Aucune pénalité hors de ces fenêtres.\n\nContinuer ?'
+    : 'Retirer le contrat ' + k.numero_reference + ' (encore ouvert) ?\n\nAucune pénalité — le contrat n\'est pas attribué. Cette action est définitive.';
+  if(!confirm(texte)) return;
+  btn.disabled = true;
+  const { data, error } = await sb.rpc('annuler_contrat_pharmacie', { p_contrat: k.id });
+  if(error){ btn.disabled = false; alert('Erreur : ' + error.message); return; }
+  const pct = data ? (data.penalite_pct || 0) : 0;
+  cdAlerteAdmin('Annulation pharmacie — ' + k.numero_reference,
+    (profil.nom_pharmacie||profil.courriel) + ' a annulé ' + k.numero_reference +
+    (pct > 0 ? ' — pénalité ' + pct + ' %, facture envoyée automatiquement au pharmacien.' : ' — aucune pénalité.'));
+  if(pct > 0){
+    alert('Contrat annulé. Pénalité de ' + pct + ' % appliquée — la facture du pharmacien a été générée et envoyée automatiquement (voir « Factures reçues »).');
+  }
+  chargerContrats();
+  chargerFactures();
 }
 
 /* ---- candidats d'un contrat : négociation 3 étapes ---- */
@@ -375,6 +409,13 @@ async function chargerCandidats(k, zone){
         };
         actions.appendChild(bC);
       }
+
+      /* annulation par la pharmacie — protection du réseau */
+      const bX = document.createElement('button');
+      bX.className='btn-mini rouge'; bX.textContent='Annuler le contrat';
+      bX.onclick = ()=> annulerContrat(k, bX);
+      actions.appendChild(bX);
+
       zone.appendChild(actions);
       zone.dataset.zoneActions = '1';
     }
