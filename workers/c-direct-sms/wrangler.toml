@@ -1,0 +1,15 @@
+# =====================================================================
+# C-DIRECT · PHASE 4 — Worker "c-direct-sms"
+# Worker séparé du déploiement Pages (le site statique n'est pas touché :
+# Pages continue de servir la racine du repo ; ce dossier n'est qu'un
+# fichier statique de plus pour Pages, sans effet).
+# Déployer depuis CE dossier : npx wrangler deploy
+# Secrets (JAMAIS ici, JAMAIS dans git) : npx wrangler secret put <NOM>
+# =====================================================================
+name = "c-direct-sms"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+
+# Aucune variable en clair : tout passe par les secrets
+#   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER,
+#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, WEBHOOK_SECRET
