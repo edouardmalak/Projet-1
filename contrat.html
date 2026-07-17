@@ -140,6 +140,11 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
       <div id="fil-conteneur"></div>
     </div>
 
+    <div id="bloc-completer" style="display:none">
+      <button class="btn" id="btn-completer">Marquer complété</button>
+      <div class="indice-btn">Le remplacement a eu lieu — la facture (brouillon) sera générée automatiquement.</div>
+    </div>
+
     <div id="bloc-contre" style="display:none">
       <div class="deux-btn">
         <button class="btn" id="btn-accepter-co" style="margin-top:20px">Accepter la contre-offre</button>
@@ -240,6 +245,28 @@ function msg(texte, type){
     });
   }
   if(k.notes){ $('bloc-notes').style.display=''; $('notes').textContent = k.notes; }
+
+  /* ---- Phase 3 : marquer complété (l'une OU l'autre des parties) ----
+     Contrat attribué + date passée + je suis la pharmacie propriétaire
+     ou le pharmacien retenu. La base journalise QUI a déclenché.     */
+  const dateContratPassee = k.date_contrat <= new Date().toISOString().slice(0,10);
+  const suisPartie = k.est_ma_pharmacie || k.ma_candidature_statut === 'accepte' || profil.role === 'admin';
+  if(k.statut === 'attribue' && dateContratPassee && suisPartie){
+    $('bloc-completer').style.display = '';
+    $('btn-completer').onclick = async ()=>{
+      if(!confirm('Confirmer que le remplacement ' + k.numero_reference + ' a bien eu lieu ? La facture sera générée en brouillon.')) return;
+      $('btn-completer').disabled = true;
+      const { data: fid, error: e } = await sb.rpc('marquer_complete', { p_contrat: k.id });
+      if(e){ $('btn-completer').disabled = false; msg('Erreur : ' + e.message, 'ko'); return; }
+      cdAlerteAdmin('Contrat complété — ' + k.numero_reference,
+        (profil.prenom||profil.courriel||'Un utilisateur') + ' (' + profil.role + ') a marqué ' + k.numero_reference + ' complété. Facture générée en brouillon.');
+      if(profil.role === 'pharmacien' || k.ma_candidature_statut === 'accepte'){
+        location.href = '/facture-vue.html?id=' + fid;   // le pharmacien révise son brouillon
+      } else {
+        location.reload();
+      }
+    };
+  }
 
   /* ---- Pharmacie propriétaire : entente finale une fois attribué ---- */
   if(k.est_ma_pharmacie && k.statut !== 'ouvert'){

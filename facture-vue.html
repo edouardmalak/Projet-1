@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Facture</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ---- même habillage que facture.html (générateur MANDAT) ---- */
+:root{--blanc:#FAFBF9;--menthe:#E7F2EC;--vert:#0B6E4F;--vert-fonce:#084C37;--encre:#1B2622;--gris:#5A6B63;--ligne:#D5E3DB;--bande:#9DC3BE;--rouge:#C0392B;--jaune:#B87A0C}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sans-serif;font-size:16px;line-height:1.5}
+.wrap{max-width:1150px;margin:0 auto;padding:26px 20px 60px}
+h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:25px;margin-bottom:4px}
+.sous{color:var(--gris);font-size:14px;margin-bottom:24px}
+.sous a{color:var(--vert);font-weight:600;text-decoration:none}
+.grille{display:grid;grid-template-columns:390px 1fr;gap:26px;align-items:start}
+@media(max-width:940px){.grille{grid-template-columns:1fr}}
+
+/* ---------- panneau statut / actions ---------- */
+.panneau{background:#fff;border:1px solid var(--ligne);border-radius:10px;padding:20px}
+.sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--vert);font-weight:600;margin:18px 0 10px;padding-top:14px;border-top:1px dashed var(--ligne)}
+.sec:first-child{margin-top:0;padding-top:0;border-top:none}
+.chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;padding:5px 12px;border-radius:4px;border:1.5px solid}
+.chip.brouillon{color:var(--gris);border-color:var(--gris);background:#f3f5f4}
+.chip.envoyee{color:var(--jaune);border-color:var(--jaune);background:#fdf6e8}
+.chip.payee{color:var(--vert);border-color:var(--vert);background:var(--menthe)}
+.chip.en_retard{color:var(--rouge);border-color:var(--rouge);background:#fbeeec}
+.detail{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--gris);margin-top:10px;line-height:1.8}
+.detail b{color:var(--encre)}
+.champ{margin:10px 0}
+.champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--gris);margin-bottom:4px}
+.champ input{width:100%;font-family:'IBM Plex Mono',monospace;font-size:14.5px;background:var(--blanc);border:1px solid var(--ligne);border-radius:4px;padding:9px 10px;color:var(--encre)}
+.champ input:focus{outline:2px solid var(--vert);border-color:var(--vert)}
+.btn{width:100%;font-weight:600;font-size:15px;background:var(--vert);color:#fff;border:none;border-radius:6px;padding:13px;cursor:pointer;margin-top:10px;font-family:'Instrument Sans',sans-serif}
+.btn:hover{background:var(--vert-fonce)}
+.btn:disabled{opacity:.6;cursor:default}
+.btn.gris{background:var(--gris)}
+.btn.gris:hover{background:#46554e}
+.astuce{margin-top:10px;font-size:12.5px;color:var(--gris)}
+.msg{display:none;border-radius:6px;padding:10px 12px;font-size:13px;margin-top:12px}
+.msg.ok{background:var(--menthe);color:var(--vert-fonce);border:1px solid var(--ligne)}
+.msg.ko{background:#fbeeec;color:var(--rouge);border:1px solid #efccc6}
+.chargement{padding:60px 20px;text-align:center;color:var(--gris);font-family:'IBM Plex Mono',monospace;font-size:13px}
+
+/* ---------- MANDAT (structure identique à facture.html) ---------- */
+.mandat{background:#fff;border:1px solid #bbb;padding:34px 38px 30px;font-family:'Instrument Sans',sans-serif;font-size:13.5px;color:#111;box-shadow:0 14px 40px rgba(8,76,55,.08)}
+.mandat h2{font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:26px;letter-spacing:.5px;margin-bottom:14px}
+.m-haut{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.m-boite{border:1.5px solid #333;padding:12px 14px;line-height:1.6}
+.m-boite .etq{font-weight:700}
+.m-droite td{padding:1.5px 0;vertical-align:top}
+.m-droite td:first-child{color:#444;text-align:right;padding-right:12px;white-space:nowrap}
+.m-droite td:last-child{font-weight:600;text-align:right}
+.m-droite{width:100%;border-collapse:collapse}
+.m-recu{border:1.5px solid #333;padding:10px 14px;margin-top:12px}
+.m-recu table{width:100%;border-collapse:collapse}
+.m-recu td{padding:1.5px 0}
+.m-recu td:first-child{color:#444;text-align:right;padding-right:12px}
+.m-recu td:last-child{font-weight:600;text-align:right}
+.m-col-g{display:flex;flex-direction:column;gap:12px}
+table.m-tbl{width:100%;border-collapse:collapse;margin-top:20px;font-size:13.5px}
+table.m-tbl th{background:var(--bande);text-align:left;font-weight:700;padding:8px 10px;font-size:13px}
+table.m-tbl th.dr,table.m-tbl td.dr{text-align:right}
+table.m-tbl td{padding:9px 10px;border-bottom:1px solid #eee}
+table.m-tbl tr:last-child td{border-bottom:none}
+.m-totaux{margin-top:6px;display:flex;justify-content:flex-end}
+.m-totaux table{border-collapse:collapse;font-size:13.5px;min-width:280px}
+.m-totaux td{padding:4px 10px}
+.m-totaux td:first-child{text-align:right;color:#333}
+.m-totaux td:last-child{text-align:right;font-weight:600;min-width:110px}
+.m-totaux tr.sep td{border-top:2px solid #111;padding-top:8px}
+.m-paye{display:flex;justify-content:space-between;border-top:2px solid #111;margin-top:14px;padding:10px 10px 0;font-size:13.5px}
+.m-net{display:flex;justify-content:space-between;align-items:baseline;padding:10px 10px 0}
+.m-net .lab{color:var(--rouge);font-weight:800;font-size:20px;letter-spacing:.5px}
+.m-net .val{color:var(--rouge);font-weight:800;font-size:20px}
+.payer-box{margin-top:24px;background:var(--menthe);border:1px solid var(--ligne);border-radius:6px;padding:14px 18px;font-size:13px;line-height:1.7;font-family:'IBM Plex Mono',monospace}
+.payer-box .lab{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--vert);font-weight:600;margin-bottom:4px}
+.payer-box b{color:var(--vert-fonce)}
+.m-pied{margin-top:22px;display:flex;justify-content:space-between;font-size:11.5px;color:#666}
+.m-pied .cd{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;color:var(--vert-fonce)}
+.tampon{display:none;margin:14px 0 0;padding:8px 12px;border:2px solid var(--vert);color:var(--vert);font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;letter-spacing:.14em;text-transform:uppercase;width:max-content;transform:rotate(-2deg)}
+.tampon.retard{border-color:var(--rouge);color:var(--rouge)}
+
+@media print{
+  body{background:#fff}
+  .panneau,h1,.sous,.no-print{display:none!important}
+  .wrap{padding:0;max-width:none}
+  .grille{display:block}
+  .mandat{border:none;box-shadow:none;padding:10px 6px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Facture C-Direct</h1>
+  <p class="sous" id="sous"><a href="#" id="lien-retour">← Retour</a></p>
+
+  <div class="chargement" id="chargement">Chargement de la facture…</div>
+
+  <div class="grille" id="grille" style="display:none">
+    <!-- ============ STATUT + ACTIONS ============ -->
+    <div class="panneau no-print">
+      <div class="sec">Statut</div>
+      <span class="chip" id="chip">—</span>
+      <div class="detail" id="detail"></div>
+
+      <div id="zone-brouillon" style="display:none">
+        <div class="sec">Réviser le brouillon</div>
+        <div class="champ">
+          <label for="in-km">Kilométrage total aller-retour (km)</label>
+          <input id="in-km" type="number" step="0.1" min="0">
+        </div>
+        <button class="btn gris" id="btn-km" type="button">Ajuster les km</button>
+        <p class="astuce">Ajustez si le trajet réel a différé (distance estimée à l'entente). Les autres montants viennent des règles du réseau.</p>
+        <button class="btn" id="btn-envoyer" type="button">Envoyer la facture à la pharmacie</button>
+        <p class="astuce">Statut → envoyée · échéance selon le délai de paiement du réseau.</p>
+      </div>
+
+      <div id="zone-payer" style="display:none">
+        <div class="sec">Paiement</div>
+        <button class="btn" id="btn-payee" type="button">Marquer payée</button>
+        <p class="astuce" id="astuce-payer">Confirme que le virement Interac a été effectué / reçu.</p>
+      </div>
+
+      <div class="sec">Document</div>
+      <button class="btn gris" type="button" onclick="window.print()">Imprimer / Enregistrer en PDF</button>
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <!-- ============ MANDAT (rendu identique au générateur) ============ -->
+    <div class="mandat" id="mandat">
+      <h2>MANDAT</h2>
+
+      <div class="m-haut">
+        <div class="m-col-g">
+          <div class="m-boite">
+            <span class="etq">Facturé à :</span><br>
+            <span id="f-cl-nom">—</span><br>
+            <span id="f-cl-adresse">—</span>
+          </div>
+          <div class="m-boite" style="flex:1">
+            <span class="etq">Nom et adresse de l'établissement :</span><br>
+            <span id="f-cl-nom2">—</span><br><br>
+            <span id="f-cl-adresse2">—</span><br>
+            <span id="f-cl-neq"></span><br>
+            Commentaires : <span id="f-commentaires"></span>
+          </div>
+        </div>
+        <div class="m-col-g">
+          <div class="m-boite">
+            <table class="m-droite">
+              <tr><td></td><td style="font-weight:700">Facturé par :</td></tr>
+              <tr><td>Remplaçant :</td><td id="f-ph-nom">—</td></tr>
+              <tr><td>Profession :</td><td>Pharmacien</td></tr>
+              <tr><td>N° OPQ :</td><td id="f-ph-opq">—</td></tr>
+              <tr><td>Statut :</td><td id="f-ph-statut">Indépendant</td></tr>
+              <tr><td>Province :</td><td>Québec</td></tr>
+              <tr><td>TPS :</td><td id="f-ph-tps">—</td></tr>
+              <tr><td>TVQ :</td><td id="f-ph-tvq">—</td></tr>
+              <tr><td style="vertical-align:top">Société :</td><td id="f-ph-corp">—</td></tr>
+            </table>
+          </div>
+          <div class="m-recu">
+            <table>
+              <tr><td>N° de reçu :</td><td id="f-numero">—</td></tr>
+              <tr><td>Contrat :</td><td id="f-ref">—</td></tr>
+              <tr><td>Date d'émission :</td><td id="f-emission">—</td></tr>
+              <tr id="ligne-echeance" style="display:none"><td>Échéance :</td><td id="f-echeance">—</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <table class="m-tbl">
+        <thead><tr><th>Date</th><th>Heure début</th><th>Heure fin</th><th class="dr">Heures</th></tr></thead>
+        <tbody><tr>
+          <td id="f-date">—</td><td id="f-debut">—</td><td id="f-fin">—</td><td class="dr" id="f-heures">—</td>
+        </tr></tbody>
+      </table>
+
+      <table class="m-tbl">
+        <thead><tr><th>Description</th><th class="dr">Qté</th><th class="dr">Prix unitaire</th><th class="dr">Montant</th></tr></thead>
+        <tbody>
+          <tr><td id="l1-desc">Pharmacien</td><td class="dr" id="l1-q">—</td><td class="dr" id="l1-pu">—</td><td class="dr" id="l1-m">—</td></tr>
+          <tr id="ligne-pd" style="display:none"><td>Per diem</td><td class="dr" id="l2-q">—</td><td class="dr" id="l2-pu">—</td><td class="dr" id="l2-m">—</td></tr>
+          <tr id="ligne-km" style="display:none"><td>Frais de déplacement (aller-retour)</td><td class="dr" id="l3-q">—</td><td class="dr" id="l3-pu">—</td><td class="dr" id="l3-m">—</td></tr>
+          <tr id="ligne-heb" style="display:none"><td>Hébergement</td><td class="dr" id="l4-q">—</td><td class="dr" id="l4-pu">—</td><td class="dr" id="l4-m">—</td></tr>
+        </tbody>
+      </table>
+
+      <div class="m-totaux">
+        <table>
+          <tr><td>Sous-total</td><td id="f-soustotal">—</td></tr>
+          <tr><td>TPS (5,000 %)</td><td id="f-tps">—</td></tr>
+          <tr><td>TVQ (9,975 %)</td><td id="f-tvq">—</td></tr>
+          <tr><td>Autre</td><td>0,00 $</td></tr>
+          <tr class="sep"><td>Total</td><td id="f-total">—</td></tr>
+        </table>
+      </div>
+
+      <div class="m-paye"><span>Payé</span><span id="f-paye">0,00 $</span></div>
+      <div class="m-net"><span class="lab">NET À PAYER :</span><span class="val" id="f-net">—</span></div>
+      <div class="tampon" id="tampon"></div>
+
+      <div class="payer-box">
+        <div class="lab">Paiement — Virement Interac (l'argent ne transite jamais par C-Direct)</div>
+        Envoyez votre virement Interac directement au pharmacien&nbsp;: <b id="f-interac">—</b><br>
+        Dépôt automatique activé — aucune question de sécurité requise.
+      </div>
+
+      <div class="m-pied">
+        <span>Facture émise par le pharmacien de façon indépendante.</span>
+        <span>Généré par : <span class="cd">C-DIRECT</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/auth.js"></script>
+<script src="/fiche.js"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+const fmt = n => new Intl.NumberFormat('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0)+" $";
+const hhmm = h => { const H=Math.floor(h), M=Math.round((h-H)*60); return String(H).padStart(2,'0')+":"+String(M).padStart(2,'0'); };
+const CHIPS = {brouillon:'BROUILLON', envoyee:'ENVOYÉE', payee:'PAYÉE', en_retard:'EN RETARD'};
+
+function msg(texte, type){
+  const el = $('msg'); el.textContent = texte; el.className = 'msg '+type; el.style.display = 'block';
+}
+
+(async function(){
+  const profil = await cdExigerConnexion();
+  $('lien-retour').href = profil.role === 'pharmacie' ? '/espace-pharmacie.html'
+                        : profil.role === 'admin' ? '/admin.html' : '/mes-mandats.html';
+
+  const id = new URLSearchParams(location.search).get('id');
+  if(!id){ $('chargement').textContent = 'Référence de facture manquante (?id=…)'; return; }
+
+  const { data, error } = await sb.rpc('get_factures');
+  if(error){ $('chargement').textContent = 'Erreur : ' + error.message; return; }
+  const f = (data||[]).find(x => x.facture_id === id);
+  if(!f){ $('chargement').textContent = 'Facture introuvable ou non accessible avec votre compte.'; return; }
+
+  $('chargement').style.display = 'none';
+  $('grille').style.display = '';
+  document.title = 'C-Direct — Facture F-' + String(f.numero_facture).padStart(6,'0');
+
+  /* ---- enrichissement fiche.js : société / TPS / TVQ / Interac ---- */
+  const fiche = (typeof PHARMACIENS !== 'undefined' ? PHARMACIENS : [])
+    .find(p => (p.courriel||'').toLowerCase() === (f.pharmacien_courriel||'').toLowerCase());
+
+  /* ---- statut ---- */
+  $('chip').className = 'chip ' + f.statut;
+  $('chip').textContent = CHIPS[f.statut] || f.statut;
+  const lignesDetail = [];
+  if(f.date_envoi)    lignesDetail.push('Envoyée le <b>'+new Date(f.date_envoi).toLocaleDateString('fr-CA')+'</b>');
+  if(f.date_echeance) lignesDetail.push('Échéance <b>'+f.date_echeance+'</b>');
+  if(f.date_paiement) lignesDetail.push('Payée le <b>'+new Date(f.date_paiement).toLocaleDateString('fr-CA')+'</b>');
+  if(f.type_facture === 'penalite_annulation') lignesDetail.push('<b>Pénalité d\'annulation</b> — protection du réseau');
+  $('detail').innerHTML = lignesDetail.join('<br>');
+
+  /* ---- MANDAT : client ---- */
+  const adr = [f.pharmacie_adresse, f.pharmacie_ville, f.pharmacie_cp].filter(Boolean).join(', ') || '—';
+  $('f-cl-nom').textContent = f.nom_pharmacie || '—';
+  $('f-cl-nom2').textContent = f.nom_pharmacie || '—';
+  $('f-cl-adresse').textContent = adr; $('f-cl-adresse2').textContent = adr;
+  if(f.pharmacie_neq) $('f-cl-neq').textContent = 'NEQ : ' + f.pharmacie_neq;
+  if(f.type_facture === 'penalite_annulation')
+    $('f-commentaires').textContent = 'Pénalité d\'annulation — contrat ' + f.numero_reference + ' (règles du réseau)';
+
+  /* ---- MANDAT : pharmacien ---- */
+  $('f-ph-nom').textContent = ((f.pharmacien_prenom||'')+' '+(f.pharmacien_nom||'')).trim() || '—';
+  $('f-ph-opq').textContent = f.pharmacien_opq || '—';
+  if(fiche){
+    $('f-ph-statut').textContent = 'Incorporé';
+    $('f-ph-corp').textContent = fiche.corp || '—';
+    $('f-ph-tps').textContent = fiche.tps || '—';
+    $('f-ph-tvq').textContent = fiche.tvq || '—';
+    $('f-interac').textContent = fiche.interac || f.pharmacien_courriel || '—';
+  } else {
+    $('f-interac').textContent = f.pharmacien_courriel || '—';
+  }
+
+  /* ---- reçu ---- */
+  $('f-numero').textContent = 'F-' + String(f.numero_facture).padStart(6,'0');
+  $('f-ref').textContent = f.numero_reference;
+  $('f-emission').textContent = new Date(f.date_envoi || f.cree_le).toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'});
+  if(f.date_echeance){ $('ligne-echeance').style.display=''; $('f-echeance').textContent = f.date_echeance; }
+
+  /* ---- mandat ---- */
+  $('f-date').textContent = f.date_contrat;
+  $('f-debut').textContent = String(f.heure_debut).slice(0,5);
+  $('f-fin').textContent = String(f.heure_fin).slice(0,5);
+  $('f-heures').textContent = hhmm(parseFloat(f.heures)||0);
+
+  /* ---- lignes ---- */
+  function lignes(){
+    const h = parseFloat(f.heures)||0, t = parseFloat(f.tarif_horaire)||0;
+    const m1 = h*t;
+    $('l1-desc').textContent = f.type_facture === 'penalite_annulation'
+      ? 'Pénalité d\'annulation — protection du réseau' : 'Pharmacien';
+    $('l1-q').textContent = hhmm(h);
+    $('l1-pu').textContent = fmt(t).replace(" $","$/h");
+    $('l1-m').textContent = fmt(m1);
+
+    const m2 = parseFloat(f.per_diem_montant)||0;
+    $('ligne-pd').style.display = m2>0 ? '' : 'none';
+    $('l2-q').textContent = 1; $('l2-pu').textContent = fmt(m2).replace(" $","$/jour"); $('l2-m').textContent = fmt(m2);
+
+    const km = parseFloat(f.km)||0, kmT = parseFloat(f.taux_km)||0, m3 = km*kmT;
+    $('ligne-km').style.display = m3>0 ? '' : 'none';
+    $('l3-q').textContent = km; $('l3-pu').textContent = fmt(kmT).replace(" $","$/km"); $('l3-m').textContent = fmt(m3);
+
+    const m4 = parseFloat(f.hebergement_montant)||0;
+    $('ligne-heb').style.display = m4>0 ? '' : 'none';
+    $('l4-q').textContent = m4>0 ? 1 : '—'; $('l4-pu').textContent = fmt(m4).replace(" $","$/nuit"); $('l4-m').textContent = fmt(m4);
+
+    const st = m1+m2+m3+m4;
+    const taxable = !!(fiche && fiche.tps);          /* taxes seulement si numéros au dossier */
+    const tps = taxable ? st*0.05 : 0, tvq = taxable ? st*0.09975 : 0;
+    $('f-soustotal').textContent = fmt(st);
+    $('f-tps').textContent = fmt(tps); $('f-tvq').textContent = fmt(tvq);
+    const total = st+tps+tvq;
+    $('f-total').textContent = fmt(total);
+    if(f.statut === 'payee'){
+      $('f-paye').textContent = fmt(total); $('f-net').textContent = fmt(0);
+      $('tampon').style.display=''; $('tampon').textContent = 'PAYÉE — ' + (f.date_paiement ? new Date(f.date_paiement).toLocaleDateString('fr-CA') : '');
+    } else {
+      $('f-paye').textContent = fmt(0); $('f-net').textContent = fmt(total);
+      if(f.statut === 'en_retard'){ $('tampon').style.display=''; $('tampon').className='tampon retard'; $('tampon').textContent='EN RETARD'; }
+    }
+  }
+  lignes();
+
+  /* ---- actions : brouillon (pharmacien) ---- */
+  const estPharmacien = profil.id === f.pharmacien_id || profil.role === 'admin';
+  const estPharmacie  = profil.id === f.pharmacie_id  || profil.role === 'admin';
+
+  if(f.statut === 'brouillon' && estPharmacien && f.type_facture === 'contrat'){
+    $('zone-brouillon').style.display = '';
+    $('in-km').value = parseFloat(f.km)||0;
+    $('btn-km').onclick = async ()=>{
+      $('btn-km').disabled = true;
+      const { error: e } = await sb.rpc('ajuster_km_facture', { p_facture: f.facture_id, p_km: parseFloat($('in-km').value)||0 });
+      $('btn-km').disabled = false;
+      if(e){ msg('Erreur : '+e.message,'ko'); return; }
+      f.km = parseFloat($('in-km').value)||0; lignes();
+      msg('Kilométrage ajusté ✓','ok');
+    };
+    $('btn-envoyer').onclick = async ()=>{
+      if(!confirm('Envoyer la facture F-'+String(f.numero_facture).padStart(6,'0')+' à '+(f.nom_pharmacie||'la pharmacie')+' ? Elle ne sera plus modifiable.')) return;
+      $('btn-envoyer').disabled = true;
+      const { error: e } = await sb.rpc('envoyer_facture', { p_facture: f.facture_id });
+      if(e){ $('btn-envoyer').disabled = false; msg('Erreur : '+e.message,'ko'); return; }
+      location.reload();
+    };
+  }
+
+  /* ---- actions : marquer payée (pharmacie, ou pharmacien qui confirme) ---- */
+  if((f.statut === 'envoyee' || f.statut === 'en_retard') && (estPharmacie || estPharmacien)){
+    $('zone-payer').style.display = '';
+    if(estPharmacien && !estPharmacie) $('astuce-payer').textContent = 'Confirme que vous avez bien reçu le paiement.';
+    $('btn-payee').onclick = async ()=>{
+      if(!confirm('Marquer la facture comme PAYÉE ?')) return;
+      $('btn-payee').disabled = true;
+      const { error: e } = await sb.rpc('marquer_facture_payee', { p_facture: f.facture_id });
+      if(e){ $('btn-payee').disabled = false; msg('Erreur : '+e.message,'ko'); return; }
+      location.reload();
+    };
+  }
+})();
+</script>
+</body>
+</html>
