@@ -126,6 +126,23 @@ tbody tr:last-child td{border-bottom:none}
     </div>
     <div class="msg" id="msg-factures"></div>
   </div>
+
+  <!-- SMS (Phase 4) -->
+  <div class="carte">
+    <div class="sec">SMS<small>pipeline Twilio via Worker c-direct-sms</small></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn" style="width:auto;margin-top:0;padding:10px 18px" id="btn-sms-test" type="button">Envoyer un SMS test à mon numéro</button>
+      <button class="btn" style="width:auto;margin-top:0;padding:10px 18px;background:transparent;color:var(--sourd);border:1px solid var(--ligne2)" id="btn-sms-config" type="button">Configurer Worker</button>
+    </div>
+    <div class="msg" id="msg-sms"></div>
+    <div class="sec" style="margin-top:20px">Journal SMS<small id="n-sms"></small></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Quand</th><th>Type</th><th>Numéro</th><th>Statut</th><th>Twilio SID</th><th>Message / erreur</th></tr></thead>
+        <tbody id="t-sms"><tr><td colspan="6" class="vide">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -226,7 +243,81 @@ function msg(id, texte, ok){
   }
 
   chargerFactures();
+  brancherSms(profil);
+  chargerSmsLog();
 })();
+
+/* ---- Phase 4 : SMS test + journal (100 derniers) ----
+   L'URL du Worker et le secret ne vivent JAMAIS dans le code / git :
+   demandés une fois, gardés en localStorage de CE navigateur. */
+function configSms(forcer){
+  let url = localStorage.getItem('cd-sms-worker-url') || '';
+  let secret = localStorage.getItem('cd-sms-secret') || '';
+  if(forcer || !url){
+    url = prompt('URL du Worker c-direct-sms (ex. https://c-direct-sms.xxx.workers.dev) :', url) || '';
+    if(url) localStorage.setItem('cd-sms-worker-url', url.replace(/\/+$/,''));
+  }
+  if(forcer || !secret){
+    secret = prompt('WEBHOOK_SECRET (voir workers/c-direct-sms/README.md) :', secret) || '';
+    if(secret) localStorage.setItem('cd-sms-secret', secret.trim());
+  }
+  return { url: (localStorage.getItem('cd-sms-worker-url')||''), secret: (localStorage.getItem('cd-sms-secret')||'') };
+}
+
+function brancherSms(profil){
+  $('btn-sms-config').onclick = ()=> configSms(true);
+  $('btn-sms-test').onclick = async ()=>{
+    if(!profil.telephone){ msg('msg-sms','Aucun téléphone à votre profil — ajoutez-le dans Mon profil.',false); return; }
+    const { url, secret } = configSms(false);
+    if(!url || !secret){ msg('msg-sms','Worker non configuré (URL + secret requis).',false); return; }
+    $('btn-sms-test').disabled = true;
+    try{
+      const r = await fetch(url + '/test', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'X-Webhook-Secret': secret },
+        body: JSON.stringify({ to: profil.telephone })
+      });
+      const rep = await r.json().catch(()=>({}));
+      if(r.ok && rep.ok){ msg('msg-sms','SMS test envoyé à '+cdTelAffiche(profil.telephone)+' ✓ (SID '+(rep.sid||'—')+')', true); }
+      else{ msg('msg-sms','Échec ('+r.status+') : '+(rep.erreur||'réponse inattendue'), false); }
+    }catch(e){
+      msg('msg-sms','Injoignable : '+e.message+' — vérifiez l\'URL du Worker.', false);
+    }
+    $('btn-sms-test').disabled = false;
+    setTimeout(chargerSmsLog, 1500);
+  };
+}
+
+async function chargerSmsLog(){
+  const { data, error } = await sb.from('sms_log')
+    .select('created_at,type,to_number,statut,twilio_sid,body,erreur')
+    .order('created_at',{ascending:false}).limit(100);
+  const tb = $('t-sms');
+  if(error){ tb.innerHTML = '<tr><td colspan="6" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
+  if(!data || !data.length){ tb.innerHTML = '<tr><td colspan="6" class="vide">Aucun SMS journalisé.</td></tr>'; return; }
+  $('n-sms').textContent = data.length + ' entrée' + (data.length>1?'s':'') + ' (100 max)';
+  tb.innerHTML = '';
+  data.forEach(s=>{
+    const tr = document.createElement('tr');
+    const td = (t)=>{ const c=document.createElement('td'); c.textContent=t; return c; };
+    const st = document.createElement('td');
+    const ok = s.statut === 'envoye' || s.statut === 'recu' || s.statut === 'optout_applique';
+    st.innerHTML = '<span class="badge '+(ok?'ouvert':'')+'">'+(s.statut||'—')+'</span>';
+    if(s.statut==='echec'){ st.firstChild.style.color='var(--rouge)'; st.firstChild.style.borderColor='rgba(229,72,77,.4)'; }
+    const texte = document.createElement('td');
+    texte.style.whiteSpace='normal'; texte.style.maxWidth='340px';
+    texte.textContent = (s.erreur ? '⚠ '+s.erreur+' · ' : '') + (s.body||'').slice(0,140);
+    tr.append(
+      td(new Date(s.created_at).toLocaleString('fr-CA',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})),
+      td(s.type||'—'),
+      td(s.to_number||'—'),
+      st,
+      td(s.twilio_sid ? s.twilio_sid.slice(0,10)+'…' : '—'),
+      texte
+    );
+    tb.appendChild(tr);
+  });
+}
 
 /* ---- Phase 3 : vue argent — toutes les factures + surcharge manuelle ---- */
 let facturesToutes = [], filtreStatut = 'tous';
