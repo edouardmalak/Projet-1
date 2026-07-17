@@ -113,6 +113,19 @@ tbody tr:last-child td{border-bottom:none}
       </table>
     </div>
   </div>
+
+  <!-- ARGENT (Phase 3) -->
+  <div class="carte">
+    <div class="sec">Argent — toutes les factures<small id="n-factures"></small></div>
+    <div id="filtres" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>N°</th><th>Type</th><th>Contrat</th><th>Pharmacien</th><th>Pharmacie</th><th>Total</th><th>Statut</th><th>Échéance</th><th>Surcharge manuelle</th></tr></thead>
+        <tbody id="t-factures"><tr><td colspan="9" class="vide">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="msg" id="msg-factures"></div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -211,7 +224,79 @@ function msg(id, texte, ok){
       tc.appendChild(tr);
     });
   }
+
+  chargerFactures();
 })();
+
+/* ---- Phase 3 : vue argent — toutes les factures + surcharge manuelle ---- */
+let facturesToutes = [], filtreStatut = 'tous';
+const STATUTS_F = ['brouillon','envoyee','payee','en_retard'];
+const LIB_F = {brouillon:'Brouillon', envoyee:'Envoyée', payee:'Payée', en_retard:'En retard'};
+
+async function chargerFactures(){
+  const { data, error } = await sb.rpc('get_factures');
+  if(error){ $('t-factures').innerHTML = '<tr><td colspan="9" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
+  facturesToutes = data || [];
+  dessinerFiltres();
+  dessinerFactures();
+}
+
+function dessinerFiltres(){
+  const z = $('filtres'); z.innerHTML = '';
+  ['tous', ...STATUTS_F].forEach(s=>{
+    const n = s==='tous' ? facturesToutes.length : facturesToutes.filter(f=>f.statut===s).length;
+    const b = document.createElement('button');
+    b.type='button';
+    b.style.cssText = 'font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:5px 11px;border-radius:3px;cursor:pointer;background:'+
+      (filtreStatut===s ? 'var(--jaune);color:#1A1405;border:1px solid var(--jaune)' : 'transparent;color:var(--sourd);border:1px solid var(--ligne2)');
+    b.textContent = (s==='tous' ? 'Toutes' : LIB_F[s]) + ' ('+n+')';
+    b.onclick = ()=>{ filtreStatut = s; dessinerFiltres(); dessinerFactures(); };
+    z.appendChild(b);
+  });
+}
+
+function dessinerFactures(){
+  const tb = $('t-factures');
+  const liste = filtreStatut==='tous' ? facturesToutes : facturesToutes.filter(f=>f.statut===filtreStatut);
+  $('n-factures').textContent = facturesToutes.length + ' facture' + (facturesToutes.length>1?'s':'');
+  if(!liste.length){ tb.innerHTML = '<tr><td colspan="9" class="vide">Aucune facture'+(filtreStatut!=='tous' ? ' « '+LIB_F[filtreStatut]+' »' : '')+'.</td></tr>'; return; }
+  tb.innerHTML = '';
+  liste.forEach(f=>{
+    const tr = document.createElement('tr');
+    const td = t=>{ const c=document.createElement('td'); c.textContent=t; return c; };
+    const num = document.createElement('td'); num.className='ref';
+    num.innerHTML = '<a href="/facture-vue.html?id='+f.facture_id+'">F-'+String(f.numero_facture).padStart(6,'0')+'</a>';
+    const st = document.createElement('td');
+    st.innerHTML = '<span class="badge '+(f.statut==='payee'?'ouvert':f.statut==='envoyee'?'attribue':'')+'">'+(LIB_F[f.statut]||f.statut)+'</span>';
+    if(f.statut==='en_retard'){ st.firstChild.style.color='var(--rouge)'; st.firstChild.style.borderColor='rgba(229,72,77,.4)'; }
+
+    /* surcharge manuelle : sélecteur + note d'audit obligatoire */
+    const over = document.createElement('td');
+    const sel = document.createElement('select');
+    sel.style.cssText = 'background:#0A100D;color:var(--texte);border:1px solid var(--ligne2);border-radius:4px;padding:5px 8px;font-family:"IBM Plex Mono",monospace;font-size:11.5px';
+    sel.innerHTML = '<option value="">— statut —</option>' +
+      STATUTS_F.filter(s=>s!==f.statut).map(s=>'<option value="'+s+'">'+LIB_F[s]+'</option>').join('');
+    sel.onchange = async ()=>{
+      const cible = sel.value; if(!cible) return;
+      const note = prompt('Surcharge manuelle : '+LIB_F[f.statut]+' → '+LIB_F[cible]+'\n\nNote d\'audit (obligatoire — pourquoi ce changement ?) :');
+      if(note === null){ sel.value=''; return; }
+      const { error: e } = await sb.rpc('admin_maj_facture_statut', { p_facture: f.facture_id, p_statut: cible, p_note: note });
+      if(e){ msg('msg-factures', e.message, false); sel.value=''; return; }
+      msg('msg-factures','F-'+String(f.numero_facture).padStart(6,'0')+' → '+LIB_F[cible]+' ✓ (note journalisée)', true);
+      chargerFactures();
+    };
+    over.appendChild(sel);
+
+    tr.append(num,
+      td(f.type_facture==='penalite_annulation' ? 'Pénalité' : 'Contrat'),
+      td(f.numero_reference),
+      td(((f.pharmacien_prenom||'')+' '+(f.pharmacien_nom||'')).trim()||'—'),
+      td(f.nom_pharmacie||'—'),
+      td(cdArgent(f.total)),
+      st, td(f.date_echeance||'—'), over);
+    tb.appendChild(tr);
+  });
+}
 </script>
 </body>
 </html>
