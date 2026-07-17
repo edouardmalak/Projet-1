@@ -157,6 +157,13 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
     <div class="sec">Mes contrats</div>
     <div id="liste"><div class="vide">Chargement…</div></div>
   </div>
+
+  <!-- FACTURES À PAYER (Phase 3) -->
+  <div class="carte">
+    <div class="sec">Factures reçues</div>
+    <div id="liste-factures"><div class="vide">Chargement…</div></div>
+    <div class="msg" id="msg-factures"></div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -233,7 +240,58 @@ function msg(id, texte, ok){
   });
 
   chargerContrats();
+  chargerFactures();
 })();
+
+/* ---- Phase 3 : factures reçues (envoyées par les pharmaciens) ---- */
+async function chargerFactures(){
+  const { data, error } = await sb.rpc('get_factures');
+  const zone = $('liste-factures');
+  if(error){ zone.innerHTML = '<div class="vide">Erreur : '+error.message+'</div>'; return; }
+  const factures = (data||[]).filter(f => f.pharmacie_id === profil.id && f.statut !== 'brouillon');
+  if(!factures.length){ zone.innerHTML = '<div class="vide">Aucune facture reçue pour l\'instant.</div>'; return; }
+
+  const chips = {envoyee:['attribue','À PAYER'], payee:['ouvert','PAYÉE'], en_retard:['rouge','EN RETARD']};
+  zone.innerHTML = '';
+  factures.forEach(f=>{
+    const div = document.createElement('div');
+    div.className = 'contrat';
+    const c = chips[f.statut] || ['autre', f.statut];
+    const tete = document.createElement('div');
+    tete.className = 'tete'; tete.style.cursor = 'default';
+    const num = document.createElement('a');
+    num.className='ref'; num.href='/facture-vue.html?id='+f.facture_id;
+    num.textContent = 'F-'+String(f.numero_facture).padStart(6,'0');
+    const meta = document.createElement('span');
+    meta.className='meta';
+    meta.textContent = f.numero_reference +
+      (f.type_facture==='penalite_annulation' ? ' · PÉNALITÉ D\'ANNULATION' : '') +
+      ' · ' + ((f.pharmacien_prenom||'')+' '+(f.pharmacien_nom||'')).trim() +
+      ' · échéance ' + (f.date_echeance||'—');
+    const total = document.createElement('span');
+    total.className='compteur'; total.innerHTML = '<b>'+cdArgent(f.total)+'</b>';
+    const badge = document.createElement('span');
+    badge.className = 'badge ' + (c[0]==='rouge' ? 'autre' : c[0]); badge.textContent = c[1];
+    if(c[0]==='rouge'){ badge.style.color='var(--rouge)'; badge.style.borderColor='rgba(229,72,77,.4)'; }
+    tete.append(num, meta, total, badge);
+
+    if(f.statut === 'envoyee' || f.statut === 'en_retard'){
+      const b = document.createElement('button');
+      b.className='btn-mini'; b.textContent='Marquer payée';
+      b.onclick = async ()=>{
+        if(!confirm('Confirmer le paiement de '+cdArgent(f.total)+' (virement Interac au pharmacien) ?')) return;
+        b.disabled = true;
+        const { error: e } = await sb.rpc('marquer_facture_payee', { p_facture: f.facture_id });
+        if(e){ b.disabled=false; msg('msg-factures','Erreur : '+e.message,false); return; }
+        msg('msg-factures','Facture marquée payée ✓',true);
+        chargerFactures();
+      };
+      tete.appendChild(b);
+    }
+    div.appendChild(tete);
+    zone.appendChild(div);
+  });
+}
 
 /* ---- liste des contrats + compteurs de candidatures ---- */
 async function chargerContrats(){
@@ -297,6 +355,29 @@ async function chargerCandidats(k, zone){
       ' — ' + (gagnante.prenom||'') + ' ' + (gagnante.nom||'');
     e.appendChild(b);
     zone.appendChild(e);
+
+    /* ---- Phase 3 : actions sur contrat attribué ---- */
+    if(k.statut === 'attribue'){
+      const actions = document.createElement('div');
+      actions.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px';
+
+      if(k.date_contrat <= new Date().toISOString().slice(0,10)){
+        const bC = document.createElement('button');
+        bC.className='btn-mini'; bC.textContent='Marquer complété';
+        bC.onclick = async ()=>{
+          if(!confirm('Confirmer que le remplacement '+k.numero_reference+' a bien eu lieu ? La facture du pharmacien sera générée en brouillon.')) return;
+          bC.disabled = true;
+          const { error: e2 } = await sb.rpc('marquer_complete', { p_contrat: k.id });
+          if(e2){ bC.disabled=false; alert('Erreur : '+e2.message); return; }
+          cdAlerteAdmin('Contrat complété — '+k.numero_reference,
+            (profil.nom_pharmacie||profil.courriel)+' (pharmacie) a marqué '+k.numero_reference+' complété.');
+          chargerContrats();
+        };
+        actions.appendChild(bC);
+      }
+      zone.appendChild(actions);
+      zone.dataset.zoneActions = '1';
+    }
   }
 
   const etats = {propose:'Proposé', contre_offre:'Contre-offre envoyée', accepte:'Accepté', refuse:'Refusé'};

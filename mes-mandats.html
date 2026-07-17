@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Mes mandats & factures</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849;--rouge:#E5484D}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1000px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:14px;color:var(--sourd)}
+.topbar .droite a.nav{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
+.topbar .droite a.nav:hover{color:var(--vert-vif)}
+.wrap{max-width:1000px;margin:0 auto;padding:36px 18px 70px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:24px;position:relative;margin-bottom:20px}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vert),transparent)}
+.sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sec small{color:var(--sourd);text-transform:none;letter-spacing:.04em}
+
+/* totaux argent */
+.totaux{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:720px){.totaux{grid-template-columns:1fr 1fr}}
+.total{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:16px 18px;position:relative}
+.total::before{content:"";position:absolute;top:0;left:0;right:0;height:2px}
+.total small{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--sourd);margin-bottom:4px}
+.total b{font-family:'IBM Plex Mono',monospace;font-size:18px}
+.total.facture::before{background:var(--vert)}
+.total.paye b{color:var(--vert-vif)} .total.paye::before{background:var(--vert-vif)}
+.total.attente b{color:var(--jaune)} .total.attente::before{background:var(--jaune)}
+.total.retard b{color:var(--rouge)} .total.retard::before{background:var(--rouge)}
+
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+th{padding:9px 11px;text-align:left;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--sourd);border-bottom:1px solid var(--ligne);white-space:nowrap}
+td{padding:10px 11px;border-bottom:1px solid var(--ligne);white-space:nowrap;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+.ref{color:var(--vert-vif);font-weight:700}
+.ref a{color:inherit;text-decoration:none}
+.ref a:hover{text-decoration:underline}
+.chip{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd)}
+.chip.brouillon{color:var(--sourd)}
+.chip.envoyee,.chip.attribue{color:var(--jaune);border-color:rgba(232,184,73,.4);background:rgba(232,184,73,.07)}
+.chip.payee,.chip.complete{color:var(--vert-vif);border-color:rgba(23,201,128,.4);background:rgba(18,169,110,.08)}
+.chip.en_retard,.chip.annule{color:var(--rouge);border-color:rgba(229,72,77,.35);background:rgba(229,72,77,.07)}
+.btn-mini{background:var(--vert);color:#04130C;border:none;border-radius:4px;padding:6px 12px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.btn-mini:hover{background:var(--vert-vif)}
+.btn-mini:disabled{opacity:.55;cursor:default}
+.btn-mini.ghost{background:transparent;color:var(--vert-vif);border:1px solid var(--ligne2)}
+.btn-mini.ghost:hover{border-color:var(--vert)}
+.btn-mini.rouge{background:transparent;color:var(--rouge);border:1px solid rgba(229,72,77,.5)}
+.btn-mini.rouge:hover{background:rgba(229,72,77,.08)}
+.btn-lot{background:var(--vert);color:#04130C;border:none;border-radius:5px;padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;margin-left:auto}
+.btn-lot:hover{background:var(--vert-vif)}
+.btn-lot:disabled{opacity:.55;cursor:default}
+.vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:16px 0}
+.msg{display:none;border-radius:4px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:12px}
+.msg.ok{background:rgba(18,169,110,.1);color:var(--vert-vif);border:1px solid var(--ligne2);border-left:3px solid var(--vert)}
+.msg.ko{background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html">
+      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></span>
+      C-DIRECT
+    </a>
+    <div class="droite">
+      <a class="nav" href="/contrats.html">Contrats</a>
+      <a class="nav" href="/profil.html">Profil</a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>Mes mandats &amp; factures</h1>
+  <p class="sous">Vos remplacements attribués, vos factures et l'état des paiements — <a href="/regles.html" style="color:var(--vert-vif)">règles du réseau</a></p>
+
+  <!-- ARGENT -->
+  <div class="totaux">
+    <div class="total facture"><small>Facturé</small><b id="t-facture">—</b></div>
+    <div class="total paye"><small>Payé</small><b id="t-paye">—</b></div>
+    <div class="total attente"><small>En attente</small><b id="t-attente">—</b></div>
+    <div class="total retard"><small>En retard</small><b id="t-retard">—</b></div>
+  </div>
+
+  <!-- CONTRATS -->
+  <div class="carte">
+    <div class="sec">Mes remplacements<small id="n-mandats"></small></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Référence</th><th>Date</th><th>Heures</th><th>Pharmacie</th><th>Tarif</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody id="t-mandats"><tr><td colspan="7" class="vide">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="msg" id="msg-mandats"></div>
+  </div>
+
+  <!-- FACTURES -->
+  <div class="carte">
+    <div class="sec">Mes factures<small id="n-factures"></small>
+      <button class="btn-lot" id="btn-lot" style="display:none">Envoyer les factures du mois</button>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>N°</th><th>Contrat</th><th>Pharmacie</th><th>Total</th><th>Statut</th><th>Échéance</th><th>Actions</th></tr></thead>
+        <tbody id="t-factures"><tr><td colspan="7" class="vide">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="msg" id="msg-factures"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/auth.js"></script>
+<script src="/outils.js"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+const CHIPS_F = {brouillon:'Brouillon', envoyee:'Envoyée', payee:'Payée', en_retard:'En retard'};
+const CHIPS_K = {attribue:'Attribué', complete:'Complété', annule:'Annulé', ouvert:'Ouvert'};
+let profil = null;
+
+function msg(id, texte, ok){
+  const el=$(id); el.textContent=texte;
+  el.className='msg '+(ok?'ok':'ko'); el.style.display='block';
+  if(ok) setTimeout(()=>{ el.style.display='none'; }, 4000);
+}
+
+(async function(){
+  profil = await cdExigerConnexion(['pharmacien']);
+  cdEnteteConnecte();
+  chargerMandats();
+  chargerFactures();
+})();
+
+/* ================= CONTRATS ================= */
+async function chargerMandats(){
+  const { data, error } = await sb.rpc('get_mes_mandats');
+  const tb = $('t-mandats');
+  if(error){ tb.innerHTML = '<tr><td colspan="7" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
+  if(!data || !data.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">Aucun remplacement attribué pour l\'instant.</td></tr>'; return; }
+  $('n-mandats').textContent = data.length + ' remplacement' + (data.length>1?'s':'');
+  tb.innerHTML = '';
+  const aujourdhui = new Date().toISOString().slice(0,10);
+
+  data.forEach(m=>{
+    const tr = document.createElement('tr');
+    const td = t=>{ const c=document.createElement('td'); c.textContent=t; return c; };
+    const ref = document.createElement('td'); ref.className='ref';
+    ref.innerHTML = '<a href="/c/'+encodeURIComponent(m.numero_reference)+'">'+m.numero_reference+'</a>';
+    const st = document.createElement('td');
+    st.innerHTML = '<span class="chip '+m.statut+'">'+(CHIPS_K[m.statut]||m.statut)+'</span>';
+    const act = document.createElement('td');
+
+    if(m.statut === 'attribue' && m.date_contrat <= aujourdhui){
+      const b = document.createElement('button');
+      b.className='btn-mini'; b.textContent='Marquer complété';
+      b.onclick = async ()=>{
+        if(!confirm('Confirmer que le remplacement '+m.numero_reference+' a bien eu lieu ? La facture sera générée en brouillon.')) return;
+        b.disabled = true;
+        const { data: fid, error: e } = await sb.rpc('marquer_complete', { p_contrat: m.contrat_id });
+        if(e){ b.disabled=false; msg('msg-mandats','Erreur : '+e.message,false); return; }
+        cdAlerteAdmin('Contrat complété — '+m.numero_reference,
+          (profil.prenom||profil.courriel)+' (pharmacien) a marqué '+m.numero_reference+' complété.');
+        location.href = '/facture-vue.html?id=' + fid;
+      };
+      act.appendChild(b);
+    }
+    if(m.statut === 'attribue'){
+      const b = document.createElement('button');
+      b.className='btn-mini rouge'; b.style.marginLeft='6px'; b.textContent='Annuler';
+      b.onclick = ()=> annulerMandat(m, b);
+      act.appendChild(b);
+    }
+
+    tr.append(ref, td(cdDate(m.date_contrat)), td(cdHeure(m.heure_debut)+'–'+cdHeure(m.heure_fin)),
+              td(m.nom_pharmacie||'—'), td(cdArgent(m.tarif)+'/h'), st, act);
+    tb.appendChild(tr);
+  });
+}
+
+/* annulation par le pharmacien : contrat remis en ligne (Phase 3.3) */
+async function annulerMandat(m, btn){
+  if(!confirm('Annuler votre remplacement '+m.numero_reference+' ?\n\n' +
+    'Le contrat sera REMIS EN LIGNE pour les autres pharmaciens et votre candidature sera close. ' +
+    'L\'annulation est journalisée et visible par l\'administrateur.')) return;
+  btn.disabled = true;
+  const { error: e } = await sb.rpc('annuler_contrat_pharmacien', { p_contrat: m.contrat_id });
+  if(e){ btn.disabled=false; msg('msg-mandats','Erreur : '+e.message,false); return; }
+  cdAlerteAdmin('Annulation pharmacien — '+m.numero_reference,
+    (profil.prenom||profil.courriel)+' a annulé son remplacement '+m.numero_reference+' — contrat remis en ligne.');
+  msg('msg-mandats','Remplacement annulé — le contrat est remis en ligne.',true);
+  chargerMandats();
+}
+
+/* ================= FACTURES ================= */
+async function chargerFactures(){
+  const { data, error } = await sb.rpc('get_factures');
+  const tb = $('t-factures');
+  if(error){ tb.innerHTML = '<tr><td colspan="7" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
+  const factures = (data||[]).filter(f => f.pharmacien_id === profil.id);
+
+  /* totaux : facturé = tout ce qui a été envoyé (incl. payé) */
+  const somme = arr => arr.reduce((s,f)=> s + (parseFloat(f.total)||0), 0);
+  $('t-facture').textContent = cdArgent(somme(factures.filter(f=>f.statut!=='brouillon')));
+  $('t-paye').textContent    = cdArgent(somme(factures.filter(f=>f.statut==='payee')));
+  $('t-attente').textContent = cdArgent(somme(factures.filter(f=>f.statut==='envoyee')));
+  $('t-retard').textContent  = cdArgent(somme(factures.filter(f=>f.statut==='en_retard')));
+
+  if(!factures.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">Aucune facture — marquez un remplacement complété pour générer la première.</td></tr>'; return; }
+  $('n-factures').textContent = factures.length + ' facture' + (factures.length>1?'s':'');
+
+  /* envoi en lot */
+  const brouillons = factures.filter(f=>f.statut==='brouillon');
+  $('btn-lot').style.display = brouillons.length ? '' : 'none';
+  $('btn-lot').onclick = async ()=>{
+    if(!confirm('Envoyer les '+brouillons.length+' facture(s) en brouillon aux pharmacies ?')) return;
+    $('btn-lot').disabled = true;
+    const { data: n, error: e } = await sb.rpc('envoyer_factures_mois');
+    $('btn-lot').disabled = false;
+    if(e){ msg('msg-factures','Erreur : '+e.message,false); return; }
+    msg('msg-factures', n+' facture(s) envoyée(s) ✓', true);
+    chargerFactures();
+  };
+
+  tb.innerHTML = '';
+  factures.forEach(f=>{
+    const tr = document.createElement('tr');
+    const td = t=>{ const c=document.createElement('td'); c.textContent=t; return c; };
+    const num = document.createElement('td'); num.className='ref';
+    num.innerHTML = '<a href="/facture-vue.html?id='+f.facture_id+'">F-'+String(f.numero_facture).padStart(6,'0')+'</a>' +
+      (f.type_facture==='penalite_annulation' ? ' <span class="chip en_retard" title="Pénalité d\'annulation">Pénalité</span>' : '');
+    const st = document.createElement('td');
+    st.innerHTML = '<span class="chip '+f.statut+'">'+(CHIPS_F[f.statut]||f.statut)+'</span>';
+    const act = document.createElement('td');
+
+    const voir = document.createElement('a');
+    voir.className='btn-mini ghost'; voir.style.textDecoration='none';
+    voir.href='/facture-vue.html?id='+f.facture_id; voir.textContent='Voir';
+    act.appendChild(voir);
+
+    if(f.statut === 'brouillon'){
+      const b = document.createElement('button');
+      b.className='btn-mini'; b.style.marginLeft='6px'; b.textContent='Envoyer';
+      b.onclick = async ()=>{
+        if(!confirm('Envoyer la facture à '+(f.nom_pharmacie||'la pharmacie')+' ?')) return;
+        b.disabled = true;
+        const { error: e } = await sb.rpc('envoyer_facture', { p_facture: f.facture_id });
+        if(e){ b.disabled=false; msg('msg-factures','Erreur : '+e.message,false); return; }
+        msg('msg-factures','Facture envoyée ✓',true);
+        chargerFactures();
+      };
+      act.appendChild(b);
+    }
+    if(f.statut === 'envoyee' || f.statut === 'en_retard'){
+      const b = document.createElement('button');
+      b.className='btn-mini ghost'; b.style.marginLeft='6px'; b.textContent='Paiement reçu';
+      b.onclick = async ()=>{
+        if(!confirm('Confirmer la réception du paiement ?')) return;
+        b.disabled = true;
+        const { error: e } = await sb.rpc('marquer_facture_payee', { p_facture: f.facture_id });
+        if(e){ b.disabled=false; msg('msg-factures','Erreur : '+e.message,false); return; }
+        chargerFactures();
+      };
+      act.appendChild(b);
+    }
+
+    tr.append(num, td(f.numero_reference), td(f.nom_pharmacie||'—'),
+              td(cdArgent(f.total)), st, td(f.date_echeance||'—'), act);
+    tb.appendChild(tr);
+  });
+}
+</script>
+</body>
+</html>
