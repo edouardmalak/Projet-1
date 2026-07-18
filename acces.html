@@ -539,7 +539,27 @@ async function apresConnexion(){
   const s = await cdSession();
   if(mode==='reset'){ render(); return; }
   if(s){
-    /* retour OAuth ou déjà connecté */
+    /* Déjà connecté ET on demande explicitement la page d'accès
+       (mode conn/insc) : proposer de continuer ou de changer de
+       compte au lieu de rediriger en silence — sinon on croit se
+       connecter avec un autre compte alors que la session (partagée
+       entre toutes les fenêtres du navigateur) reste la même. */
+    if(mode==='conn' || mode==='insc'){
+      const p = await cdProfil();
+      if(p && p.role && p.consentement_date){
+        const stylBtn = "background:none;border:none;color:var(--vert-vif);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-size:13px";
+        succes('DÉJÀ CONNECTÉ.',
+          "Cette fenêtre est connectée en tant que <b>" + ((p.prenom||p.courriel||'').replace(/</g,'&lt;')) + "</b> (" + (NOM_ROLE[p.role]||p.role) + ").<br><br>" +
+          "<button style='"+stylBtn+"' onclick='cdAllerEspace()'>Continuer vers mon espace</button>" +
+          " &nbsp;·&nbsp; " +
+          "<button style='"+stylBtn+"' onclick='cdChangerCompte()'>Changer de compte (déconnexion)</button>" +
+          "<br><br><span style='font-size:12px;color:var(--sourd)'>Pour utiliser DEUX comptes en même temps (ex. pharmacie + pharmacien), ouvrez l'un des deux dans une fenêtre privée — la session est partagée entre toutes les fenêtres normales du navigateur.</span>");
+        window.cdAllerEspace = ()=> cdReprendreSuite(p.role);
+        window.cdChangerCompte = async ()=>{ await sb.auth.signOut(); location.href = '/acces.html?mode=conn'; };
+        return;
+      }
+    }
+    /* retour OAuth ou profil incomplet */
     await apresConnexion();
     return;
   }
