@@ -176,6 +176,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
         </div>
         <button class="btn" id="btn-connexion">Se connecter</button>
         <div class="erreur" id="err-conn"></div>
+        <p class="note" id="note-renvoi" style="display:none"><button id="btn-renvoi" type="button">Renvoyer le courriel de confirmation</button></p>
         <p class="note"><button id="lien-oubli">Mot de passe oublié&nbsp;?</button></p>
         <p class="note"><span>Pas de compte&nbsp;?</span> <button class="vers-insc">Inscrivez-vous — c'est gratuit</button></p>
       </div>
@@ -399,10 +400,34 @@ $('btn-connexion').onclick = async ()=>{
     email:$('c-courriel').value.trim(), password:$('c-mdp').value
   });
   b.disabled=false;
-  if(error){ erreur('err-conn', messageErreur(error)); return; }
+  if(error){
+    erreur('err-conn', messageErreur(error));
+    /* courriel non confirmé → proposer le renvoi du lien */
+    if((error.message||'').toLowerCase().includes('not confirmed')) $('note-renvoi').style.display='';
+    return;
+  }
   await apresConnexion();
 };
 $('c-mdp').addEventListener('keydown', e=>{ if(e.key==='Enter') $('btn-connexion').click(); });
+
+/* ---------- renvoyer le courriel de confirmation ----------
+   Même redirect que l'inscription : doit être dans la liste blanche
+   Supabase (Authentication → URL Configuration → Redirect URLs). */
+window.renvoyerConfirmation = async function(courriel, bouton){
+  courriel = (courriel||'').trim();
+  if(!courriel){ erreur('err-conn','Entrez votre courriel ci-dessus, puis réessayez.'); return; }
+  if(bouton) bouton.disabled = true;
+  const { error } = await sb.auth.resend({
+    type:'signup',
+    email: courriel,
+    options:{ emailRedirectTo: location.origin + location.pathname + '?mode=conn' }
+  });
+  if(bouton) bouton.disabled = false;
+  if(error){ erreur('err-conn', messageErreur(error)); return; }
+  succes('COURRIEL RENVOYÉ.',
+    "Un nouveau lien de confirmation vient d'être envoyé à <b>"+courriel.replace(/</g,'&lt;')+"</b> (vérifiez vos indésirables). Le lien précédent n'est plus valide.");
+};
+$('btn-renvoi').onclick = ()=> renvoyerConfirmation($('c-courriel').value, $('btn-renvoi'));
 
 /* ---------- inscription ---------- */
 $('f-inscription').addEventListener('submit', async e=>{
@@ -426,8 +451,13 @@ $('f-inscription').addEventListener('submit', async e=>{
   b.disabled=false; b.textContent='Créer mon compte';
   if(error){ erreur('err-insc', messageErreur(error)); return; }
   if(data.session){ await apresConnexion(); return; }
+  const courrielInscrit = $('i-courriel').value.trim().replace(/</g,'&lt;').replace(/"/g,'&quot;');
   succes('COMPTE CRÉÉ.',
-    "Un courriel de confirmation vient de vous être envoyé (vérifiez vos indésirables).<br><br>Cliquez le lien pour activer votre compte, puis connectez-vous.");
+    "Un courriel de confirmation vient de vous être envoyé (vérifiez vos indésirables).<br><br>" +
+    "Cliquez le lien pour activer votre compte, puis connectez-vous.<br><br>" +
+    "Rien reçu après quelques minutes&nbsp;? " +
+    "<button style='background:none;border:none;color:var(--vert-vif);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-size:13px' " +
+    "onclick=\"renvoyerConfirmation('" + courrielInscrit + "', this)\">Renvoyer le courriel</button>");
 });
 
 /* ---------- mot de passe oublié ---------- */
