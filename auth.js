@@ -89,6 +89,14 @@ window.cdEnteteConnecte = async function(){
     const el = document.createElement('span');
     el.id = 'cd-entete-session';
     el.style.cssText = "display:inline-flex;align-items:center;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap";
+    /* badge de rôle — on sait TOUJOURS avec quel compte on est connecté */
+    const roleBadge = document.createElement('span');
+    const libelles = { admin:'ADMIN', pharmacie:'PHARMACIE', pharmacien:'PHARMACIEN(NE)' };
+    roleBadge.textContent = libelles[p.role] || p.role || '';
+    roleBadge.style.cssText = 'padding:2px 8px;border-radius:3px;border:1px solid;font-size:10px;font-weight:700;letter-spacing:.1em;' +
+      (p.role === 'admin'
+        ? 'color:#E8B849;border-color:rgba(232,184,73,.55);background:rgba(232,184,73,.1)'
+        : 'color:#17C980;border-color:rgba(23,201,128,.45);background:rgba(18,169,110,.1)');
     const nom = document.createElement('b');
     nom.textContent = p.prenom || p.courriel || '';
     const sep = document.createElement('span'); sep.textContent = '·'; sep.style.opacity = '.5';
@@ -96,7 +104,7 @@ window.cdEnteteConnecte = async function(){
     btn.textContent = 'Déconnexion';
     btn.style.cssText = "background:none;border:none;cursor:pointer;color:inherit;font:inherit;text-decoration:underline;text-underline-offset:3px;opacity:.8";
     btn.onclick = cdDeconnexion;
-    el.append(nom, sep, btn);
+    el.append(roleBadge, nom, sep, btn);
     conteneur.appendChild(el);
     // masquer les liens Connexion/Inscription éventuels
     document.querySelectorAll('a[href^="acces.html"],a[href^="/acces.html"]').forEach(a=>{
