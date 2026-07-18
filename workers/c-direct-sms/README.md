@@ -47,7 +47,19 @@ Supabase → **Database → Webhooks → Create a new hook** :
    `X-Webhook-Secret` = la valeur ci-dessus
 6. Confirm / Create.
 
-(Les autres évènements — attribution, rappels, etc. — viennent en Phase 5.)
+**Phase 5 — trois webhooks SUPPLÉMENTAIRES** (mêmes URL et header que
+ci-dessus, seuls le nom, la table et les évènements changent) :
+
+| Name | Table | Events |
+|---|---|---|
+| `sms-contrats-update` | `contrats` | **UPDATE** |
+| `sms-candidatures` | `candidatures` | **INSERT** + **UPDATE** |
+| `sms-factures` | `factures` | **UPDATE** |
+
+Pour chacun : Database → Webhooks → Create a new hook → cocher le(s)
+évènement(s) → HTTP Request POST → URL `…workers.dev/webhook` → header
+`X-Webhook-Secret`. Après création, redéployer le Worker n'est PAS requis
+(les webhooks pointent vers la même route).
 
 ## 3 · Twilio — webhook entrant (opt-out ARRET/STOP)
 

@@ -357,21 +357,49 @@ async function routeWebhook(request, env) {
   if (!secretValide(request, env)) return json({ erreur: 'Non autorisé' }, 401);
 
   const payload = await request.json().catch(() => null);
-  if (!payload || payload.type !== 'INSERT' || payload.table !== 'contrats' || !payload.record)
-    return json({ ok: true, ignore: 'Évènement non géré en Phase 4' });
+  if (!payload || !payload.record) return json({ ok: true, ignore: 'Payload vide' });
+  const { table, type: evt, record, old_record } = payload;
 
-  const k = payload.record;
+  /* ---- matrice du cycle de vie (5.3) ---- */
+  if (table === 'contrats' && evt === 'INSERT')
+    return diffusionNouveauContrat(env, record);
+  if (table === 'contrats' && evt === 'UPDATE')
+    return evenementContrat(env, record, old_record || {});
+  if (table === 'candidatures' && evt === 'INSERT')
+    return candidatureNouvelle(env, record);
+  if (table === 'candidatures' && evt === 'UPDATE')
+    return candidatureMaj(env, record, old_record || {});
+  if (table === 'factures' && evt === 'UPDATE')
+    return factureMaj(env, record, old_record || {});
+
+  return json({ ok: true, ignore: `Évènement non géré (${table}/${evt})` });
+}
+
+/* Idempotence générique : marqueur 'dedupe' dans sms_log, clé exacte,
+   fenêtre 10 min (Supabase peut réessayer les webhooks). */
+async function dejaTraite(env, cle) {
+  const depuis = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  const l = await sbSelect(env,
+    `sms_log?select=id&type=eq.dedupe&body=eq.${encodeURIComponent(cle)}&created_at=gte.${encodeURIComponent(depuis)}&limit=1`);
+  if (l.length) return true;
+  await loggerSms(env, { type: 'dedupe', statut: 'marqueur', body: cle });
+  return false;
+}
+
+/* charges utiles fréquentes */
+const CHAMPS_PROFIL = 'id,telephone,sms_optin,prenom,nom,ville,nom_pharmacie,adresse,code_postal,logiciel,notes_acces,cell_proprietaire';
+async function chargerContrat(env, id) { return (await sbSelect(env, `contrats?select=*&id=eq.${id}`))[0]; }
+async function chargerProfil(env, id) { return (await sbSelect(env, `profiles?select=${CHAMPS_PROFIL}&id=eq.${id}`))[0]; }
+const initiale = nom => (nom ? nom.trim().charAt(0).toUpperCase() + '.' : '');
+
+/* =====================================================================
+   contrats INSERT — diffusion filtrée (5.1) mise en file (5.2/5.4)
+===================================================================== */
+async function diffusionNouveauContrat(env, k) {
   if (k.statut && k.statut !== 'ouvert')
     return json({ ok: true, ignore: 'Contrat non ouvert' });
-
-  /* ---- 1 · idempotence : Supabase peut réessayer le webhook ---- */
-  const depuis = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-  const deja = await sbSelect(env,
-    `sms_log?select=id&contrat_id=eq.${k.id}&type=eq.contrat_nouveau&created_at=gte.${encodeURIComponent(depuis)}&limit=1`);
-  if (deja.length) return json({ ok: true, ignore: 'Doublon (retry webhook) — déjà traité' });
-
-  /* marqueur immédiat : ferme la fenêtre de course entre deux retries */
-  await loggerSms(env, { contrat_id: k.id, type: 'contrat_nouveau', statut: 'demarre', body: `Diffusion ${k.numero_reference}` });
+  if (await dejaTraite(env, `contrats:INSERT:${k.id}`))
+    return json({ ok: true, ignore: 'Doublon (retry webhook) — déjà traité' });
 
   /* ---- 2 · candidats + contexte (pharmacie, règles, disponibilités) ---- */
   const cibles = await ciblesFiltrees(env, k);
@@ -507,6 +535,217 @@ async function ciblesFiltrees(env, k) {
   }
 
   return { retenus, pharmacie, nEvalues: pharmaciens.length, nFiltres: exclusions.length };
+}
+
+/* =====================================================================
+   5.3 · MATRICE DU CYCLE DE VIE
+   Pharmacien : via envoyerAuPharmacien (heures de silence respectées).
+   Pharmacie : envoi immédiat (confirmations opérationnelles).
+===================================================================== */
+
+/* ---- candidatures INSERT → pharmacie ---- */
+async function candidatureNouvelle(env, c) {
+  if (await dejaTraite(env, `candidatures:INSERT:${c.id}`))
+    return json({ ok: true, ignore: 'Doublon' });
+
+  const k = await chargerContrat(env, c.contrat_id);
+  if (!k) return json({ ok: true, ignore: 'Contrat introuvable' });
+  const [pharmacie, pharmacien] = await Promise.all([
+    chargerProfil(env, k.pharmacie_id), chargerProfil(env, c.pharmacien_id),
+  ]);
+  if (!pharmacie || !pharmacie.telephone)
+    return json({ ok: true, ignore: 'Pharmacie sans téléphone' });
+
+  const qui = `${pharmacien?.prenom || 'Un pharmacien'} ${initiale(pharmacien?.nom)}`.trim();
+  const corps = c.type_candidature === 'instantanee'
+    ? `C-Direct: ${qui} accepte ${k.numero_reference} du ${dateCourte(k.date_contrat)} au tarif affiche. ` +
+      `Confirmez en 1 clic: c-direct.ca/p/${k.numero_reference}`
+    : `C-Direct: Nouvelle candidature de ${qui} pour ${k.numero_reference} du ${dateCourte(k.date_contrat)} ` +
+      `a ${Math.round(c.tarif_propose ?? k.tarif_horaire)}$/h. Repondre: c-direct.ca/p/${k.numero_reference}`;
+
+  const res = await envoyerEtLogger(env, {
+    vers: pharmacie.telephone, corps,
+    type: c.type_candidature === 'instantanee' ? 'candidature_instantanee' : 'candidature_nouvelle',
+    profile_id: pharmacie.id, contrat_id: k.id,
+  });
+  return json({ ok: res.ok });
+}
+
+/* ---- candidatures UPDATE (changement de statut) ---- */
+async function candidatureMaj(env, c, avant) {
+  if (!avant.statut || c.statut === avant.statut)
+    return json({ ok: true, ignore: 'Pas de changement de statut' });
+  if (await dejaTraite(env, `candidatures:UPDATE:${c.id}:${c.statut}`))
+    return json({ ok: true, ignore: 'Doublon' });
+
+  const k = await chargerContrat(env, c.contrat_id);
+  if (!k) return json({ ok: true, ignore: 'Contrat introuvable' });
+
+  /* → CONTRE-OFFRE : au pharmacien */
+  if (c.statut === 'contre_offre') {
+    const pharmacien = await chargerProfil(env, c.pharmacien_id);
+    if (!pharmacien?.telephone || pharmacien.sms_optin === false)
+      return json({ ok: true, ignore: 'Pharmacien injoignable/optout' });
+    const horaireModifie = c.heure_debut_proposee &&
+      (c.heure_debut_proposee !== avant.heure_debut_proposee || c.heure_fin_proposee !== avant.heure_fin_proposee);
+    const corps = `C-Direct: Contre-offre pour ${k.numero_reference}: ${Math.round(c.tarif_propose)}$/h` +
+      (horaireModifie ? `, horaire ${hhmm(c.heure_debut_proposee)}-${hhmm(c.heure_fin_proposee)}` : '') +
+      `. Repondre: c-direct.ca/c/${k.numero_reference}`;
+    const res = await envoyerAuPharmacien(env, {
+      profile_id: pharmacien.id, contrat_id: k.id, vers: pharmacien.telephone,
+      corps, type: 'contre_offre',
+    });
+    return json({ ok: res.ok });
+  }
+
+  /* → ACCEPTE : félicitations au pharmacien + info pharmacie
+     (les autres candidats reçoivent leur message via LEUR évènement
+      refuse automatique — voir plus bas) */
+  if (c.statut === 'accepte') {
+    const [pharmacien, pharmacie] = await Promise.all([
+      chargerProfil(env, c.pharmacien_id), chargerProfil(env, k.pharmacie_id),
+    ]);
+    const tarif = Math.round(c.tarif_propose ?? k.tarif_horaire);
+    const resultats = {};
+
+    if (pharmacien?.telephone && pharmacien.sms_optin !== false) {
+      const corps = `C-Direct: Felicitations! ${k.numero_reference} du ${dateCourte(k.date_contrat)} ` +
+        `a ${String(pharmacie?.ville || '').slice(0, 20) || 'la pharmacie'} ACCEPTE a ${tarif}$/h. ` +
+        `Details: c-direct.ca/c/${k.numero_reference}`;
+      resultats.pharmacien = (await envoyerAuPharmacien(env, {
+        profile_id: pharmacien.id, contrat_id: k.id, vers: pharmacien.telephone,
+        corps, type: 'accepte_pharmacien',
+      })).ok;
+    }
+    if (pharmacie?.telephone) {
+      const corps = `C-Direct: Contrat ${k.numero_reference} attribue a ` +
+        `${pharmacien?.prenom || ''} ${pharmacien?.nom || ''}`.trim() + '.';
+      resultats.pharmacie = (await envoyerEtLogger(env, {
+        vers: pharmacie.telephone, corps, type: 'accepte_pharmacie',
+        profile_id: pharmacie.id, contrat_id: k.id,
+      })).ok;
+    }
+    return json({ ok: true, ...resultats });
+  }
+
+  /* → REFUSE automatique (contrat attribué à un autre) : à ce candidat.
+     Les refus manuels et les désistements ne génèrent AUCUN SMS. */
+  if (c.statut === 'refuse') {
+    let dernier = null;
+    try { const j = JSON.parse(c.message); dernier = Array.isArray(j) ? j[j.length - 1] : null; } catch (e) {}
+    if (!dernier || dernier.auto !== true || dernier.etape !== 'refuse')
+      return json({ ok: true, ignore: 'Refus manuel/désistement — pas de SMS' });
+    const pharmacien = await chargerProfil(env, c.pharmacien_id);
+    if (!pharmacien?.telephone || pharmacien.sms_optin === false)
+      return json({ ok: true, ignore: 'Pharmacien injoignable/optout' });
+    const corps = `C-Direct: ${k.numero_reference} du ${dateCourte(k.date_contrat)} a ete attribue. ` +
+      `D'autres contrats: c-direct.ca`;
+    const res = await envoyerAuPharmacien(env, {
+      profile_id: pharmacien.id, contrat_id: k.id, vers: pharmacien.telephone,
+      corps, type: 'attribue_autres',
+    });
+    return json({ ok: res.ok });
+  }
+
+  return json({ ok: true, ignore: `Statut ${c.statut} sans SMS` });
+}
+
+/* ---- contrats UPDATE : annulation (et republication au commit 4) ---- */
+async function evenementContrat(env, k, avant) {
+  /* ANNULATION d'un contrat attribué (protection du réseau) */
+  if (avant.statut === 'attribue' && k.statut === 'annule') {
+    if (await dejaTraite(env, `contrats:UPDATE:${k.id}:annule`))
+      return json({ ok: true, ignore: 'Doublon' });
+
+    /* candidature retenue + facture de pénalité éventuelle */
+    const cands = await sbSelect(env,
+      `candidatures?select=id,pharmacien_id,message,heure_debut_proposee,heure_fin_proposee,tarif_propose&contrat_id=eq.${k.id}&statut=eq.accepte&limit=1`);
+    const c = cands[0];
+    if (!c) return json({ ok: true, ignore: 'Aucune candidature retenue' });
+
+    let pct = 0;
+    try {
+      const j = JSON.parse(c.message);
+      const jalon = Array.isArray(j) ? [...j].reverse().find(x => x.etape === 'annule' && x.par === 'pharmacie') : null;
+      pct = jalon ? (parseInt(jalon.penalite_pct) || 0) : 0;
+    } catch (e) {}
+
+    const factures = await sbSelect(env,
+      `factures?select=numero_facture,total&candidature_id=eq.${c.id}&type_facture=eq.penalite_annulation&limit=1`);
+    const facture = factures[0];
+
+    const [pharmacien, pharmacie, regles] = await Promise.all([
+      chargerProfil(env, c.pharmacien_id), chargerProfil(env, k.pharmacie_id),
+      sbSelect(env, 'regles_reseau?select=penalite_annulation_48h_pct&id=eq.1').then(l => l[0] || {}),
+    ]);
+    const resultats = {};
+
+    if (facture && pct > 0) {
+      const montant = Math.round(parseFloat(facture.total) || 0);
+      const delai = pct >= (parseInt(regles.penalite_annulation_48h_pct) || 100) ? '48h' : '7 jours';
+      if (pharmacien?.telephone && pharmacien.sms_optin !== false) {
+        resultats.pharmacien = (await envoyerAuPharmacien(env, {
+          profile_id: pharmacien.id, contrat_id: k.id, vers: pharmacien.telephone,
+          corps: `C-Direct: ${k.numero_reference} annule a moins de ${delai}. Facture de ${pct}% (${montant}$) ` +
+                 `emise automatiquement en votre faveur (regles du reseau).`,
+          type: 'annulation_pharmacien',
+        })).ok;
+      }
+      if (pharmacie?.telephone) {
+        resultats.pharmacie = (await envoyerEtLogger(env, {
+          vers: pharmacie.telephone,
+          corps: `C-Direct: Annulation ${k.numero_reference}: facture de ${montant}$ ` +
+                 `conformement aux regles acceptees a la publication.`,
+          type: 'annulation_pharmacie', profile_id: pharmacie.id, contrat_id: k.id,
+        })).ok;
+      }
+    } else if (pharmacien?.telephone && pharmacien.sms_optin !== false) {
+      /* hors fenêtre : informer simplement le pharmacien */
+      resultats.pharmacien = (await envoyerAuPharmacien(env, {
+        profile_id: pharmacien.id, contrat_id: k.id, vers: pharmacien.telephone,
+        corps: `C-Direct: ${k.numero_reference} du ${dateCourte(k.date_contrat)} annule par la pharmacie ` +
+               `(aucune penalite - hors fenetre). D'autres contrats: c-direct.ca`,
+        type: 'annulation_pharmacien',
+      })).ok;
+    }
+    return json({ ok: true, penalite_pct: pct, ...resultats });
+  }
+
+  /* REPUBLICATION sur hausse de tarif : gérée au commit 4 */
+  return json({ ok: true, ignore: 'UPDATE contrats sans SMS' });
+}
+
+/* ---- factures UPDATE : passage en retard → 1re relance polie ---- */
+async function factureMaj(env, f, avant) {
+  if (!(f.statut === 'en_retard' && avant.statut !== 'en_retard'))
+    return json({ ok: true, ignore: 'Changement sans SMS' });
+  if (await dejaTraite(env, `factures:UPDATE:${f.id}:en_retard`))
+    return json({ ok: true, ignore: 'Doublon' });
+  const res = await relancerFacture(env, f);
+  return json(res);
+}
+
+/* relance d'une facture en retard (webhook = 1re, cron = suivantes) */
+async function relancerFacture(env, f) {
+  const cands = await sbSelect(env,
+    `candidatures?select=id,pharmacien_id,contrat_id&id=eq.${f.candidature_id}`);
+  const c = cands[0];
+  if (!c) return { ok: true, ignore: 'Candidature introuvable' };
+  const k = await chargerContrat(env, c.contrat_id);
+  const [pharmacien, pharmacie] = await Promise.all([
+    chargerProfil(env, c.pharmacien_id), chargerProfil(env, k.pharmacie_id),
+  ]);
+  if (!pharmacie?.telephone) return { ok: true, ignore: 'Pharmacie sans téléphone' };
+
+  const numero = 'F-' + String(f.numero_facture).padStart(6, '0');
+  const montant = Math.round(parseFloat(f.total) || 0);
+  const corps = `C-Direct: Rappel - facture ${numero} de ${pharmacien?.prenom || ''} ${pharmacien?.nom || ''}`.trim() +
+    ` (${montant}$) echue le ${dateCourte(f.date_echeance)}. Merci de proceder au paiement.`;
+  const res = await envoyerEtLogger(env, {
+    vers: pharmacie.telephone, corps, type: 'rappel_paiement',
+    profile_id: pharmacie.id, contrat_id: c.contrat_id,
+  });
+  return { ok: res.ok, facture: numero };
 }
 
 /* =====================================================================
