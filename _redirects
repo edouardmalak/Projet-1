@@ -1,3 +1,7 @@
 # Cloudflare Pages — réécritures C-Direct
 # La fiche contrat vit à /c/CD-XXXXXX (URL citable par SMS/téléphone).
 /c/* /contrat.html 200
+# Lot de nouveaux contrats (digest SMS Phase 5)
+/nouveaux/* /nouveaux.html 200
+# Lien pharmacie côté SMS (répondre à une candidature)
+/p/* /espace-pharmacie.html 200

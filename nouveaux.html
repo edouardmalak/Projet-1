@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Nouveaux contrats</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849;--rouge:#E5484D}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar .in{max-width:820px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:14px;color:var(--sourd)}
+.wrap{max-width:820px;margin:0 auto;padding:36px 18px 70px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;position:relative;overflow:hidden}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vert),transparent)}
+table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:13px}
+th{padding:12px 14px;text-align:left;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--sourd);border-bottom:1px solid var(--ligne);white-space:nowrap}
+td{padding:13px 14px;border-bottom:1px solid var(--ligne);white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--panneau2)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr.pour-vous{background:rgba(18,169,110,.07)}
+tbody tr.pour-vous:hover{background:rgba(18,169,110,.12)}
+.ref{color:var(--vert-vif);font-weight:700}
+.tarif{font-weight:700}
+.badge{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd)}
+.badge.match{color:var(--vert-vif);border-color:rgba(23,201,128,.4);background:rgba(18,169,110,.1)}
+.badge.ferme{color:var(--sourd)}
+.chargement{padding:48px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.legende{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd);margin-top:12px}
+.legende b{color:var(--vert-vif)}
+@media(max-width:600px){.cache-mobile{display:none}td,th{padding:11px 10px}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html">
+      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></span>
+      C-DIRECT
+    </a>
+    <div class="droite"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>Nouveaux contrats</h1>
+  <p class="sous" id="sous">Lot de contrats publiés ensemble</p>
+
+  <div class="carte">
+    <div class="chargement" id="chargement">Chargement du lot…</div>
+    <table id="tableau" style="display:none">
+      <thead><tr><th>Référence</th><th>Date</th><th>Heures</th><th class="cache-mobile">Ville</th><th>Tarif</th><th></th></tr></thead>
+      <tbody id="lignes"></tbody>
+    </table>
+  </div>
+  <p class="legende" id="legende" style="display:none">Les lignes <b>surlignées</b> correspondent à vos critères (distance, tarif, logiciel, disponibilités). Touchez une ligne pour ouvrir la fiche et postuler.</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/auth.js"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+
+function batchDepuisUrl(){
+  const m = location.pathname.match(/\/nouveaux\/([0-9a-f-]{36})/i);
+  if(m) return m[1];
+  return new URLSearchParams(location.search).get('id');
+}
+
+(async function(){
+  await cdExigerConnexion();
+  cdEnteteConnecte();
+
+  const id = batchDepuisUrl();
+  if(!id){ $('chargement').textContent = 'Lot introuvable — lien incomplet.'; return; }
+
+  const { data, error } = await sb.rpc('get_batch_contrats', { p_batch: id });
+  if(error){ $('chargement').textContent = 'Erreur : ' + error.message; return; }
+  if(!data || !data.length){ $('chargement').textContent = 'Lot introuvable ou vide.'; return; }
+
+  $('chargement').style.display = 'none';
+  $('tableau').style.display = ''; $('legende').style.display = '';
+  const n = data.length, m = data.filter(k=>k.correspond).length;
+  $('sous').textContent = n + ' contrats publiés ensemble · ' + m + ' correspondent à vos critères';
+
+  const tb = $('lignes');
+  data.forEach(k=>{
+    const tr = document.createElement('tr');
+    if(k.correspond) tr.className = 'pour-vous';
+    tr.onclick = ()=>{ location.href = '/c/' + encodeURIComponent(k.numero_reference); };
+    const td = (t, cls)=>{ const c=document.createElement('td'); if(cls) c.className=cls; c.textContent=t; return c; };
+    const etat = document.createElement('td');
+    etat.innerHTML = k.statut !== 'ouvert'
+      ? '<span class="badge ferme">' + (k.statut==='attribue'?'Attribué':k.statut) + '</span>'
+      : (k.correspond ? '<span class="badge match">Pour vous</span>' : '');
+    tr.append(
+      td(k.numero_reference, 'ref'),
+      td(cdDate(k.date_contrat)),
+      td(cdHeure(k.heure_debut) + ' – ' + cdHeure(k.heure_fin)),
+      td(k.ville || '—', 'cache-mobile'),
+      td(cdArgent(k.tarif_horaire) + '/h', 'tarif'),
+      etat
+    );
+    tb.appendChild(tr);
+  });
+})();
+</script>
+</body>
+</html>

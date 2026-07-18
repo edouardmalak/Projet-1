@@ -28,6 +28,21 @@ export default {
       return json({ erreur: 'Erreur interne', detail: e.message }, 500);
     }
   },
+
+  /* Cron Triggers — voir wrangler.toml */
+  async scheduled(event, env, ctx) {
+    try {
+      if (event.cron === '* * * * *') {
+        await flushQueue(env);
+      } else {
+        const h = heureMontreal();
+        if (h === 10) await cronDunning(env);        // 14/15 UTC → 10:00 locale
+        if (h === 18) await cronRappelVeille(env);   // 22/23 UTC → 18:00 locale
+      }
+    } catch (e) {
+      console.error('Erreur cron:', e.stack || e.message);
+    }
+  },
 };
 
 /* =====================================================================
@@ -141,6 +156,175 @@ async function enParallele(taches, limite = 5) {
 }
 
 /* =====================================================================
+   HEURES DE SILENCE (5.4) + FILE D'ATTENTE (5.2)
+   Les messages destinés aux PHARMACIENS créés 21:00–07:00
+   America/Montreal attendent 07:00. Confirmations pharmacie et
+   rappel_veille (18:00) : non concernés.
+===================================================================== */
+function partiesMontreal(d = new Date()) {
+  const f = new Intl.DateTimeFormat('fr-CA', {
+    timeZone: 'America/Montreal',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  });
+  return Object.fromEntries(f.formatToParts(d).map(p => [p.type, p.value]));
+}
+function heureMontreal(d = new Date()) { return (+partiesMontreal(d).hour) % 24; }
+
+function enSilence(d = new Date()) {
+  const h = heureMontreal(d);
+  return h >= 21 || h < 7;
+}
+
+/* le prochain 07:00 America/Montreal, en instant UTC réel */
+function prochain0700Utc(depuis = new Date()) {
+  const p = partiesMontreal(depuis);
+  /* décalage Montréal↔UTC à cet instant (≈ 4 ou 5 h, arrondi au quart d'heure) */
+  const mur = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute);
+  const decalage = Math.round((depuis.getTime() - mur) / 900000) * 900000;
+  let cible = Date.UTC(+p.year, +p.month - 1, +p.day, 7, 0, 0) + decalage;
+  if (+p.hour >= 7) cible += 24 * 3600 * 1000;   // déjà passé 07:00 → demain
+  return new Date(cible);
+}
+
+/* instant d'envoi ajusté : jamais pendant les heures de silence */
+function ajusterEnvoi(envisage) {
+  return enSilence(envisage) ? prochain0700Utc(envisage) : envisage;
+}
+
+/* mise en file (pharmaciens seulement) */
+async function enfilerSms(env, lignes) {
+  if (!lignes.length) return true;
+  return sbInsert(env, 'sms_queue', lignes);
+}
+
+/* envoi pharmacien : immédiat hors silence, sinon en file jusqu'à 07:00 */
+async function envoyerAuPharmacien(env, { profile_id, contrat_id = null, pharmacie_id = null, vers, corps, type, ville = null }) {
+  if (!enSilence()) {
+    return envoyerEtLogger(env, { vers, corps, type, profile_id, contrat_id });
+  }
+  await enfilerSms(env, [{
+    profile_id, contrat_id, pharmacie_id, to_number: vers, type, corps, ville,
+    envoyer_apres: prochain0700Utc().toISOString(),
+  }]);
+  return { ok: true, differe: true };
+}
+
+/* =====================================================================
+   VIDAGE DE LA FILE — Cron chaque minute.
+   · Réclamation atomique (statut attente→envoi, filtre PostgREST)
+   · Par pharmacien : 3+ contrats d'une MÊME pharmacie dus ensemble
+     → UN digest (lot sms_batch, page /nouveaux/{batch_id}) ;
+     1–2 → SMS individuels normaux. Autres types : individuels.
+===================================================================== */
+async function flushQueue(env) {
+  const nowIso = new Date().toISOString();
+  const rows = await sbUpdate(env,
+    `sms_queue?statut=eq.attente&envoyer_apres=lte.${encodeURIComponent(nowIso)}`,
+    { statut: 'envoi' });
+  if (!rows.length) return { traite: 0 };
+
+  /* suffixe opt-out : numéros jamais contactés */
+  const dejaContactes = await numerosDejaContactes(env, [...new Set(rows.map(r => r.to_number))]);
+  const suffixe = n => (dejaContactes.has(n) ? '' : SUFFIXE_OPTOUT);
+
+  /* regroupement par pharmacien */
+  const parPharmacien = new Map();
+  for (const r of rows) {
+    if (!parPharmacien.has(r.profile_id)) parPharmacien.set(r.profile_id, []);
+    parPharmacien.get(r.profile_id).push(r);
+  }
+
+  /* lots par pharmacie (partagés entre pharmaciens) : créés à la demande */
+  const batchParPharmacie = new Map();   // pharmacie_id → {id, contratIds:Set}
+  const taches = [];
+  const majStatut = [];                  // {ids, statut, batch_id}
+
+  for (const [, lignes] of parPharmacien) {
+    const diffusions = lignes.filter(l => l.type === 'contrat_nouveau');
+    const autres = lignes.filter(l => l.type !== 'contrat_nouveau');
+
+    /* diffusions groupées par pharmacie d'origine */
+    const parPharmacie = new Map();
+    for (const l of diffusions) {
+      const cle = l.pharmacie_id || 'x';
+      if (!parPharmacie.has(cle)) parPharmacie.set(cle, []);
+      parPharmacie.get(cle).push(l);
+    }
+
+    for (const [pharmacieId, groupe] of parPharmacie) {
+      if (groupe.length >= 3 && pharmacieId !== 'x') {
+        /* ---- DIGEST ---- */
+        if (!batchParPharmacie.has(pharmacieId)) {
+          batchParPharmacie.set(pharmacieId, { id: crypto.randomUUID(), contratIds: new Set() });
+        }
+        const lot = batchParPharmacie.get(pharmacieId);
+        groupe.forEach(l => lot.contratIds.add(l.contrat_id));
+        taches.push(async () => {
+          const infos = await sbSelect(env,
+            `contrats?select=date_contrat,tarif_horaire&id=in.(${groupe.map(l => l.contrat_id).join(',')})`);
+          const dates = infos.map(i => i.date_contrat).sort();
+          const tarifs = infos.map(i => Math.round(i.tarif_horaire)).sort((a, b) => a - b);
+          const tarifTxt = tarifs[0] === tarifs[tarifs.length - 1]
+            ? `${tarifs[0]}` : `${tarifs[0]}-${tarifs[tarifs.length - 1]}`;
+          const corps = `C-Direct: ${groupe.length} nouveaux contrats - ${groupe[0].ville || 'Quebec'}, ` +
+            `du ${dateCourte(dates[0])} au ${dateCourte(dates[dates.length - 1])}, ${tarifTxt}$/h. ` +
+            `Voir: c-direct.ca/nouveaux/${lot.id}` + suffixe(groupe[0].to_number);
+          const res = await envoyerEtLogger(env, {
+            vers: groupe[0].to_number, corps, type: 'contrat_digest',
+            profile_id: groupe[0].profile_id, contrat_id: null,
+          });
+          majStatut.push({ ids: groupe.map(l => l.id), statut: res.ok ? 'groupe' : 'echec', batch_id: lot.id });
+          return res;
+        });
+      } else {
+        /* ---- individuels ---- */
+        for (const l of groupe) {
+          taches.push(async () => {
+            const res = await envoyerEtLogger(env, {
+              vers: l.to_number, corps: (l.corps || '') + suffixe(l.to_number),
+              type: l.type, profile_id: l.profile_id, contrat_id: l.contrat_id,
+            });
+            majStatut.push({ ids: [l.id], statut: res.ok ? 'envoye' : 'echec', batch_id: null });
+            return res;
+          });
+        }
+      }
+    }
+
+    /* messages différés non-diffusion (heures de silence) */
+    for (const l of autres) {
+      taches.push(async () => {
+        const res = await envoyerEtLogger(env, {
+          vers: l.to_number, corps: (l.corps || '') + suffixe(l.to_number),
+          type: l.type, profile_id: l.profile_id, contrat_id: l.contrat_id,
+        });
+        majStatut.push({ ids: [l.id], statut: res.ok ? 'envoye' : 'echec', batch_id: null });
+        return res;
+      });
+    }
+  }
+
+  /* créer les lots AVANT les envois (la page doit exister au clic) */
+  for (const [pharmacieId, lot] of batchParPharmacie) {
+    await sbInsert(env, 'sms_batch', [{ id: lot.id, pharmacie_id: pharmacieId, contrat_ids: [...lot.contratIds] }]);
+  }
+
+  await enParallele(taches, 5);
+
+  /* statuts finaux de la file */
+  for (const m of majStatut) {
+    await sbUpdate(env, `sms_queue?id=in.(${m.ids.join(',')})`,
+      m.batch_id ? { statut: m.statut, batch_id: m.batch_id } : { statut: m.statut });
+  }
+  return { traite: rows.length };
+}
+
+/* stubs — implémentés au commit 4 (crons quotidiens) */
+async function cronDunning(env) {}
+async function cronRappelVeille(env) {}
+
+/* =====================================================================
    MESSAGES — préfixe "C-Direct:", GSM-7 autant que possible.
    Mois SANS accents problématiques ("août" → "aout" : û n'est pas
    GSM-7 et ferait basculer tout le message en UCS-2 / segments de 70).
@@ -193,21 +377,26 @@ async function routeWebhook(request, env) {
   const cibles = await ciblesFiltrees(env, k);
   const { retenus, pharmacie } = cibles;
 
-  /* premier SMS jamais envoyé à chacun de ces numéros ? */
-  const tousNumeros = retenus.map(r => r.p.telephone)
-    .concat(pharmacie.telephone ? [pharmacie.telephone] : []);
-  const dejaContactes = await numerosDejaContactes(env, tousNumeros);
-
-  /* ---- 3 · diffusion filtrée (5 en parallèle, tout journalisé) ---- */
-  const taches = retenus.map(r => () => envoyerEtLogger(env, {
-    vers: r.p.telephone,
-    corps: r.corps + (dejaContactes.has(r.p.telephone) ? '' : SUFFIXE_OPTOUT),
-    type: 'contrat_nouveau',
+  /* ---- 3 · mise en FILE des diffusions pharmaciens (5.2 + 5.4) :
+     tampon ~5 min pour le groupage, décalé à 07:00 si heures de
+     silence. Le Cron du Worker vide la file chaque minute (le suffixe
+     opt-out du premier SMS est appliqué au moment de l'envoi). ---- */
+  const envoiPrevu = ajusterEnvoi(new Date(Date.now() + 5 * 60 * 1000)).toISOString();
+  await enfilerSms(env, retenus.map(r => ({
     profile_id: r.p.id,
     contrat_id: k.id,
-  }));
-  const resultats = await enParallele(taches, 5);
-  const nEnvoyes = resultats.filter(r => r && r.ok).length;
+    pharmacie_id: k.pharmacie_id,
+    to_number: r.p.telephone,
+    type: 'contrat_nouveau',
+    corps: r.corps,
+    ville: String(pharmacie.ville || 'Quebec').slice(0, 20),
+    envoyer_apres: envoiPrevu,
+  })));
+  const nEnvoyes = retenus.length;   // mis en file — la confirmation annonce le compte
+
+  /* suffixe premier-SMS pour la confirmation pharmacie (immédiate) */
+  const dejaContactes = await numerosDejaContactes(env,
+    pharmacie.telephone ? [pharmacie.telephone] : []);
 
   /* ---- 4 · confirmation à la pharmacie ---- */
   let confirmation = null;

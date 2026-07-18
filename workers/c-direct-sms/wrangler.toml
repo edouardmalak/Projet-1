@@ -13,3 +13,11 @@ compatibility_date = "2026-07-01"
 # Aucune variable en clair : tout passe par les secrets
 #   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER,
 #   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, WEBHOOK_SECRET
+
+# Cron Triggers (UTC) :
+#   * * * * *      → vidage de la file sms_queue (groupage + heures de silence)
+#   0 14/15 * * *  → relances de paiement (garde : 10:00 America/Montreal)
+#   0 22/23 * * *  → rappel_veille (garde : 18:00 America/Montreal)
+# Les doublons 14+15 / 22+23 couvrent EDT/EST ; le code vérifie l'heure locale.
+[triggers]
+crons = ["* * * * *", "0 14 * * *", "0 15 * * *", "0 22 * * *", "0 23 * * *"]
