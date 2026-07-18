@@ -1,7 +1,10 @@
 # Cloudflare Pages — réécritures C-Direct
 # La fiche contrat vit à /c/CD-XXXXXX (URL citable par SMS/téléphone).
-/c/* /contrat.html 200
+# Cibles SANS .html : avec « /contrat.html 200 », Pages enchaîne sur sa
+# redirection « pretty URL » et le navigateur perd /c/CD-XXXXXX (bug vu
+# en prod : « Référence manquante »). Extensionless = vraie réécriture.
+/c/* /contrat 200
 # Lot de nouveaux contrats (digest SMS Phase 5)
-/nouveaux/* /nouveaux.html 200
+/nouveaux/* /nouveaux 200
 # Lien pharmacie côté SMS (répondre à une candidature)
-/p/* /espace-pharmacie.html 200
+/p/* /espace-pharmacie 200
