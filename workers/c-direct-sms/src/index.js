@@ -6,6 +6,8 @@
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, WEBHOOK_SECRET
 // =====================================================================
 
+import { distanceKm } from './fsa.js';
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -187,30 +189,21 @@ async function routeWebhook(request, env) {
   /* marqueur immédiat : ferme la fenêtre de course entre deux retries */
   await loggerSms(env, { contrat_id: k.id, type: 'contrat_nouveau', statut: 'demarre', body: `Diffusion ${k.numero_reference}` });
 
-  /* ---- 2 · destinataires + ville de la pharmacie ---- */
-  const [pharmaciens, pharmacies] = await Promise.all([
-    sbSelect(env, `profiles?select=id,telephone&role=eq.pharmacien&sms_optin=eq.true&telephone=not.is.null`),
-    sbSelect(env, `profiles?select=id,telephone,ville,nom_pharmacie&id=eq.${k.pharmacie_id}`),
-  ]);
-  const pharmacie = pharmacies[0] || {};
-
-  /* gabarit broadcast — ville bornée à 20 car. pour viser 1 segment GSM-7 */
-  const ville = String(pharmacie.ville || 'Quebec').slice(0, 20);
-  const base = `C-Direct: Nouveau contrat ${k.numero_reference} - ${ville}, ${dateCourte(k.date_contrat)}, ` +
-               `${hhmm(k.heure_debut)}-${hhmm(k.heure_fin)}, ${Math.round(k.tarif_horaire)}$/h. ` +
-               `Postulez: c-direct.ca/c/${k.numero_reference}`;
+  /* ---- 2 · candidats + contexte (pharmacie, règles, disponibilités) ---- */
+  const cibles = await ciblesFiltrees(env, k);
+  const { retenus, pharmacie } = cibles;
 
   /* premier SMS jamais envoyé à chacun de ces numéros ? */
-  const tousNumeros = pharmaciens.map(p => p.telephone)
+  const tousNumeros = retenus.map(r => r.p.telephone)
     .concat(pharmacie.telephone ? [pharmacie.telephone] : []);
   const dejaContactes = await numerosDejaContactes(env, tousNumeros);
 
-  /* ---- 3 · diffusion (5 en parallèle, tout journalisé) ---- */
-  const taches = pharmaciens.map(p => () => envoyerEtLogger(env, {
-    vers: p.telephone,
-    corps: base + (dejaContactes.has(p.telephone) ? '' : SUFFIXE_OPTOUT),
+  /* ---- 3 · diffusion filtrée (5 en parallèle, tout journalisé) ---- */
+  const taches = retenus.map(r => () => envoyerEtLogger(env, {
+    vers: r.p.telephone,
+    corps: r.corps + (dejaContactes.has(r.p.telephone) ? '' : SUFFIXE_OPTOUT),
     type: 'contrat_nouveau',
-    profile_id: p.id,
+    profile_id: r.p.id,
     contrat_id: k.id,
   }));
   const resultats = await enParallele(taches, 5);
@@ -232,10 +225,99 @@ async function routeWebhook(request, env) {
   return json({
     ok: true,
     contrat: k.numero_reference,
-    pharmaciens_cibles: pharmaciens.length,
+    pharmaciens_evalues: cibles.nEvalues,
+    retenus: retenus.length,
+    filtres: cibles.nFiltres,
     sms_envoyes: nEnvoyes,
     confirmation_pharmacie: confirmation ? confirmation.ok : 'aucun téléphone au profil',
   });
+}
+
+/* =====================================================================
+   5.1 · CIBLAGE FILTRÉ — remplace la diffusion à tous.
+   Critères (chaque critère est IGNORÉ si la donnée manque — un profil
+   incomplet ou un calendrier non tenu ne bloque jamais) :
+     · distance FSA(pharmacien, pharmacie) <= rayon_deplacement_km
+     · tarif_horaire >= tarif_horaire_min du pharmacien
+     · logiciel de la pharmacie ∈ logiciels du pharmacien
+     · si le pharmacien a DES disponibilités ce mois-là → il en faut
+       une le date_contrat
+   Chaque exclusion est journalisée : statut 'filtre' + raison.
+   Message par destinataire : km A/R + montant km quand calculables.
+===================================================================== */
+async function ciblesFiltrees(env, k) {
+  const moisDebut = String(k.date_contrat).slice(0, 8) + '01';
+  const finMois = new Date(Date.UTC(+String(k.date_contrat).slice(0, 4), +String(k.date_contrat).slice(5, 7), 0));
+  const moisFin = finMois.toISOString().slice(0, 10);
+
+  const [pharmaciens, pharmacies, reglesL] = await Promise.all([
+    sbSelect(env, `profiles?select=id,telephone,code_postal,rayon_deplacement_km,tarif_horaire_min,logiciels&role=eq.pharmacien&sms_optin=eq.true&telephone=not.is.null`),
+    sbSelect(env, `profiles?select=id,telephone,ville,nom_pharmacie,code_postal,logiciel&id=eq.${k.pharmacie_id}`),
+    sbSelect(env, `regles_reseau?select=taux_km&id=eq.1`),
+  ]);
+  const pharmacie = pharmacies[0] || {};
+  const tauxKm = parseFloat((reglesL[0] || {}).taux_km) || 0.70;
+
+  /* disponibilités du mois pour tous les candidats (1 requête) */
+  const ids = pharmaciens.map(p => p.id);
+  let disposParPh = new Map();
+  if (ids.length) {
+    const dispos = await sbSelect(env,
+      `disponibilites?select=pharmacien_id,date_dispo&date_dispo=gte.${moisDebut}&date_dispo=lte.${moisFin}&pharmacien_id=in.(${ids.join(',')})`);
+    for (const d of dispos) {
+      if (!disposParPh.has(d.pharmacien_id)) disposParPh.set(d.pharmacien_id, new Set());
+      disposParPh.get(d.pharmacien_id).add(String(d.date_dispo));
+    }
+  }
+
+  const ville = String(pharmacie.ville || 'Quebec').slice(0, 20);
+  const retenus = [], exclusions = [];
+
+  for (const p of pharmaciens) {
+    /* 1 · distance (ignoré si l'un des codes postaux manque) */
+    const km = distanceKm(p.code_postal, pharmacie.code_postal);
+    if (km != null && p.rayon_deplacement_km != null && km > p.rayon_deplacement_km) {
+      exclusions.push({ p, raison: `distance ${km} km > rayon ${p.rayon_deplacement_km} km` }); continue;
+    }
+    /* 2 · tarif plancher personnel (ignoré si non renseigné) */
+    if (p.tarif_horaire_min != null && parseFloat(k.tarif_horaire) < parseFloat(p.tarif_horaire_min)) {
+      exclusions.push({ p, raison: `tarif ${k.tarif_horaire}$ < min ${p.tarif_horaire_min}$` }); continue;
+    }
+    /* 3 · logiciel (ignoré si l'une des listes est vide) */
+    if (pharmacie.logiciel && Array.isArray(p.logiciels) && p.logiciels.length &&
+        !p.logiciels.includes(pharmacie.logiciel)) {
+      exclusions.push({ p, raison: `logiciel ${pharmacie.logiciel} non maitrise` }); continue;
+    }
+    /* 4 · disponibilités : un calendrier non tenu ne bloque jamais */
+    const sesDispos = disposParPh.get(p.id);
+    if (sesDispos && sesDispos.size && !sesDispos.has(String(k.date_contrat))) {
+      exclusions.push({ p, raison: 'indispo (calendrier tenu, date absente)' }); continue;
+    }
+
+    /* message par destinataire — km A/R + montant quand calculables */
+    let corps;
+    if (km != null) {
+      const kmAR = km * 2;
+      const montant = Math.round(kmAR * tauxKm);
+      corps = `C-Direct: Nouveau contrat ${k.numero_reference} - ${ville}, ${dateCourte(k.date_contrat)}, ` +
+              `${Math.round(k.tarif_horaire)}$/h (+${kmAR} km = ${montant}$ km). Postulez: c-direct.ca/c/${k.numero_reference}`;
+    } else {
+      corps = `C-Direct: Nouveau contrat ${k.numero_reference} - ${ville}, ${dateCourte(k.date_contrat)}, ` +
+              `${Math.round(k.tarif_horaire)}$/h. Postulez: c-direct.ca/c/${k.numero_reference}`;
+    }
+    retenus.push({ p, corps, km });
+  }
+
+  /* journal des exclus : statut 'filtre' + raison (type contrat_nouveau) */
+  if (exclusions.length) {
+    await sbInsert(env, 'sms_log', exclusions.map(x => ({
+      profile_id: x.p.id, contrat_id: k.id, type: 'contrat_nouveau',
+      to_number: x.p.telephone, body: null, twilio_sid: null,
+      statut: 'filtre', erreur: x.raison,
+    })));
+  }
+
+  return { retenus, pharmacie, nEvalues: pharmaciens.length, nFiltres: exclusions.length };
 }
 
 /* =====================================================================
