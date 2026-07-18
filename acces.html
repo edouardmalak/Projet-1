@@ -258,6 +258,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="auth.js"></script>
+<script src="outils.js"></script>
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
@@ -450,11 +451,13 @@ $('f-inscription').addEventListener('submit', async e=>{
   });
   b.disabled=false; b.textContent='Créer mon compte';
   if(error){ erreur('err-insc', messageErreur(error)); return; }
+  cdAlerteAdmin('Nouvelle inscription — à valider',
+    (role||'?') + ' : ' + $('i-prenom').value + ' ' + $('i-nom').value + ' <' + $('i-courriel').value.trim() + '> — valider dans la console admin.');
   if(data.session){ await apresConnexion(); return; }
   const courrielInscrit = $('i-courriel').value.trim().replace(/</g,'&lt;').replace(/"/g,'&quot;');
   succes('COMPTE CRÉÉ.',
     "Un courriel de confirmation vient de vous être envoyé (vérifiez vos indésirables).<br><br>" +
-    "Cliquez le lien pour activer votre compte, puis connectez-vous.<br><br>" +
+    "Cliquez le lien pour confirmer votre courriel. Votre compte sera ensuite <b>activé après vérification par l'équipe</b> (inscription OPQ pour les pharmacien(ne)s, établissement pour les pharmacies).<br><br>" +
     "Rien reçu après quelques minutes&nbsp;? " +
     "<button style='background:none;border:none;color:var(--vert-vif);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-size:13px' " +
     "onclick=\"renvoyerConfirmation('" + courrielInscrit + "', this)\">Renvoyer le courriel</button>");
@@ -510,6 +513,8 @@ $('f-completer').addEventListener('submit', async e=>{
   }
   b.disabled=false;
   if(error){ erreur('err-completer', messageErreur(error)); return; }
+  cdAlerteAdmin('Nouvelle inscription (Google) — à valider',
+    (role||'?') + ' : ' + $('g-prenom').value + ' ' + $('g-nom').value + ' <' + (s.user.email||'') + '> — valider dans la console admin.');
   const p = await cdProfil(true);
   cdReprendreSuite(p.role);
 });

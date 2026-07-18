@@ -97,8 +97,8 @@ tbody tr:last-child td{border-bottom:none}
     <div class="sec">Utilisateurs<small id="n-users"></small></div>
     <div class="table-scroll">
       <table>
-        <thead><tr><th>Rôle</th><th>Nom</th><th>Courriel</th><th>Téléphone</th><th>Ville</th><th>SMS</th><th>Inscrit le</th></tr></thead>
-        <tbody id="t-users"><tr><td colspan="7" class="vide">Chargement…</td></tr></tbody>
+        <thead><tr><th>Rôle</th><th>Nom</th><th>Courriel</th><th>Téléphone</th><th>Ville</th><th>SMS</th><th>Inscrit le</th><th>Validation</th></tr></thead>
+        <tbody id="t-users"><tr><td colspan="8" class="vide">Chargement…</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -185,19 +185,55 @@ function msg(id, texte, ok){
 
   /* ---- utilisateurs (lecture seule) ---- */
   const { data: users, error: eu } = await sb.from('profiles')
-    .select('role,nom,prenom,courriel,telephone,ville,ville_base,nom_pharmacie,sms_optin,created_at')
+    .select('id,role,nom,prenom,courriel,telephone,ville,ville_base,nom_pharmacie,sms_optin,created_at,approuve')
     .order('created_at',{ascending:false});
   const tu = $('t-users');
-  if(eu){ tu.innerHTML = '<tr><td colspan="7" class="vide">Erreur : '+eu.message+'</td></tr>'; }
-  else if(!users || !users.length){ tu.innerHTML = '<tr><td colspan="7" class="vide">Aucun utilisateur.</td></tr>'; }
+  if(eu){ tu.innerHTML = '<tr><td colspan="8" class="vide">Erreur : '+eu.message+'</td></tr>'; }
+  else if(!users || !users.length){ tu.innerHTML = '<tr><td colspan="8" class="vide">Aucun utilisateur.</td></tr>'; }
   else{
-    $('n-users').textContent = users.length + ' compte' + (users.length>1?'s':'');
+    const enAttente = users.filter(u=>u.role!=='admin' && !u.approuve).length;
+    $('n-users').textContent = users.length + ' compte' + (users.length>1?'s':'') +
+      (enAttente ? ' · ' + enAttente + ' EN ATTENTE DE VALIDATION' : '');
     tu.innerHTML = '';
     users.forEach(u=>{
       const tr = document.createElement('tr');
       const td = (t)=>{ const c=document.createElement('td'); c.textContent=t; return c; };
       const role = document.createElement('td');
       role.innerHTML = '<span class="role '+(u.role||'')+'">'+(u.role||'—')+'</span>';
+
+      /* colonne validation : Valider / Révoquer (trigger DB : admin seulement) */
+      const val = document.createElement('td');
+      if(u.role === 'admin'){ val.textContent = '—'; }
+      else{
+        const etat = document.createElement('span');
+        etat.className = 'badge ' + (u.approuve ? 'ouvert' : 'attribue');
+        etat.textContent = u.approuve ? 'Validé' : 'En attente';
+        const b = document.createElement('button');
+        b.textContent = u.approuve ? 'Révoquer' : 'Valider';
+        b.style.cssText = 'margin-left:8px;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:3px;cursor:pointer;' +
+          (u.approuve ? 'background:transparent;color:var(--sourd);border:1px solid var(--ligne2)'
+                      : 'background:var(--jaune);color:#1A1405;border:1px solid var(--jaune);font-weight:700');
+        b.onclick = async ()=>{
+          const nom = u.nom_pharmacie || ((u.prenom||'')+' '+(u.nom||'')).trim() || u.courriel;
+          if(!confirm((u.approuve ? 'RÉVOQUER la validation de ' : 'VALIDER le compte de ') + nom + ' ?')) return;
+          b.disabled = true;
+          const { error: e } = await sb.from('profiles').update({
+            approuve: !u.approuve,
+            approuve_date: !u.approuve ? new Date().toISOString() : null
+          }).eq('id', u.id);
+          b.disabled = false;
+          if(e){ alert('Erreur : '+e.message); return; }
+          u.approuve = !u.approuve;
+          etat.className = 'badge ' + (u.approuve ? 'ouvert' : 'attribue');
+          etat.textContent = u.approuve ? 'Validé' : 'En attente';
+          b.textContent = u.approuve ? 'Révoquer' : 'Valider';
+          b.style.cssText = b.style.cssText.replace(/background:[^;]+;color:[^;]+;border:[^;]+/,
+            u.approuve ? 'background:transparent;color:var(--sourd);border:1px solid var(--ligne2)'
+                       : 'background:var(--jaune);color:#1A1405;border:1px solid var(--jaune)');
+        };
+        val.append(etat, b);
+      }
+
       tr.append(
         role,
         td(u.role==='pharmacie' ? (u.nom_pharmacie || ((u.prenom||'')+' '+(u.nom||'')).trim() || '—')
@@ -206,7 +242,8 @@ function msg(id, texte, ok){
         td(cdTelAffiche(u.telephone)||'—'),
         td(u.ville || u.ville_base || '—'),
         td(u.sms_optin ? 'Oui' : 'Non'),
-        td(u.created_at ? new Date(u.created_at).toLocaleDateString('fr-CA') : '—')
+        td(u.created_at ? new Date(u.created_at).toLocaleDateString('fr-CA') : '—'),
+        val
       );
       tu.appendChild(tr);
     });

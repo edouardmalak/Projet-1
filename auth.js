@@ -51,6 +51,16 @@ window.cdExigerConnexion = async function(roles){
     location.replace(cdAccueilPourRole(p.role));
     return new Promise(()=>{});
   }
+  /* compte non encore validé par l'admin : accès limité au profil
+     (nécessaire à la vérification) — tout le reste va en salle d'attente.
+     La base bloque de toute façon (RLS) ; ici c'est l'expérience. */
+  if(p.role !== 'admin' && p.approuve !== true){
+    const permis = ['/profil.html', '/attente.html'];
+    if(!permis.includes(location.pathname)){
+      location.replace('/attente.html');
+      return new Promise(()=>{});
+    }
+  }
   return p;
 };
 

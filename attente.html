@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Compte en attente de validation</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.6;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
+.carte{max-width:440px;width:100%;background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:32px 28px;position:relative;text-align:center}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--jaune),transparent)}
+.horloge{width:52px;height:52px;border-radius:8px;background:rgba(232,184,73,.1);border:1px solid rgba(232,184,73,.35);display:grid;place-items:center;margin:0 auto 18px;font-size:24px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--jaune);margin-bottom:12px}
+p{color:var(--sourd);font-size:13.5px;margin-bottom:12px}
+p b{color:var(--texte)}
+.btn{display:block;width:100%;background:var(--vert);color:#04130C;border:none;border-radius:5px;padding:12px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-decoration:none;margin-top:16px}
+.btn:hover{background:var(--vert-vif)}
+.lien{background:none;border:none;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:11.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;margin-top:12px}
+.lien:hover{color:var(--texte)}
+</style>
+</head>
+<body>
+<div class="carte">
+  <div class="horloge">⏳</div>
+  <h1>Compte en attente de validation</h1>
+  <p id="texte">Chaque compte C-Direct est vérifié manuellement avant l'activation — <b>inscription à l'OPQ</b> pour les pharmacien(ne)s, <b>établissement</b> pour les pharmacies. C'est ce qui fait la fiabilité du réseau.</p>
+  <p>Vous serez avisé(e) dès l'activation. En attendant, assurez-vous que votre profil est complet — cela accélère la vérification.</p>
+  <a class="btn" href="/profil.html">Compléter mon profil</a>
+  <button class="lien" onclick="cdDeconnexion()">Déconnexion</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/auth.js"></script>
+<script>
+(async function(){
+  const p = await cdExigerConnexion();
+  /* déjà validé (ou admin) : direction l'espace normal */
+  if(p.role === 'admin' || p.approuve === true) location.replace(cdAccueilPourRole(p.role));
+})();
+</script>
+</body>
+</html>
