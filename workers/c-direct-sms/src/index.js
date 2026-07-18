@@ -320,9 +320,92 @@ async function flushQueue(env) {
   return { traite: rows.length };
 }
 
-/* stubs — implémentés au commit 4 (crons quotidiens) */
-async function cronDunning(env) {}
-async function cronRappelVeille(env) {}
+/* =====================================================================
+   CRON QUOTIDIEN 18:00 America/Montreal — RAPPEL VEILLE
+   Chaque contrat ATTRIBUÉ daté de demain → SMS au pharmacien retenu
+   avec adresse, horaire convenu, notes d'accès, logiciel, cell du
+   propriétaire. Envoyé à 18:00 : hors heures de silence par définition.
+   (Message volontairement complet → souvent 2 segments, assumé.)
+===================================================================== */
+async function cronRappelVeille(env) {
+  const p = partiesMontreal();
+  const demainUtc = new Date(Date.UTC(+p.year, +p.month - 1, +p.day + 1));
+  const demain = demainUtc.toISOString().slice(0, 10);
+
+  const contrats = await sbSelect(env, `contrats?select=*&statut=eq.attribue&date_contrat=eq.${demain}`);
+  let envoyes = 0;
+
+  for (const k of contrats) {
+    if (await dejaTraite(env, `cron:rappel_veille:${k.id}:${demain}`)) continue;
+
+    const cands = await sbSelect(env,
+      `candidatures?select=pharmacien_id,tarif_propose,heure_debut_proposee,heure_fin_proposee&contrat_id=eq.${k.id}&statut=eq.accepte&limit=1`);
+    const c = cands[0];
+    if (!c) continue;
+    const [pharmacien, pharmacie] = await Promise.all([
+      chargerProfil(env, c.pharmacien_id), chargerProfil(env, k.pharmacie_id),
+    ]);
+    if (!pharmacien?.telephone || pharmacien.sms_optin === false) continue;
+
+    const hd = hhmm(c.heure_debut_proposee || k.heure_debut);
+    const hf = hhmm(c.heure_fin_proposee || k.heure_fin);
+    const tarif = Math.round(c.tarif_propose ?? k.tarif_horaire);
+    const morceaux = [
+      `C-Direct: Rappel - ${k.numero_reference} demain a ${pharmacie?.nom_pharmacie || 'la pharmacie'}, ` +
+      `${pharmacie?.adresse || ''}, ${pharmacie?.ville || ''}. ${hd}-${hf}, ${tarif}$/h.`,
+    ];
+    if (pharmacie?.notes_acces) morceaux.push(String(pharmacie.notes_acces).slice(0, 60) + '.');
+    if (pharmacie?.logiciel) morceaux.push(`Logiciel: ${pharmacie.logiciel}.`);
+    if (pharmacie?.cell_proprietaire) morceaux.push(`Cell proprio: ${pharmacie.cell_proprietaire}.`);
+
+    const res = await envoyerEtLogger(env, {
+      vers: pharmacien.telephone, corps: morceaux.join(' '),
+      type: 'rappel_veille', profile_id: pharmacien.id, contrat_id: k.id,
+    });
+    if (res.ok) envoyes++;
+  }
+  return { contrats: contrats.length, envoyes };
+}
+
+/* =====================================================================
+   CRON QUOTIDIEN 10:00 America/Montreal — RELANCES DE PAIEMENT
+   Factures en_retard : relance tous les 7 jours, MAX 3, puis
+   signalement admin (sms_log type rappel_paiement_max).
+   (La 1re relance part du webhook factures UPDATE → en_retard.)
+===================================================================== */
+async function cronDunning(env) {
+  const factures = await sbSelect(env,
+    `factures?select=id,numero_facture,total,date_echeance,candidature_id&statut=eq.en_retard`);
+  let relances = 0, signalements = 0;
+
+  for (const f of factures) {
+    const numero = 'F-' + String(f.numero_facture).padStart(6, '0');
+    const motif = encodeURIComponent(`*${numero}*`);
+    const envois = await sbSelect(env,
+      `sms_log?select=created_at&type=eq.rappel_paiement&statut=eq.envoye&body=like.${motif}&order=created_at.desc`);
+
+    if (envois.length >= 3) {
+      /* plafond atteint → signaler l'admin UNE fois */
+      const dejaSignale = await sbSelect(env,
+        `sms_log?select=id&type=eq.rappel_paiement_max&body=eq.${encodeURIComponent(numero)}&limit=1`);
+      if (!dejaSignale.length) {
+        await loggerSms(env, {
+          type: 'rappel_paiement_max', statut: 'signale', body: numero,
+          erreur: `3 relances envoyées sans paiement — intervention admin requise`,
+        });
+        signalements++;
+      }
+      continue;
+    }
+    /* relance si aucune dans les 7 derniers jours */
+    const derniere = envois[0] ? new Date(envois[0].created_at).getTime() : 0;
+    if (Date.now() - derniere < 7 * 24 * 3600 * 1000) continue;
+
+    const res = await relancerFacture(env, f);
+    if (res.ok) relances++;
+  }
+  return { factures: factures.length, relances, signalements };
+}
 
 /* =====================================================================
    MESSAGES — préfixe "C-Direct:", GSM-7 autant que possible.
@@ -711,7 +794,32 @@ async function evenementContrat(env, k, avant) {
     return json({ ok: true, penalite_pct: pct, ...resultats });
   }
 
-  /* REPUBLICATION sur hausse de tarif : gérée au commit 4 */
+  /* REPUBLICATION sur hausse de tarif — UNIQUEMENT quand une pharmacie
+     augmente tarif_horaire d'un contrat encore 'ouvert'. Aucune autre
+     modification ne déclenche de re-diffusion. Liste RÉÉVALUÉE (le
+     nouveau tarif peut débloquer des pharmaciens filtrés avant). */
+  if (avant.statut === 'ouvert' && k.statut === 'ouvert' &&
+      avant.tarif_horaire != null &&
+      parseFloat(k.tarif_horaire) > parseFloat(avant.tarif_horaire)) {
+    if (await dejaTraite(env, `contrats:UPDATE:${k.id}:tarif:${k.tarif_horaire}`))
+      return json({ ok: true, ignore: 'Doublon' });
+
+    const nouveau = Math.round(k.tarif_horaire);
+    const delta = Math.round((parseFloat(k.tarif_horaire) - parseFloat(avant.tarif_horaire)) * 100) / 100;
+    const cibles = await ciblesFiltrees(env, k);
+    const ville = String(cibles.pharmacie.ville || 'Quebec').slice(0, 20);
+    const corps = `C-Direct: ${k.numero_reference} republie: ${nouveau}$/h (+${delta}$) - ${ville}, ` +
+                  `${dateCourte(k.date_contrat)}. Postulez: c-direct.ca/c/${k.numero_reference}`;
+
+    const envoiPrevu = ajusterEnvoi(new Date(Date.now() + 5 * 60 * 1000)).toISOString();
+    await enfilerSms(env, cibles.retenus.map(r => ({
+      profile_id: r.p.id, contrat_id: k.id, pharmacie_id: k.pharmacie_id,
+      to_number: r.p.telephone, type: 'contrat_republie', corps, ville,
+      envoyer_apres: envoiPrevu,
+    })));
+    return json({ ok: true, republie: true, retenus: cibles.retenus.length, filtres: cibles.nFiltres });
+  }
+
   return json({ ok: true, ignore: 'UPDATE contrats sans SMS' });
 }
 
