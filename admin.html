@@ -54,6 +54,15 @@ tbody tr:last-child td{border-bottom:none}
 .vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:16px 0}
 @media(max-width:720px){.grille-regles{grid-template-columns:1fr 1fr}}
 @media(max-width:480px){.grille-regles{grid-template-columns:1fr}}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:720px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi{background:#0A100D;border:1px solid var(--ligne);border-radius:7px;padding:14px 16px}
+.kpi small{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--sourd);margin-bottom:5px}
+.kpi b{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:700;color:var(--texte)}
+.kpi.vert b{color:var(--vert-vif)} .kpi.jaune b{color:var(--jaune)}
+.kpi .sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--sourd);margin-top:3px}
+.sms-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+@media(max-width:720px){.sms-stats{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -71,6 +80,21 @@ tbody tr:last-child td{border-bottom:none}
 <div class="wrap">
   <h1>Console <b>·</b> Administration</h1>
   <p class="sous" id="sous">Accès restreint — rôle administrateur vérifié en base (RLS)</p>
+
+  <!-- TABLEAU DE BORD (Phase 6.2) -->
+  <div class="carte">
+    <div class="sec">Tableau de bord<small>indicateurs du réseau</small></div>
+    <div class="kpis" id="kpis">
+      <div class="kpi"><small>Contrats publiés</small><b id="k-pub">—</b></div>
+      <div class="kpi vert"><small>Taux de remplissage</small><b id="k-fill">—</b><div class="sub" id="k-fill-sub"></div></div>
+      <div class="kpi"><small>Pharmaciens</small><b id="k-pn">—</b><div class="sub" id="k-pn-sub"></div></div>
+      <div class="kpi jaune"><small>Comptes en attente</small><b id="k-attente">—</b></div>
+      <div class="kpi"><small>Délai médian d'attribution</small><b id="k-fill-time">—</b></div>
+      <div class="kpi vert"><small>Total facturé</small><b id="k-fact">—</b></div>
+      <div class="kpi vert"><small>Total payé</small><b id="k-paye">—</b></div>
+      <div class="kpi jaune"><small>En retard</small><b id="k-retard">—</b></div>
+    </div>
+  </div>
 
   <!-- RÈGLES DU RÉSEAU -->
   <div class="carte">
@@ -135,6 +159,12 @@ tbody tr:last-child td{border-bottom:none}
       <button class="btn" style="width:auto;margin-top:0;padding:10px 18px;background:transparent;color:var(--sourd);border:1px solid var(--ligne2)" id="btn-sms-config" type="button">Configurer Worker</button>
     </div>
     <div class="msg" id="msg-sms"></div>
+    <div class="sms-stats" id="sms-stats">
+      <div class="kpi"><small>SMS (30 j)</small><b id="s-vol">—</b></div>
+      <div class="kpi"><small>Coût estimé (30 j)</small><b id="s-cout">—</b></div>
+      <div class="kpi jaune"><small>Échecs (30 j)</small><b id="s-echec">—</b></div>
+      <div class="kpi"><small>Désabonnés SMS</small><b id="s-optout">—</b></div>
+    </div>
     <div class="sec" style="margin-top:20px">Journal SMS<small id="n-sms"></small></div>
     <div class="table-scroll">
       <table>
@@ -184,6 +214,8 @@ function cdToast(texte, ok){
   const profil = await cdExigerConnexion(['admin']);
   if(profil.role !== 'admin'){ location.replace(cdAccueilPourRole(profil.role)); return; }
   cdEnteteConnecte();
+  chargerKPIs();
+  chargerSmsStats();
 
   /* ---- règles ---- */
   const { data: regles } = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle();
@@ -460,6 +492,73 @@ function dessinerFactures(){
       st, td(f.date_echeance||'—'), over);
     tb.appendChild(tr);
   });
+}
+
+/* ================= TABLEAU DE BORD (Phase 6.2) — défensif ================= */
+function mediane(arr){
+  if(!arr.length) return null;
+  const s = arr.slice().sort((a,b)=>a-b); const m = Math.floor(s.length/2);
+  return s.length%2 ? s[m] : (s[m-1]+s[m])/2;
+}
+function dureeLisible(heures){
+  if(heures == null) return '—';
+  if(heures < 24) return Math.round(heures) + ' h';
+  return (Math.round(heures/24*10)/10) + ' j';
+}
+async function chargerKPIs(){
+  try{
+    const [{data:profs}, {data:ks}, {data:cands}, {data:facts}] = await Promise.all([
+      sb.from('profiles').select('role,approuve'),
+      sb.from('contrats').select('id,statut,created_at'),
+      sb.from('candidatures').select('contrat_id,statut,updated_at'),
+      sb.rpc('get_factures')
+    ]);
+    const P = profs||[], K = ks||[], C = cands||[], F = facts||[];
+    const pn = P.filter(x=>x.role==='pharmacien').length;
+    const pe = P.filter(x=>x.role==='pharmacie').length;
+    const attente = P.filter(x=>x.role!=='admin' && !x.approuve).length;
+    const pub = K.length;
+    const remplis = K.filter(k=>k.statut==='attribue' || k.statut==='complete').length;
+    const taux = pub ? Math.round(remplis/pub*100) : 0;
+    if($('k-pub')) $('k-pub').textContent = pub;
+    if($('k-fill')){ $('k-fill').textContent = taux + ' %'; $('k-fill-sub').textContent = remplis + ' / ' + pub + ' contrats'; }
+    if($('k-pn')){ $('k-pn').textContent = pn; $('k-pn-sub').textContent = pe + ' pharmacie' + (pe>1?'s':''); }
+    if($('k-attente')) $('k-attente').textContent = attente;
+    /* délai médian d'attribution : contrat.created_at → candidature acceptée.updated_at */
+    const kById = {}; K.forEach(k=>kById[k.id]=k);
+    const delais = [];
+    C.filter(c=>c.statut==='accepte').forEach(c=>{
+      const k = kById[c.contrat_id];
+      if(k && k.created_at && c.updated_at){
+        const h = (new Date(c.updated_at) - new Date(k.created_at))/3600000;
+        if(h >= 0) delais.push(h);
+      }
+    });
+    if($('k-fill-time')) $('k-fill-time').textContent = dureeLisible(mediane(delais));
+    const num = v => parseFloat(v)||0;
+    const somme = arr => arr.reduce((s,f)=>s+num(f.total),0);
+    if($('k-fact'))   $('k-fact').textContent   = cdArgent(somme(F.filter(f=>f.statut!=='brouillon')));
+    if($('k-paye'))   $('k-paye').textContent   = cdArgent(somme(F.filter(f=>f.statut==='payee')));
+    if($('k-retard')) $('k-retard').textContent = cdArgent(somme(F.filter(f=>f.statut==='en_retard')));
+  }catch(e){ /* les KPI ne doivent jamais casser la console */ }
+}
+async function chargerSmsStats(){
+  try{
+    const depuis = new Date(Date.now() - 30*24*3600*1000).toISOString();
+    const [{data:logs}, {data:profs}] = await Promise.all([
+      sb.from('sms_log').select('statut,created_at').gte('created_at', depuis),
+      sb.from('profiles').select('role,sms_optin')
+    ]);
+    const L = logs||[];
+    const envoyes = L.filter(x=>x.statut==='envoye' || x.statut==='recu' || x.statut==='optout_applique').length;
+    const echecs  = L.filter(x=>x.statut==='echec').length;
+    const cout = (L.length * 0.0079); /* ~0,0079 $US par segment */
+    const optout = (profs||[]).filter(x=>x.role==='pharmacien' && x.sms_optin===false).length;
+    if($('s-vol'))   $('s-vol').textContent   = envoyes;
+    if($('s-cout'))  $('s-cout').textContent  = cout.toFixed(2).replace('.',',') + ' $US';
+    if($('s-echec')) $('s-echec').textContent = echecs;
+    if($('s-optout'))$('s-optout').textContent= optout;
+  }catch(e){ /* défensif */ }
 }
 </script>
 </body>
