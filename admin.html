@@ -161,6 +161,23 @@ function msg(id, texte, ok){
   if(ok) setTimeout(()=>{ el.style.display='none'; }, 3500);
 }
 
+/* toast flottant : retour visible partout (jamais de no-op silencieux) */
+function cdToast(texte, ok){
+  let t = document.getElementById('cd-toast');
+  if(!t){
+    t = document.createElement('div'); t.id='cd-toast';
+    t.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:9999;max-width:560px;padding:12px 18px;border-radius:6px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.45;letter-spacing:.02em;box-shadow:0 8px 30px rgba(0,0,0,.35);opacity:0;transition:opacity .2s;text-align:center';
+    document.body.appendChild(t);
+  }
+  t.textContent = texte;
+  t.style.background = ok ? 'rgba(18,169,110,.15)' : 'rgba(229,72,77,.15)';
+  t.style.color = ok ? '#17C980' : '#E5484D';
+  t.style.border = '1px solid ' + (ok ? 'rgba(23,201,128,.5)' : 'rgba(229,72,77,.5)');
+  t.style.opacity = '1';
+  clearTimeout(t._to);
+  t._to = setTimeout(()=>{ t.style.opacity='0'; }, ok ? 3500 : 9000);
+}
+
 (async function(){
   /* Garde réelle : session Supabase + rôle admin. La RLS reste la
      vraie barrière — un non-admin ne recevrait aucune donnée. */
@@ -215,21 +232,34 @@ function msg(id, texte, ok){
                       : 'background:var(--jaune);color:#1A1405;border:1px solid var(--jaune);font-weight:700');
         b.onclick = async ()=>{
           const nom = u.nom_pharmacie || ((u.prenom||'')+' '+(u.nom||'')).trim() || u.courriel;
-          if(!confirm((u.approuve ? 'RÉVOQUER la validation de ' : 'VALIDER le compte de ') + nom + ' ?')) return;
+          const vers = !u.approuve; /* true = valider · false = révoquer */
+          if(!confirm((vers ? 'VALIDER le compte de ' : 'RÉVOQUER la validation de ') + nom + ' ?')) return;
           b.disabled = true;
-          const { error: e } = await sb.from('profiles').update({
-            approuve: !u.approuve,
-            approuve_date: !u.approuve ? new Date().toISOString() : null
-          }).eq('id', u.id);
+          /* .select() est ESSENTIEL : sans lui, supabase-js renvoie error:null
+             même quand la RLS ne modifie AUCUNE ligne (échec silencieux).
+             On lit la/les ligne(s) réellement modifiée(s) pour trancher. */
+          const { data: maj, error: e } = await sb.from('profiles').update({
+            approuve: vers,
+            approuve_date: vers ? new Date().toISOString() : null
+          }).eq('id', u.id).select('id,approuve');
           b.disabled = false;
-          if(e){ alert('Erreur : '+e.message); return; }
-          u.approuve = !u.approuve;
+          if(e){ cdToast('Échec : ' + e.message, false); return; }
+          if(!maj || !maj.length){
+            cdToast('Aucune ligne modifiée. Votre compte n\'a pas les droits admin sur profiles (RLS), ou le SQL 12 n\'est pas appliqué. Vérifiez profiles.role = « admin » et réexécutez sql/12-validation-comptes.sql.', false);
+            return;
+          }
+          u.approuve = maj[0].approuve;
           etat.className = 'badge ' + (u.approuve ? 'ouvert' : 'attribue');
           etat.textContent = u.approuve ? 'Validé' : 'En attente';
           b.textContent = u.approuve ? 'Révoquer' : 'Valider';
           b.style.cssText = b.style.cssText.replace(/background:[^;]+;color:[^;]+;border:[^;]+/,
             u.approuve ? 'background:transparent;color:var(--sourd);border:1px solid var(--ligne2)'
                        : 'background:var(--jaune);color:#1A1405;border:1px solid var(--jaune)');
+          /* compteur « en attente » mis à jour en direct */
+          const restants = users.filter(x=>x.role!=='admin' && !x.approuve).length;
+          $('n-users').textContent = users.length + ' compte' + (users.length>1?'s':'') +
+            (restants ? ' · ' + restants + ' EN ATTENTE DE VALIDATION' : '');
+          cdToast((u.approuve ? 'Compte validé ✓ — ' : 'Validation révoquée — ') + nom, true);
         };
         val.append(etat, b);
       }
