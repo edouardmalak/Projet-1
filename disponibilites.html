@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Mes disponibilités</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849;--rouge:#E5484D}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1000px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:14px;color:var(--sourd)}
+.topbar .droite a.nav{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
+.topbar .droite a.nav:hover{color:var(--vert-vif)}
+.wrap{max-width:1000px;margin:0 auto;padding:36px 18px 70px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:22px;position:relative}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vert),transparent)}
+.cal-tete{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px}
+.cal-mois{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;letter-spacing:.06em;text-transform:capitalize}
+.nav-mois{display:flex;gap:8px;align-items:center}
+.bnav{background:var(--panneau2);border:1px solid var(--ligne2);color:var(--texte);border-radius:5px;width:34px;height:34px;font-size:16px;cursor:pointer;font-family:'IBM Plex Mono',monospace}
+.bnav:hover{border-color:var(--vert)}
+.bauj{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:5px;padding:0 12px;height:34px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.bauj:hover{border-color:var(--vert);color:var(--vert-vif)}
+.grille-jours{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.jour-tete{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);text-align:center;padding:6px 0}
+.jour{aspect-ratio:1/1;border:1px solid var(--ligne);border-radius:6px;background:var(--panneau2);display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;padding:7px 8px;cursor:pointer;transition:border-color .1s,background .1s;position:relative;min-height:52px}
+.jour:hover{border-color:var(--vert)}
+.jour.vide{background:transparent;border-color:transparent;cursor:default}
+.jour.passe{opacity:.4;cursor:not-allowed}
+.jour .n{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
+.jour.dispo{background:rgba(18,169,110,.16);border-color:var(--vert)}
+.jour.dispo .n{color:var(--vert-vif)}
+.jour.auj{box-shadow:inset 0 0 0 1px var(--jaune)}
+.pastille{margin-top:auto;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.04em;text-transform:uppercase;padding:1px 5px;border-radius:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pastille.contrat{background:rgba(232,184,73,.16);color:var(--jaune);border:1px solid rgba(232,184,73,.4)}
+.legende{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd)}
+.legende span{display:inline-flex;align-items:center;gap:7px}
+.pnt{width:12px;height:12px;border-radius:3px;display:inline-block}
+.pnt.dispo{background:rgba(18,169,110,.16);border:1px solid var(--vert)}
+.pnt.contrat{background:rgba(232,184,73,.16);border:1px solid rgba(232,184,73,.4)}
+.msg{display:none;border-radius:4px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:14px}
+.msg.ok{background:rgba(18,169,110,.1);color:var(--vert-vif);border:1px solid var(--ligne2);border-left:3px solid var(--vert)}
+.msg.ko{background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge)}
+.chargement{padding:40px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html">
+      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></span>
+      C-DIRECT
+    </a>
+    <div class="droite">
+      <a class="nav" href="/contrats.html">Contrats</a>
+      <a class="nav" href="/mes-mandats.html">Mes mandats</a>
+      <a class="nav" href="/profil.html">Profil</a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>Mes disponibilités</h1>
+  <p class="sous">Touchez une journée pour l'activer ou la retirer. Vos contrats attribués sont affichés en repère.</p>
+
+  <div class="carte">
+    <div class="chargement" id="chargement">Chargement du calendrier…</div>
+    <div id="cal" style="display:none">
+      <div class="cal-tete">
+        <div class="cal-mois" id="mois-lbl">—</div>
+        <div class="nav-mois">
+          <button class="bauj" id="b-auj">Aujourd'hui</button>
+          <button class="bnav" id="b-prev" aria-label="Mois précédent">‹</button>
+          <button class="bnav" id="b-next" aria-label="Mois suivant">›</button>
+        </div>
+      </div>
+      <div class="grille-jours" id="jours-tete"></div>
+      <div class="grille-jours" id="grille" style="margin-top:6px"></div>
+      <div class="legende">
+        <span><i class="pnt dispo"></i> Disponible</span>
+        <span><i class="pnt contrat"></i> Contrat attribué</span>
+      </div>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/auth.js"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+const JOURS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+let profil = null;
+let curseur = new Date();            // mois affiché
+const dispo = new Set();             // dates 'YYYY-MM-DD' disponibles
+const contrats = new Map();          // date -> référence contrat attribué
+
+function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function msg(t, ok){ const el=$('msg'); el.textContent=t; el.className='msg '+(ok?'ok':'ko'); el.style.display='block'; if(ok) setTimeout(()=>{el.style.display='none';},2500); }
+
+(async function(){
+  profil = await cdExigerConnexion(['pharmacien']);
+  cdEnteteConnecte();
+  await chargerDonnees();
+  $('chargement').style.display='none';
+  $('cal').style.display='';
+  // en-tête des jours
+  const jt=$('jours-tete'); JOURS.forEach(j=>{ const d=document.createElement('div'); d.className='jour-tete'; d.textContent=j; jt.appendChild(d); });
+  $('b-prev').onclick=()=>{ curseur.setMonth(curseur.getMonth()-1); dessiner(); };
+  $('b-next').onclick=()=>{ curseur.setMonth(curseur.getMonth()+1); dessiner(); };
+  $('b-auj').onclick=()=>{ curseur=new Date(); dessiner(); };
+  dessiner();
+})();
+
+async function chargerDonnees(){
+  try{
+    const { data: ds } = await sb.from('disponibilites').select('date_dispo').eq('pharmacien_id', profil.id);
+    (ds||[]).forEach(r=> dispo.add(String(r.date_dispo).slice(0,10)));
+  }catch(e){ /* défensif */ }
+  try{
+    const { data: mandats } = await sb.rpc('get_mes_mandats');
+    (mandats||[]).forEach(m=>{ if(m.statut==='attribue' || m.statut==='complete') contrats.set(String(m.date_contrat).slice(0,10), m.numero_reference); });
+  }catch(e){ /* défensif : le calendrier fonctionne sans les contrats */ }
+}
+
+function dessiner(){
+  $('mois-lbl').textContent = MOIS[curseur.getMonth()] + ' ' + curseur.getFullYear();
+  const grille=$('grille'); grille.innerHTML='';
+  const an=curseur.getFullYear(), mo=curseur.getMonth();
+  const premier=new Date(an,mo,1);
+  let decal=(premier.getDay()+6)%7;              // lundi = 0
+  const nbJours=new Date(an,mo+1,0).getDate();
+  const ajd=iso(new Date());
+  for(let i=0;i<decal;i++){ const c=document.createElement('div'); c.className='jour vide'; grille.appendChild(c); }
+  for(let d=1; d<=nbJours; d++){
+    const date=iso(new Date(an,mo,d));
+    const cell=document.createElement('div'); cell.className='jour';
+    const passe = date < ajd;
+    if(passe) cell.classList.add('passe');
+    if(date===ajd) cell.classList.add('auj');
+    if(dispo.has(date)) cell.classList.add('dispo');
+    const n=document.createElement('div'); n.className='n'; n.textContent=d; cell.appendChild(n);
+    if(contrats.has(date)){
+      const p=document.createElement('div'); p.className='pastille contrat'; p.textContent=contrats.get(date); cell.appendChild(p);
+    }
+    if(!passe){ cell.onclick=()=>basculer(date, cell); }
+    grille.appendChild(cell);
+  }
+}
+
+async function basculer(date, cell){
+  const etaitDispo = dispo.has(date);
+  cell.style.pointerEvents='none';
+  if(etaitDispo){
+    const { error } = await sb.from('disponibilites').delete().eq('pharmacien_id', profil.id).eq('date_dispo', date);
+    cell.style.pointerEvents='';
+    if(error){ msg('Erreur : '+error.message, false); return; }
+    dispo.delete(date); cell.classList.remove('dispo');
+  } else {
+    const { error } = await sb.from('disponibilites').insert({ pharmacien_id: profil.id, date_dispo: date });
+    cell.style.pointerEvents='';
+    if(error){ msg(error.code==='23505' ? 'Déjà marquée disponible.' : 'Erreur : '+error.message, false); return; }
+    dispo.add(date); cell.classList.add('dispo');
+  }
+}
+</script>
+</body>
+</html>
