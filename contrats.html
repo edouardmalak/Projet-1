@@ -41,6 +41,11 @@ tbody tr:last-child td{border-bottom:none}
 .chargement i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--vert-vif);box-shadow:0 0 6px var(--vert-vif);animation:pulse 1.2s ease infinite;margin-right:8px;vertical-align:1px}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 .erreur{display:none;background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge);border-radius:4px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:14px}
+.filtres{display:none;flex-wrap:wrap;gap:9px;margin-bottom:16px}
+.filtre-champ{background:#0A100D;border:1px solid var(--ligne2);border-radius:4px;padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--texte);min-width:0}
+.filtre-champ:focus{outline:none;border-color:var(--vert)}
+.filtre-reset{background:transparent;border:1px solid var(--ligne2);border-radius:4px;padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--sourd);cursor:pointer}
+.filtre-reset:hover{border-color:var(--vert);color:var(--vert-vif)}
 @media(max-width:720px){
   .cache-mobile{display:none}
   td,th{padding:11px 10px}
@@ -62,6 +67,20 @@ tbody tr:last-child td{border-bottom:none}
 <div class="wrap">
   <h1>Contrats ouverts</h1>
   <p class="sous" id="sous">Réseau C-Direct · 0 % commission</p>
+
+  <div class="filtres" id="filtres">
+    <input class="filtre-champ" id="f-ville" placeholder="Ville" style="flex:1 1 130px">
+    <input class="filtre-champ" id="f-tarif" type="number" min="0" step="1" placeholder="Tarif min $/h" style="flex:1 1 120px">
+    <input class="filtre-champ" id="f-logiciel" placeholder="Logiciel" style="flex:1 1 120px">
+    <input class="filtre-champ" id="f-dist" type="number" min="0" step="10" placeholder="Distance max km" style="flex:1 1 130px">
+    <select class="filtre-champ" id="f-tri" style="flex:1 1 130px">
+      <option value="date">Plus récents</option>
+      <option value="date_contrat">Date du contrat</option>
+      <option value="tarif">Tarif ↓</option>
+      <option value="distance">Distance ↑</option>
+    </select>
+    <button class="filtre-reset" id="f-reset" type="button">Réinitialiser</button>
+  </div>
 
   <div class="carte">
     <div class="chargement" id="chargement"><i></i>Interrogation du réseau…</div>
@@ -90,45 +109,109 @@ tbody tr:last-child td{border-bottom:none}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js"></script>
 <script src="/auth.js"></script>
+<script src="/fsa-qc.js"></script>
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
+let profil = null, contrats = [], regles = null;
 
-(async function(){
-  const profil = await cdExigerConnexion(['pharmacien']);
-  cdEnteteConnecte();
-  if(profil.role === 'admin'){
-    document.querySelector('.droite').insertAdjacentHTML('afterbegin',
-      '<a class="nav" href="/admin.html">Console</a>');
+/* estimation défensive par contrat (jamais bloquante) */
+function calcEstim(k){
+  try{
+    if(typeof cdEstimation !== 'function' || !regles) return null;
+    const maCP = profil && profil.code_postal;
+    const d = (maCP && k.code_postal && typeof cdDistanceKm === 'function')
+      ? cdDistanceKm(maCP, k.code_postal) : null;
+    return cdEstimation(k.tarif_horaire, k.heure_debut, k.heure_fin, d, regles);
+  }catch(e){ return null; }
+}
+
+function dessiner(){
+  const vv = ($('f-ville').value||'').trim().toLowerCase();
+  const tmin = parseFloat($('f-tarif').value) || 0;
+  const lg = ($('f-logiciel').value||'').trim().toLowerCase();
+  const dmax = parseFloat($('f-dist').value);
+  const tri = $('f-tri').value;
+  let list = contrats.filter(k=>{
+    if(vv && !(k.ville||'').toLowerCase().includes(vv)) return false;
+    if(tmin && parseFloat(k.tarif_horaire) < tmin) return false;
+    if(lg && !(k.logiciel||'').toLowerCase().includes(lg)) return false;
+    if(!isNaN(dmax)){ const km = k._est && k._est.distanceKm; if(km==null || km>dmax) return false; }
+    return true;
+  });
+  list.sort((a,b)=>{
+    if(tri==='tarif') return parseFloat(b.tarif_horaire)-parseFloat(a.tarif_horaire);
+    if(tri==='date_contrat') return (a.date_contrat>b.date_contrat?1:(a.date_contrat<b.date_contrat?-1:0));
+    if(tri==='distance'){
+      const da=(a._est&&a._est.distanceKm!=null)?a._est.distanceKm:Infinity;
+      const db=(b._est&&b._est.distanceKm!=null)?b._est.distanceKm:Infinity; return da-db;
+    }
+    return 0; /* 'date' : ordre reçu (plus récents d'abord via la RPC) */
+  });
+  const tb = $('lignes'); tb.innerHTML='';
+  if(!list.length){
+    $('tableau').style.display='none'; $('vide').style.display='block';
+    $('vide').querySelector('b').textContent = contrats.length ? 'AUCUN RÉSULTAT' : 'AUCUN CONTRAT OUVERT';
+    $('sous').textContent = '0 contrat · 0 % commission';
+    return;
   }
-
-  const { data, error } = await sb.rpc('get_contrats_ouverts');
-  $('chargement').style.display = 'none';
-  if(error){ $('err').textContent = 'Erreur : ' + error.message; $('err').style.display='block'; return; }
-
-  if(!data || !data.length){ $('vide').style.display = 'block'; return; }
-
-  $('sous').textContent = data.length + ' contrat' + (data.length>1?'s':'') + ' ouvert' + (data.length>1?'s':'') + ' · 0 % commission';
-  const tb = $('lignes');
-  data.forEach(k=>{
+  $('vide').style.display='none'; $('tableau').style.display='';
+  list.forEach(k=>{
     const tr = document.createElement('tr');
     tr.onclick = ()=>{ location.href = '/c/' + encodeURIComponent(k.numero_reference); };
     const cel = (html, cls)=>{ const td=document.createElement('td'); if(cls) td.className=cls; td.innerHTML=html; return td; };
     const txt = (t, cls)=>{ const td=document.createElement('td'); if(cls) td.className=cls; td.textContent=t; return td; };
+    const tarifTd = document.createElement('td'); tarifTd.className='tarif';
+    tarifTd.textContent = cdArgent(k.tarif_horaire) + '/h';
+    if(k._est){
+      const s = document.createElement('div');
+      s.style.cssText = 'font-weight:400;color:var(--sourd);font-size:11px;margin-top:2px';
+      s.textContent = '≈ ' + cdArgent(k._est.total).replace(',00','') +
+        (k._est.distanceKm!=null ? ' · ' + k._est.distanceKm + ' km' : '');
+      tarifTd.appendChild(s);
+    }
     tr.append(
       txt(k.numero_reference, 'ref'),
       txt(cdDate(k.date_contrat)),
       txt(cdHeure(k.heure_debut) + ' – ' + cdHeure(k.heure_fin)),
       txt(k.ville || '—', 'cache-mobile'),
       txt(k.logiciel || '—', 'cache-mobile'),
-      txt(cdArgent(k.tarif_horaire) + '/h', 'tarif'),
+      tarifTd,
       cel(k.deja_postule
         ? '<span class="badge postule">Postulé</span>'
         : '<span class="badge ouvert">Ouvert</span>')
     );
     tb.appendChild(tr);
   });
-  $('tableau').style.display = '';
+  $('sous').textContent = list.length + ' contrat' + (list.length>1?'s':'') +
+    (list.length!==contrats.length ? ' / ' + contrats.length : '') + ' · 0 % commission';
+}
+
+(async function(){
+  profil = await cdExigerConnexion(['pharmacien']);
+  cdEnteteConnecte();
+  if(profil.role === 'admin'){
+    document.querySelector('.droite').insertAdjacentHTML('afterbegin',
+      '<a class="nav" href="/admin.html">Console</a>');
+  }
+  try{ const { data: rg } = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle(); regles = rg; }catch(e){}
+
+  const { data, error } = await sb.rpc('get_contrats_ouverts');
+  $('chargement').style.display = 'none';
+  if(error){ $('err').textContent = 'Erreur : ' + error.message; $('err').style.display='block'; return; }
+
+  contrats = data || [];
+  contrats.forEach(k=>{ k._est = calcEstim(k); });
+  if(!contrats.length){ $('vide').style.display = 'block'; return; }
+
+  $('filtres').style.display = 'flex';
+  ['f-ville','f-tarif','f-logiciel','f-dist'].forEach(id=> $(id).addEventListener('input', dessiner));
+  $('f-tri').addEventListener('change', dessiner);
+  $('f-reset').onclick = ()=>{
+    ['f-ville','f-tarif','f-logiciel','f-dist'].forEach(id=> $(id).value='');
+    $('f-tri').value='date'; dessiner();
+  };
+  dessiner();
 })();
 </script>
 </body>
