@@ -41,6 +41,19 @@ tbody tr:last-child td{border-bottom:none}
 .chargement i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--vert-vif);box-shadow:0 0 6px var(--vert-vif);animation:pulse 1.2s ease infinite;margin-right:8px;vertical-align:1px}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 .erreur{display:none;background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge);border-radius:4px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:14px}
+.onboard{display:none;background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:18px 20px;margin-bottom:20px;position:relative;overflow:hidden}
+.onboard::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--jaune),transparent)}
+.onboard .ob-tete{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.onboard .ob-titre{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--jaune)}
+.onboard .ob-fermer{background:none;border:none;color:var(--sourd);cursor:pointer;font-size:16px;line-height:1}
+.ob-item{display:flex;align-items:center;gap:11px;padding:7px 0;font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+.ob-item + .ob-item{border-top:1px solid var(--ligne)}
+.ob-coche{width:18px;height:18px;border-radius:4px;border:1px solid var(--ligne2);flex:none;display:grid;place-items:center;font-size:11px;color:#04130C}
+.ob-item.fait .ob-coche{background:var(--vert-vif);border-color:var(--vert-vif)}
+.ob-item.fait .ob-txt{color:var(--sourd);text-decoration:line-through}
+.ob-txt{flex:1;color:var(--texte)}
+.ob-lien{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--vert-vif);text-decoration:none;border:1px solid var(--ligne2);border-radius:4px;padding:5px 10px;white-space:nowrap;cursor:pointer;background:none;font-family:inherit}
+.ob-lien:hover{border-color:var(--vert)}
 .filtres{display:none;flex-wrap:wrap;gap:9px;margin-bottom:16px}
 .filtre-champ{background:#0A100D;border:1px solid var(--ligne2);border-radius:4px;padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--texte);min-width:0}
 .filtre-champ:focus{outline:none;border-color:var(--vert)}
@@ -67,6 +80,14 @@ tbody tr:last-child td{border-bottom:none}
 <div class="wrap">
   <h1>Contrats ouverts</h1>
   <p class="sous" id="sous">Réseau C-Direct · 0 % commission</p>
+
+  <div class="onboard" id="onboard">
+    <div class="ob-tete">
+      <div class="ob-titre">Bienvenue — 3 étapes pour recevoir les bons contrats</div>
+      <button class="ob-fermer" id="ob-fermer" title="Masquer">✕</button>
+    </div>
+    <div id="ob-liste"></div>
+  </div>
 
   <div class="filtres" id="filtres">
     <input class="filtre-champ" id="f-ville" placeholder="Ville" style="flex:1 1 130px">
@@ -194,6 +215,7 @@ function dessiner(){
     document.querySelector('.droite').insertAdjacentHTML('afterbegin',
       '<a class="nav" href="/admin.html">Console</a>');
   }
+  evaluerOnboarding();
   try{ const { data: rg } = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle(); regles = rg; }catch(e){}
 
   const { data, error } = await sb.rpc('get_contrats_ouverts');
@@ -213,6 +235,51 @@ function dessiner(){
   };
   dessiner();
 })();
+
+/* ================= ONBOARDING (Phase 6.3) — défensif, jamais bloquant ========= */
+const CD_NUMERO = '+14504009628';
+function evaluerOnboarding(){
+  try{
+    if(!profil || profil.role !== 'pharmacien') return;
+    try{ if(localStorage.getItem('cd-onboard-ferme') === '1') return; }catch(e){}
+    const p = profil;
+    const etapes = [
+      { fait: !!(p.code_postal && (p.ville_base || p.ville)), txt:'Localisation — code postal + ville de base', href:'/profil.html', lien:'Compléter' },
+      { fait: !!(p.rayon_deplacement_km && p.tarif_horaire_min && p.logiciels && p.logiciels.length), txt:'Rayon, tarif minimum et logiciels', href:'/profil.html', lien:'Régler' },
+      { fait: p.sms_optin === true, txt:'Activer les alertes SMS des nouveaux contrats', href:'/profil.html', lien:'Activer' },
+      { fait: 'action', txt:'Enregistrer le numéro C-Direct dans vos contacts', vcard:true, lien:'Télécharger' },
+      { fait: 'action', txt:'Marquer vos disponibilités au calendrier', href:'/disponibilites.html', lien:'Ouvrir' }
+    ];
+    const liste = document.getElementById('ob-liste'); liste.innerHTML = '';
+    etapes.forEach(e=>{
+      const done = e.fait === true;
+      const row = document.createElement('div'); row.className = 'ob-item' + (done ? ' fait' : '');
+      const coche = document.createElement('div'); coche.className = 'ob-coche'; coche.textContent = done ? '✓' : '';
+      const txt = document.createElement('div'); txt.className = 'ob-txt'; txt.textContent = e.txt;
+      row.append(coche, txt);
+      if(!done){
+        if(e.vcard){ const b=document.createElement('button'); b.className='ob-lien'; b.type='button'; b.textContent=e.lien; b.onclick=cdVCard; row.appendChild(b); }
+        else { const a=document.createElement('a'); a.className='ob-lien'; a.href=e.href; a.textContent=e.lien; row.appendChild(a); }
+      }
+      liste.appendChild(row);
+    });
+    const incomplet = !etapes[0].fait || !etapes[1].fait || !etapes[2].fait;
+    if(incomplet) document.getElementById('onboard').style.display = '';
+    document.getElementById('ob-fermer').onclick = ()=>{
+      try{ localStorage.setItem('cd-onboard-ferme','1'); }catch(e){}
+      document.getElementById('onboard').style.display = 'none';
+    };
+  }catch(e){ /* l'onboarding ne doit jamais casser le tableau */ }
+}
+function cdVCard(){
+  const vcf = ['BEGIN:VCARD','VERSION:3.0','FN:C-Direct','ORG:C-Direct',
+    'TEL;TYPE=CELL:'+CD_NUMERO,'URL:https://c-direct.ca',
+    'NOTE:Contrats de remplacement en pharmacie. Rép. ARRET pour vous désabonner.','END:VCARD'].join('\r\n');
+  const blob = new Blob([vcf], {type:'text/vcard;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'C-Direct.vcf';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
 </script>
 </body>
 </html>
