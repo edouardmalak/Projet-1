@@ -121,6 +121,11 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
       <div class="cellule"><small>ATP présente</small><b id="atp">—</b></div>
     </div>
 
+    <div id="bloc-estim" style="display:none">
+      <div class="sec">Estimation pour ce contrat</div>
+      <div class="notes" id="estim" style="line-height:1.7"></div>
+    </div>
+
     <div id="bloc-services" style="display:none">
       <div class="sec">Services</div>
       <div class="puces" id="services"></div>
@@ -175,6 +180,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
 <script src="/supabase-config.js"></script>
 <script src="/auth.js"></script>
 <script src="/outils.js"></script>
+<script src="/fsa-qc.js"></script>
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
@@ -245,6 +251,22 @@ function msg(texte, type){
     });
   }
   if(k.notes){ $('bloc-notes').style.display=''; $('notes').textContent = k.notes; }
+
+  /* ---- Estimation (Phase 2.3) — base toujours affichée ; km + indemnités
+     dès que les codes postaux permettent le calcul de distance. Défensif :
+     ne doit JAMAIS casser la fiche si fsa-qc / regles / codes manquent. ---- */
+  let distApply = null;
+  try{
+    if(typeof cdDistanceKm === 'function'){
+      const maCP = profil.code_postal || null;
+      distApply = (maCP && k.code_postal) ? cdDistanceKm(maCP, k.code_postal) : null;
+    }
+    const { data: rg } = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle();
+    if(rg && typeof cdEstimation === 'function'){
+      const est = cdEstimation(k.tarif_horaire, k.heure_debut, k.heure_fin, distApply, rg);
+      if(est && est.ligne){ $('bloc-estim').style.display = ''; $('estim').textContent = est.ligne; }
+    }
+  }catch(e){ /* l'estimation est un plus : jamais bloquante */ }
 
   /* ---- Phase 3 : marquer complété (l'une OU l'autre des parties) ----
      Contrat attribué + date passée + je suis la pharmacie propriétaire
@@ -349,7 +371,7 @@ function msg(texte, type){
       $('btn-instant').onclick = ()=> postuler({
         contrat_id: k.id, pharmacien_id: profil.id,
         statut: 'propose', type_candidature: 'instantanee',
-        tarif_propose: k.tarif_horaire,
+        tarif_propose: k.tarif_horaire, distance_km: distApply,
         message: cdJalonAjouter(null, {etape:'candidature', par:'pharmacien',
           type:'instantanee', tarif:k.tarif_horaire, hd:k.heure_debut, hf:k.heure_fin})
       }, 'Candidature envoyée au tarif affiché (' + cdArgent(k.tarif_horaire) + '/h). La pharmacie peut accepter en un geste.',
@@ -368,7 +390,7 @@ function msg(texte, type){
         postuler({
           contrat_id: k.id, pharmacien_id: profil.id,
           statut: 'propose', type_candidature: 'negociee',
-          tarif_propose: tarif,
+          tarif_propose: tarif, distance_km: distApply,
           heure_debut_proposee: hd, heure_fin_proposee: hf,
           message: cdJalonAjouter(null, {etape:'candidature', par:'pharmacien',
             type:'negociee', tarif:tarif, hd:hd||k.heure_debut, hf:hf||k.heure_fin, message:texte})
