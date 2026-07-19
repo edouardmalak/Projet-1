@@ -227,7 +227,7 @@ function cdToast(texte, ok){
         etat.textContent = u.approuve ? 'Validé' : 'En attente';
         const b = document.createElement('button');
         b.textContent = u.approuve ? 'Révoquer' : 'Valider';
-        b.style.cssText = 'margin-left:8px;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:3px;cursor:pointer;' +
+        b.style.cssText = 'font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:3px;cursor:pointer;white-space:nowrap;' +
           (u.approuve ? 'background:transparent;color:var(--sourd);border:1px solid var(--ligne2)'
                       : 'background:var(--jaune);color:#1A1405;border:1px solid var(--jaune);font-weight:700');
         b.onclick = async ()=>{
@@ -261,7 +261,13 @@ function cdToast(texte, ok){
             (restants ? ' · ' + restants + ' EN ATTENTE DE VALIDATION' : '');
           cdToast((u.approuve ? 'Compte validé ✓ — ' : 'Validation révoquée — ') + nom, true);
         };
-        val.append(etat, b);
+        /* pile verticale : le bouton reste TOUJOURS visible/cliquable
+           (sinon la largeur badge + bouton débordait hors du tableau
+           défilant et le bouton finissait hors de vue à droite). */
+        const boite = document.createElement('div');
+        boite.style.cssText = 'display:inline-flex;flex-direction:column;align-items:flex-start;gap:6px';
+        boite.append(etat, b);
+        val.append(boite);
       }
 
       tr.append(
