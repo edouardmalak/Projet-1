@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Connexion administrateur</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849;--rouge:#E5484D}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;
+background-image:linear-gradient(rgba(232,184,73,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(232,184,73,.03) 1px,transparent 1px);background-size:44px 44px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.mono{font-family:'IBM Plex Mono',monospace}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1100px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.retour{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em}
+.retour:hover{color:var(--vert-vif)}
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 18px 30px}
+.colonne{width:100%;max-width:420px}
+.statut{display:flex;justify-content:space-between;gap:8px;margin-bottom:14px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:var(--sourd);text-transform:uppercase}
+.statut span{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.statut i{width:6px;height:6px;border-radius:50%;background:var(--jaune);box-shadow:0 0 6px var(--jaune);animation:pulse 2.4s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:30px 28px 22px;position:relative;animation:pose .3s ease}
+@keyframes pose{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--jaune),transparent)}
+.carte .logo{width:44px;height:44px;border-radius:6px;background:var(--jaune);display:grid;place-items:center;margin:0 auto 16px}
+.carte h2{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-spacing:.14em;text-align:center;text-transform:uppercase}
+.badge-admin{display:block;width:fit-content;margin:8px auto 0;padding:3px 12px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--jaune);border:1px solid rgba(232,184,73,.5);background:rgba(232,184,73,.08)}
+.carte .sous{text-align:center;color:var(--sourd);font-size:12.5px;margin-top:10px;font-family:'IBM Plex Mono',monospace}
+.champ{margin-bottom:12px;margin-top:0}
+.champ:first-of-type{margin-top:22px}
+.champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--sourd);margin-bottom:5px}
+.champ input{width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:11px 12px;font-size:14px;font-family:'IBM Plex Mono',monospace;background:#0A100D;color:var(--texte);transition:border-color .1s ease}
+.champ input:focus{outline:none;border-color:var(--jaune);box-shadow:0 0 0 2px rgba(232,184,73,.16)}
+.champ input::placeholder{color:#3D4F47}
+.rel{position:relative}
+.oeil{position:absolute;right:10px;bottom:10px;background:none;border:none;cursor:pointer;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px;text-transform:uppercase;letter-spacing:.06em}
+.oeil:hover{color:var(--texte)}
+.btn{width:100%;background:var(--jaune);color:#1A1403;border:none;border-radius:5px;padding:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:filter .1s ease;margin-top:4px}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.55;cursor:default}
+.note{font-size:12.5px;color:var(--sourd);text-align:center;margin-top:14px}
+.note button,.note a{color:var(--jaune);font-weight:600;cursor:pointer;background:none;border:none;font-size:12.5px;font-family:'Instrument Sans',sans-serif;text-decoration:underline;text-underline-offset:3px}
+.erreur{display:none;background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge);border-radius:4px;padding:9px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:10px}
+.info{display:none;background:rgba(232,184,73,.07);border:1px solid var(--ligne2);border-left:3px solid var(--jaune);border-radius:5px;padding:16px;font-size:13px;margin-top:4px;text-align:center}
+.info b{color:var(--jaune);font-family:'IBM Plex Mono',monospace;letter-spacing:.04em}
+.pied{margin-top:14px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#3D4F47;text-transform:uppercase}
+.cgv{margin-top:16px;padding-top:12px;border-top:1px solid var(--ligne);font-size:11px;color:var(--sourd);text-align:center;line-height:1.6}
+.cgv a{color:var(--vert-vif);text-decoration:underline;text-underline-offset:2px}
+@media(max-width:520px){.carte{padding:24px 18px 18px}.statut{flex-wrap:wrap;justify-content:flex-start}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="index.html">
+      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></span>
+      C-DIRECT
+    </a>
+    <a class="retour" href="index.html">← RETOUR AU SITE</a>
+  </div>
+</div>
+
+<main>
+  <div class="colonne">
+
+    <div class="statut">
+      <span><i></i><b>ESPACE RÉSERVÉ</b></span>
+      <span><i></i><b>ACCÈS ADMINISTRATEUR</b></span>
+      <span><i></i><b>CONNEXION CHIFFRÉE</b></span>
+    </div>
+
+    <div class="carte">
+      <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3v6c0 5-3.4 8.5-8 11-4.6-2.5-8-6-8-11V5l8-3z" stroke="#1A1403" stroke-width="2" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="#1A1403" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h2>Connexion administrateur</h2>
+      <span class="badge-admin">ADMIN · C-DIRECT</span>
+      <p class="sous" id="sous">Réservé à l'équipe C-Direct.</p>
+
+      <!-- formulaire -->
+      <div id="z-form">
+        <div class="champ">
+          <label>Courriel</label>
+          <input id="courriel" type="email" autocomplete="email" placeholder="admin@c-direct.ca">
+        </div>
+        <div class="champ rel">
+          <label>Mot de passe</label>
+          <input id="mdp" type="password" autocomplete="current-password" style="padding-right:74px">
+          <button class="oeil" type="button" id="oeil">afficher</button>
+        </div>
+        <button class="btn" id="btn-conn">Accéder à la console</button>
+        <div class="erreur" id="err"></div>
+        <p class="note"><a href="acces.html?mode=oubli">Mot de passe oublié&nbsp;?</a></p>
+      </div>
+
+      <!-- déjà connecté (non-admin) -->
+      <div class="info" id="z-info"></div>
+
+      <p class="cgv">Cette page est destinée aux administrateurs. Les pharmacies et pharmacien(ne)s se connectent depuis l'<a href="acces.html?mode=conn">accès standard</a>.</p>
+    </div>
+
+    <p class="pied">C-DIRECT // CONSOLE ADMIN · QUÉBEC</p>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="auth.js"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+function erreur(msg){ $('err').textContent = msg; $('err').style.display = 'block'; }
+function messageErreur(e){
+  const m = (e && e.message || '').toLowerCase();
+  if(m.includes('invalid login')) return 'Courriel ou mot de passe invalide.';
+  if(m.includes('not confirmed')) return 'Courriel non confirmé — cliquez le lien reçu par courriel.';
+  if(m.includes('rate limit')) return 'Trop de tentatives — réessayez dans quelques minutes.';
+  return e && e.message ? e.message : 'Une erreur est survenue. Réessayez.';
+}
+
+/* afficher / masquer le mot de passe */
+$('oeil').onclick = ()=>{
+  const c = $('mdp'); const vis = c.type === 'text';
+  c.type = vis ? 'password' : 'text';
+  $('oeil').textContent = vis ? 'afficher' : 'masquer';
+};
+
+/* connexion */
+async function connecter(){
+  $('err').style.display = 'none';
+  const email = $('courriel').value.trim();
+  const password = $('mdp').value;
+  if(!email || !password){ erreur('Entrez votre courriel et votre mot de passe.'); return; }
+  const b = $('btn-conn'); b.disabled = true; b.textContent = 'Vérification…';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ b.disabled = false; b.textContent = 'Accéder à la console'; erreur(messageErreur(error)); return; }
+  const p = await cdProfil(true);
+  if(!p || p.role !== 'admin'){
+    await sb.auth.signOut();
+    b.disabled = false; b.textContent = 'Accéder à la console';
+    erreur("Ce compte n'est pas administrateur. Utilisez l'accès standard.");
+    return;
+  }
+  location.replace('/admin.html');
+}
+$('btn-conn').onclick = connecter;
+$('mdp').addEventListener('keydown', e=>{ if(e.key === 'Enter') connecter(); });
+
+/* déjà connecté ? */
+(async function(){
+  const s = await cdSession();
+  if(!s) return;
+  const p = await cdProfil();
+  if(p && p.role === 'admin'){ location.replace('/admin.html'); return; }
+  /* connecté avec un compte NON admin : proposer de changer */
+  $('z-form').style.display = 'none';
+  $('sous').textContent = '';
+  const nom = ((p && (p.prenom || p.courriel)) || 'ce compte').replace(/</g,'&lt;');
+  $('z-info').style.display = 'block';
+  $('z-info').innerHTML =
+    "Vous êtes connecté en tant que <b>" + nom + "</b>, qui n'est pas un compte administrateur." +
+    "<br><br><button class='btn' style='width:auto;padding:10px 18px' onclick='changerCompte()'>Se déconnecter et changer de compte</button>";
+  window.changerCompte = async ()=>{ await sb.auth.signOut(); location.reload(); };
+})();
+</script>
+</body>
+</html>

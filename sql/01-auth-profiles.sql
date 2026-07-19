@@ -139,8 +139,38 @@ revoke all on function public.supprimer_mon_compte() from public, anon;
 grant execute on function public.supprimer_mon_compte() to authenticated;
 
 -- ---------- PROMOTION ADMIN ----------
--- À exécuter APRÈS avoir créé le compte edouardmalak@gmail.com via la page d'accès :
+-- À exécuter APRÈS avoir créé le compte edouardmalak@gmail.com via la page d'accès.
+-- IMPORTANT : les triggers anti-escalade (trg_empecher_changement_role et
+-- trg_empecher_approbation, ce dernier défini au fichier 12) BLOQUENT tout
+-- passage à « admin » tant qu'aucun admin n'existe (poule-et-œuf). Il faut
+-- donc les désactiver le temps de promouvoir le PREMIER admin, puis les
+-- réactiver. On approuve aussi le compte d'office.
+begin;
+alter table public.profiles disable trigger trg_empecher_changement_role;
+-- trg_empecher_approbation n'existe qu'après l'exécution du fichier 12 :
+do $$ begin
+  if exists (select 1 from pg_trigger where tgname = 'trg_empecher_approbation') then
+    execute 'alter table public.profiles disable trigger trg_empecher_approbation';
+  end if;
+end $$;
 update public.profiles p
    set role = 'admin'
   from auth.users u
  where u.id = p.id and u.email = 'edouardmalak@gmail.com';
+-- approuve / approuve_date n'existent qu'après le fichier 12 :
+do $$ begin
+  if exists (select 1 from information_schema.columns
+             where table_schema='public' and table_name='profiles' and column_name='approuve') then
+    execute $q$update public.profiles p
+                  set approuve = true, approuve_date = coalesce(approuve_date, now())
+                 from auth.users u
+                where u.id = p.id and u.email = 'edouardmalak@gmail.com'$q$;
+  end if;
+end $$;
+alter table public.profiles enable trigger trg_empecher_changement_role;
+do $$ begin
+  if exists (select 1 from pg_trigger where tgname = 'trg_empecher_approbation') then
+    execute 'alter table public.profiles enable trigger trg_empecher_approbation';
+  end if;
+end $$;
+commit;
