@@ -119,6 +119,32 @@ tbody tr:last-child td{border-bottom:none}
     </div>
     <div class="msg" id="msg-factures"></div>
   </div>
+
+  <!-- COMPTABILITÉ (Phase 6.2) -->
+  <div class="carte" id="carte-compta" style="display:none">
+    <div class="sec">Comptabilité<small id="compta-annee"></small>
+      <button class="btn-lot" id="btn-csv">Export comptable (T2125)</button>
+    </div>
+    <div class="totaux">
+      <div class="total facture"><small>Honoraires</small><b id="c-hono">—</b></div>
+      <div class="total facture"><small>Kilométrage</small><b id="c-km">—</b></div>
+      <div class="total facture"><small>Per diem</small><b id="c-perdiem">—</b></div>
+      <div class="total facture"><small>Hébergement</small><b id="c-heberg">—</b></div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Mois</th><th>Fact.</th><th>Honoraires</th><th>Km</th><th>Indemnités</th><th>Total</th><th>Payé</th></tr></thead>
+        <tbody id="t-mois"></tbody>
+      </table>
+    </div>
+    <div class="sec" style="margin-top:18px">Par pharmacie</div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Pharmacie</th><th>Fact.</th><th>Total</th><th>Payé</th></tr></thead>
+        <tbody id="t-parpharm"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -219,6 +245,8 @@ async function chargerFactures(){
   $('t-attente').textContent = cdArgent(somme(factures.filter(f=>f.statut==='envoyee')));
   $('t-retard').textContent  = cdArgent(somme(factures.filter(f=>f.statut==='en_retard')));
 
+  rendreComptabilite(factures);
+
   if(!factures.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">Aucune facture — marquez un remplacement complété pour générer la première.</td></tr>'; return; }
   $('n-factures').textContent = factures.length + ' facture' + (factures.length>1?'s':'');
 
@@ -281,6 +309,79 @@ async function chargerFactures(){
               td(cdArgent(f.total)), st, td(f.date_echeance||'—'), act);
     tb.appendChild(tr);
   });
+}
+
+/* ================= COMPTABILITÉ (Phase 6.2) ================= */
+const _num = v => parseFloat(v) || 0;
+const _hono = f => _num(f.heures) * _num(f.tarif_horaire);
+const _kmM  = f => _num(f.km) * _num(f.taux_km);
+
+function rendreComptabilite(factures){
+  const issued = (factures||[]).filter(f => f.statut !== 'brouillon');
+  if(!issued.length){ $('carte-compta').style.display = 'none'; return; }
+  $('carte-compta').style.display = '';
+  $('compta-annee').textContent = issued.length + ' facture' + (issued.length>1?'s':'') + ' émise' + (issued.length>1?'s':'');
+
+  const T = {hono:0, km:0, perdiem:0, heberg:0};
+  issued.forEach(f=>{ T.hono+=_hono(f); T.km+=_kmM(f); T.perdiem+=_num(f.per_diem_montant); T.heberg+=_num(f.hebergement_montant); });
+  $('c-hono').textContent    = cdArgent(T.hono);
+  $('c-km').textContent      = cdArgent(T.km);
+  $('c-perdiem').textContent = cdArgent(T.perdiem);
+  $('c-heberg').textContent  = cdArgent(T.heberg);
+
+  const dOf = f => (f.date_contrat || (f.cree_le||'').slice(0,10) || '');
+  const mois = {};
+  issued.forEach(f=>{ const m = (dOf(f)||'').slice(0,7) || '—'; (mois[m]=mois[m]||[]).push(f); });
+  const tbMois = $('t-mois'); tbMois.innerHTML = '';
+  Object.keys(mois).sort().reverse().forEach(m=>{
+    const arr = mois[m];
+    const tot  = arr.reduce((s,f)=>s+_num(f.total),0);
+    const paye = arr.filter(f=>f.statut==='payee').reduce((s,f)=>s+_num(f.total),0);
+    const h    = arr.reduce((s,f)=>s+_hono(f),0);
+    const km   = arr.reduce((s,f)=>s+_kmM(f),0);
+    const ind  = arr.reduce((s,f)=>s+_num(f.per_diem_montant)+_num(f.hebergement_montant),0);
+    const tr = document.createElement('tr');
+    [m, arr.length, cdArgent(h), cdArgent(km), cdArgent(ind), cdArgent(tot), cdArgent(paye)]
+      .forEach(t=>{ const td=document.createElement('td'); td.textContent=t; tr.appendChild(td); });
+    tbMois.appendChild(tr);
+  });
+
+  const ph = {};
+  issued.forEach(f=>{ const k=f.nom_pharmacie||'—'; (ph[k]=ph[k]||[]).push(f); });
+  const tbPh = $('t-parpharm'); tbPh.innerHTML = '';
+  Object.keys(ph).sort().forEach(k=>{
+    const arr = ph[k];
+    const tot  = arr.reduce((s,f)=>s+_num(f.total),0);
+    const paye = arr.filter(f=>f.statut==='payee').reduce((s,f)=>s+_num(f.total),0);
+    const tr = document.createElement('tr');
+    [k, arr.length, cdArgent(tot), cdArgent(paye)]
+      .forEach(t=>{ const td=document.createElement('td'); td.textContent=t; tr.appendChild(td); });
+    tbPh.appendChild(tr);
+  });
+
+  $('btn-csv').onclick = ()=> exportComptaCSV(issued);
+}
+
+/* CSV « comptable » (format FR : séparateur ; et décimales , + BOM Excel) */
+function exportComptaCSV(factures){
+  const esc = v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
+  const dec = n => _num(n).toFixed(2).replace('.', ',');
+  const cols = ['Date contrat','N° facture','Référence','Pharmacie','Ville','Heures','Tarif horaire',
+    'Honoraires','Km A/R','Taux km','Montant km','Per diem','Hébergement','Total','Statut','Type','Date paiement'];
+  const rows = factures.map(f=>[
+    f.date_contrat||'', 'F-'+String(f.numero_facture).padStart(6,'0'), f.numero_reference||'',
+    f.nom_pharmacie||'', f.pharmacie_ville||'',
+    dec(f.heures), dec(f.tarif_horaire), dec(_hono(f)),
+    dec(f.km), dec(f.taux_km), dec(_kmM(f)),
+    dec(f.per_diem_montant), dec(f.hebergement_montant), dec(f.total),
+    f.statut||'', f.type_facture||'', (f.date_paiement||'').slice(0,10)
+  ]);
+  const csv = [cols.map(esc).join(';'), ...rows.map(r=>r.map(esc).join(';'))].join('\r\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'c-direct-comptabilite-' + new Date().getFullYear() + '.csv';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 </script>
 </body>
