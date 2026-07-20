@@ -141,6 +141,168 @@ async function envoyerEtLogger(env, { vers, corps, type, profile_id = null, cont
   return res;
 }
 
+/* =====================================================================
+   COURRIEL « CONTRAT CONFIRMÉ » + PDF joint (Resend) — bilingue
+   Déclenché quand une candidature passe à 'accepte'. Sans dépendance :
+   le PDF est fabriqué à la main (Helvetica, texte ASCII). N'envoie rien
+   si RESEND_API_KEY est absent — donc inoffensif tant que le secret
+   n'est pas configuré.
+===================================================================== */
+async function envoyerEmailResend(env, { to, subject, html, filename, pdfBase64 }) {
+  if (!env.RESEND_API_KEY) return { ok: false, skip: 'RESEND_API_KEY absent' };
+  if (!to) return { ok: false, skip: 'courriel manquant' };
+  const body = {
+    from: env.RESEND_FROM || 'C-Direct <notifications@c-direct.ca>',
+    to: [to], subject, html,
+  };
+  if (pdfBase64) body.attachments = [{ filename: filename || 'contrat.pdf', content: pdfBase64 }];
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return { ok: r.ok, status: r.status, erreur: r.ok ? null : (await r.text()).slice(0, 200) };
+}
+
+/* repli ASCII (les polices standard du PDF n'ont pas toutes les accents) */
+function foldAscii(s) {
+  return String(s == null ? '' : s)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\x20-\x7E]/g, ' ');
+}
+
+/* PDF minimal, une page, sans librairie : liste de lignes de texte.
+   Renvoie une chaîne base64 prête pour la pièce jointe Resend. */
+function pdfSimple(titre, lignes) {
+  const esc = t => foldAscii(t).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+  let y = 780;
+  let flux = 'BT /F1 16 Tf 60 ' + y + ' Td (' + esc(titre) + ') Tj ET\n';
+  y -= 30;
+  for (const ligne of lignes) {
+    flux += 'BT /F1 11 Tf 60 ' + y + ' Td (' + esc(ligne) + ') Tj ET\n';
+    y -= 18;
+    if (y < 60) break;
+  }
+  const objets = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
+    '<< /Length ' + flux.length + ' >>\nstream\n' + flux + 'endstream',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+  ];
+  let pdf = '%PDF-1.4\n';
+  const offsets = [];
+  objets.forEach((o, i) => {
+    offsets.push(pdf.length);
+    pdf += (i + 1) + ' 0 obj\n' + o + '\nendobj\n';
+  });
+  const xref = pdf.length;
+  pdf += 'xref\n0 ' + (objets.length + 1) + '\n0000000000 65535 f \n';
+  offsets.forEach(off => { pdf += String(off).padStart(10, '0') + ' 00000 n \n'; });
+  pdf += 'trailer\n<< /Size ' + (objets.length + 1) + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF';
+  // chaîne binaire → base64
+  let bin = '';
+  for (let i = 0; i < pdf.length; i++) bin += String.fromCharCode(pdf.charCodeAt(i) & 0xff);
+  return btoa(bin);
+}
+
+function heuresEntre(hd, hf) {
+  const [h1, m1] = String(hd || '0:0').split(':').map(Number);
+  const [h2, m2] = String(hf || '0:0').split(':').map(Number);
+  let h = (h2 * 60 + m2 - (h1 * 60 + m1)) / 60;
+  if (h < 0) h += 24;
+  return Math.round(h * 100) / 100;
+}
+
+const T_CONF = {
+  fr: {
+    subject: r => 'Contrat confirmé — ' + r,
+    salut: 'Bonjour',
+    intro: 'Voici votre contrat confirmé. Les deux parties ont accepté les termes ci-dessous.',
+    ref: 'Référence', date: 'Date', horaire: 'Horaire', tarif: 'Tarif horaire',
+    heures: 'Heures', honos: 'Honoraires estimés', pharmacie: 'Pharmacie',
+    pharmacien: 'Pharmacien(ne)', adresse: 'Adresse', opq: 'N° OPQ', neq: 'NEQ',
+    piece: 'Le contrat confirmé est joint en PDF.',
+    note: 'La facturation définitive (kilométrage, indemnités) est établie à la complétion du contrat, selon les règles du réseau. Aucun frais ne transite par C-Direct.',
+    pdf_titre: 'C-DIRECT — Contrat confirmé', signature: '— C-Direct',
+  },
+  en: {
+    subject: r => 'Confirmed contract — ' + r,
+    salut: 'Hello',
+    intro: 'Here is your confirmed contract. Both parties have accepted the terms below.',
+    ref: 'Reference', date: 'Date', horaire: 'Schedule', tarif: 'Hourly rate',
+    heures: 'Hours', honos: 'Estimated fees', pharmacie: 'Pharmacy',
+    pharmacien: 'Pharmacist', adresse: 'Address', opq: 'OPQ No.', neq: 'NEQ',
+    piece: 'The confirmed contract is attached as a PDF.',
+    note: 'Final billing (mileage, allowances) is issued upon contract completion, per network rules. No money transits through C-Direct.',
+    pdf_titre: 'C-DIRECT — Confirmed contract', signature: '— C-Direct',
+  },
+};
+
+async function envoyerConfirmationContrat(env, k, c) {
+  if (!env.RESEND_API_KEY) return { ok: false, skip: 'RESEND_API_KEY absent' };
+  const champs = 'id,courriel,prenom,nom,langue,nom_pharmacie,adresse,ville,code_postal,neq,numero_opq';
+  const [pnA, peA] = await Promise.all([
+    sbSelect(env, `profiles?select=${champs}&id=eq.${c.pharmacien_id}`),
+    sbSelect(env, `profiles?select=${champs}&id=eq.${k.pharmacie_id}`),
+  ]);
+  const pn = pnA[0] || {}, pe = peA[0] || {};
+  const tarif = Number(c.tarif_propose ?? k.tarif_horaire) || 0;
+  const hd = c.heure_debut_proposee || k.heure_debut;
+  const hf = c.heure_fin_proposee || k.heure_fin;
+  const heures = heuresEntre(hd, hf);
+  const honos = Math.round(heures * tarif * 100) / 100;
+  const nomPn = `${pn.prenom || ''} ${pn.nom || ''}`.trim() || '—';
+  const nomPe = pe.nom_pharmacie || '—';
+  const adr = [pe.adresse, pe.ville, pe.code_postal].filter(Boolean).join(', ') || '—';
+
+  const construire = (lang) => {
+    const t = T_CONF[lang === 'en' ? 'en' : 'fr'];
+    const lignesPdf = [
+      `${t.ref}: ${k.numero_reference}`,
+      `${t.date}: ${k.date_contrat}`,
+      `${t.horaire}: ${hhmm(hd)} - ${hhmm(hf)}  (${heures} h)`,
+      `${t.tarif}: ${tarif} $/h`,
+      `${t.honos}: ${honos} $`,
+      '',
+      `${t.pharmacie}: ${nomPe}`,
+      `${t.adresse}: ${adr}` + (pe.neq ? `   ${t.neq}: ${pe.neq}` : ''),
+      `${t.pharmacien}: ${nomPn}` + (pn.numero_opq ? `   ${t.opq}: ${pn.numero_opq}` : ''),
+      '',
+      t.note,
+    ];
+    const pdf = pdfSimple(t.pdf_titre, lignesPdf);
+    const ligneHtml = (a, b) => `<tr><td style="padding:3px 12px 3px 0;color:#6b7c74">${a}</td><td style="padding:3px 0;font-weight:600">${b}</td></tr>`;
+    const html =
+      `<div style="font-family:Arial,sans-serif;color:#12211b;max-width:560px">` +
+      `<p>${t.salut},</p><p>${t.intro}</p>` +
+      `<table style="border-collapse:collapse;font-size:14px;margin:8px 0">` +
+      ligneHtml(t.ref, k.numero_reference) + ligneHtml(t.date, k.date_contrat) +
+      ligneHtml(t.horaire, `${hhmm(hd)}–${hhmm(hf)} (${heures} h)`) +
+      ligneHtml(t.tarif, `${tarif} $/h`) + ligneHtml(t.honos, `${honos} $`) +
+      ligneHtml(t.pharmacie, nomPe) + ligneHtml(t.pharmacien, nomPn) +
+      `</table><p>${t.piece}</p><p style="font-size:12px;color:#6b7c74">${t.note}</p><p>${t.signature}</p></div>`;
+    return { t, pdf, html };
+  };
+
+  const out = {};
+  if (pn.courriel) {
+    const b = construire(pn.langue);
+    out.pharmacien = await envoyerEmailResend(env, {
+      to: pn.courriel, subject: b.t.subject(k.numero_reference), html: b.html,
+      filename: `C-Direct-${k.numero_reference}.pdf`, pdfBase64: b.pdf,
+    });
+  }
+  if (pe.courriel) {
+    const b = construire(pe.langue);
+    out.pharmacie = await envoyerEmailResend(env, {
+      to: pe.courriel, subject: b.t.subject(k.numero_reference), html: b.html,
+      filename: `C-Direct-${k.numero_reference}.pdf`, pdfBase64: b.pdf,
+    });
+  }
+  return { ok: true, ...out };
+}
+
 /* File d'envoi à concurrence limitée (5 en parallèle) */
 async function enParallele(taches, limite = 5) {
   const resultats = [];
@@ -707,6 +869,15 @@ async function candidatureMaj(env, c, avant) {
         vers: pharmacie.telephone, corps, type: 'accepte_pharmacie',
         profile_id: pharmacie.id, contrat_id: k.id,
       })).ok;
+    }
+    /* Courriel « contrat confirmé » + PDF joint aux DEUX parties (langue
+       de chacun). Isolé : ne doit JAMAIS casser l'envoi SMS ci-dessus.
+       Ne s'exécute que si RESEND_API_KEY est présent (sinon ignoré). */
+    try {
+      resultats.confirmation = await envoyerConfirmationContrat(env, k, c);
+    } catch (e) {
+      console.error('confirmation contrat (courriel/PDF):', e);
+      resultats.confirmation = { ok: false, erreur: String(e) };
     }
     return json({ ok: true, ...resultats });
   }

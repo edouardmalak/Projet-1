@@ -74,6 +74,7 @@ a.lien{color:var(--vert-vif)}
       <div class="deux">
         <div class="champ"><label>Courriel</label><input id="courriel" type="email" readonly></div>
         <div class="champ"><label>Téléphone</label><input id="telephone" type="tel" required placeholder="514-555-0123"></div>
+        <div class="champ"><label>Langue des communications</label><select id="langue"><option value="fr">Français</option><option value="en">English</option></select></div>
       </div>
 
       <!-- PHARMACIEN -->
@@ -173,6 +174,7 @@ function msg(id, texte, ok){
   $('prenom').value=profil.prenom||''; $('nom').value=profil.nom||'';
   $('courriel').value=profil.courriel||''; $('telephone').value=cdTelAffiche(profil.telephone);
   $('sms_optin').checked=!!profil.sms_optin;
+  if($('langue')) $('langue').value = profil.langue || 'fr';
   if(profil.role==='pharmacien'){
     $('numero_opq').value=profil.numero_opq||'';
     $('tarif_horaire_min').value=profil.tarif_horaire_min??'';
@@ -209,7 +211,8 @@ function msg(id, texte, ok){
     if(!tel){ msg('msg','Téléphone invalide — 10 chiffres requis.',false); return; }
     const maj = {
       prenom:$('prenom').value.trim(), nom:$('nom').value.trim(), telephone:tel,
-      sms_optin: $('sms_optin').checked
+      sms_optin: $('sms_optin').checked,
+      langue: ($('langue') && $('langue').value) || 'fr'
     };
     if($('sms_optin').checked && !profil.sms_optin) maj.sms_optin_date = new Date().toISOString();
     if(!$('sms_optin').checked) maj.sms_optin_date = null;

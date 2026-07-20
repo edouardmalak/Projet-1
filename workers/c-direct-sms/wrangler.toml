@@ -13,6 +13,9 @@ compatibility_date = "2026-07-01"
 # Aucune variable en clair : tout passe par les secrets
 #   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER,
 #   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, WEBHOOK_SECRET
+#   RESEND_API_KEY   → confirmation « contrat confirmé » + PDF à l'acceptation
+#   RESEND_FROM      → (optionnel) ex. "C-Direct <notifications@c-direct.ca>"
+# Sans RESEND_API_KEY, la confirmation par courriel est simplement ignorée.
 
 # Cron Triggers (UTC) :
 #   * * * * *      → vidage de la file sms_queue (groupage + heures de silence)
