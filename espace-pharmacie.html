@@ -151,6 +151,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
         <label>Tarif horaire ($/h)</label>
         <input id="tarif_horaire" type="number" step="0.01" required>
         <div class="indice">Plancher réseau : <b id="plancher">—</b></div>
+        <div class="indice" id="compatibles" style="display:none;color:var(--vert-vif);margin-top:6px;font-weight:600"></div>
       </div>
       <div class="deux">
         <div class="champ"><label>Rx / jour (semaine)</label><input id="rx_jour_semaine" type="number" min="0"></div>
@@ -208,6 +209,7 @@ function msg(id, texte, ok){
   cdEnteteConnecte();
   $('sous').textContent = (profil.nom_pharmacie || 'Pharmacie') + (profil.ville ? ' · ' + profil.ville : '');
   chargerTableauBordPharmacie();
+  ['date_contrat','tarif_horaire'].forEach(id=> $(id) && $(id).addEventListener('change', majCompatibles));
 
   /* services */
   $('coches-services').innerHTML = SERVICES.map(s=>
@@ -579,6 +581,21 @@ async function chargerTableauBordPharmacie(){
     if($('pb-med')) $('pb-med').textContent = delais.length ? _duree(_mediane(delais)) : '—';
     $('carte-pb').style.display='';
   }catch(e){ /* le tableau de bord ne doit jamais casser la page */ }
+}
+
+/* repère « N pharmaciens compatibles » (Phase 6.1) — nécessite sql/14 ;
+   défensif : masqué si la RPC n'existe pas encore. */
+async function majCompatibles(){
+  const el = $('compatibles'); if(!el) return;
+  const d = $('date_contrat').value, t = parseFloat($('tarif_horaire').value);
+  if(!d || !t){ el.style.display='none'; return; }
+  try{
+    const { data, error } = await sb.rpc('compter_compatibles', { p_date:d, p_tarif:t });
+    if(error || data == null){ el.style.display='none'; return; }
+    el.textContent = data + ' pharmacien' + (data>1?'s':'') + ' compatible' + (data>1?'s':'') +
+      ' dans le réseau le ' + cdDate(d);
+    el.style.display='';
+  }catch(e){ el.style.display='none'; }
 }
 </script>
 </body>
