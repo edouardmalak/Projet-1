@@ -119,6 +119,25 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
   <h1>Espace pharmacie</h1>
   <p class="sous" id="sous">—</p>
 
+  <!-- TABLEAU DE BORD (Phase 6.2) -->
+  <style>
+  .pb-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:720px){.pb-kpis{grid-template-columns:1fr 1fr}}
+  .pb-kpi{background:#0A100D;border:1px solid var(--ligne);border-radius:7px;padding:14px 16px}
+  .pb-kpi small{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--sourd);margin-bottom:5px}
+  .pb-kpi b{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:700}
+  .pb-kpi.vert b{color:var(--vert-vif)}
+  </style>
+  <div class="carte" id="carte-pb" style="display:none">
+    <div class="sec">Tableau de bord</div>
+    <div class="pb-kpis">
+      <div class="pb-kpi"><small>Contrats publiés</small><b id="pb-pub">—</b></div>
+      <div class="pb-kpi vert"><small>Taux de remplissage</small><b id="pb-fill">—</b></div>
+      <div class="pb-kpi vert"><small>Total payé</small><b id="pb-paye">—</b></div>
+      <div class="pb-kpi"><small>1<sup>re</sup> candidature (médiane)</small><b id="pb-med">—</b></div>
+    </div>
+  </div>
+
   <!-- PUBLIER -->
   <div class="carte">
     <div class="sec">Publier un contrat</div>
@@ -188,6 +207,7 @@ function msg(id, texte, ok){
   profil = await cdExigerConnexion(['pharmacie']);
   cdEnteteConnecte();
   $('sous').textContent = (profil.nom_pharmacie || 'Pharmacie') + (profil.ville ? ' · ' + profil.ville : '');
+  chargerTableauBordPharmacie();
 
   /* services */
   $('coches-services').innerHTML = SERVICES.map(s=>
@@ -531,6 +551,34 @@ async function chargerCandidats(k, zone){
 
     zone.appendChild(bloc);
   });
+}
+
+/* ================= TABLEAU DE BORD PHARMACIE (Phase 6.2) — défensif ========= */
+function _mediane(arr){ if(!arr.length) return null; const s=arr.slice().sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2 ? s[m] : (s[m-1]+s[m])/2; }
+function _duree(h){ if(h==null) return '—'; if(h<1) return Math.round(h*60)+' min'; if(h<24) return Math.round(h)+' h'; return (Math.round(h/24*10)/10)+' j'; }
+async function chargerTableauBordPharmacie(){
+  try{
+    const [{data:ks},{data:cs},{data:fs}] = await Promise.all([
+      sb.from('contrats').select('id,statut,created_at').eq('pharmacie_id', profil.id),
+      sb.from('candidatures').select('contrat_id,created_at'),
+      sb.rpc('get_factures')
+    ]);
+    const K=ks||[], C=cs||[], F=(fs||[]).filter(f=>f.pharmacie_id===profil.id);
+    if(!K.length && !F.length) return;               // rien à afficher encore
+    const pub=K.length, rempl=K.filter(k=>k.statut==='attribue'||k.statut==='complete').length;
+    const num=v=>parseFloat(v)||0;
+    const paye=F.filter(f=>f.statut==='payee').reduce((s,f)=>s+num(f.total),0);
+    if($('pb-pub'))  $('pb-pub').textContent  = pub;
+    if($('pb-fill')) $('pb-fill').textContent = pub ? Math.round(rempl/pub*100)+' %' : '—';
+    if($('pb-paye')) $('pb-paye').textContent = cdArgent(paye);
+    /* médiane du délai jusqu'à la 1re candidature (contrat.created_at → 1re candidature) */
+    const first={}; C.forEach(c=>{ const t=new Date(c.created_at).getTime(); if(!(c.contrat_id in first) || t<first[c.contrat_id]) first[c.contrat_id]=t; });
+    const kById={}; K.forEach(k=>kById[k.id]=k);
+    const delais=[];
+    Object.keys(first).forEach(cid=>{ const k=kById[cid]; if(k&&k.created_at){ const h=(first[cid]-new Date(k.created_at).getTime())/3600000; if(h>=0) delais.push(h); } });
+    if($('pb-med')) $('pb-med').textContent = delais.length ? _duree(_mediane(delais)) : '—';
+    $('carte-pb').style.display='';
+  }catch(e){ /* le tableau de bord ne doit jamais casser la page */ }
 }
 </script>
 </body>
