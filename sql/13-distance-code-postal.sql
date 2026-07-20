@@ -16,7 +16,9 @@
 
 -- ---------------------------------------------------------------------
 -- get_contrats_ouverts — + code_postal de la pharmacie
+-- (drop d'abord : on change la liste des colonnes retournées)
 -- ---------------------------------------------------------------------
+drop function if exists public.get_contrats_ouverts();
 create or replace function public.get_contrats_ouverts()
 returns table (
   id uuid, numero_reference text, date_contrat date,
@@ -46,7 +48,9 @@ grant execute on function public.get_contrats_ouverts() to authenticated;
 
 -- ---------------------------------------------------------------------
 -- get_contrat_fiche — + code_postal de la pharmacie
+-- (drop d'abord : on change la liste des colonnes retournées)
 -- ---------------------------------------------------------------------
+drop function if exists public.get_contrat_fiche(text);
 create or replace function public.get_contrat_fiche(p_ref text)
 returns table (
   id uuid, numero_reference text, date_contrat date,

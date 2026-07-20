@@ -1,7 +1,7 @@
 -- ============================================================
 -- C-DIRECT — TOUT LE SQL EN ATTENTE (à exécuter en une fois)
 -- Copiez TOUT ce fichier, collez dans Supabase > SQL Editor,
--- puis cliquez Run. Sans danger : idempotent, ne supprime rien.
+-- puis cliquez Run. Sans danger : idempotent, ne supprime aucune donnée.
 -- Regroupe sql/13 + sql/14 + sql/15.
 -- ============================================================
 
@@ -24,7 +24,9 @@
 
 -- ---------------------------------------------------------------------
 -- get_contrats_ouverts — + code_postal de la pharmacie
+-- (drop d'abord : on change la liste des colonnes retournées)
 -- ---------------------------------------------------------------------
+drop function if exists public.get_contrats_ouverts();
 create or replace function public.get_contrats_ouverts()
 returns table (
   id uuid, numero_reference text, date_contrat date,
@@ -54,7 +56,9 @@ grant execute on function public.get_contrats_ouverts() to authenticated;
 
 -- ---------------------------------------------------------------------
 -- get_contrat_fiche — + code_postal de la pharmacie
+-- (drop d'abord : on change la liste des colonnes retournées)
 -- ---------------------------------------------------------------------
+drop function if exists public.get_contrat_fiche(text);
 create or replace function public.get_contrat_fiche(p_ref text)
 returns table (
   id uuid, numero_reference text, date_contrat date,
