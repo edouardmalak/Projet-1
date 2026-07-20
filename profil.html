@@ -211,8 +211,7 @@ function msg(id, texte, ok){
     if(!tel){ msg('msg','Téléphone invalide — 10 chiffres requis.',false); return; }
     const maj = {
       prenom:$('prenom').value.trim(), nom:$('nom').value.trim(), telephone:tel,
-      sms_optin: $('sms_optin').checked,
-      langue: ($('langue') && $('langue').value) || 'fr'
+      sms_optin: $('sms_optin').checked
     };
     if($('sms_optin').checked && !profil.sms_optin) maj.sms_optin_date = new Date().toISOString();
     if(!$('sms_optin').checked) maj.sms_optin_date = null;
@@ -240,8 +239,15 @@ function msg(id, texte, ok){
     }
     $('btn-save').disabled=true;
     const { error } = await sb.from('profiles').update(maj).eq('id', profil.id);
+    if(error){ $('btn-save').disabled=false; msg('msg', error.message, false); return; }
+    /* langue : mise à jour séparée et TOLÉRANTE — la colonne peut ne pas
+       exister avant l'exécution de sql/15 ; son absence ne doit jamais
+       faire échouer l'enregistrement du profil. */
+    if($('langue')){
+      const { error: eLang } = await sb.from('profiles').update({ langue: $('langue').value || 'fr' }).eq('id', profil.id);
+      if(eLang) console.warn('langue non enregistrée (exécuter sql/15) :', eLang.message);
+    }
     $('btn-save').disabled=false;
-    if(error){ msg('msg', error.message, false); return; }
     profil = await cdProfil(true);
     msg('msg','Profil enregistré ✓', true);
   });
