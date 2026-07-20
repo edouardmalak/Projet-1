@@ -673,7 +673,9 @@ function montrerBienvenue(){
   let deja = '1';
   try{ deja = localStorage.getItem('cd-intro-vu') || ''; }catch(e){}
   const reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if((deja && !rejouer) || reduit || (location.hash && location.hash !== '#intro')){
+  /* Accès direct : l'intro ne se joue plus automatiquement. Elle reste
+     disponible sur demande via c-direct.ca/?intro (ou #intro). */
+  if(!rejouer || reduit || (location.hash && location.hash !== '#intro')){
     sw.remove(); montrerBienvenue(); return;
   }
   /* champ d'étoiles */
