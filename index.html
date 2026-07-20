@@ -653,11 +653,9 @@ $('bv-pharmacie').onclick = ()=>{ fermerBienvenue(); allerAcces('pharmacie'); };
 $('bienvenue').addEventListener('click', e=>{ if(e.target.id==='bienvenue') fermerBienvenue(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && $('bienvenue').classList.contains('on')) fermerBienvenue(); });
 function montrerBienvenue(){
-  try{
-    if(!localStorage.getItem('cd-bienvenue-vu') && !location.hash){
-      $('bienvenue').classList.add('on');
-    }
-  }catch(e){}
+  /* désactivé : les visiteurs arrivent directement sur la page d'accueil
+     (la fenêtre de bienvenue / choix de rôle a été retirée). Le choix de
+     rôle reste disponible via les boutons de la page et /acces.html. */
 }
 
 /* ---- intro style Star Wars (première visite, ou ?intro pour revoir) ---- */
