@@ -168,7 +168,7 @@ async function envoyerEmailResend(env, { to, subject, html, text, filename, pdfB
     from: env.RESEND_FROM || 'C-Direct <notifications@c-direct.ca>',
     to: [to], subject, html,
     text: text || 'Voir la version HTML. / See the HTML version.',
-    reply_to: env.REPLY_TO || 'edouardmalak@gmail.com',
+    reply_to: env.REPLY_TO || 'C-Direct <notifications@c-direct.ca>',
     headers: { 'X-Entity-Ref-ID': (filename || 'c-direct') },
   };
   if (pdfBase64) body.attachments = [{ filename: filename || 'contrat.pdf', content: pdfBase64 }];
@@ -413,7 +413,7 @@ async function envoyerConfirmationContrat(env, k, c) {
   const adr = [pe.adresse, pe.ville, pe.code_postal].filter(Boolean).join(', ') || '—';
   const emission = new Date().toISOString().slice(0, 10);
 
-  const construire = (lang) => {
+  const construire = (lang, role) => {
     const t = T_CONF[lang === 'en' ? 'en' : 'fr'];
     const lignes = [{ desc: t.l_pharmacien, qte: `${heures} h`, pu: argent(tarif), montant: argent(base) }];
     if (kmAR > 0) lignes.push({ desc: t.l_km, qte: `${kmAR} km`, pu: argent(taux_km), montant: argent(montantKm) });
@@ -428,25 +428,34 @@ async function envoyerConfirmationContrat(env, k, c) {
       soustotal: argent(soustotal), tps: argent(tps), tvq: argent(tvq), total: argent(total),
     };
     const pdf = pdfContratConfirme(t, d);
+    const estPh = role === 'pharmacien';
+    const bonjour = (estPh && pn.prenom) ? `${t.salut} ${pn.prenom}` : t.salut;
+    const phrase = estPh
+      ? (lang === 'en'
+          ? `Your mandate for contract ${k.numero_reference} on ${k.date_contrat} at ${nomPe} is confirmed. The fee breakdown is attached as a PDF.`
+          : `Votre mandat pour le contrat ${k.numero_reference} du ${k.date_contrat} à ${nomPe} est confirmé. Le détail des honoraires est joint en PDF.`)
+      : (lang === 'en'
+          ? `Contract ${k.numero_reference} on ${k.date_contrat} is confirmed with ${nomPn}. The mandate is attached as a PDF.`
+          : `Le contrat ${k.numero_reference} du ${k.date_contrat} est confirmé avec ${nomPn}. Le mandat est joint en PDF.`);
     const html =
-      `<div style="font-family:Arial,sans-serif;color:#12211b;max-width:560px">` +
-      `<p>${t.salut},</p><p>${t.intro}</p>` +
-      `<p style="font-size:14px"><b>${t.ref} :</b> ${k.numero_reference}<br><b>${t.total_l} :</b> ${argent(total)}</p>` +
-      `<p style="font-size:12px;color:#6b7c74">${t.note}</p><p>${t.signature}</p></div>`;
-    const text = `${t.salut},\n\n${t.intro}\n\n${t.ref} : ${k.numero_reference}\n${t.total_l} : ${argent(total)}\n\n${t.note}\n${t.signature}`;
+      `<div style="font-family:Arial,Helvetica,sans-serif;color:#1b2622;font-size:15px;line-height:1.6;max-width:520px">` +
+      `<p>${bonjour},</p><p>${phrase}</p>` +
+      `<p style="margin:14px 0"><b>${t.total_l} : ${argent(total)}</b></p>` +
+      `<p style="color:#8a9a92;font-size:12px">${t.signature}</p></div>`;
+    const text = `${bonjour},\n\n${phrase}\n\n${t.total_l} : ${argent(total)}\n\n${t.signature}`;
     return { t, pdf, html, text };
   };
 
   const out = {};
   if (pn.courriel) {
-    const b = construire(pn.langue);
+    const b = construire(pn.langue, 'pharmacien');
     out.pharmacien = await envoyerEmailResend(env, {
       to: pn.courriel, subject: b.t.subject(k.numero_reference), html: b.html, text: b.text,
       filename: `C-Direct-${k.numero_reference}.pdf`, pdfBase64: b.pdf,
     });
   }
   if (pe.courriel) {
-    const b = construire(pe.langue);
+    const b = construire(pe.langue, 'pharmacie');
     out.pharmacie = await envoyerEmailResend(env, {
       to: pe.courriel, subject: b.t.subject(k.numero_reference), html: b.html, text: b.text,
       filename: `C-Direct-${k.numero_reference}.pdf`, pdfBase64: b.pdf,
