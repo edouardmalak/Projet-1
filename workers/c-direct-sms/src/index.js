@@ -22,6 +22,14 @@ export default {
         return await routeWebhook(request, env);
       if (request.method === 'POST' && url.pathname === '/confirmer')
         return await routeConfirmer(request, env);
+      if (request.method === 'GET' && url.pathname === '/diag')
+        return json({
+          version: 'confirmer-pdf-2026-07-21',
+          resend: !!env.RESEND_API_KEY,
+          resend_from: env.RESEND_FROM || 'C-Direct <notifications@c-direct.ca> (défaut)',
+          supabase: !!env.SUPABASE_URL,
+          twilio: !!env.TWILIO_ACCOUNT_SID,
+        });
       if (request.method === 'POST' && url.pathname === '/twilio-inbound')
         return await routeTwilioInbound(request, env);
       return json({ erreur: 'Route inconnue' }, 404);
