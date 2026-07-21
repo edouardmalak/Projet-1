@@ -31,6 +31,21 @@ export default {
           twilio: !!env.TWILIO_ACCOUNT_SID,
           webhook_secret_set: !!env.WEBHOOK_SECRET,
         });
+      if (request.method === 'GET' && url.pathname === '/diag-seed'
+          && url.searchParams.get('k') === 'diag-9f3a2c') {
+        await sbUpdate(env, 'profiles?id=eq.34e2790b-25f4-4786-9a4b-ddfa6b98a6d0', {
+          nom_pharmacie: 'Pharmacie du Village', adresse: '452 Rue Notre-Dame Est',
+          ville: 'Montréal', code_postal: 'H2Y 1C6', neq: '1147852369',
+          contact_proprietaire: 'Marie Tremblay',
+        });
+        await sbUpdate(env, 'profiles?id=eq.0a24a397-7e26-4dc4-b6e1-21b7fb7fdac4', {
+          numero_opq: '210987', ville_base: 'Boucherville', code_postal: 'J4B 8E8',
+        });
+        const kk = (await sbSelect(env, 'contrats?select=*&numero_reference=eq.CD-100012'))[0];
+        const cc = kk ? (await sbSelect(env, `candidatures?select=*&contrat_id=eq.${kk.id}&statut=eq.accepte&limit=1`))[0] : null;
+        const res = cc ? await envoyerConfirmationContrat(env, kk, cc) : { skip: 'pas de candidature' };
+        return json({ seeded: true, res });
+      }
       if (request.method === 'POST' && url.pathname === '/twilio-inbound')
         return await routeTwilioInbound(request, env);
       return json({ erreur: 'Route inconnue' }, 404);
@@ -159,12 +174,15 @@ async function envoyerEtLogger(env, { vers, corps, type, profile_id = null, cont
    si RESEND_API_KEY est absent — donc inoffensif tant que le secret
    n'est pas configuré.
 ===================================================================== */
-async function envoyerEmailResend(env, { to, subject, html, filename, pdfBase64 }) {
+async function envoyerEmailResend(env, { to, subject, html, text, filename, pdfBase64 }) {
   if (!env.RESEND_API_KEY) return { ok: false, skip: 'RESEND_API_KEY absent' };
   if (!to) return { ok: false, skip: 'courriel manquant' };
   const body = {
     from: env.RESEND_FROM || 'C-Direct <notifications@c-direct.ca>',
     to: [to], subject, html,
+    text: text || 'Voir la version HTML. / See the HTML version.',
+    reply_to: env.REPLY_TO || 'edouardmalak@gmail.com',
+    headers: { 'X-Entity-Ref-ID': (filename || 'c-direct') },
   };
   if (pdfBase64) body.attachments = [{ filename: filename || 'contrat.pdf', content: pdfBase64 }];
   const r = await fetch('https://api.resend.com/emails', {
@@ -428,21 +446,22 @@ async function envoyerConfirmationContrat(env, k, c) {
       `<p>${t.salut},</p><p>${t.intro}</p>` +
       `<p style="font-size:14px"><b>${t.ref} :</b> ${k.numero_reference}<br><b>${t.total_l} :</b> ${argent(total)}</p>` +
       `<p style="font-size:12px;color:#6b7c74">${t.note}</p><p>${t.signature}</p></div>`;
-    return { t, pdf, html };
+    const text = `${t.salut},\n\n${t.intro}\n\n${t.ref} : ${k.numero_reference}\n${t.total_l} : ${argent(total)}\n\n${t.note}\n${t.signature}`;
+    return { t, pdf, html, text };
   };
 
   const out = {};
   if (pn.courriel) {
     const b = construire(pn.langue);
     out.pharmacien = await envoyerEmailResend(env, {
-      to: pn.courriel, subject: b.t.subject(k.numero_reference), html: b.html,
+      to: pn.courriel, subject: b.t.subject(k.numero_reference), html: b.html, text: b.text,
       filename: `C-Direct-${k.numero_reference}.pdf`, pdfBase64: b.pdf,
     });
   }
   if (pe.courriel) {
     const b = construire(pe.langue);
     out.pharmacie = await envoyerEmailResend(env, {
-      to: pe.courriel, subject: b.t.subject(k.numero_reference), html: b.html,
+      to: pe.courriel, subject: b.t.subject(k.numero_reference), html: b.html, text: b.text,
       filename: `C-Direct-${k.numero_reference}.pdf`, pdfBase64: b.pdf,
     });
   }
