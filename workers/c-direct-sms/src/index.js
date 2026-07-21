@@ -249,10 +249,10 @@ function pdfContratConfirme(t, d) {
   if (d.pe_neq) { txt(44, yl, 'NEQ : ' + d.pe_neq, 9, GRIS, false); yl -= 11; }
 
   // colonne droite : Facturé par (encadré) + reçu
-  cadre(326, 604, 242, 100, LIGNE);
+  cadre(326, 578, 242, 126, LIGNE);
   let yr = 692;
   txt(334, yr, t.facture_par, 9, DARK, true); yr -= 14;
-  const paire = (a, b) => { txt(334, yr, a, 8.5, GRIS, false); txt(430, yr, String(b || '—'), 8.5, DARK, false); yr -= 12; };
+  const paire = (a, b) => { txt(334, yr, a, 8.5, GRIS, false); txt(432, yr, String(b || '—'), 8.5, DARK, false); yr -= 12; };
   paire(t.remplacant, d.pn_nom);
   paire(t.profession, t.val_profession);
   paire('N° OPQ', d.pn_opq);
@@ -260,11 +260,12 @@ function pdfContratConfirme(t, d) {
   paire(t.province, t.val_province);
   paire('TPS', d.pn_tps);
   paire('TVQ', d.pn_tvq);
-  let yre = 590;
-  const recu = (a, b) => { txt(334, yre, a, 8.5, GRIS, false); txt(440, yre, String(b || '—'), 8.5, DARK, false); yre -= 12; };
+  paire(t.societe_l, d.pn_corp);
+  let yre = 566;
+  const recu = (a, b) => { txt(334, yre, a, 8.5, GRIS, false); txt(442, yre, String(b || '—'), 8.5, DARK, false); yre -= 12; };
   recu(t.recu, '—'); recu(t.contrat_l, d.ref); recu(t.emission, d.date_emission);
 
-  let y = Math.min(yl, 552) - 6;
+  let y = Math.min(yl, 528) - 6;
 
   // tableau des heures
   rect(44, y - 15, 524, 15, BG); cadre(44, y - 30, 524, 30, LIGNE); filet(44, y - 15, 568, LIGNE);
@@ -330,8 +331,8 @@ const T_CONF = {
     facture_a: 'Facturé à :', etablissement: 'Nom et adresse de l\'établissement :',
     facture_par: 'Facturé par :', remplacant: 'Remplaçant :', profession: 'Profession :',
     val_profession: 'Pharmacien(ne)', statut_l: 'Statut :', val_statut: 'Indépendant',
-    province: 'Province :', val_province: 'Québec', recu: 'N° de reçu :', contrat_l: 'Contrat :',
-    emission: 'Date d\'émission :',
+    province: 'Province :', val_province: 'Québec', societe_l: 'Société :',
+    recu: 'N° de reçu :', contrat_l: 'Contrat :', emission: 'Date d\'émission :',
     th_date: 'Date', th_debut: 'Heure début', th_fin: 'Heure fin', th_heures: 'Heures',
     th_desc: 'Description', th_qte: 'Qté', th_pu: 'Prix unitaire', th_montant: 'Montant',
     l_pharmacien: 'Pharmacien(ne)', l_km: 'Frais de déplacement (aller-retour)',
@@ -349,8 +350,8 @@ const T_CONF = {
     facture_a: 'Billed to:', etablissement: 'Establishment name and address:',
     facture_par: 'Billed by:', remplacant: 'Relief pharmacist:', profession: 'Profession:',
     val_profession: 'Pharmacist', statut_l: 'Status:', val_statut: 'Independent',
-    province: 'Province:', val_province: 'Quebec', recu: 'Receipt No.:', contrat_l: 'Contract:',
-    emission: 'Issue date:',
+    province: 'Province:', val_province: 'Quebec', societe_l: 'Company:',
+    recu: 'Receipt No.:', contrat_l: 'Contract:', emission: 'Issue date:',
     th_date: 'Date', th_debut: 'Start', th_fin: 'End', th_heures: 'Hours',
     th_desc: 'Description', th_qte: 'Qty', th_pu: 'Unit price', th_montant: 'Amount',
     l_pharmacien: 'Pharmacist', l_km: 'Travel (round trip)',
@@ -363,7 +364,7 @@ const T_CONF = {
 
 async function envoyerConfirmationContrat(env, k, c) {
   if (!env.RESEND_API_KEY) return { ok: false, skip: 'RESEND_API_KEY absent' };
-  const champs = 'id,courriel,prenom,nom,langue,nom_pharmacie,adresse,ville,code_postal,neq,numero_opq';
+  const champs = '*';   // tolérant : lit tps/tvq/societe s'ils existent, sinon absents
   const [pnA, peA] = await Promise.all([
     sbSelect(env, `profiles?select=${champs}&id=eq.${c.pharmacien_id}`),
     sbSelect(env, `profiles?select=${champs}&id=eq.${k.pharmacie_id}`),
@@ -385,8 +386,9 @@ async function envoyerConfirmationContrat(env, k, c) {
   const perdiem = k.per_diem ? per_diem_jour : 0;
   const heberg = k.hebergement ? heberg_jour : 0;
   const soustotal = base + montantKm + perdiem + heberg;
-  const tps = Math.round(soustotal * 0.05 * 100) / 100;
-  const tvq = Math.round(soustotal * 0.09975 * 100) / 100;
+  const taxable = !!(pn.tps && String(pn.tps).trim());   // taxes seulement si numéro TPS au dossier
+  const tps = taxable ? Math.round(soustotal * 0.05 * 100) / 100 : 0;
+  const tvq = taxable ? Math.round(soustotal * 0.09975 * 100) / 100 : 0;
   const total = Math.round((soustotal + tps + tvq) * 100) / 100;
   const nomPn = `${pn.prenom || ''} ${pn.nom || ''}`.trim() || '—';
   const nomPe = pe.nom_pharmacie || '—';
@@ -402,7 +404,7 @@ async function envoyerConfirmationContrat(env, k, c) {
     const d = {
       ref: k.numero_reference, date_emission: emission,
       pe_nom: nomPe, pe_adr: adr, pe_neq: pe.neq || '',
-      pn_nom: nomPn, pn_opq: pn.numero_opq || '', pn_tps: '', pn_tvq: '',
+      pn_nom: nomPn, pn_opq: pn.numero_opq || '', pn_tps: pn.tps || '', pn_tvq: pn.tvq || '', pn_corp: pn.societe || '',
       contrat_date: String(k.date_contrat), hd: hhmm(hd), hf: hhmm(hf), heures: `${heures} h`,
       lignes,
       soustotal: argent(soustotal), tps: argent(tps), tvq: argent(tvq), total: argent(total),

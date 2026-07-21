@@ -89,6 +89,13 @@ a.lien{color:var(--vert-vif)}
           <div class="champ"><label>Code postal</label><input id="cp_pharmacien"></div>
           <div class="champ"><label>Rayon (km)</label><input id="rayon_deplacement_km" type="number" min="0"></div>
         </div>
+        <div class="sec" style="margin-top:14px">Facturation (mandats)</div>
+        <div class="trois">
+          <div class="champ"><label>N° TPS</label><input id="tps" placeholder="123456789 RT0001"></div>
+          <div class="champ"><label>N° TVQ</label><input id="tvq" placeholder="1234567890 TQ0001"></div>
+          <div class="champ"><label>Société (raison sociale)</label><input id="societe"></div>
+        </div>
+        <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px">Nécessaire pour facturer les taxes (TPS/TVQ) sur vos mandats. Laissez vide si vous n'êtes pas inscrit.</p>
         <div class="champ"><label>Logiciels maîtrisés</label>
           <div class="coches" id="coches-logiciels"></div>
         </div>
@@ -175,6 +182,9 @@ function msg(id, texte, ok){
   $('courriel').value=profil.courriel||''; $('telephone').value=cdTelAffiche(profil.telephone);
   $('sms_optin').checked=!!profil.sms_optin;
   if($('langue')) $('langue').value = profil.langue || 'fr';
+  if($('tps')) $('tps').value = profil.tps || '';
+  if($('tvq')) $('tvq').value = profil.tvq || '';
+  if($('societe')) $('societe').value = profil.societe || '';
   if(profil.role==='pharmacien'){
     $('numero_opq').value=profil.numero_opq||'';
     $('tarif_horaire_min').value=profil.tarif_horaire_min??'';
@@ -246,6 +256,12 @@ function msg(id, texte, ok){
     if($('langue')){
       const { error: eLang } = await sb.from('profiles').update({ langue: $('langue').value || 'fr' }).eq('id', profil.id);
       if(eLang) console.warn('langue non enregistrée (exécuter sql/15) :', eLang.message);
+    }
+    if(profil.role==='pharmacien' && $('tps')){
+      const { error: eFac } = await sb.from('profiles').update({
+        tps: $('tps').value.trim()||null, tvq: $('tvq').value.trim()||null, societe: $('societe').value.trim()||null
+      }).eq('id', profil.id);
+      if(eFac) console.warn('champs facturation non enregistrés (exécuter sql/17) :', eFac.message);
     }
     $('btn-save').disabled=false;
     profil = await cdProfil(true);
