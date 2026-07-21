@@ -220,35 +220,96 @@ function assemblerPdf(flux) {
 }
 function pdfContratConfirme(t, d) {
   const VERT = '0.043 0.431 0.310', DARK = '0.106 0.149 0.125', GRIS = '0.42 0.49 0.45',
-        LIGNE = '0.85 0.89 0.86', BLANC = '1 1 1';
+        LIGNE = '0.80 0.85 0.82', BG = '0.94 0.97 0.95', BLANC = '1 1 1';
   const o = [];
   const txt = (x, y, s, size, col, bold) => o.push(`BT /${bold ? 'F2' : 'F1'} ${size} Tf ${col} rg ${x} ${y} Td (${escPdf(s)}) Tj ET`);
+  const largeur = (s, size) => cp1252(String(s)).length * size * 0.5;
+  const txtR = (xr, y, s, size, col, bold) => txt(xr - largeur(s, size), y, s, size, col, bold);
   const rect = (x, y, w, h, col) => o.push(`${col} rg ${x} ${y} ${w} ${h} re f`);
-  const filet = (x1, y1, x2, col) => o.push(`${col} RG 0.7 w ${x1} ${y1} m ${x2} ${y1} l S`);
-  // bandeau d'en-tête + logo croix
-  rect(0, 712, 612, 80, VERT);
-  rect(44, 742, 26, 9, BLANC); rect(52.5, 733, 9, 26, BLANC);
-  txt(88, 744, 'C-DIRECT', 20, BLANC, true);
-  txt(88, 728, t.pdf_tag, 8.5, BLANC, false);
-  // titre
-  txt(44, 672, t.pdf_titre, 20, DARK, true);
-  rect(44, 664, 130, 3, VERT);
-  txt(44, 642, t.ref + ' : ' + d.ref, 11.5, GRIS, false);
-  let y = 606;
-  const section = (label) => { txt(44, y, label.toUpperCase(), 10, VERT, true); y -= 7; filet(44, y, 568, LIGNE); y -= 19; };
-  const row = (label, val) => { txt(48, y, label, 10.5, GRIS, false); txt(235, y, String(val || '—'), 10.5, DARK, true); y -= 20; };
-  section(t.sec_details);
-  row(t.date, d.date); row(t.horaire, d.horaire); row(t.tarif, d.tarif);
-  row(t.heures, d.heures); row(t.honos, d.honos);
-  y -= 8; section(t.pharmacie);
-  row(t.nom, d.pe_nom); row(t.adresse, d.pe_adr); if (d.pe_neq) row(t.neq, d.pe_neq);
-  y -= 8; section(t.pharmacien);
-  row(t.nom, d.pn_nom); if (d.pn_opq) row(t.opq, d.pn_opq);
-  y -= 6; filet(44, y, 568, LIGNE); y -= 16;
-  motsEnLignes(t.note, 96).forEach(l => { txt(44, y, l, 8.5, GRIS, false); y -= 12; });
-  txt(44, 54, 'c-direct.ca', 9.5, VERT, true);
-  txt(470, 54, t.signature, 8.5, GRIS, false);
+  const cadre = (x, y, w, h, col) => o.push(`${col} RG 0.6 w ${x} ${y} ${w} ${h} re S`);
+  const filet = (x1, y1, x2, col) => o.push(`${col} RG 0.6 w ${x1} ${y1} m ${x2} ${y1} l S`);
+
+  // en-tête / lettre
+  rect(0, 748, 612, 44, VERT);
+  rect(40, 762, 20, 7, BLANC); rect(46.5, 755.5, 7, 20, BLANC);
+  txt(74, 762, 'C-DIRECT', 15, BLANC, true);
+  txt(74, 752, t.pdf_tag, 7, BLANC, false);
+  txt(44, 728, 'MANDAT', 15, DARK, true);
+  rect(44, 721, 74, 2.5, VERT);
+
+  // colonne gauche : Facturé à / établissement
+  let yl = 704;
+  txt(44, yl, t.facture_a, 9, DARK, true); yl -= 13;
+  txt(44, yl, d.pe_nom, 10, DARK, false); yl -= 12;
+  motsEnLignes(d.pe_adr, 44).forEach(l => { txt(44, yl, l, 9, GRIS, false); yl -= 11; });
+  yl -= 8;
+  txt(44, yl, t.etablissement, 9, DARK, true); yl -= 13;
+  txt(44, yl, d.pe_nom, 9.5, DARK, false); yl -= 11;
+  motsEnLignes(d.pe_adr, 44).forEach(l => { txt(44, yl, l, 9, GRIS, false); yl -= 11; });
+  if (d.pe_neq) { txt(44, yl, 'NEQ : ' + d.pe_neq, 9, GRIS, false); yl -= 11; }
+
+  // colonne droite : Facturé par (encadré) + reçu
+  cadre(326, 604, 242, 100, LIGNE);
+  let yr = 692;
+  txt(334, yr, t.facture_par, 9, DARK, true); yr -= 14;
+  const paire = (a, b) => { txt(334, yr, a, 8.5, GRIS, false); txt(430, yr, String(b || '—'), 8.5, DARK, false); yr -= 12; };
+  paire(t.remplacant, d.pn_nom);
+  paire(t.profession, t.val_profession);
+  paire('N° OPQ', d.pn_opq);
+  paire(t.statut_l, t.val_statut);
+  paire(t.province, t.val_province);
+  paire('TPS', d.pn_tps);
+  paire('TVQ', d.pn_tvq);
+  let yre = 590;
+  const recu = (a, b) => { txt(334, yre, a, 8.5, GRIS, false); txt(440, yre, String(b || '—'), 8.5, DARK, false); yre -= 12; };
+  recu(t.recu, '—'); recu(t.contrat_l, d.ref); recu(t.emission, d.date_emission);
+
+  let y = Math.min(yl, 552) - 6;
+
+  // tableau des heures
+  rect(44, y - 15, 524, 15, BG); cadre(44, y - 30, 524, 30, LIGNE); filet(44, y - 15, 568, LIGNE);
+  txt(50, y - 11, t.th_date, 8.5, DARK, true); txt(190, y - 11, t.th_debut, 8.5, DARK, true);
+  txt(320, y - 11, t.th_fin, 8.5, DARK, true); txtR(562, y - 11, t.th_heures, 8.5, DARK, true);
+  txt(50, y - 26, d.contrat_date, 9.5, DARK, false); txt(190, y - 26, d.hd, 9.5, DARK, false);
+  txt(320, y - 26, d.hf, 9.5, DARK, false); txtR(562, y - 26, d.heures, 9.5, DARK, false);
+  y -= 46;
+
+  // tableau des postes
+  const hRows = d.lignes.length;
+  rect(44, y - 15, 524, 15, BG);
+  cadre(44, y - 15 - hRows * 17, 524, 15 + hRows * 17, LIGNE);
+  filet(44, y - 15, 568, LIGNE);
+  txt(50, y - 11, t.th_desc, 8.5, DARK, true); txtR(410, y - 11, t.th_qte, 8.5, DARK, true);
+  txtR(490, y - 11, t.th_pu, 8.5, DARK, true); txtR(562, y - 11, t.th_montant, 8.5, DARK, true);
+  let yp = y - 30;
+  d.lignes.forEach((L, i) => {
+    txt(50, yp, L.desc, 9.5, DARK, false); txtR(410, yp, L.qte, 9.5, DARK, false);
+    txtR(490, yp, L.pu, 9.5, DARK, false); txtR(562, yp, L.montant, 9.5, DARK, false);
+    if (i < hRows - 1) filet(44, yp - 6, 568, LIGNE);
+    yp -= 17;
+  });
+  y = yp - 8;
+
+  // totaux
+  const tot = (a, b, bold) => { txt(408, y, a, 9.5, bold ? DARK : GRIS, bold); txtR(562, y, b, 9.5, DARK, bold); y -= 15; };
+  tot(t.soustotal_l, d.soustotal, false);
+  tot(t.tps_l, d.tps, false);
+  tot(t.tvq_l, d.tvq, false);
+  filet(408, y + 4, 568, LIGNE);
+  tot(t.total_l, d.total, true);
+
+  // pied
+  y -= 6; filet(44, y, 568, LIGNE); y -= 15;
+  motsEnLignes(t.note, 108).forEach(l => { txt(44, y, l, 8, GRIS, false); y -= 11; });
+  txt(44, 46, 'c-direct.ca', 9.5, VERT, true);
+  txtR(568, 46, t.signature, 8.5, GRIS, false);
   return assemblerPdf(o.join('\n'));
+}
+function argent(n) {
+  n = Number(n) || 0;
+  const p = n.toFixed(2).split('.');
+  p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return p[0] + ',' + p[1] + ' $';
 }
 
 function heuresEntre(hd, hf) {
@@ -263,26 +324,40 @@ const T_CONF = {
   fr: {
     subject: r => 'Contrat confirmé — ' + r,
     salut: 'Bonjour',
-    intro: 'Voici votre contrat confirmé. Les deux parties ont accepté les termes ci-dessous.',
-    ref: 'Référence', date: 'Date', horaire: 'Horaire', tarif: 'Tarif horaire',
-    heures: 'Heures', honos: 'Honoraires estimés', pharmacie: 'Pharmacie',
-    pharmacien: 'Pharmacien(ne)', adresse: 'Adresse', opq: 'N° OPQ', neq: 'NEQ', nom: 'Nom',
-    sec_details: 'Détails du contrat', pdf_tag: 'Réseau de remplacement en pharmacie',
-    piece: 'Le contrat confirmé est joint en PDF.',
-    note: 'La facturation définitive (kilométrage, indemnités) est établie à la complétion du contrat, selon les règles du réseau. Aucun frais ne transite par C-Direct.',
-    pdf_titre: 'Contrat confirmé', signature: '— C-Direct · 0 % commission',
+    intro: 'Voici votre contrat confirmé. Le mandat (détail des honoraires) est joint en PDF.',
+    ref: 'Référence', pharmacie: 'Pharmacie', pharmacien: 'Pharmacien(ne)', nom: 'Nom',
+    pdf_tag: 'Réseau de remplacement en pharmacie',
+    facture_a: 'Facturé à :', etablissement: 'Nom et adresse de l\'établissement :',
+    facture_par: 'Facturé par :', remplacant: 'Remplaçant :', profession: 'Profession :',
+    val_profession: 'Pharmacien(ne)', statut_l: 'Statut :', val_statut: 'Indépendant',
+    province: 'Province :', val_province: 'Québec', recu: 'N° de reçu :', contrat_l: 'Contrat :',
+    emission: 'Date d\'émission :',
+    th_date: 'Date', th_debut: 'Heure début', th_fin: 'Heure fin', th_heures: 'Heures',
+    th_desc: 'Description', th_qte: 'Qté', th_pu: 'Prix unitaire', th_montant: 'Montant',
+    l_pharmacien: 'Pharmacien(ne)', l_km: 'Frais de déplacement (aller-retour)',
+    l_perdiem: 'Per diem', l_heberg: 'Hébergement',
+    soustotal_l: 'Sous-total', tps_l: 'TPS (5,000 %)', tvq_l: 'TVQ (9,975 %)', total_l: 'Total',
+    note: 'Mandat de confirmation. La facture finale, avec kilométrage réel et taxes applicables, est émise à la complétion du contrat. Paiement Interac direct — aucun frais ne transite par C-Direct.',
+    signature: '— C-Direct · 0 % commission',
   },
   en: {
     subject: r => 'Confirmed contract — ' + r,
     salut: 'Hello',
-    intro: 'Here is your confirmed contract. Both parties have accepted the terms below.',
-    ref: 'Reference', date: 'Date', horaire: 'Schedule', tarif: 'Hourly rate',
-    heures: 'Hours', honos: 'Estimated fees', pharmacie: 'Pharmacy',
-    pharmacien: 'Pharmacist', adresse: 'Address', opq: 'OPQ No.', neq: 'NEQ', nom: 'Name',
-    sec_details: 'Contract details', pdf_tag: 'Pharmacy relief network',
-    piece: 'The confirmed contract is attached as a PDF.',
-    note: 'Final billing (mileage, allowances) is issued upon contract completion, per network rules. No money transits through C-Direct.',
-    pdf_titre: 'Confirmed contract', signature: '— C-Direct · 0% commission',
+    intro: 'Here is your confirmed contract. The mandate (fee breakdown) is attached as a PDF.',
+    ref: 'Reference', pharmacie: 'Pharmacy', pharmacien: 'Pharmacist', nom: 'Name',
+    pdf_tag: 'Pharmacy relief network',
+    facture_a: 'Billed to:', etablissement: 'Establishment name and address:',
+    facture_par: 'Billed by:', remplacant: 'Relief pharmacist:', profession: 'Profession:',
+    val_profession: 'Pharmacist', statut_l: 'Status:', val_statut: 'Independent',
+    province: 'Province:', val_province: 'Quebec', recu: 'Receipt No.:', contrat_l: 'Contract:',
+    emission: 'Issue date:',
+    th_date: 'Date', th_debut: 'Start', th_fin: 'End', th_heures: 'Hours',
+    th_desc: 'Description', th_qte: 'Qty', th_pu: 'Unit price', th_montant: 'Amount',
+    l_pharmacien: 'Pharmacist', l_km: 'Travel (round trip)',
+    l_perdiem: 'Per diem', l_heberg: 'Lodging',
+    soustotal_l: 'Subtotal', tps_l: 'GST (5.000 %)', tvq_l: 'QST (9.975 %)', total_l: 'Total',
+    note: 'Confirmation mandate. The final invoice, with actual mileage and applicable taxes, is issued upon contract completion. Direct Interac payment — no money transits through C-Direct.',
+    signature: '— C-Direct · 0% commission',
   },
 };
 
@@ -294,38 +369,50 @@ async function envoyerConfirmationContrat(env, k, c) {
     sbSelect(env, `profiles?select=${champs}&id=eq.${k.pharmacie_id}`),
   ]);
   const pn = pnA[0] || {}, pe = peA[0] || {};
+  let taux_km = 0.70, per_diem_jour = 50, heberg_jour = 250;
+  try {
+    const rg = (await sbSelect(env, 'regles_reseau?select=taux_km,per_diem_jour,hebergement_jour&id=eq.1'))[0];
+    if (rg) { taux_km = Number(rg.taux_km) || 0.70; per_diem_jour = Number(rg.per_diem_jour) || 50; heberg_jour = Number(rg.hebergement_jour) || 250; }
+  } catch (e) {}
+
   const tarif = Number(c.tarif_propose ?? k.tarif_horaire) || 0;
   const hd = c.heure_debut_proposee || k.heure_debut;
   const hf = c.heure_fin_proposee || k.heure_fin;
   const heures = heuresEntre(hd, hf);
-  const honos = Math.round(heures * tarif * 100) / 100;
+  const base = Math.round(heures * tarif * 100) / 100;
+  const kmAR = (c.distance_km != null) ? Number(c.distance_km) * 2 : 0;
+  const montantKm = Math.round(kmAR * taux_km * 100) / 100;
+  const perdiem = k.per_diem ? per_diem_jour : 0;
+  const heberg = k.hebergement ? heberg_jour : 0;
+  const soustotal = base + montantKm + perdiem + heberg;
+  const tps = Math.round(soustotal * 0.05 * 100) / 100;
+  const tvq = Math.round(soustotal * 0.09975 * 100) / 100;
+  const total = Math.round((soustotal + tps + tvq) * 100) / 100;
   const nomPn = `${pn.prenom || ''} ${pn.nom || ''}`.trim() || '—';
   const nomPe = pe.nom_pharmacie || '—';
   const adr = [pe.adresse, pe.ville, pe.code_postal].filter(Boolean).join(', ') || '—';
+  const emission = new Date().toISOString().slice(0, 10);
 
   const construire = (lang) => {
     const t = T_CONF[lang === 'en' ? 'en' : 'fr'];
+    const lignes = [{ desc: t.l_pharmacien, qte: `${heures} h`, pu: argent(tarif), montant: argent(base) }];
+    if (kmAR > 0) lignes.push({ desc: t.l_km, qte: `${kmAR} km`, pu: argent(taux_km), montant: argent(montantKm) });
+    if (perdiem > 0) lignes.push({ desc: t.l_perdiem, qte: '1', pu: argent(per_diem_jour), montant: argent(perdiem) });
+    if (heberg > 0) lignes.push({ desc: t.l_heberg, qte: '1', pu: argent(heberg_jour), montant: argent(heberg) });
     const d = {
-      ref: k.numero_reference,
-      date: String(k.date_contrat),
-      horaire: `${hhmm(hd)} - ${hhmm(hf)} (${heures} h)`,
-      tarif: `${tarif} $/h`,
-      heures: `${heures} h`,
-      honos: `${honos} $`,
+      ref: k.numero_reference, date_emission: emission,
       pe_nom: nomPe, pe_adr: adr, pe_neq: pe.neq || '',
-      pn_nom: nomPn, pn_opq: pn.numero_opq || '',
+      pn_nom: nomPn, pn_opq: pn.numero_opq || '', pn_tps: '', pn_tvq: '',
+      contrat_date: String(k.date_contrat), hd: hhmm(hd), hf: hhmm(hf), heures: `${heures} h`,
+      lignes,
+      soustotal: argent(soustotal), tps: argent(tps), tvq: argent(tvq), total: argent(total),
     };
     const pdf = pdfContratConfirme(t, d);
-    const ligneHtml = (a, b) => `<tr><td style="padding:3px 12px 3px 0;color:#6b7c74">${a}</td><td style="padding:3px 0;font-weight:600">${b}</td></tr>`;
     const html =
       `<div style="font-family:Arial,sans-serif;color:#12211b;max-width:560px">` +
       `<p>${t.salut},</p><p>${t.intro}</p>` +
-      `<table style="border-collapse:collapse;font-size:14px;margin:8px 0">` +
-      ligneHtml(t.ref, k.numero_reference) + ligneHtml(t.date, k.date_contrat) +
-      ligneHtml(t.horaire, `${hhmm(hd)}–${hhmm(hf)} (${heures} h)`) +
-      ligneHtml(t.tarif, `${tarif} $/h`) + ligneHtml(t.honos, `${honos} $`) +
-      ligneHtml(t.pharmacie, nomPe) + ligneHtml(t.pharmacien, nomPn) +
-      `</table><p>${t.piece}</p><p style="font-size:12px;color:#6b7c74">${t.note}</p><p>${t.signature}</p></div>`;
+      `<p style="font-size:14px"><b>${t.ref} :</b> ${k.numero_reference}<br><b>${t.total_l} :</b> ${argent(total)}</p>` +
+      `<p style="font-size:12px;color:#6b7c74">${t.note}</p><p>${t.signature}</p></div>`;
     return { t, pdf, html };
   };
 
