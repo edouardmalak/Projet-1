@@ -88,6 +88,20 @@ window.cdConfirmerContrat = function(ref){
   }).catch(function(){});
 };
 
+/* ---- diffusion SMS d'un nouveau contrat (site → Worker, comme cdConfirmerContrat) ---- */
+window.cdDiffuserContrat = function(ref){
+  if(!ref) return;
+  cdSession().then(function(s){
+    var token = s && s.access_token;
+    if(!token) return;
+    fetch('https://c-direct-sms.edouardmalak.workers.dev/diffuser', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+      body: JSON.stringify({ ref: ref })
+    }).catch(function(){});
+  }).catch(function(){});
+};
+
 /* ---- déconnexion ---- */
 window.cdDeconnexion = async function(){
   await sb.auth.signOut();

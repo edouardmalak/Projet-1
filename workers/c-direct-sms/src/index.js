@@ -22,6 +22,8 @@ export default {
         return await routeWebhook(request, env);
       if (request.method === 'POST' && url.pathname === '/confirmer')
         return await routeConfirmer(request, env);
+      if (request.method === 'POST' && url.pathname === '/diffuser')
+        return await routeDiffuser(request, env);
       if (request.method === 'GET' && url.pathname === '/diag')
         return json({
           version: 'confirmer-pdf-2026-07-21b',
@@ -836,6 +838,32 @@ const CHAMPS_PROFIL = 'id,telephone,sms_optin,prenom,nom,ville,nom_pharmacie,adr
 async function chargerContrat(env, id) { return (await sbSelect(env, `contrats?select=*&id=eq.${id}`))[0]; }
 async function chargerProfil(env, id) { return (await sbSelect(env, `profiles?select=${CHAMPS_PROFIL}&id=eq.${id}`))[0]; }
 const initiale = nom => (nom ? nom.trim().charAt(0).toUpperCase() + '.' : '');
+
+/* POST /diffuser — appelé par le SITE après publication d'un contrat
+   (contourne les Database Webhooks). JWT + propriétaire du contrat. */
+async function routeDiffuser(request, env) {
+  try {
+    const token = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+    if (!token) return json({ erreur: 'Non authentifié' }, 401);
+    const ru = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${token}` },
+    });
+    if (!ru.ok) return json({ erreur: 'Jeton invalide' }, 401);
+    const user = await ru.json();
+    const body = await request.json().catch(() => ({}));
+    const ref = String(body.ref || '').toUpperCase();
+    if (!ref) return json({ erreur: 'Référence manquante' }, 400);
+    const k = (await sbSelect(env, `contrats?select=*&numero_reference=eq.${encodeURIComponent(ref)}`))[0];
+    if (!k) return json({ erreur: 'Contrat introuvable' }, 404);
+    const profs = await sbSelect(env, `profiles?select=id,role&id=eq.${user.id}`);
+    const role = profs[0] ? profs[0].role : null;
+    if (!(user.id === k.pharmacie_id || role === 'admin')) return json({ erreur: 'Non autorisé' }, 403);
+    return await diffusionNouveauContrat(env, k);
+  } catch (e) {
+    console.error('routeDiffuser:', e.stack || e.message);
+    return json({ erreur: 'Erreur interne', detail: e.message }, 500);
+  }
+}
 
 /* =====================================================================
    contrats INSERT — diffusion filtrée (5.1) mise en file (5.2/5.4)

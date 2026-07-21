@@ -258,6 +258,7 @@ function msg(id, texte, ok){
     $('btn-pub').disabled = false;
     if(error){ msg('msg-pub', error.message, false); return; }
     msg('msg-pub','Contrat '+data.numero_reference+' publié ✓', true);
+    cdDiffuserContrat(data.numero_reference);   /* SMS aux pharmaciens compatibles (site → Worker) */
     $('notes').value='';
     chargerContrats();
   });
