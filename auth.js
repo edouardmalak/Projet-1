@@ -102,6 +102,20 @@ window.cdDiffuserContrat = function(ref){
   }).catch(function(){});
 };
 
+/* ---- envoi de la facture finale par courriel (site → Worker) ---- */
+window.cdEnvoyerFacture = function(id){
+  if(!id) return;
+  cdSession().then(function(s){
+    var token = s && s.access_token;
+    if(!token) return;
+    fetch('https://c-direct-sms.edouardmalak.workers.dev/facture', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+      body: JSON.stringify({ facture_id: id })
+    }).catch(function(){});
+  }).catch(function(){});
+};
+
 /* ---- déconnexion ---- */
 window.cdDeconnexion = async function(){
   await sb.auth.signOut();

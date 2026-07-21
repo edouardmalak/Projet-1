@@ -358,6 +358,7 @@ function msg(texte, type){
       $('btn-envoyer').disabled = true;
       const { error: e } = await sb.rpc('envoyer_facture', { p_facture: f.facture_id });
       if(e){ $('btn-envoyer').disabled = false; msg('Erreur : '+e.message,'ko'); return; }
+      if(window.cdEnvoyerFacture) cdEnvoyerFacture(f.facture_id);   /* courriel PDF à la pharmacie */
       location.reload();
     };
   }

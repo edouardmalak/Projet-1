@@ -260,6 +260,7 @@ async function chargerFactures(){
     const { data: n, error: e } = await sb.rpc('envoyer_factures_mois');
     $('btn-lot').disabled = false;
     if(e){ msg('msg-factures','Erreur : '+e.message,false); return; }
+    brouillons.forEach(function(bf){ cdEnvoyerFacture(bf.facture_id); });   /* courriel PDF pour chaque facture envoyée */
     msg('msg-factures', n+' facture(s) envoyée(s) ✓', true);
     chargerFactures();
   };
@@ -288,6 +289,7 @@ async function chargerFactures(){
         b.disabled = true;
         const { error: e } = await sb.rpc('envoyer_facture', { p_facture: f.facture_id });
         if(e){ b.disabled=false; msg('msg-factures','Erreur : '+e.message,false); return; }
+        cdEnvoyerFacture(f.facture_id);   /* courriel de la facture (PDF) à la pharmacie */
         msg('msg-factures','Facture envoyée ✓',true);
         chargerFactures();
       };

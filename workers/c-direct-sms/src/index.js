@@ -24,6 +24,8 @@ export default {
         return await routeConfirmer(request, env);
       if (request.method === 'POST' && url.pathname === '/diffuser')
         return await routeDiffuser(request, env);
+      if (request.method === 'POST' && url.pathname === '/facture')
+        return await routeFacture(request, env);
       if (request.method === 'GET' && url.pathname === '/diag')
         return json({
           version: 'confirmer-pdf-2026-07-21b',
@@ -270,7 +272,8 @@ function pdfContratConfirme(t, d) {
   paire(t.societe_l, d.pn_corp);
   let yre = 566;
   const recu = (a, b) => { txt(334, yre, a, 8.5, GRIS, false); txt(442, yre, String(b || '—'), 8.5, DARK, false); yre -= 12; };
-  recu(t.recu, '—'); recu(t.contrat_l, d.ref); recu(t.emission, d.date_emission);
+  recu(t.recu, d.numero || '—'); recu(t.contrat_l, d.ref); recu(t.emission, d.date_emission);
+  if (d.echeance) recu(t.echeance_l, d.echeance);
 
   let y = Math.min(yl, 528) - 6;
 
@@ -308,7 +311,7 @@ function pdfContratConfirme(t, d) {
 
   // pied
   y -= 6; filet(44, y, 568, LIGNE); y -= 15;
-  motsEnLignes(t.note, 108).forEach(l => { txt(44, y, l, 8, GRIS, false); y -= 11; });
+  motsEnLignes(d.note || t.note, 108).forEach(l => { txt(44, y, l, 8, GRIS, false); y -= 11; });
   txt(44, 46, 'c-direct.ca', 9.5, VERT, true);
   txtR(568, 46, t.signature, 8.5, GRIS, false);
   return assemblerPdf(o.join('\n'));
@@ -339,7 +342,10 @@ const T_CONF = {
     facture_par: 'Facturé par :', remplacant: 'Remplaçant :', profession: 'Profession :',
     val_profession: 'Pharmacien(ne)', statut_l: 'Statut :', val_statut: 'Indépendant',
     province: 'Province :', val_province: 'Québec', societe_l: 'Société :',
-    recu: 'N° de reçu :', contrat_l: 'Contrat :', emission: 'Date d\'émission :',
+    recu: 'N° de reçu :', contrat_l: 'Contrat :', emission: 'Date d\'émission :', echeance_l: 'Échéance :',
+    subject_facture: r => 'Facture ' + r,
+    intro_facture: 'La facture de votre remplacement est jointe en PDF.',
+    note_facture: 'Facture émise. Paiement par virement Interac au pharmacien, à l\'échéance indiquée. Aucun frais ne transite par C-Direct.',
     th_date: 'Date', th_debut: 'Heure début', th_fin: 'Heure fin', th_heures: 'Heures',
     th_desc: 'Description', th_qte: 'Qté', th_pu: 'Prix unitaire', th_montant: 'Montant',
     l_pharmacien: 'Pharmacien(ne)', l_km: 'Frais de déplacement (aller-retour)',
@@ -358,7 +364,10 @@ const T_CONF = {
     facture_par: 'Billed by:', remplacant: 'Relief pharmacist:', profession: 'Profession:',
     val_profession: 'Pharmacist', statut_l: 'Status:', val_statut: 'Independent',
     province: 'Province:', val_province: 'Quebec', societe_l: 'Company:',
-    recu: 'Receipt No.:', contrat_l: 'Contract:', emission: 'Issue date:',
+    recu: 'Receipt No.:', contrat_l: 'Contract:', emission: 'Issue date:', echeance_l: 'Due date:',
+    subject_facture: r => 'Invoice ' + r,
+    intro_facture: 'The invoice for your relief shift is attached as a PDF.',
+    note_facture: 'Invoice issued. Payment by direct Interac transfer to the pharmacist by the due date shown. No money transits through C-Direct.',
     th_date: 'Date', th_debut: 'Start', th_fin: 'End', th_heures: 'Hours',
     th_desc: 'Description', th_qte: 'Qty', th_pu: 'Unit price', th_montant: 'Amount',
     l_pharmacien: 'Pharmacist', l_km: 'Travel (round trip)',
@@ -462,6 +471,97 @@ async function envoyerConfirmationContrat(env, k, c) {
     });
   }
   return { ok: true, ...out };
+}
+
+/* Facture FINALE (à l'envoi de la facture) : mandat PDF avec montants réels
+   (km réel, N° de facture, échéance) au pharmacie + copie au pharmacien. */
+async function envoyerFactureFinale(env, facture_id) {
+  if (!env.RESEND_API_KEY) return { ok: false, skip: 'RESEND_API_KEY absent' };
+  const f = (await sbSelect(env, `factures?select=*&id=eq.${facture_id}`))[0];
+  if (!f) return { ok: false, erreur: 'facture introuvable' };
+  const c = (await sbSelect(env, `candidatures?select=*&id=eq.${f.candidature_id}`))[0];
+  if (!c) return { ok: false, erreur: 'candidature introuvable' };
+  const k = (await sbSelect(env, `contrats?select=*&id=eq.${c.contrat_id}`))[0];
+  const [pnA, peA] = await Promise.all([
+    sbSelect(env, `profiles?select=*&id=eq.${c.pharmacien_id}`),
+    sbSelect(env, `profiles?select=*&id=eq.${k.pharmacie_id}`),
+  ]);
+  const pn = pnA[0] || {}, pe = peA[0] || {};
+  const fiscal = REGISTRE_FISCAL[normCourriel(pn.courriel)] || {};
+  const pnTps = (pn.tps && String(pn.tps).trim()) || fiscal.tps || '';
+  const pnTvq = (pn.tvq && String(pn.tvq).trim()) || fiscal.tvq || '';
+  const pnCorp = (pn.societe && String(pn.societe).trim()) || fiscal.corp || '';
+  const N = v => Number(v) || 0;
+  const heures = N(f.heures), tarif = N(f.tarif_horaire);
+  const base = Math.round(heures * tarif * 100) / 100;
+  const km = N(f.km), tauxKm = N(f.taux_km) || 0.70;
+  const montantKm = Math.round(km * tauxKm * 100) / 100;
+  const perdiem = N(f.per_diem_montant), heberg = N(f.hebergement_montant);
+  const soustotal = base + montantKm + perdiem + heberg;
+  const taxable = !!pnTps;
+  const tps = taxable ? Math.round(soustotal * 0.05 * 100) / 100 : 0;
+  const tvq = taxable ? Math.round(soustotal * 0.09975 * 100) / 100 : 0;
+  const total = Math.round((soustotal + tps + tvq) * 100) / 100;
+  const nomPn = `${pn.prenom || ''} ${pn.nom || ''}`.trim() || '—';
+  const nomPe = pe.nom_pharmacie || '—';
+  const adr = [pe.adresse, pe.ville, pe.code_postal].filter(Boolean).join(', ') || '—';
+  const hd = c.heure_debut_proposee || k.heure_debut, hf = c.heure_fin_proposee || k.heure_fin;
+  const numero = 'F-' + String(f.numero_facture).padStart(6, '0');
+  const emission = String(f.date_envoi || new Date().toISOString()).slice(0, 10);
+
+  const construire = (lang, role) => {
+    const t = T_CONF[lang === 'en' ? 'en' : 'fr'];
+    const lignes = [{ desc: t.l_pharmacien, qte: `${heures} h`, pu: argent(tarif), montant: argent(base) }];
+    if (km > 0) lignes.push({ desc: t.l_km, qte: `${km} km`, pu: argent(tauxKm), montant: argent(montantKm) });
+    if (perdiem > 0) lignes.push({ desc: t.l_perdiem, qte: '1', pu: argent(perdiem), montant: argent(perdiem) });
+    if (heberg > 0) lignes.push({ desc: t.l_heberg, qte: '1', pu: argent(heberg), montant: argent(heberg) });
+    const d = {
+      ref: k.numero_reference, date_emission: emission, numero, echeance: f.date_echeance || '',
+      pe_nom: nomPe, pe_adr: adr, pe_neq: pe.neq || '',
+      pn_nom: nomPn, pn_opq: pn.numero_opq || '', pn_tps: pnTps, pn_tvq: pnTvq, pn_corp: pnCorp,
+      contrat_date: String(k.date_contrat), hd: hhmm(hd), hf: hhmm(hf), heures: `${heures} h`,
+      lignes, soustotal: argent(soustotal), tps: argent(tps), tvq: argent(tvq), total: argent(total),
+      note: t.note_facture,
+    };
+    const pdf = pdfContratConfirme(t, d);
+    const estPh = role === 'pharmacien';
+    const bonjour = (estPh && pn.prenom) ? `${t.salut} ${pn.prenom}` : t.salut;
+    const html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#1b2622;font-size:15px;line-height:1.6;max-width:520px">`
+      + `<p>${bonjour},</p><p>${t.intro_facture}</p>`
+      + `<p style="margin:14px 0"><b>${t.total_l} : ${argent(total)}</b></p>`
+      + `<p style="color:#8a9a92;font-size:12px">${t.signature}</p></div>`;
+    const text = `${bonjour},\n\n${t.intro_facture}\n\n${t.total_l} : ${argent(total)}\n\n${t.signature}`;
+    return { t, pdf, html, text };
+  };
+  const out = {};
+  if (pe.courriel) { const b = construire(pe.langue, 'pharmacie'); out.pharmacie = await envoyerEmailResend(env, { to: pe.courriel, subject: b.t.subject_facture(numero), html: b.html, text: b.text, filename: `C-Direct-${numero}.pdf`, pdfBase64: b.pdf }); }
+  if (pn.courriel) { const b = construire(pn.langue, 'pharmacien'); out.pharmacien = await envoyerEmailResend(env, { to: pn.courriel, subject: b.t.subject_facture(numero), html: b.html, text: b.text, filename: `C-Direct-${numero}.pdf`, pdfBase64: b.pdf }); }
+  return { ok: true, ...out };
+}
+
+/* POST /facture — appelé par le SITE quand le pharmacien envoie sa facture. */
+async function routeFacture(request, env) {
+  try {
+    const token = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+    if (!token) return json({ erreur: 'Non authentifié' }, 401);
+    const ru = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, { headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${token}` } });
+    if (!ru.ok) return json({ erreur: 'Jeton invalide' }, 401);
+    const user = await ru.json();
+    const body = await request.json().catch(() => ({}));
+    const fid = String(body.facture_id || '');
+    if (!fid) return json({ erreur: 'facture_id manquant' }, 400);
+    if (await dejaTraite(env, `facture:${fid}`)) return json({ ok: true, ignore: 'Déjà envoyée' });
+    const f = (await sbSelect(env, `factures?select=candidature_id&id=eq.${fid}`))[0];
+    if (!f) return json({ erreur: 'Facture introuvable' }, 404);
+    const c = (await sbSelect(env, `candidatures?select=pharmacien_id&id=eq.${f.candidature_id}`))[0];
+    const profs = await sbSelect(env, `profiles?select=id,role&id=eq.${user.id}`);
+    const role = profs[0] ? profs[0].role : null;
+    if (!(c && (user.id === c.pharmacien_id || role === 'admin'))) return json({ erreur: 'Non autorisé' }, 403);
+    return json({ ok: true, res: await envoyerFactureFinale(env, fid) });
+  } catch (e) {
+    console.error('routeFacture:', e.stack || e.message);
+    return json({ erreur: 'Erreur interne', detail: e.message }, 500);
+  }
 }
 
 /* File d'envoi à concurrence limitée (5 en parallèle) */
