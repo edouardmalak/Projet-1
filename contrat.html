@@ -332,6 +332,7 @@ function msg(texte, type){
             $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = true;
             const { error: e } = await sb.rpc('accepter_contre_offre', { p_candidature: ma.id });
             if(e){ $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = false; msg('Erreur : '+e.message,'ko'); return; }
+            cdConfirmerContrat(k.numero_reference);   /* courriel « contrat confirmé » + PDF aux 2 parties */
             cdAlerteAdmin('Contre-offre acceptée — ' + k.numero_reference,
               (profil.prenom||profil.courriel||'Un pharmacien') + ' a accepté la contre-offre pour ' + k.numero_reference + ' (' + cdEntenteTexte(ma, k) + ').');
             location.reload();

@@ -478,6 +478,7 @@ async function chargerCandidats(k, zone){
           bA.disabled = true;
           const { error: e } = await sb.rpc('accepter_candidature', { p_candidature: c.candidature_id });
           if(e){ bA.disabled=false; alert('Erreur : '+e.message); return; }
+          cdConfirmerContrat(k.numero_reference);   /* courriel « contrat confirmé » + PDF aux 2 parties */
           chargerContrats();
         };
         const bC = document.createElement('button');

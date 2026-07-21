@@ -71,6 +71,23 @@ window.cdReprendreSuite = function(role){
   location.replace(suite || cdAccueilPourRole(role));
 };
 
+/* ---- confirmation « contrat confirmé » (courriel bilingue + PDF) ----
+   Appelle le Worker DIRECTEMENT après une acceptation (plus fiable que les
+   Database Webhooks). Authentifié par le jeton Supabase de l'usager.
+   Fire-and-forget : ne bloque jamais l'interface, n'échoue jamais. */
+window.cdConfirmerContrat = function(ref){
+  if(!ref) return;
+  cdSession().then(s=>{
+    const token = s && s.access_token;
+    if(!token) return;
+    fetch('https://c-direct-sms.edouardmalak.workers.dev/confirmer', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+      body: JSON.stringify({ ref: ref })
+    }).catch(function(){});
+  }).catch(function(){});
+};
+
 /* ---- déconnexion ---- */
 window.cdDeconnexion = async function(){
   await sb.auth.signOut();

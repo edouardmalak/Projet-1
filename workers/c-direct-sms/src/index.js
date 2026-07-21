@@ -20,6 +20,8 @@ export default {
         return await routeTest(request, env);
       if (request.method === 'POST' && url.pathname === '/webhook')
         return await routeWebhook(request, env);
+      if (request.method === 'POST' && url.pathname === '/confirmer')
+        return await routeConfirmer(request, env);
       if (request.method === 'POST' && url.pathname === '/twilio-inbound')
         return await routeTwilioInbound(request, env);
       return json({ erreur: 'Route inconnue' }, 404);
@@ -618,6 +620,56 @@ async function routeWebhook(request, env) {
     return factureMaj(env, record, old_record || {});
 
   return json({ ok: true, ignore: `Évènement non géré (${table}/${evt})` });
+}
+
+/* =====================================================================
+   POST /confirmer — appelé par le SITE juste après une acceptation.
+   Plus fiable que les Database Webhooks : le navigateur déclenche
+   directement l'envoi. Authentifié par le jeton Supabase de l'usager
+   (pas de secret partagé côté client). Envoie le courriel « contrat
+   confirmé » + PDF aux deux parties. Idempotent (fenêtre 10 min).
+   Corps : { ref: "CD-XXXXXX" }  ·  En-tête : Authorization: Bearer <jwt>
+===================================================================== */
+async function routeConfirmer(request, env) {
+  try {
+    const token = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+    if (!token) return json({ erreur: 'Non authentifié' }, 401);
+
+    // 1) valider le jeton → usager
+    const ru = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${token}` },
+    });
+    if (!ru.ok) return json({ erreur: 'Jeton invalide' }, 401);
+    const user = await ru.json();
+
+    const corps = await request.json().catch(() => ({}));
+    const ref = String(corps.ref || '').toUpperCase();
+    if (!ref) return json({ erreur: 'Référence manquante' }, 400);
+
+    if (await dejaTraite(env, `confirmer:${ref}`))
+      return json({ ok: true, ignore: 'Confirmation déjà envoyée' });
+
+    // 2) contrat + candidature acceptée (service_role : lecture serveur)
+    const ks = await sbSelect(env, `contrats?select=*&numero_reference=eq.${encodeURIComponent(ref)}`);
+    const k = ks[0];
+    if (!k) return json({ erreur: 'Contrat introuvable' }, 404);
+    const cs = await sbSelect(env, `candidatures?select=*&contrat_id=eq.${k.id}&statut=eq.accepte&limit=1`);
+    const c = cs[0];
+    if (!c) return json({ erreur: 'Aucune candidature acceptée' }, 409);
+
+    // 3) autorisation : pharmacie propriétaire, pharmacien retenu, ou admin
+    const profs = await sbSelect(env, `profiles?select=id,role&id=eq.${user.id}`);
+    const role = profs[0] ? profs[0].role : null;
+    const autorise = user.id === k.pharmacie_id || user.id === c.pharmacien_id || role === 'admin';
+    if (!autorise) return json({ erreur: 'Non autorisé pour ce contrat' }, 403);
+
+    // 4) envoi (courriel bilingue + PDF)
+    const res = await envoyerConfirmationContrat(env, k, c);
+    return json({ ok: true, contrat: ref, confirmation: res });
+  } catch (e) {
+    console.error('routeConfirmer:', e.stack || e.message);
+    return json({ erreur: 'Erreur interne', detail: e.message }, 500);
+  }
 }
 
 /* Idempotence générique : marqueur 'dedupe' dans sms_log, clé exacte,
