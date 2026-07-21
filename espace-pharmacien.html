@@ -21,7 +21,9 @@ body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sa
 .wrap{max-width:1080px;margin:0 auto;padding:44px 24px 70px}
 .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert);margin-bottom:10px}
 h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(26px,4vw,36px);letter-spacing:-.015em;margin-bottom:8px}
-p.lead{color:var(--gris);margin-bottom:36px;max-width:60ch}
+p.lead{color:var(--gris);margin-bottom:18px;max-width:60ch}
+.cta-primaire{display:inline-block;background:var(--vert);color:#fff;font-weight:700;font-size:15px;text-decoration:none;padding:13px 22px;border-radius:10px;margin-bottom:38px;box-shadow:0 8px 20px rgba(8,76,55,.18)}
+.cta-primaire:hover{background:var(--vert-fonce)}
 
 .grille{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media(max-width:760px){.grille{grid-template-columns:1fr}}
@@ -59,21 +61,22 @@ footer{margin-top:60px;border-top:1px solid var(--ligne);padding:26px 24px;text-
 <div class="wrap">
   <div class="eyebrow">Espace pharmacien</div>
   <h1>Bienvenue dans le réseau</h1>
-  <p class="lead">Tout passe par votre courriel et votre calendrier — aucune application à installer. Voici vos quatre outils.</p>
+  <p class="lead">Consultez les contrats ouverts, postulez en un clic, et laissez la facturation se faire toute seule. Voici vos outils.</p>
+  <a class="cta-primaire" href="contrats.html">Voir les contrats ouverts →</a>
 
   <div class="grille">
     <div class="carte">
       <div class="ico">📅</div>
       <h3>1 · Mes disponibilités</h3>
-      <p>Vos disponibilités affichées aux pharmacies proviennent de votre calendrier Google public «&nbsp;Disponibilités&nbsp;». Marquez vos journées libres «&nbsp;Disponible&nbsp;» — le site se met à jour tout seul, en temps réel.</p>
-      <a class="action" href="https://calendar.google.com" target="_blank" rel="noopener">Gérer mon calendrier Google →</a>
+      <p>Ouvrez votre calendrier C-Direct et touchez vos journées libres. Les pharmacies voient vos disponibilités en temps réel — aucune application à installer.</p>
+      <a class="action" href="disponibilites.html">Ouvrir mon calendrier →</a>
     </div>
 
     <div class="carte">
       <div class="ico">📨</div>
       <h3>2 · Mes demandes</h3>
-      <p>Chaque demande d'une pharmacie arrive directement dans votre courriel avec toutes les conditions : date, heures, taux, distance et frais calculés. Un lien vous permet d'<b>accepter</b> ou de <b>proposer un autre taux</b> en un clic.</p>
-      <div class="mono">Objet du courriel : «&nbsp;C-Direct — Nouvelle demande CD-…&nbsp;»</div>
+      <p>Chaque nouveau contrat compatible vous est signalé par <b>SMS et courriel</b>, avec toutes les conditions : date, heures, taux, distance et frais calculés. Ouvrez la fiche pour <b>postuler</b> ou <b>proposer un autre taux</b> en un clic.</p>
+      <a class="action" href="contrats.html">Parcourir les contrats →</a>
     </div>
 
     <div class="carte">
@@ -86,7 +89,7 @@ footer{margin-top:60px;border-top:1px solid var(--ligne);padding:26px 24px;text-
     <div class="carte">
       <div class="ico">👤</div>
       <h3>4 · Mon profil</h3>
-      <p>Taux par défaut, adresse de domicile (pour le calcul des déplacements), courriel Interac, société et numéros de taxes. Un changement&nbsp;? Soumettez à nouveau votre profil — l'administrateur met votre fiche à jour.</p>
+      <p>Taux minimum, ville de base (pour le calcul des déplacements), langue, logiciels maîtrisés, société et numéros de taxes (TPS/TVQ). Modifiez-le quand vous voulez — les changements sont immédiats.</p>
       <a class="action" href="profil.html">Mettre à jour mon profil →</a>
     </div>
   </div>
@@ -100,15 +103,14 @@ footer{margin-top:60px;border-top:1px solid var(--ligne);padding:26px 24px;text-
 
 <footer>C-Direct · Chaque pharmacien exerce et facture de façon indépendante · Besoin d'aide&nbsp;? Répondez à n'importe quel courriel C-Direct, l'administrateur vous répondra rapidement.</footer>
 
-<script src="fiche.js"></script>
 <script>
 try{
   const fmt = n => new Intl.NumberFormat('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+" $";
   document.getElementById('regles-lignes').innerHTML =
-    "<div><b>"+fmt(REGLES.tauxMinimum)+"/h</b>Taux plancher — offrez plus, jamais moins</div>"+
-    "<div><b>"+fmt(REGLES.tauxKm)+"/km</b>Déplacement — aller-retour, automatique</div>"+
-    "<div><b>"+fmt(REGLES.perDiemJour)+"/jour</b>Per diem — automatique si > "+REGLES.seuilKmAllerSimple+" km</div>"+
-    "<div><b>"+fmt(REGLES.hebergementNuit)+"/nuit</b>Hébergement — automatique si > "+REGLES.seuilKmAllerSimple+" km</div>";
+    "<div><b>"+fmt(120)+"/h</b>Taux plancher — offrez plus, jamais moins</div>"+
+    "<div><b>"+fmt(0.70)+"/km</b>Déplacement — aller-retour, automatique</div>"+
+    "<div><b>"+fmt(50)+"/jour</b>Per diem — automatique si > 100 km</div>"+
+    "<div><b>"+fmt(250)+"/nuit</b>Hébergement — automatique si > 100 km</div>";
 }catch(e){}
 </script>
 </body>
