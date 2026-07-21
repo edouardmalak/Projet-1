@@ -31,21 +31,6 @@ export default {
           twilio: !!env.TWILIO_ACCOUNT_SID,
           webhook_secret_set: !!env.WEBHOOK_SECRET,
         });
-      if (request.method === 'GET' && url.pathname === '/diag-seed'
-          && url.searchParams.get('k') === 'diag-9f3a2c') {
-        await sbUpdate(env, 'profiles?id=eq.34e2790b-25f4-4786-9a4b-ddfa6b98a6d0', {
-          nom_pharmacie: 'Pharmacie du Village', adresse: '452 Rue Notre-Dame Est',
-          ville: 'Montréal', code_postal: 'H2Y 1C6', neq: '1147852369',
-          contact_proprietaire: 'Marie Tremblay',
-        });
-        await sbUpdate(env, 'profiles?id=eq.0a24a397-7e26-4dc4-b6e1-21b7fb7fdac4', {
-          numero_opq: '210987', ville_base: 'Boucherville', code_postal: 'J4B 8E8',
-        });
-        const kk = (await sbSelect(env, 'contrats?select=*&numero_reference=eq.CD-100012'))[0];
-        const cc = kk ? (await sbSelect(env, `candidatures?select=*&contrat_id=eq.${kk.id}&statut=eq.accepte&limit=1`))[0] : null;
-        const res = cc ? await envoyerConfirmationContrat(env, kk, cc) : { skip: 'pas de candidature' };
-        return json({ seeded: true, res });
-      }
       if (request.method === 'POST' && url.pathname === '/twilio-inbound')
         return await routeTwilioInbound(request, env);
       return json({ erreur: 'Route inconnue' }, 404);
