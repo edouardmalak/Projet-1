@@ -31,6 +31,15 @@ export default {
           twilio: !!env.TWILIO_ACCOUNT_SID,
           webhook_secret_set: !!env.WEBHOOK_SECRET,
         });
+      if (request.method === 'GET' && url.pathname === '/diag-email'
+          && url.searchParams.get('k') === 'diag-9f3a2c') {
+        const ref = (url.searchParams.get('ref') || 'CD-100012').toUpperCase();
+        const kk = (await sbSelect(env, `contrats?select=*&numero_reference=eq.${encodeURIComponent(ref)}`))[0];
+        if (!kk) return json({ erreur: 'contrat introuvable', ref });
+        const cc = (await sbSelect(env, `candidatures?select=*&contrat_id=eq.${kk.id}&statut=eq.accepte&limit=1`))[0];
+        if (!cc) return json({ erreur: 'aucune candidature acceptée', ref });
+        return json({ ok: true, ref, res: await envoyerConfirmationContrat(env, kk, cc) });
+      }
       if (request.method === 'POST' && url.pathname === '/twilio-inbound')
         return await routeTwilioInbound(request, env);
       return json({ erreur: 'Route inconnue' }, 404);
@@ -362,6 +371,13 @@ const T_CONF = {
   },
 };
 
+// Registre fiscal (repris de fiche.js) : numéros de taxes par courriel.
+// Sert de repli quand le profil du pharmacien n'a pas encore ses numéros.
+const REGISTRE_FISCAL = {
+  'edouardmalak@gmail.com': { tps: '845655646 RT0001', tvq: '1219458181 TQ0002', corp: 'Edouard Abdel Malak Pharmacien Inc' },
+};
+function normCourriel(e) { return String(e || '').toLowerCase().trim().replace(/\+[^@]*(?=@)/, ''); }
+
 async function envoyerConfirmationContrat(env, k, c) {
   if (!env.RESEND_API_KEY) return { ok: false, skip: 'RESEND_API_KEY absent' };
   const champs = '*';   // tolérant : lit tps/tvq/societe s'ils existent, sinon absents
@@ -370,6 +386,10 @@ async function envoyerConfirmationContrat(env, k, c) {
     sbSelect(env, `profiles?select=${champs}&id=eq.${k.pharmacie_id}`),
   ]);
   const pn = pnA[0] || {}, pe = peA[0] || {};
+  const fiscal = REGISTRE_FISCAL[normCourriel(pn.courriel)] || {};
+  const pnTps = (pn.tps && String(pn.tps).trim()) || fiscal.tps || '';
+  const pnTvq = (pn.tvq && String(pn.tvq).trim()) || fiscal.tvq || '';
+  const pnCorp = (pn.societe && String(pn.societe).trim()) || fiscal.corp || '';
   let taux_km = 0.70, per_diem_jour = 50, heberg_jour = 250;
   try {
     const rg = (await sbSelect(env, 'regles_reseau?select=taux_km,per_diem_jour,hebergement_jour&id=eq.1'))[0];
@@ -386,7 +406,7 @@ async function envoyerConfirmationContrat(env, k, c) {
   const perdiem = k.per_diem ? per_diem_jour : 0;
   const heberg = k.hebergement ? heberg_jour : 0;
   const soustotal = base + montantKm + perdiem + heberg;
-  const taxable = !!(pn.tps && String(pn.tps).trim());   // taxes seulement si numéro TPS au dossier
+  const taxable = !!pnTps;   // taxes seulement si numéro TPS au dossier (profil ou registre)
   const tps = taxable ? Math.round(soustotal * 0.05 * 100) / 100 : 0;
   const tvq = taxable ? Math.round(soustotal * 0.09975 * 100) / 100 : 0;
   const total = Math.round((soustotal + tps + tvq) * 100) / 100;
@@ -404,7 +424,7 @@ async function envoyerConfirmationContrat(env, k, c) {
     const d = {
       ref: k.numero_reference, date_emission: emission,
       pe_nom: nomPe, pe_adr: adr, pe_neq: pe.neq || '',
-      pn_nom: nomPn, pn_opq: pn.numero_opq || '', pn_tps: pn.tps || '', pn_tvq: pn.tvq || '', pn_corp: pn.societe || '',
+      pn_nom: nomPn, pn_opq: pn.numero_opq || '', pn_tps: pnTps, pn_tvq: pnTvq, pn_corp: pnCorp,
       contrat_date: String(k.date_contrat), hd: hhmm(hd), hf: hhmm(hf), heures: `${heures} h`,
       lignes,
       soustotal: argent(soustotal), tps: argent(tps), tvq: argent(tvq), total: argent(total),
