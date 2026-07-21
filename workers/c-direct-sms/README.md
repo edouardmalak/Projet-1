@@ -29,7 +29,7 @@ npx wrangler deploy
 les deux dashboards) :**
 
 ```
-62fec5c4c01c77530a4c8e628f72b0e961353477a392895641b7896de27b95a4
+<VOTRE_WEBHOOK_SECRET — généré par vous, stocké dans votre gestionnaire de mots de passe + le secret du Worker, JAMAIS commité>
 ```
 
 Redéployer après toute modification du code : `npx wrangler deploy` (les
@@ -87,7 +87,7 @@ Test rapide en ligne de commande :
 ```bash
 curl -X POST "https://c-direct-sms.<sous-domaine>.workers.dev/test" \
   -H "Content-Type: application/json" \
-  -H "X-Webhook-Secret: 62fec5c4c01c77530a4c8e628f72b0e961353477a392895641b7896de27b95a4" \
+  -H "X-Webhook-Secret: <VOTRE_WEBHOOK_SECRET — généré par vous, stocké dans votre gestionnaire de mots de passe + le secret du Worker, JAMAIS commité>" \
   -d '{"to":"+1514XXXXXXX"}'
 ```
 

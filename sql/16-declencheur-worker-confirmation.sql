@@ -30,7 +30,7 @@ begin
         url     := 'https://c-direct-sms.edouardmalak.workers.dev/webhook',
         headers := jsonb_build_object(
                      'Content-Type', 'application/json',
-                     'X-Webhook-Secret', '62fec5c4c01c77530a4c8e628f72b0e961353477a392895641b7896de27b95a4'),
+                     'X-Webhook-Secret', 'REMPLACER_PAR_VOTRE_WEBHOOK_SECRET'),
         body    := jsonb_build_object(
                      'type', 'UPDATE',
                      'table', 'candidatures',
