@@ -31,24 +31,6 @@ export default {
           twilio: !!env.TWILIO_ACCOUNT_SID,
           webhook_secret_set: !!env.WEBHOOK_SECRET,
         });
-      if (request.method === 'GET' && url.pathname === '/diag-livraison'
-          && url.searchParams.get('k') === 'diag-9f3a2c') {
-        const kk = (await sbSelect(env, `contrats?select=*&numero_reference=eq.CD-100012`))[0];
-        const cc = kk ? (await sbSelect(env, `candidatures?select=*&contrat_id=eq.${kk.id}&statut=eq.accepte&limit=1`))[0] : null;
-        if (!kk || !cc) return json({ erreur: 'contrat/candidature test introuvable' });
-        const envoi = await envoyerConfirmationContrat(env, kk, cc);
-        const ids = [];
-        if (envoi.pharmacien && envoi.pharmacien.id) ids.push({ role: 'pharmacien', id: envoi.pharmacien.id, to: envoi.pharmacien.to });
-        if (envoi.pharmacie && envoi.pharmacie.id) ids.push({ role: 'pharmacie', id: envoi.pharmacie.id, to: envoi.pharmacie.to });
-        await new Promise(r => setTimeout(r, 5000));
-        const statuts = [];
-        for (const it of ids) {
-          const rr = await fetch(`https://api.resend.com/emails/${it.id}`, { headers: { Authorization: `Bearer ${env.RESEND_API_KEY}` } });
-          const jj = await rr.json().catch(() => ({}));
-          statuts.push({ role: it.role, to: it.to, last_event: jj.last_event || null, from: jj.from || null });
-        }
-        return json({ from: env.RESEND_FROM || 'C-Direct <notifications@c-direct.ca>', envoi, statuts });
-      }
       if (request.method === 'POST' && url.pathname === '/twilio-inbound')
         return await routeTwilioInbound(request, env);
       return json({ erreur: 'Route inconnue' }, 404);
