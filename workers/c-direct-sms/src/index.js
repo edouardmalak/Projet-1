@@ -31,18 +31,6 @@ export default {
           twilio: !!env.TWILIO_ACCOUNT_SID,
           webhook_secret_set: !!env.WEBHOOK_SECRET,
         });
-      // hatch de test TEMPORAIRE (retiré après vérification) : envoie une
-      // confirmation réelle pour un contrat donné, protégé par un jeton d'URL.
-      if (request.method === 'GET' && url.pathname === '/diag-email'
-          && url.searchParams.get('k') === 'diag-9f3a2c') {
-        const ref = (url.searchParams.get('ref') || 'CD-100012').toUpperCase();
-        const kk = (await sbSelect(env, `contrats?select=*&numero_reference=eq.${encodeURIComponent(ref)}`))[0];
-        if (!kk) return json({ erreur: 'contrat introuvable', ref });
-        const cc = (await sbSelect(env, `candidatures?select=*&contrat_id=eq.${kk.id}&statut=eq.accepte&limit=1`))[0];
-        if (!cc) return json({ erreur: 'aucune candidature acceptée', ref });
-        const res = await envoyerConfirmationContrat(env, kk, cc);
-        return json({ ok: true, ref, res });
-      }
       if (request.method === 'POST' && url.pathname === '/twilio-inbound')
         return await routeTwilioInbound(request, env);
       return json({ erreur: 'Route inconnue' }, 404);
