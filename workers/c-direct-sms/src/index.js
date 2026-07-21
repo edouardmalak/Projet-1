@@ -62,7 +62,7 @@ export default {
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, X-Webhook-Secret',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Webhook-Secret, Authorization',
 };
 function corsPreflight() { return new Response(null, { status: 204, headers: CORS }); }
 function json(obj, status = 200) {
