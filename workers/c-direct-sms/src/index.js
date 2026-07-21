@@ -173,39 +173,73 @@ function foldAscii(s) {
     .replace(/[^\x20-\x7E]/g, ' ');
 }
 
-/* PDF minimal, une page, sans librairie : liste de lignes de texte.
+/* PDF « soigné » sans librairie : 2 polices, couleurs, filets, logo vectoriel.
    Renvoie une chaîne base64 prête pour la pièce jointe Resend. */
-function pdfSimple(titre, lignes) {
-  const esc = t => foldAscii(t).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
-  let y = 780;
-  let flux = 'BT /F1 16 Tf 60 ' + y + ' Td (' + esc(titre) + ') Tj ET\n';
-  y -= 30;
-  for (const ligne of lignes) {
-    flux += 'BT /F1 11 Tf 60 ' + y + ' Td (' + esc(ligne) + ') Tj ET\n';
-    y -= 18;
-    if (y < 60) break;
-  }
+/* CP1252 (WinAnsi) : garde les accents français en octets simples pour le PDF */
+function cp1252(s) {
+  const map = { '’': '', '‘': '', '“': '', '”': '',
+                '–': '', '—': '', '…': '', '€': '' };
+  return String(s == null ? '' : s).split('').map(ch => {
+    const c = ch.charCodeAt(0);
+    if (c <= 0xFF) return ch;      // Latin-1 (inclut é è à ç ê î ô û …) → même octet
+    return map[ch] || ' ';
+  }).join('');
+}
+const escPdf = t => cp1252(t).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+function motsEnLignes(s, max) {
+  const mots = String(s == null ? '' : s).split(/\s+/); const out = []; let cur = '';
+  for (const m of mots) { if ((cur + ' ' + m).trim().length > max) { if (cur) out.push(cur.trim()); cur = m; } else cur += ' ' + m; }
+  if (cur.trim()) out.push(cur.trim()); return out;
+}
+function assemblerPdf(flux) {
   const objets = [
     '<< /Type /Catalog /Pages 2 0 R >>',
     '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>',
     '<< /Length ' + flux.length + ' >>\nstream\n' + flux + 'endstream',
-    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>',
   ];
-  let pdf = '%PDF-1.4\n';
-  const offsets = [];
-  objets.forEach((o, i) => {
-    offsets.push(pdf.length);
-    pdf += (i + 1) + ' 0 obj\n' + o + '\nendobj\n';
-  });
+  let pdf = '%PDF-1.4\n'; const offs = [];
+  objets.forEach((o, i) => { offs.push(pdf.length); pdf += (i + 1) + ' 0 obj\n' + o + '\nendobj\n'; });
   const xref = pdf.length;
   pdf += 'xref\n0 ' + (objets.length + 1) + '\n0000000000 65535 f \n';
-  offsets.forEach(off => { pdf += String(off).padStart(10, '0') + ' 00000 n \n'; });
+  offs.forEach(o => { pdf += String(o).padStart(10, '0') + ' 00000 n \n'; });
   pdf += 'trailer\n<< /Size ' + (objets.length + 1) + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF';
-  // chaîne binaire → base64
-  let bin = '';
-  for (let i = 0; i < pdf.length; i++) bin += String.fromCharCode(pdf.charCodeAt(i) & 0xff);
+  let bin = ''; for (let i = 0; i < pdf.length; i++) bin += String.fromCharCode(pdf.charCodeAt(i) & 0xff);
   return btoa(bin);
+}
+function pdfContratConfirme(t, d) {
+  const VERT = '0.043 0.431 0.310', DARK = '0.106 0.149 0.125', GRIS = '0.42 0.49 0.45',
+        LIGNE = '0.85 0.89 0.86', BLANC = '1 1 1';
+  const o = [];
+  const txt = (x, y, s, size, col, bold) => o.push(`BT /${bold ? 'F2' : 'F1'} ${size} Tf ${col} rg ${x} ${y} Td (${escPdf(s)}) Tj ET`);
+  const rect = (x, y, w, h, col) => o.push(`${col} rg ${x} ${y} ${w} ${h} re f`);
+  const filet = (x1, y1, x2, col) => o.push(`${col} RG 0.7 w ${x1} ${y1} m ${x2} ${y1} l S`);
+  // bandeau d'en-tête + logo croix
+  rect(0, 712, 612, 80, VERT);
+  rect(44, 742, 26, 9, BLANC); rect(52.5, 733, 9, 26, BLANC);
+  txt(88, 744, 'C-DIRECT', 20, BLANC, true);
+  txt(88, 728, t.pdf_tag, 8.5, BLANC, false);
+  // titre
+  txt(44, 672, t.pdf_titre, 20, DARK, true);
+  rect(44, 664, 130, 3, VERT);
+  txt(44, 642, t.ref + ' : ' + d.ref, 11.5, GRIS, false);
+  let y = 606;
+  const section = (label) => { txt(44, y, label.toUpperCase(), 10, VERT, true); y -= 7; filet(44, y, 568, LIGNE); y -= 19; };
+  const row = (label, val) => { txt(48, y, label, 10.5, GRIS, false); txt(235, y, String(val || '—'), 10.5, DARK, true); y -= 20; };
+  section(t.sec_details);
+  row(t.date, d.date); row(t.horaire, d.horaire); row(t.tarif, d.tarif);
+  row(t.heures, d.heures); row(t.honos, d.honos);
+  y -= 8; section(t.pharmacie);
+  row(t.nom, d.pe_nom); row(t.adresse, d.pe_adr); if (d.pe_neq) row(t.neq, d.pe_neq);
+  y -= 8; section(t.pharmacien);
+  row(t.nom, d.pn_nom); if (d.pn_opq) row(t.opq, d.pn_opq);
+  y -= 6; filet(44, y, 568, LIGNE); y -= 16;
+  motsEnLignes(t.note, 96).forEach(l => { txt(44, y, l, 8.5, GRIS, false); y -= 12; });
+  txt(44, 54, 'c-direct.ca', 9.5, VERT, true);
+  txt(470, 54, t.signature, 8.5, GRIS, false);
+  return assemblerPdf(o.join('\n'));
 }
 
 function heuresEntre(hd, hf) {
@@ -223,10 +257,11 @@ const T_CONF = {
     intro: 'Voici votre contrat confirmé. Les deux parties ont accepté les termes ci-dessous.',
     ref: 'Référence', date: 'Date', horaire: 'Horaire', tarif: 'Tarif horaire',
     heures: 'Heures', honos: 'Honoraires estimés', pharmacie: 'Pharmacie',
-    pharmacien: 'Pharmacien(ne)', adresse: 'Adresse', opq: 'N° OPQ', neq: 'NEQ',
+    pharmacien: 'Pharmacien(ne)', adresse: 'Adresse', opq: 'N° OPQ', neq: 'NEQ', nom: 'Nom',
+    sec_details: 'Détails du contrat', pdf_tag: 'Réseau de remplacement en pharmacie',
     piece: 'Le contrat confirmé est joint en PDF.',
     note: 'La facturation définitive (kilométrage, indemnités) est établie à la complétion du contrat, selon les règles du réseau. Aucun frais ne transite par C-Direct.',
-    pdf_titre: 'C-DIRECT — Contrat confirmé', signature: '— C-Direct',
+    pdf_titre: 'Contrat confirmé', signature: '— C-Direct · 0 % commission',
   },
   en: {
     subject: r => 'Confirmed contract — ' + r,
@@ -234,10 +269,11 @@ const T_CONF = {
     intro: 'Here is your confirmed contract. Both parties have accepted the terms below.',
     ref: 'Reference', date: 'Date', horaire: 'Schedule', tarif: 'Hourly rate',
     heures: 'Hours', honos: 'Estimated fees', pharmacie: 'Pharmacy',
-    pharmacien: 'Pharmacist', adresse: 'Address', opq: 'OPQ No.', neq: 'NEQ',
+    pharmacien: 'Pharmacist', adresse: 'Address', opq: 'OPQ No.', neq: 'NEQ', nom: 'Name',
+    sec_details: 'Contract details', pdf_tag: 'Pharmacy relief network',
     piece: 'The confirmed contract is attached as a PDF.',
     note: 'Final billing (mileage, allowances) is issued upon contract completion, per network rules. No money transits through C-Direct.',
-    pdf_titre: 'C-DIRECT — Confirmed contract', signature: '— C-Direct',
+    pdf_titre: 'Confirmed contract', signature: '— C-Direct · 0% commission',
   },
 };
 
@@ -260,20 +296,17 @@ async function envoyerConfirmationContrat(env, k, c) {
 
   const construire = (lang) => {
     const t = T_CONF[lang === 'en' ? 'en' : 'fr'];
-    const lignesPdf = [
-      `${t.ref}: ${k.numero_reference}`,
-      `${t.date}: ${k.date_contrat}`,
-      `${t.horaire}: ${hhmm(hd)} - ${hhmm(hf)}  (${heures} h)`,
-      `${t.tarif}: ${tarif} $/h`,
-      `${t.honos}: ${honos} $`,
-      '',
-      `${t.pharmacie}: ${nomPe}`,
-      `${t.adresse}: ${adr}` + (pe.neq ? `   ${t.neq}: ${pe.neq}` : ''),
-      `${t.pharmacien}: ${nomPn}` + (pn.numero_opq ? `   ${t.opq}: ${pn.numero_opq}` : ''),
-      '',
-      t.note,
-    ];
-    const pdf = pdfSimple(t.pdf_titre, lignesPdf);
+    const d = {
+      ref: k.numero_reference,
+      date: String(k.date_contrat),
+      horaire: `${hhmm(hd)} - ${hhmm(hf)} (${heures} h)`,
+      tarif: `${tarif} $/h`,
+      heures: `${heures} h`,
+      honos: `${honos} $`,
+      pe_nom: nomPe, pe_adr: adr, pe_neq: pe.neq || '',
+      pn_nom: nomPn, pn_opq: pn.numero_opq || '',
+    };
+    const pdf = pdfContratConfirme(t, d);
     const ligneHtml = (a, b) => `<tr><td style="padding:3px 12px 3px 0;color:#6b7c74">${a}</td><td style="padding:3px 0;font-weight:600">${b}</td></tr>`;
     const html =
       `<div style="font-family:Arial,sans-serif;color:#12211b;max-width:560px">` +
