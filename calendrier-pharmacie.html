@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Calendrier de la pharmacie</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;min-height:100vh;background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1000px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar a.nav{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
+.topbar a.nav:hover{color:var(--vert-vif)}
+.wrap{max-width:1000px;margin:0 auto;padding:36px 18px 70px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:22px;position:relative}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vert),transparent)}
+.cal-tete{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px}
+.cal-mois{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;letter-spacing:.06em;text-transform:capitalize}
+.nav-mois{display:flex;gap:8px;align-items:center}
+.bnav{background:var(--panneau2);border:1px solid var(--ligne2);color:var(--texte);border-radius:5px;width:34px;height:34px;font-size:16px;cursor:pointer;font-family:'IBM Plex Mono',monospace}
+.bnav:hover{border-color:var(--vert)}
+.bauj{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:5px;padding:0 12px;height:34px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.bauj:hover{border-color:var(--vert);color:var(--vert-vif)}
+.grille-jours{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.jour-tete{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);text-align:center;padding:6px 0}
+.jour{aspect-ratio:1/1;border:1px solid var(--ligne);border-radius:6px;background:var(--panneau2);display:flex;flex-direction:column;align-items:flex-start;padding:7px 8px;position:relative;min-height:56px;overflow:hidden}
+.jour.vide{background:transparent;border-color:transparent}
+.jour.auj{box-shadow:inset 0 0 0 1px var(--jaune)}
+.jour.a-contrat{border-color:var(--vert)}
+.jour .n{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
+.pastille{margin-top:4px;display:block;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.03em;padding:2px 5px;border-radius:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;cursor:pointer}
+.pastille.attribue{background:rgba(232,184,73,.16);color:var(--jaune);border:1px solid rgba(232,184,73,.4)}
+.pastille.complete{background:rgba(18,169,110,.16);color:var(--vert-vif);border:1px solid rgba(23,201,128,.4)}
+.pastille:hover{filter:brightness(1.25)}
+.legende{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd)}
+.legende span{display:inline-flex;align-items:center;gap:7px}
+.pnt{width:12px;height:12px;border-radius:3px;display:inline-block}
+.pnt.attribue{background:rgba(232,184,73,.16);border:1px solid rgba(232,184,73,.4)}
+.pnt.complete{background:rgba(18,169,110,.16);border:1px solid rgba(23,201,128,.4)}
+.chargement{padding:40px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html"><span class="croix"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></span>C-DIRECT</a>
+    <div class="droite"><a class="nav" href="/espace-pharmacie.html">Espace</a><a class="nav" href="/messages.html">Messagerie</a><a class="nav" href="/profil.html">Profil</a></div>
+  </div>
+</div>
+<div class="wrap">
+  <h1>Calendrier</h1>
+  <p class="sous">Vos contrats confirmés par journée. Touchez un contrat pour l'ouvrir.</p>
+  <div class="carte">
+    <div class="chargement" id="chargement">Chargement du calendrier…</div>
+    <div id="cal" style="display:none">
+      <div class="cal-tete">
+        <div class="cal-mois" id="mois-lbl">—</div>
+        <div class="nav-mois">
+          <button class="bauj" id="b-auj">Aujourd'hui</button>
+          <button class="bnav" id="b-prev">‹</button>
+          <button class="bnav" id="b-next">›</button>
+        </div>
+      </div>
+      <div class="grille-jours" id="jours-tete"></div>
+      <div class="grille-jours" id="grille" style="margin-top:6px"></div>
+      <div class="legende">
+        <span><i class="pnt attribue"></i> Attribué</span>
+        <span><i class="pnt complete"></i> Complété</span>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/auth.js"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+const JOURS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+let profil = null, curseur = new Date();
+const parJour = new Map();
+function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+(async function(){
+  profil = await cdExigerConnexion(['pharmacie']);
+  cdEnteteConnecte();
+  try{
+    const { data } = await sb.from('contrats').select('numero_reference,date_contrat,statut')
+      .eq('pharmacie_id', profil.id).in('statut',['attribue','complete']);
+    (data||[]).forEach(k=>{ const j=String(k.date_contrat).slice(0,10); if(!parJour.has(j)) parJour.set(j,[]); parJour.get(j).push(k); });
+  }catch(e){}
+  $('chargement').style.display='none'; $('cal').style.display='';
+  const jt=$('jours-tete'); JOURS.forEach(j=>{ const d=document.createElement('div'); d.className='jour-tete'; d.textContent=j; jt.appendChild(d); });
+  $('b-prev').onclick=()=>{ curseur.setMonth(curseur.getMonth()-1); dessiner(); };
+  $('b-next').onclick=()=>{ curseur.setMonth(curseur.getMonth()+1); dessiner(); };
+  $('b-auj').onclick=()=>{ curseur=new Date(); dessiner(); };
+  dessiner();
+})();
+
+function dessiner(){
+  $('mois-lbl').textContent = MOIS[curseur.getMonth()] + ' ' + curseur.getFullYear();
+  const grille=$('grille'); grille.innerHTML='';
+  const an=curseur.getFullYear(), mo=curseur.getMonth();
+  let decal=(new Date(an,mo,1).getDay()+6)%7;
+  const nbJours=new Date(an,mo+1,0).getDate();
+  const ajd=iso(new Date());
+  for(let i=0;i<decal;i++){ const c=document.createElement('div'); c.className='jour vide'; grille.appendChild(c); }
+  for(let d=1; d<=nbJours; d++){
+    const date=iso(new Date(an,mo,d));
+    const cell=document.createElement('div'); cell.className='jour';
+    if(date===ajd) cell.classList.add('auj');
+    const liste = parJour.get(date) || [];
+    if(liste.length) cell.classList.add('a-contrat');
+    const n=document.createElement('div'); n.className='n'; n.textContent=d; cell.appendChild(n);
+    liste.slice(0,2).forEach(k=>{
+      const a=document.createElement('a'); a.className='pastille '+k.statut; a.textContent=k.numero_reference;
+      a.href='/c/'+encodeURIComponent(k.numero_reference); a.title='Voir '+k.numero_reference;
+      cell.appendChild(a);
+    });
+    if(liste.length>2){ const p=document.createElement('div'); p.style.cssText='font-family:"IBM Plex Mono",monospace;font-size:8px;color:var(--sourd);margin-top:2px'; p.textContent='+'+(liste.length-2); cell.appendChild(p); }
+    grille.appendChild(cell);
+  }
+}
+</script>
+</body>
+</html>

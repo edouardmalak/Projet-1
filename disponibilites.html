@@ -65,6 +65,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
     <div class="droite">
       <a class="nav" href="/contrats.html">Contrats</a>
       <a class="nav" href="/mes-mandats.html">Mes mandats</a>
+      <a class="nav" href="/messages.html">Messagerie</a>
       <a class="nav" href="/profil.html">Profil</a>
     </div>
   </div>
@@ -155,7 +156,12 @@ function dessiner(){
     if(dispo.has(date)) cell.classList.add('dispo');
     const n=document.createElement('div'); n.className='n'; n.textContent=d; cell.appendChild(n);
     if(contrats.has(date)){
-      const p=document.createElement('div'); p.className='pastille contrat'; p.textContent=contrats.get(date); cell.appendChild(p);
+      const ref=contrats.get(date);
+      const p=document.createElement('a'); p.className='pastille contrat'; p.textContent=ref;
+      p.href='/c/'+encodeURIComponent(ref); p.title='Voir le contrat '+ref;
+      p.style.cssText='display:block;text-decoration:none;cursor:pointer';
+      p.onclick=(e)=>{ e.stopPropagation(); };
+      cell.appendChild(p);
     }
     if(!passe){ cell.onclick=()=>basculer(date, cell); }
     grille.appendChild(cell);

@@ -109,6 +109,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
       <span class="badge" id="badge">—</span>
     </div>
     <p class="sous" id="sous">—</p>
+    <a id="lien-messagerie" href="#" style="display:none;margin:2px 0 10px;text-decoration:none;color:var(--vert-vif);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.04em">Messagerie avec l'autre partie →</a>
 
     <div class="grille">
       <div class="cellule"><small>Date</small><b id="date">—</b></div>
@@ -273,6 +274,11 @@ function msg(texte, type){
      ou le pharmacien retenu. La base journalise QUI a déclenché.     */
   const dateContratPassee = k.date_contrat <= new Date().toISOString().slice(0,10);
   const suisPartie = k.est_ma_pharmacie || k.ma_candidature_statut === 'accepte' || profil.role === 'admin';
+  if((k.statut==='attribue' || k.statut==='complete') && suisPartie){
+    const lm = $('lien-messagerie');
+    lm.href = '/messages.html?ref=' + encodeURIComponent(k.numero_reference);
+    lm.style.display = 'inline-block';
+  }
   if(k.statut === 'attribue' && dateContratPassee && suisPartie){
     $('bloc-completer').style.display = '';
     $('btn-completer').onclick = async ()=>{
