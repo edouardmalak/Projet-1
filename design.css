@@ -1,0 +1,216 @@
+/* =====================================================================
+   C-DIRECT · DESIGN.CSS — système de design unifié (v2, « balance »)
+   Chargé APRÈS le <style> de chaque page : il raffine sans tout casser.
+   Esthétique : minimalisme sobre — beaucoup de blanc, hairlines
+   neutres, une seule couleur d'accent (vert C-Direct), typographie
+   Inter serrée, coins doux, ombres presque invisibles.
+   ===================================================================== */
+
+/* ---------- palette raffinée (surcharge les :root des pages) ---------- */
+:root{
+  --fond:#F5F6F4;
+  --panneau:#FFFFFF;
+  --panneau2:#F4F5F3;
+  --ligne:#E6E8E4;
+  --ligne2:#D8DBD6;
+  --vert:#0B6E4F;
+  --vert-vif:#0D8A61;
+  --texte:#1D1D1F;
+  --sourd:#71766F;
+  --jaune:#B07207;
+  --rouge:#C0392B;
+  --menthe:#EDF4EF;
+}
+
+/* ---------- typographie ---------- */
+body{
+  font-family:'Inter','Instrument Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif !important;
+  background-image:none !important;      /* adieu la grille tactique */
+  -webkit-font-smoothing:antialiased;
+  font-size:15px;
+}
+.wrap h1{
+  font-family:'Inter',sans-serif;
+  font-weight:700;
+  font-size:27px;
+  letter-spacing:-.022em;
+  text-transform:none;
+  line-height:1.15;
+}
+.wrap .sous{
+  font-family:'Inter',sans-serif;
+  font-size:14px;
+  letter-spacing:0;
+  text-transform:none;
+  color:var(--sourd);
+}
+.wrap h2, .wrap .sec{
+  font-family:'Inter',sans-serif;
+  font-weight:600;
+  font-size:13px;
+  letter-spacing:.02em;
+  color:var(--sourd);
+}
+
+/* ---------- barre de navigation ---------- */
+.topbar{
+  background:rgba(255,255,255,.82) !important;
+  backdrop-filter:blur(14px) saturate(1.6);
+  -webkit-backdrop-filter:blur(14px) saturate(1.6);
+  border-bottom:1px solid rgba(0,0,0,.07);
+}
+.topbar .brand{
+  font-family:'Inter',sans-serif;
+  font-weight:650;
+  font-size:15.5px;
+  letter-spacing:.01em;
+}
+.topbar .croix{
+  background:var(--vert);
+  border-radius:8px;
+  width:30px;height:30px;
+}
+.topbar a.nav, .topbar .droite a.nav{
+  font-family:'Inter',sans-serif;
+  font-size:13px;
+  font-weight:500;
+  letter-spacing:0;
+  text-transform:none;
+  color:#5A5F58;
+  padding:6px 2px;
+}
+.topbar a.nav:hover, .topbar .droite a.nav:hover{color:var(--texte)}
+.topbar a.nav.on{color:var(--texte);font-weight:600}
+#cd-entete-session{font-family:'Inter',sans-serif !important;font-size:12px !important;letter-spacing:.01em !important;text-transform:none !important}
+
+/* ---------- cartes / panneaux ---------- */
+.carte, .onboard, .avis, .conv, .total{
+  border-radius:16px;
+  border:1px solid var(--ligne);
+  box-shadow:0 1px 2px rgba(20,24,20,.04), 0 12px 32px -18px rgba(20,24,20,.10);
+}
+.carte::before, .onboard::before, .total::before{display:none !important}  /* adieu les lignes de scan */
+.carte{overflow:visible}
+
+/* ---------- boutons ---------- */
+.btn, .btn-top, .cta, button.btn{
+  font-family:'Inter',sans-serif;
+  font-weight:600;
+  font-size:14px;
+  letter-spacing:0;
+  text-transform:none;
+  border-radius:10px;
+  transition:background .15s ease, transform .05s ease;
+}
+.btn:active, .cta:active{transform:scale(.985)}
+.btn-mini, .btn-lot, .bauj, .filtre-reset, .filtre-fav, .ob-lien, .seg button{
+  font-family:'Inter',sans-serif;
+  font-weight:600;
+  letter-spacing:0;
+  text-transform:none;
+  border-radius:9px;
+}
+.btn-mini{font-size:12.5px}
+.bnav{border-radius:9px}
+.saisie button{
+  font-family:'Inter',sans-serif;font-weight:600;letter-spacing:0;text-transform:none;border-radius:10px;
+}
+
+/* ---------- tableaux ---------- */
+table{font-family:'Inter',sans-serif;font-size:13.5px}
+th{
+  font-family:'Inter',sans-serif;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.04em;
+  color:#8A8F88;
+}
+td{font-variant-numeric:tabular-nums}
+.ref, .r{font-family:'SF Mono','IBM Plex Mono',monospace;font-size:12.5px;letter-spacing:.01em}
+tbody tr:hover{background:#FAFBF9}
+
+/* ---------- champs ---------- */
+input, select, textarea, .filtre-champ{
+  font-family:'Inter',sans-serif !important;
+  border-radius:10px !important;
+  background:#FFFFFF !important;
+  border:1px solid #D8DBD6;
+  transition:border-color .12s ease, box-shadow .12s ease;
+}
+input:focus, select:focus, textarea:focus, .filtre-champ:focus{
+  outline:none;
+  border-color:var(--vert) !important;
+  box-shadow:0 0 0 3.5px rgba(11,110,79,.12);
+}
+.champ label, .champ .lbl{
+  font-family:'Inter',sans-serif;
+  font-size:12.5px;
+  font-weight:550;
+  letter-spacing:0;
+  text-transform:none;
+  color:#5A5F58;
+}
+.coches label{
+  font-family:'Inter',sans-serif;
+  font-size:13px;
+  border-radius:9px;
+  background:#FFFFFF;
+  border:1px solid var(--ligne);
+}
+.coches label:hover{border-color:var(--ligne2)}
+
+/* ---------- badges / pastilles / puces ---------- */
+.badge, .chip, .tag, .match, .etat, .type-c{
+  font-family:'Inter',sans-serif;
+  font-weight:600;
+  letter-spacing:.01em;
+  text-transform:none;
+  border-radius:99px;
+}
+.badge{font-size:11.5px;padding:4px 10px}
+.pastille{border-radius:7px;font-family:'Inter',sans-serif;letter-spacing:0}
+
+/* ---------- calendriers ---------- */
+.jour{border-radius:12px}
+.jour .n{font-family:'Inter',sans-serif;font-weight:600}
+.jour-tete{font-family:'Inter',sans-serif;font-size:10.5px;letter-spacing:.05em;color:#8A8F88}
+.cal-mois{font-family:'Inter',sans-serif;font-weight:650;letter-spacing:0;font-size:16px}
+
+/* ---------- messagerie ---------- */
+.bulle{border-radius:16px;font-family:'Inter',sans-serif}
+.bulle.moi{background:var(--vert);border:none;color:#fff}
+.bulle.moi .qui, .bulle.moi .h{color:rgba(255,255,255,.75)}
+.bulle.autre{background:#F0F1EF;border:none}
+.saisie textarea{border-radius:12px}
+
+/* ---------- divers ---------- */
+.vide, .chargement{
+  font-family:'Inter',sans-serif;
+  font-size:13.5px;
+  letter-spacing:0;
+  text-transform:none;
+}
+.retour{font-family:'Inter',sans-serif;font-size:13px;letter-spacing:0}
+.sous a{color:var(--vert-vif)}
+.legende, .m, .avis .meta, .conv .m, .indice, .indice-btn{
+  font-family:'Inter',sans-serif;letter-spacing:0;text-transform:none;
+}
+.msg{font-family:'Inter',sans-serif;letter-spacing:0}
+.erreur{border-radius:10px;font-family:'Inter',sans-serif}
+::selection{background:rgba(11,110,79,.14)}
+
+/* barres de défilement discrètes (WebKit) */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#D4D7D2;border-radius:99px;border:2.5px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- pages publiques (index / faq) : douceur seulement ---------- */
+.hero h1, header.hero h1{font-family:'Inter','Bricolage Grotesque',sans-serif;letter-spacing:-.03em;font-weight:750}
+.eyebrow{font-family:'Inter',sans-serif;font-weight:600;letter-spacing:.12em;font-size:12px}
+.chips span{
+  font-family:'Inter',sans-serif;font-weight:550;font-size:12.5px;letter-spacing:0;
+  background:#fff;border:1px solid var(--ligne);color:#3E463F;
+}
+.lang button{font-family:'Inter',sans-serif;letter-spacing:0}
+.gratuit{font-family:'Inter',sans-serif;letter-spacing:0}
+nav.liens a{font-family:'Inter',sans-serif}
