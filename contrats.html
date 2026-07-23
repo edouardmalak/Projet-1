@@ -35,6 +35,16 @@ tbody tr:last-child td{border-bottom:none}
 .badge{display:inline-block;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:3px;border:1px solid var(--ligne2)}
 .badge.ouvert{color:var(--vert-vif);border-color:rgba(23,201,128,.4);background:rgba(18,169,110,.08)}
 .badge.postule{color:var(--jaune);border-color:rgba(232,184,73,.4);background:rgba(232,184,73,.07)}
+.match{display:inline-block;margin-top:4px;font-family:'IBM Plex Mono',monospace;font-weight:400;font-size:10px;letter-spacing:.04em;padding:1px 7px;border-radius:99px;border:1px solid}
+.match.fort{color:var(--vert-vif);border-color:rgba(23,201,128,.4);background:rgba(18,169,110,.1)}
+.match.moyen{color:var(--jaune);border-color:rgba(232,184,73,.4);background:rgba(232,184,73,.08)}
+.match.faible{color:var(--sourd);border-color:var(--ligne2)}
+.coeur{background:none;border:none;cursor:pointer;color:var(--ligne2);font-size:16px;margin-left:10px;vertical-align:middle;line-height:1}
+.coeur:hover{color:var(--sourd)}
+.coeur.on{color:var(--rouge)}
+.filtre-fav{background:transparent;border:1px solid var(--ligne2);border-radius:4px;padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--sourd);cursor:pointer}
+.filtre-fav:hover{border-color:var(--vert)}
+.filtre-fav.on{color:var(--rouge);border-color:rgba(229,72,77,.5);background:rgba(229,72,77,.08)}
 .vide{padding:48px 20px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:13px}
 .vide b{color:var(--texte);display:block;margin-bottom:6px;letter-spacing:.08em}
 .chargement{padding:48px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
@@ -95,11 +105,13 @@ tbody tr:last-child td{border-bottom:none}
     <input class="filtre-champ" id="f-logiciel" placeholder="Logiciel" style="flex:1 1 120px">
     <input class="filtre-champ" id="f-dist" type="number" min="0" step="10" placeholder="Distance max km" style="flex:1 1 130px">
     <select class="filtre-champ" id="f-tri" style="flex:1 1 130px">
+      <option value="compat">Compatibilité ↓</option>
       <option value="date">Plus récents</option>
       <option value="date_contrat">Date du contrat</option>
       <option value="tarif">Tarif ↓</option>
       <option value="distance">Distance ↑</option>
     </select>
+    <button class="filtre-fav" id="f-fav" type="button">♥ Favoris</button>
     <button class="filtre-reset" id="f-reset" type="button">Réinitialiser</button>
   </div>
 
@@ -147,6 +159,32 @@ function calcEstim(k){
   }catch(e){ return null; }
 }
 
+/* compatibilité (logiciel connu + distance dans le rayon) — heuristique */
+function calcMatch(k){
+  if(!profil) return null;
+  let score = 60; const raisons = [];
+  const logs = profil.logiciels || [];
+  if(k.logiciel){
+    if(logs.includes(k.logiciel)){ score += 25; raisons.push('logiciel connu'); }
+    else { score -= 15; raisons.push('logiciel non maîtrisé'); }
+  }
+  const dist = k._est && k._est.distanceKm;
+  const rayon = profil.rayon_deplacement_km;
+  if(dist != null){
+    if(rayon){ if(dist <= rayon){ score += 15; raisons.push(dist+' km · dans votre rayon'); } else { score -= 25; raisons.push(dist+' km · hors rayon'); } }
+    else { if(dist <= 50) score += 15; else if(dist > 100) score -= 15; raisons.push(dist+' km'); }
+  }
+  score = Math.max(0, Math.min(100, score));
+  return { pct:score, tier: score>=80?'fort':score>=55?'moyen':'faible', raison: raisons.join(' · ') };
+}
+
+/* favoris (par navigateur) */
+function favSet(){ try{ return new Set(JSON.parse(localStorage.getItem('cd-favoris')||'[]')); }catch(e){ return new Set(); } }
+function favSave(s){ try{ localStorage.setItem('cd-favoris', JSON.stringify([...s])); }catch(e){} }
+function estFavori(ref){ return favSet().has(ref); }
+function toggleFavori(ref){ const s=favSet(); s.has(ref)?s.delete(ref):s.add(ref); favSave(s); }
+let favOnly = false;
+
 function dessiner(){
   const vv = ($('f-ville').value||'').trim().toLowerCase();
   const tmin = parseFloat($('f-tarif').value) || 0;
@@ -154,6 +192,7 @@ function dessiner(){
   const dmax = parseFloat($('f-dist').value);
   const tri = $('f-tri').value;
   let list = contrats.filter(k=>{
+    if(favOnly && !estFavori(k.numero_reference)) return false;
     if(vv && !(k.ville||'').toLowerCase().includes(vv)) return false;
     if(tmin && parseFloat(k.tarif_horaire) < tmin) return false;
     if(lg && !(k.logiciel||'').toLowerCase().includes(lg)) return false;
@@ -161,6 +200,7 @@ function dessiner(){
     return true;
   });
   list.sort((a,b)=>{
+    if(tri==='compat') return ((b._match&&b._match.pct)||0)-((a._match&&a._match.pct)||0);
     if(tri==='tarif') return parseFloat(b.tarif_horaire)-parseFloat(a.tarif_horaire);
     if(tri==='date_contrat') return (a.date_contrat>b.date_contrat?1:(a.date_contrat<b.date_contrat?-1:0));
     if(tri==='distance'){
@@ -191,16 +231,33 @@ function dessiner(){
         (k._est.distanceKm!=null ? ' · ' + k._est.distanceKm + ' km' : '');
       tarifTd.appendChild(s);
     }
+    /* cellule référence + puce de compatibilité */
+    const refTd = document.createElement('td'); refTd.className = 'ref';
+    refTd.textContent = k.numero_reference;
+    if(k._match){
+      const c = document.createElement('div'); c.className = 'match ' + k._match.tier;
+      c.textContent = k._match.pct + '% compatible';
+      if(k._match.raison) c.title = k._match.raison;
+      refTd.appendChild(c);
+    }
+    /* cellule statut + coeur favori */
+    const statutTd = document.createElement('td');
+    statutTd.innerHTML = k.deja_postule
+      ? '<span class="badge postule">Postulé</span>'
+      : '<span class="badge ouvert">Ouvert</span>';
+    const coeur = document.createElement('button');
+    coeur.type = 'button'; coeur.className = 'coeur' + (estFavori(k.numero_reference) ? ' on' : '');
+    coeur.innerHTML = '♥'; coeur.title = 'Favori';
+    coeur.onclick = (e)=>{ e.stopPropagation(); toggleFavori(k.numero_reference); coeur.classList.toggle('on'); if(favOnly) dessiner(); };
+    statutTd.appendChild(coeur);
     tr.append(
-      txt(k.numero_reference, 'ref'),
+      refTd,
       txt(cdDate(k.date_contrat)),
       txt(cdHeure(k.heure_debut) + ' – ' + cdHeure(k.heure_fin)),
       txt(k.ville || '—', 'cache-mobile'),
       txt(k.logiciel || '—', 'cache-mobile'),
       tarifTd,
-      cel(k.deja_postule
-        ? '<span class="badge postule">Postulé</span>'
-        : '<span class="badge ouvert">Ouvert</span>')
+      statutTd
     );
     tb.appendChild(tr);
   });
@@ -223,15 +280,17 @@ function dessiner(){
   if(error){ $('err').textContent = 'Erreur : ' + error.message; $('err').style.display='block'; return; }
 
   contrats = data || [];
-  contrats.forEach(k=>{ k._est = calcEstim(k); });
+  contrats.forEach(k=>{ k._est = calcEstim(k); k._match = calcMatch(k); });
   if(!contrats.length){ $('vide').style.display = 'block'; return; }
 
   $('filtres').style.display = 'flex';
   ['f-ville','f-tarif','f-logiciel','f-dist'].forEach(id=> $(id).addEventListener('input', dessiner));
   $('f-tri').addEventListener('change', dessiner);
+  $('f-fav').onclick = ()=>{ favOnly = !favOnly; $('f-fav').classList.toggle('on', favOnly); dessiner(); };
   $('f-reset').onclick = ()=>{
     ['f-ville','f-tarif','f-logiciel','f-dist'].forEach(id=> $(id).value='');
-    $('f-tri').value='date'; dessiner();
+    favOnly = false; $('f-fav').classList.remove('on');
+    $('f-tri').value='compat'; dessiner();
   };
   dessiner();
 })();
