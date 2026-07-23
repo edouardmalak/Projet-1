@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Carte des contrats</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;min-height:100vh}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1100px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar a.nav{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
+.topbar a.nav:hover,.topbar a.nav.on{color:var(--vert-vif)}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 18px 50px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:16px}
+#carte{height:66vh;min-height:420px;border:1px solid var(--ligne);border-radius:10px;overflow:hidden;background:var(--panneau)}
+.leaflet-container{background:#0A100D;font-family:'Instrument Sans',sans-serif}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--panneau);color:var(--texte);border:1px solid var(--ligne2)}
+.leaflet-popup-content{margin:12px 14px;font-size:13px}
+.pop-ville{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--sourd);margin-bottom:8px}
+.pop-c{border-top:1px solid var(--ligne);padding:8px 0 6px}
+.pop-c:first-of-type{border-top:none}
+.pop-c .r{font-family:'IBM Plex Mono',monospace;color:var(--vert-vif);font-weight:700}
+.pop-c .d{color:var(--sourd);font-size:12px;font-family:'IBM Plex Mono',monospace;margin:2px 0 5px}
+.pop-c a{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#04130C;background:var(--vert);text-decoration:none;padding:4px 10px;border-radius:5px}
+.pop-c a:hover{background:var(--vert-vif)}
+.marqueur{width:20px;height:20px;border-radius:50% 50% 50% 0;background:var(--vert);border:2px solid #04130C;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.marqueur .nb{transform:rotate(45deg);display:block;text-align:center;color:#04130C;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11px;line-height:16px}
+.marqueur.moi{background:var(--jaune);border-color:#1a1405}
+.chargement{padding:40px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.hors{margin-top:16px}
+.hors h2{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);margin-bottom:8px}
+.hors a{display:inline-flex;gap:8px;text-decoration:none;color:var(--texte);border:1px solid var(--ligne);border-radius:7px;padding:8px 12px;margin:0 8px 8px 0;font-family:'IBM Plex Mono',monospace;font-size:12px}
+.hors a:hover{border-color:var(--vert)}
+.hors a b{color:var(--vert-vif)}
+.legende{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd)}
+.legende span{display:inline-flex;align-items:center;gap:7px}
+.pnt{width:12px;height:12px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:inline-block;border:2px solid #04130C}
+.pnt.vert{background:var(--vert)} .pnt.jaune{background:var(--jaune);border-color:#1a1405}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html"><span class="croix"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></span>C-DIRECT</a>
+    <div class="droite">
+      <a class="nav" href="/contrats.html">Contrats</a>
+      <a class="nav on" href="/carte.html">Carte</a>
+      <a class="nav" href="/disponibilites.html">Disponibilités</a>
+      <a class="nav" href="/mes-mandats.html">Mes mandats</a>
+      <a class="nav" href="/profil.html">Profil</a>
+    </div>
+  </div>
+</div>
+<div class="wrap">
+  <h1>Carte des contrats</h1>
+  <p class="sous" id="sous">Contrats ouverts près de vous. Positions approximatives (secteur du code postal).</p>
+  <div id="carte"><div class="chargement">Chargement de la carte…</div></div>
+  <div class="legende">
+    <span><i class="pnt vert"></i> Contrat disponible</span>
+    <span><i class="pnt jaune"></i> Votre secteur</span>
+  </div>
+  <div class="hors" id="hors" style="display:none">
+    <h2>Sans localisation précise</h2>
+    <div id="hors-liste"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/supabase-config.js"></script>
+<script src="/auth.js"></script>
+<script src="/fsa-qc.js"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+let profil = null;
+function esc(s){ return String(s||'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+
+(async function(){
+  profil = await cdExigerConnexion(['pharmacien']);
+  cdEnteteConnecte();
+  let contrats = [];
+  try{ const { data } = await sb.rpc('get_contrats_ouverts'); contrats = data || []; }catch(e){}
+
+  const map = L.map('carte', { zoomControl:true, scrollWheelZoom:true }).setView([47.0, -71.5], 6);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution:'© OpenStreetMap · © CARTO', maxZoom:19, subdomains:'abcd'
+  }).addTo(map);
+
+  const maCP = profil.code_postal || null;
+  const maPos = (maCP && window.CD_FSA_QC) ? CD_FSA_QC[cdFsa(maCP)] : null;
+
+  // regrouper les contrats par secteur (FSA) pour éviter les marqueurs superposés
+  const groupes = {}; const hors = [];
+  contrats.forEach(k=>{
+    const pos = (k.code_postal && window.CD_FSA_QC) ? CD_FSA_QC[cdFsa(k.code_postal)] : null;
+    if(!pos){ hors.push(k); return; }
+    const cle = pos[0]+','+pos[1];
+    (groupes[cle] = groupes[cle] || { pos, liste:[] }).liste.push(k);
+  });
+
+  const bornes = [];
+  Object.values(groupes).forEach(g=>{
+    const nb = g.liste.length;
+    const icone = L.divIcon({ className:'', iconSize:[20,20], iconAnchor:[10,20], popupAnchor:[0,-18],
+      html:'<div class="marqueur"><span class="nb">'+(nb>1?nb:'')+'</span></div>' });
+    const contenu = '<div class="pop-ville">'+esc(g.liste[0].ville||'Secteur')+'</div>' +
+      g.liste.slice(0,8).map(k=>{
+        const dist = (maCP && k.code_postal && typeof cdDistanceKm==='function') ? cdDistanceKm(maCP, k.code_postal) : null;
+        return '<div class="pop-c"><span class="r">'+esc(k.numero_reference)+'</span>'+
+          '<div class="d">'+cdDate(k.date_contrat)+' · '+cdArgent(k.tarif_horaire)+'/h'+
+          (dist!=null?' · ~'+dist+' km':'')+(k.logiciel?' · '+esc(k.logiciel):'')+'</div>'+
+          '<a href="/c/'+encodeURIComponent(k.numero_reference)+'">Voir le contrat →</a></div>';
+      }).join('') +
+      (nb>8?'<div class="pop-c" style="color:var(--sourd);font-family:\'IBM Plex Mono\',monospace;font-size:11px">+ '+(nb-8)+' autre(s)…</div>':'');
+    L.marker(g.pos, { icon:icone }).addTo(map).bindPopup(contenu, { maxWidth:260 });
+    bornes.push(g.pos);
+  });
+
+  if(maPos){
+    const icoMoi = L.divIcon({ className:'', iconSize:[20,20], iconAnchor:[10,20],
+      html:'<div class="marqueur moi"></div>' });
+    L.marker(maPos, { icon:icoMoi }).addTo(map).bindPopup('<b>Votre secteur</b><br>'+esc(maCP));
+    bornes.push(maPos);
+  }
+
+  if(bornes.length){ map.fitBounds(bornes, { padding:[40,40], maxZoom:11 }); }
+  setTimeout(()=>map.invalidateSize(), 200);
+
+  const nbGeo = contrats.length - hors.length;
+  $('sous').textContent = nbGeo + ' contrat' + (nbGeo>1?'s':'') + ' disponible' + (nbGeo>1?'s':'') +
+    ' sur la carte. Positions approximatives (secteur du code postal).';
+
+  if(hors.length){
+    $('hors').style.display = '';
+    $('hors-liste').innerHTML = hors.map(k=>
+      '<a href="/c/'+encodeURIComponent(k.numero_reference)+'"><b>'+esc(k.numero_reference)+'</b> · '+
+      esc(k.ville||'—')+' · '+cdArgent(k.tarif_horaire)+'/h</a>').join('');
+  }
+})();
+</script>
+</body>
+</html>
