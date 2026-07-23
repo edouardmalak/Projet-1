@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Évaluations</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849;--rouge:#E5484D}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;min-height:100vh}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar .in{max-width:820px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar a.nav{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
+.topbar a.nav:hover{color:var(--vert-vif)}
+.wrap{max-width:820px;margin:0 auto;padding:28px 18px 50px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+h2{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);margin:26px 0 12px}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:18px;margin-bottom:12px}
+.ligne-item{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.r{font-family:'IBM Plex Mono',monospace;color:var(--vert-vif);font-weight:700;letter-spacing:.05em}
+.m{color:var(--sourd);font-size:13px;font-family:'IBM Plex Mono',monospace;margin-top:3px}
+.btn{background:var(--vert);color:#04130C;border:none;border-radius:7px;padding:9px 18px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-block}
+.btn:hover{background:var(--vert-vif)}
+.btn.ligne{background:transparent;border:1px solid var(--ligne2);color:var(--texte)}
+.btn.ligne:hover{border-color:var(--vert)}
+.vide{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-align:center;padding:26px 0}
+.retour{display:inline-block;color:var(--vert-vif);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-bottom:14px}
+/* résumé note */
+.resume{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.big{font-family:'IBM Plex Mono',monospace;font-size:34px;font-weight:700;line-height:1}
+.big small{font-size:15px;color:var(--sourd)}
+.resume .st{font-size:20px;color:var(--jaune);letter-spacing:2px}
+.resume .kpi{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd)}
+.resume .kpi b{color:var(--texte);font-size:15px;display:block}
+/* avis reçu */
+.avis{border:1px solid var(--ligne);border-radius:8px;padding:14px 16px;margin-bottom:10px;background:var(--panneau)}
+.avis .tete{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.avis .st{color:var(--jaune);letter-spacing:2px;font-size:16px}
+.avis .cite{margin-top:8px;color:var(--texte);font-size:14px;line-height:1.5}
+.avis .meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd);margin-top:8px}
+.tag{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.05em;padding:2px 8px;border-radius:99px;border:1px solid}
+.tag.oui{color:var(--vert-vif);border-color:rgba(23,201,128,.45);background:rgba(18,169,110,.1)}
+.tag.non{color:var(--sourd);border-color:var(--ligne2)}
+/* formulaire */
+.forme .avis-note{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.05em;color:var(--sourd);line-height:1.7;background:var(--panneau2);border:1px solid var(--ligne);border-radius:7px;padding:12px 14px;margin:4px 0 20px}
+.champ{margin-bottom:20px}
+.champ .lbl{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--sourd);margin-bottom:8px}
+.champ .lbl b{color:var(--rouge)}
+.etoiles{display:flex;gap:6px}
+.etoiles span{font-size:34px;color:var(--ligne2);cursor:pointer;line-height:1;transition:color .08s,transform .08s}
+.etoiles span:hover{transform:scale(1.1)}
+.etoiles span.on{color:var(--jaune)}
+.ouinon{display:flex;gap:10px}
+.ouinon button{flex:0 0 auto;background:transparent;border:1px solid var(--ligne2);color:var(--texte);border-radius:8px;padding:9px 22px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;cursor:pointer}
+.ouinon button.on{background:rgba(18,169,110,.16);border-color:var(--vert);color:var(--vert-vif)}
+textarea{width:100%;background:#0A100D;border:1px solid var(--ligne2);border-radius:8px;padding:11px 13px;color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:14px;resize:vertical;min-height:80px}
+textarea:focus{outline:none;border-color:var(--vert)}
+.forme-actions{display:flex;gap:12px;align-items:center;margin-top:8px}
+.msg{font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:10px}
+.msg.ok{color:var(--vert-vif)} .msg.err{color:var(--rouge)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html"><span class="croix"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></span>C-DIRECT</a>
+    <div class="droite" id="nav"></div>
+  </div>
+</div>
+<div class="wrap" id="wrap"><div class="vide">Chargement…</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/auth.js"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+let profil = null;
+function etoilesTxt(n){ return '★★★★★'.slice(0,n) + '☆☆☆☆☆'.slice(0,5-n); }
+function esc(s){ return String(s||'').replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+function refDepuisUrl(){ const q = new URLSearchParams(location.search).get('ref'); return q ? q.toUpperCase() : null; }
+
+(async function(){
+  profil = await cdExigerConnexion(['pharmacien','pharmacie']);
+  cdEnteteConnecte();
+  $('nav').innerHTML = (profil.role==='pharmacie'
+    ? '<a class="nav" href="/espace-pharmacie.html">Espace</a>'
+    : '<a class="nav" href="/contrats.html">Contrats</a>');
+  const ref = refDepuisUrl();
+  if(ref){ ouvrirFormulaire(ref); } else { tableauBord(); }
+})();
+
+/* ---------------- TABLEAU DE BORD ÉVALUATIONS ---------------- */
+async function tableauBord(){
+  const wrap = $('wrap');
+  wrap.innerHTML = '<h1>Évaluations</h1><p class="sous">Vos avis améliorent les jumelages. Confidentiels jusqu\'à l\'envoi des deux côtés.</p>'+
+    '<div id="resume"></div>'+
+    '<h2>À évaluer</h2><div id="afaire"><div class="vide">Chargement…</div></div>'+
+    '<h2>Notes reçues</h2><div id="recues"><div class="vide">Chargement…</div></div>';
+
+  // Résumé de ma note
+  try{
+    const { data } = await sb.rpc('get_note_profil', { p_profil: profil.id });
+    const n = (data && data[0]) || {moyenne:null, nombre:0, taux_reviendrait:0};
+    const el = $('resume');
+    if(n.nombre > 0){
+      el.innerHTML = '<div class="carte"><div class="resume">'+
+        '<div><div class="big">'+Number(n.moyenne).toFixed(2)+' <small>/5</small></div>'+
+        '<div class="st">'+etoilesTxt(Math.round(n.moyenne))+'</div></div>'+
+        '<div class="kpi">Évaluations<b>'+n.nombre+'</b></div>'+
+        '<div class="kpi">Retravailleraient<b>'+n.taux_reviendrait+' %</b></div>'+
+        '</div></div>';
+    } else {
+      el.innerHTML = '<div class="carte"><div class="vide">Aucune note reçue pour l\'instant — elle apparaîtra une fois vos contrats évalués des deux côtés.</div></div>';
+    }
+  }catch(e){ $('resume').innerHTML=''; }
+
+  // À faire
+  try{
+    const { data } = await sb.rpc('get_evaluations_a_faire');
+    const l = $('afaire');
+    if(!data || !data.length){ l.innerHTML = '<div class="vide">Rien à évaluer — bravo, vous êtes à jour.</div>'; }
+    else l.innerHTML = data.map(c =>
+      '<div class="carte"><div class="ligne-item"><div>'+
+      '<span class="r">'+esc(c.numero_reference)+'</span>'+
+      '<div class="m">'+cdDate(c.date_contrat)+' · '+esc(c.autre_nom)+'</div></div>'+
+      '<a class="btn" href="/evaluations.html?ref='+encodeURIComponent(c.numero_reference)+'">★ Évaluer</a>'+
+      '</div></div>').join('');
+  }catch(e){ $('afaire').innerHTML = '<div class="vide">—</div>'; }
+
+  // Reçues
+  try{
+    const { data } = await sb.rpc('get_evaluations_recues');
+    const l = $('recues');
+    if(!data || !data.length){ l.innerHTML = '<div class="vide">Aucun avis reçu pour l\'instant.</div>'; }
+    else l.innerHTML = data.map(a =>
+      '<div class="avis"><div class="tete"><span class="st">'+etoilesTxt(a.note)+'</span>'+
+      (a.reviendrait===true?'<span class="tag oui">Retravaillerait ✓</span>':
+       a.reviendrait===false?'<span class="tag non">Ne reviendrait pas</span>':'')+'</div>'+
+      (a.commentaire?'<div class="cite">« '+esc(a.commentaire)+' »</div>':'')+
+      '<div class="meta">'+esc(a.numero_reference)+' · '+cdDate(a.date_contrat)+'</div></div>').join('');
+  }catch(e){ $('recues').innerHTML = '<div class="vide">—</div>'; }
+}
+
+/* ---------------- FORMULAIRE D'ÉVALUATION ---------------- */
+let noteSel = 0, reviendraitSel = null, contratSel = null;
+async function ouvrirFormulaire(ref){
+  const wrap = $('wrap');
+  wrap.innerHTML = '<div class="vide">Chargement…</div>';
+  // retrouver le contrat parmi ceux « à faire »
+  let cible = null;
+  try{
+    const { data } = await sb.rpc('get_evaluations_a_faire');
+    cible = (data||[]).find(c => c.numero_reference === ref);
+  }catch(e){}
+  if(!cible){
+    wrap.innerHTML = '<a class="retour" href="/evaluations.html">← Évaluations</a>'+
+      '<div class="carte"><div class="vide">Ce contrat est introuvable, n\'est pas encore évaluable, ou vous l\'avez déjà évalué.</div></div>';
+    return;
+  }
+  contratSel = cible.contrat_id;
+  const quoi = cible.mon_role === 'pharmacie' ? 'ce pharmacien remplaçant' : 'cette pharmacie';
+  wrap.innerHTML =
+    '<a class="retour" href="/evaluations.html">← Toutes les évaluations</a>'+
+    '<h1>Évaluation</h1>'+
+    '<p class="sous">'+esc(cible.numero_reference)+' · '+cdDate(cible.date_contrat)+' · '+esc(cible.autre_nom)+'</p>'+
+    '<div class="carte forme">'+
+      '<div class="avis-note">Comment avez-vous trouvé '+quoi+' ? (≈ 20 secondes)<br>'+
+      'Vos commentaires améliorent les jumelages. Confidentiels jusqu\'à l\'envoi des deux côtés (max. 72 h).<br>'+
+      'Restez respectueux — aucune information sur un patient.</div>'+
+      '<div class="champ"><div class="lbl">Note globale <b>*</b></div>'+
+        '<div class="etoiles" id="etoiles">'+[1,2,3,4,5].map(i=>'<span data-n="'+i+'">★</span>').join('')+'</div></div>'+
+      '<div class="champ"><div class="lbl">'+(cible.mon_role==='pharmacie'?'Réembaucheriez-vous cette personne ?':'Retravailleriez-vous à cet endroit ?')+' <b>*</b></div>'+
+        '<div class="ouinon" id="ouinon"><button data-v="oui">Oui</button><button data-v="non">Non</button></div></div>'+
+      '<div class="champ"><div class="lbl">Commentaire (optionnel)</div>'+
+        '<textarea id="comm" maxlength="1000" placeholder="Ce qui s\'est bien passé, ce qui pourrait être amélioré…"></textarea></div>'+
+      '<div class="forme-actions"><button class="btn" id="envoyer">Soumettre</button>'+
+        '<a class="btn ligne" href="/evaluations.html">Passer pour l\'instant</a></div>'+
+      '<div class="msg" id="msg"></div>'+
+    '</div>';
+
+  document.querySelectorAll('#etoiles span').forEach(s=>{
+    s.onclick = ()=>{ noteSel = +s.dataset.n; peindreEtoiles(); };
+    s.onmouseenter = ()=>peindreEtoiles(+s.dataset.n);
+  });
+  $('etoiles').onmouseleave = ()=>peindreEtoiles();
+  document.querySelectorAll('#ouinon button').forEach(b=>{
+    b.onclick = ()=>{ reviendraitSel = b.dataset.v==='oui'; document.querySelectorAll('#ouinon button').forEach(x=>x.classList.toggle('on', x===b)); };
+  });
+  $('envoyer').onclick = soumettre;
+}
+function peindreEtoiles(survol){
+  const n = survol || noteSel;
+  document.querySelectorAll('#etoiles span').forEach(s=> s.classList.toggle('on', +s.dataset.n <= n));
+}
+async function soumettre(){
+  const msg = $('msg');
+  if(!noteSel){ msg.className='msg err'; msg.textContent='Choisissez une note (1 à 5 étoiles).'; return; }
+  if(reviendraitSel===null){ msg.className='msg err'; msg.textContent='Indiquez si vous reviendriez.'; return; }
+  $('envoyer').disabled = true; msg.className='msg'; msg.textContent='Envoi…';
+  const { error } = await sb.rpc('soumettre_evaluation', {
+    p_contrat: contratSel, p_note: noteSel, p_reviendrait: reviendraitSel,
+    p_commentaire: ($('comm').value || '').trim()
+  });
+  if(error){ $('envoyer').disabled=false; msg.className='msg err'; msg.textContent='Erreur : '+error.message; return; }
+  msg.className='msg ok'; msg.textContent='Merci ! Votre évaluation a été enregistrée.';
+  setTimeout(()=>location.href='/evaluations.html', 1100);
+}
+</script>
+</body>
+</html>

@@ -64,6 +64,8 @@ a.lien{color:var(--vert-vif)}
   <h1>Mon profil</h1>
   <p class="sous" id="sous">—</p>
 
+  <div id="ma-note" style="display:none"></div>
+
   <div class="carte">
     <form id="f">
       <div class="sec">Identité</div>
@@ -164,10 +166,42 @@ function msg(id, texte, ok){
   if(ok) setTimeout(()=>{ el.style.display='none'; }, 3500);
 }
 
+/* ---- ma réputation (évaluations reçues, révélées) ---- */
+function etoilesTxt(n){ return '★★★★★'.slice(0,n) + '☆☆☆☆☆'.slice(0,5-n); }
+async function rendreMaNote(){
+  const box = $('ma-note'); if(!box) return;
+  let n = null, avis = [];
+  try{ const r = await sb.rpc('get_note_profil', { p_profil: profil.id }); n = (r.data && r.data[0]) || null; }catch(e){}
+  try{ const r = await sb.rpc('get_evaluations_recues'); avis = r.data || []; }catch(e){}
+  if(!n || !n.nombre){
+    box.style.display = 'block';
+    box.innerHTML = '<div class="carte" style="margin-bottom:16px"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--sourd);margin-bottom:6px">Ma réputation</div>'+
+      '<div style="color:var(--sourd);font-size:13px">Aucune évaluation reçue pour l\'instant. Vos notes apparaîtront ici une fois vos contrats évalués des deux côtés. <a href="/evaluations.html" style="color:var(--vert-vif);text-decoration:none">Voir les évaluations →</a></div></div>';
+    return;
+  }
+  const listeAvis = avis.filter(a=>a.commentaire).slice(0,4).map(a=>
+    '<div style="border-top:1px solid var(--ligne);padding-top:10px;margin-top:10px">'+
+    '<span style="color:var(--jaune);letter-spacing:2px">'+etoilesTxt(a.note)+'</span>'+
+    '<div style="font-size:13.5px;margin-top:5px;color:var(--texte)">« '+String(a.commentaire).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))+' »</div>'+
+    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--sourd);margin-top:4px">'+a.numero_reference+' · '+cdDate(a.date_contrat)+'</div></div>').join('');
+  box.style.display = 'block';
+  box.innerHTML = '<div class="carte" style="margin-bottom:16px">'+
+    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--sourd);margin-bottom:12px">Ma réputation</div>'+
+    '<div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">'+
+      '<div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:30px;font-weight:700;line-height:1">'+Number(n.moyenne).toFixed(2)+' <span style="font-size:14px;color:var(--sourd)">/5</span></div>'+
+      '<div style="color:var(--jaune);letter-spacing:2px;font-size:18px">'+etoilesTxt(Math.round(n.moyenne))+'</div></div>'+
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--sourd)">Évaluations<b style="display:block;color:var(--texte);font-size:15px">'+n.nombre+'</b></div>'+
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--sourd)">'+(profil.role==='pharmacie'?'Réembaucheraient':'Retravailleraient')+'<b style="display:block;color:var(--texte);font-size:15px">'+n.taux_reviendrait+' %</b></div>'+
+      '<a href="/evaluations.html" style="margin-left:auto;color:var(--vert-vif);text-decoration:none;font-family:\'IBM Plex Mono\',monospace;font-size:12px">Toutes les évaluations →</a>'+
+    '</div>'+ listeAvis +'</div>';
+}
+
 (async function(){
   profil = await cdExigerConnexion();
   cdEnteteConnecte();
   $('sous').textContent = (profil.role==='pharmacie' ? 'PHARMACIE' : profil.role==='admin' ? 'ADMINISTRATEUR' : 'PHARMACIEN(NE) REMPLAÇANT(E)') + ' · ' + (profil.courriel||'');
+
+  if(profil.role !== 'admin') rendreMaNote();
 
   /* cases logiciels (pharmacien) + select logiciel (pharmacie) */
   $('coches-logiciels').innerHTML = LOGICIELS.map(l=>

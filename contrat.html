@@ -110,6 +110,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
     </div>
     <p class="sous" id="sous">—</p>
     <a id="lien-messagerie" href="#" style="display:none;margin:2px 0 10px;text-decoration:none;color:var(--vert-vif);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.04em">Messagerie avec l'autre partie →</a>
+    <a id="lien-evaluer" href="#" style="display:none;margin:2px 0 10px 18px;text-decoration:none;color:var(--jaune);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.04em">★ Évaluer l'autre partie →</a>
 
     <div class="grille">
       <div class="cellule"><small>Date</small><b id="date">—</b></div>
@@ -278,6 +279,12 @@ function msg(texte, type){
     const lm = $('lien-messagerie');
     lm.href = '/messages.html?ref=' + encodeURIComponent(k.numero_reference);
     lm.style.display = 'inline-block';
+  }
+  /* évaluer l'autre partie — contrat passé + je suis une partie (non admin) */
+  if((k.statut==='attribue' || k.statut==='complete') && dateContratPassee && suisPartie && profil.role!=='admin'){
+    const le = $('lien-evaluer');
+    le.href = '/evaluations.html?ref=' + encodeURIComponent(k.numero_reference);
+    le.style.display = 'inline-block';
   }
   if(k.statut === 'attribue' && dateContratPassee && suisPartie){
     $('bloc-completer').style.display = '';
