@@ -469,6 +469,25 @@ async function chargerCandidats(k, zone){
     row.append(nom, type, det, etat);
     bloc.appendChild(row);
 
+    /* réputation + compétences — pour choisir selon le profil, pas juste le tarif */
+    const meta = document.createElement('div');
+    meta.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 2px';
+    if(c.note_nombre > 0){
+      const nb = document.createElement('span');
+      nb.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--jaune);border:1px solid rgba(232,184,73,.4);background:rgba(232,184,73,.1);border-radius:99px;padding:2px 9px";
+      nb.textContent = '★ ' + Number(c.note_moyenne).toFixed(1) + ' · ' + c.note_nombre + ' avis';
+      meta.appendChild(nb);
+    }
+    const puce = (txt, couleur) => {
+      const s = document.createElement('span'); s.textContent = txt;
+      s.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:" + couleur + ";border:1px solid var(--ligne2);border-radius:99px;padding:2px 8px";
+      return s;
+    };
+    (c.logiciels||[]).forEach(l => meta.appendChild(puce(l, 'var(--vert-vif)')));
+    (c.competences||[]).forEach(l => meta.appendChild(puce(l, 'var(--sourd)')));
+    (c.langues_parlees||[]).forEach(l => meta.appendChild(puce(l, 'var(--sourd)')));
+    if(meta.children.length) bloc.appendChild(meta);
+
     /* actions */
     if(k.statut === 'ouvert' && (c.statut === 'propose' || c.statut === 'contre_offre')){
       const actions = document.createElement('div');

@@ -101,6 +101,12 @@ a.lien{color:var(--vert-vif)}
         <div class="champ"><label>Logiciels maîtrisés</label>
           <div class="coches" id="coches-logiciels"></div>
         </div>
+        <div class="champ"><label>Compétences additionnelles</label>
+          <div class="coches" id="coches-competences"></div>
+        </div>
+        <div class="champ"><label>Langues parlées</label>
+          <div class="coches" id="coches-langues"></div>
+        </div>
       </div>
 
       <!-- PHARMACIE -->
@@ -158,6 +164,8 @@ a.lien{color:var(--vert-vif)}
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 const LOGICIELS = ['Kroll','AssystRx','Mentor','PrioRx','RxPro','Ubik','ReflexRx (XDRx)',"L'Ordonnance (Logipharm)",'Pharmaclik'];
+const COMPETENCES = ['Loi 41','Loi 31','Vaccination','INR / ACO','MAPA','Méthadone','Suboxone','Magistrales non stériles','Magistrales stériles','Dispills / piluliers','Clé DSQ','Soins pharmaceutiques avancés'];
+const LANGUES = ['Français','Anglais','Espagnol','Arabe','Créole','Mandarin','Autre'];
 let profil = null;
 
 function msg(id, texte, ok){
@@ -170,12 +178,17 @@ function msg(id, texte, ok){
 function etoilesTxt(n){ return '★★★★★'.slice(0,n) + '☆☆☆☆☆'.slice(0,5-n); }
 async function rendreMaNote(){
   const box = $('ma-note'); if(!box) return;
-  let n = null, avis = [];
+  let n = null, avis = [], stats = null;
   try{ const r = await sb.rpc('get_note_profil', { p_profil: profil.id }); n = (r.data && r.data[0]) || null; }catch(e){}
   try{ const r = await sb.rpc('get_evaluations_recues'); avis = r.data || []; }catch(e){}
+  if(profil.role==='pharmacien'){ try{ const r = await sb.rpc('get_stats_pharmacien', { p_profil: profil.id }); stats = (r.data && r.data[0]) || null; }catch(e){} }
+  const statsKpi = (stats && stats.completes > 0)
+    ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--sourd)">Mandats complétés<b style="display:block;color:var(--texte);font-size:15px">'+stats.completes+'</b></div>'
+    : '';
   if(!n || !n.nombre){
     box.style.display = 'block';
     box.innerHTML = '<div class="carte" style="margin-bottom:16px"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--sourd);margin-bottom:6px">Ma réputation</div>'+
+      (statsKpi ? '<div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;margin-bottom:8px">'+statsKpi+'</div>' : '')+
       '<div style="color:var(--sourd);font-size:13px">Aucune évaluation reçue pour l\'instant. Vos notes apparaîtront ici une fois vos contrats évalués des deux côtés. <a href="/evaluations.html" style="color:var(--vert-vif);text-decoration:none">Voir les évaluations →</a></div></div>';
     return;
   }
@@ -192,6 +205,7 @@ async function rendreMaNote(){
       '<div style="color:var(--jaune);letter-spacing:2px;font-size:18px">'+etoilesTxt(Math.round(n.moyenne))+'</div></div>'+
       '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--sourd)">Évaluations<b style="display:block;color:var(--texte);font-size:15px">'+n.nombre+'</b></div>'+
       '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--sourd)">'+(profil.role==='pharmacie'?'Réembaucheraient':'Retravailleraient')+'<b style="display:block;color:var(--texte);font-size:15px">'+n.taux_reviendrait+' %</b></div>'+
+      statsKpi+
       '<a href="/evaluations.html" style="margin-left:auto;color:var(--vert-vif);text-decoration:none;font-family:\'IBM Plex Mono\',monospace;font-size:12px">Toutes les évaluations →</a>'+
     '</div>'+ listeAvis +'</div>';
 }
@@ -205,6 +219,10 @@ async function rendreMaNote(){
 
   /* cases logiciels (pharmacien) + select logiciel (pharmacie) */
   $('coches-logiciels').innerHTML = LOGICIELS.map(l=>
+    '<label><input type="checkbox" value="'+l.replace(/"/g,'&quot;')+'"> '+l+'</label>').join('');
+  $('coches-competences').innerHTML = COMPETENCES.map(l=>
+    '<label><input type="checkbox" value="'+l.replace(/"/g,'&quot;')+'"> '+l+'</label>').join('');
+  $('coches-langues').innerHTML = LANGUES.map(l=>
     '<label><input type="checkbox" value="'+l.replace(/"/g,'&quot;')+'"> '+l+'</label>').join('');
   LOGICIELS.forEach(l=>{ const o=document.createElement('option'); o.textContent=l; $('logiciel').appendChild(o); });
 
@@ -227,6 +245,14 @@ async function rendreMaNote(){
     $('rayon_deplacement_km').value=profil.rayon_deplacement_km??'';
     (profil.logiciels||[]).forEach(l=>{
       const c=[...document.querySelectorAll('#coches-logiciels input')].find(i=>i.value===l);
+      if(c) c.checked=true;
+    });
+    (profil.competences||[]).forEach(l=>{
+      const c=[...document.querySelectorAll('#coches-competences input')].find(i=>i.value===l);
+      if(c) c.checked=true;
+    });
+    (profil.langues_parlees||[]).forEach(l=>{
+      const c=[...document.querySelectorAll('#coches-langues input')].find(i=>i.value===l);
       if(c) c.checked=true;
     });
   }
@@ -266,6 +292,7 @@ async function rendreMaNote(){
       maj.code_postal=$('cp_pharmacien').value.trim()||null;
       maj.rayon_deplacement_km=$('rayon_deplacement_km').value||null;
       maj.logiciels=[...document.querySelectorAll('#coches-logiciels input:checked')].map(i=>i.value);
+      maj.competences=[...document.querySelectorAll('#coches-competences input:checked')].map(i=>i.value);
     }
     if(profil.role==='pharmacie'){
       maj.nom_pharmacie=$('nom_pharmacie').value.trim()||null;
@@ -290,6 +317,12 @@ async function rendreMaNote(){
     if($('langue')){
       const { error: eLang } = await sb.from('profiles').update({ langue: $('langue').value || 'fr' }).eq('id', profil.id);
       if(eLang) console.warn('langue non enregistrée (exécuter sql/15) :', eLang.message);
+    }
+    /* langues parlées : colonne ajoutée par sql/20 — enregistrement tolérant. */
+    if(profil.role==='pharmacien'){
+      const langues=[...document.querySelectorAll('#coches-langues input:checked')].map(i=>i.value);
+      const { error: eLp } = await sb.from('profiles').update({ langues_parlees: langues }).eq('id', profil.id);
+      if(eLp) console.warn('langues_parlees non enregistrées (exécuter sql/20) :', eLp.message);
     }
     if(profil.role==='pharmacien' && $('tps')){
       const { error: eFac } = await sb.from('profiles').update({
