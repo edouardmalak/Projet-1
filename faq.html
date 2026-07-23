@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Foire aux questions</title>
+<meta name="description" content="Questions fréquentes sur C-Direct : 0 % commission, paiement Interac direct, indemnités, évaluations, facturation.">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--blanc:#FAFBF9;--menthe:#E7F2EC;--vert:#0B6E4F;--vert-fonce:#084C37;--encre:#1B2622;--gris:#5A6B63;--ligne:#D5E3DB}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.in{max-width:820px;margin:0 auto;padding:0 24px}
+.topbar{border-bottom:1px solid var(--ligne);background:var(--blanc);position:sticky;top:0;z-index:20}
+.topbar .in{height:64px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--encre);font-weight:600;white-space:nowrap}
+.croix{width:32px;height:32px;display:grid;place-items:center;background:var(--vert);border-radius:8px;flex:none}
+.retour{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--vert);text-decoration:none}
+.retour:hover{color:var(--vert-fonce)}
+header.hero{padding:52px 0 24px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert);margin-bottom:14px}
+h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(30px,5vw,44px);line-height:1.05;letter-spacing:-.02em}
+.lead{margin-top:14px;color:var(--gris);font-size:18px;max-width:52ch}
+.groupe{margin:36px 0 8px}
+.groupe h2{font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--vert);margin-bottom:6px}
+.qa{border-bottom:1px solid var(--ligne)}
+.qa button{width:100%;background:none;border:none;cursor:pointer;text-align:left;padding:18px 40px 18px 0;font-family:'Instrument Sans',sans-serif;font-size:17px;font-weight:600;color:var(--encre);position:relative}
+.qa button::after{content:"+";position:absolute;right:6px;top:50%;transform:translateY(-50%);font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--vert);transition:transform .18s}
+.qa.open button::after{content:"–"}
+.qa .rep{max-height:0;overflow:hidden;transition:max-height .22s ease;color:var(--gris)}
+.qa .rep p{padding:0 8px 20px 0}
+.qa.open .rep{max-height:400px}
+footer{border-top:1px solid var(--ligne);margin-top:56px;padding:34px 0;color:var(--gris)}
+footer .in{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;align-items:center}
+footer a{color:var(--vert);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:13px;margin-left:16px}
+footer a:first-child{margin-left:0}
+.contact{background:var(--menthe);border:1px solid var(--ligne);border-radius:12px;padding:22px 24px;margin-top:34px}
+.contact b{font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--vert-fonce)}
+.contact p{margin-top:6px;color:var(--gris)}
+.contact a{color:var(--vert);font-weight:600;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="in">
+  <a class="brand" href="/index.html"><span class="croix"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z" fill="#fff"/></svg></span>C-Direct</a>
+  <a class="retour" href="/index.html">← Accueil</a>
+</div></div>
+
+<header class="hero"><div class="in">
+  <div class="eyebrow">Foire aux questions</div>
+  <h1>Tout ce qu'il faut savoir</h1>
+  <p class="lead">C-Direct relie directement pharmacies et pharmaciens remplaçants au Québec — 0 % commission, paiement Interac direct. Voici les questions les plus fréquentes.</p>
+</div></header>
+
+<main class="in">
+  <div class="groupe"><h2>Pharmaciens remplaçants</h2></div>
+
+  <div class="qa"><button>C-Direct prend-il une commission sur mon tarif ?</button><div class="rep"><p>Non. C-Direct facture 0 % de commission. Vous conservez 100 % de votre tarif. L'argent ne transite jamais par C-Direct : la pharmacie vous paie directement par Interac.</p></div></div>
+
+  <div class="qa"><button>Comment sont calculées les indemnités (déplacement, per diem, hébergement) ?</button><div class="rep"><p>Automatiquement, selon la distance aller simple. Le déplacement est remboursé au taux du réseau (par km aller-retour). Le per diem (repas) et l'hébergement s'appliquent lorsque la distance atteint le seuil du réseau (100 km aller simple). Vous voyez l'estimation complète — honoraires + indemnités + total — avant même de postuler.</p></div></div>
+
+  <div class="qa"><button>Puis-je proposer un autre tarif ou d'autres heures ?</button><div class="rep"><p>Oui. Vous pouvez postuler au tarif affiché en un geste, ou faire une offre négociée avec votre propre tarif et un horaire proposé. La pharmacie peut accepter, refuser ou faire une contre-offre.</p></div></div>
+
+  <div class="qa"><button>Comment fonctionne la compatibilité affichée sur les contrats ?</button><div class="rep"><p>C-Direct estime votre compatibilité avec chaque contrat à partir des logiciels que vous maîtrisez et de la distance par rapport à votre rayon de déplacement. Plus votre profil est complet (logiciels, compétences, rayon, code postal), plus les suggestions sont justes.</p></div></div>
+
+  <div class="qa"><button>Comment suis-je payé, et quand ?</button><div class="rep"><p>Directement par la pharmacie, par virement Interac, selon les modalités du réseau. Une facture MANDAT professionnelle (avec TPS/TVQ si vous êtes inscrit) est générée automatiquement une fois le contrat complété.</p></div></div>
+
+  <div class="qa"><button>Y a-t-il des évaluations ?</button><div class="rep"><p>Oui. Après un contrat complété, la pharmacie et vous pouvez vous évaluer mutuellement (1 à 5 étoiles). Les avis restent confidentiels jusqu'à ce que les deux parties aient soumis — ou 72 h après le contrat — pour éviter les représailles. Votre note apparaît sur votre profil.</p></div></div>
+
+  <div class="qa"><button>Puis-je voir les contrats sur une carte ?</button><div class="rep"><p>Oui. La page Carte affiche les contrats ouverts par secteur, avec la distance depuis chez vous, et des filtres par jour, par mois ou par jour de la semaine.</p></div></div>
+
+  <div class="qa"><button>Comment recevoir les nouveaux contrats ?</button><div class="rep"><p>Activez les alertes SMS dans votre profil : les pharmaciens compatibles sont notifiés automatiquement dès qu'un contrat est publié. Vous pouvez aussi consulter le tableau des contrats ouverts et la carte à tout moment.</p></div></div>
+
+  <div class="groupe"><h2>Pharmacies</h2></div>
+
+  <div class="qa"><button>Combien coûte C-Direct pour une pharmacie ?</button><div class="rep"><p>C-Direct met en lien directement, sans intermédiaire ni exclusivité. Vous publiez un contrat en moins d'une minute et les pharmaciens compatibles sont notifiés automatiquement.</p></div></div>
+
+  <div class="qa"><button>Puis-je choisir selon les compétences, pas seulement le tarif ?</button><div class="rep"><p>Oui. Chaque candidature affiche la note du pharmacien, les logiciels qu'il maîtrise, ses compétences (Loi 41, INR, méthadone, etc.), ses langues, et le coût total estimé (honoraires + indemnités). Vous acceptez en un clic ou faites une contre-offre.</p></div></div>
+
+  <div class="qa"><button>Que se passe-t-il en cas d'annulation ?</button><div class="rep"><p>Le réseau applique une protection d'annulation : une pénalité s'applique à moins de 7 jours (50 %) et à moins de 48 h (100 %) du contrat, afin de protéger les deux parties.</p></div></div>
+
+  <div class="qa"><button>Puis-je communiquer avec le pharmacien retenu ?</button><div class="rep"><p>Oui. Une messagerie s'ouvre par contrat une fois celui-ci confirmé des deux côtés — directement, sans intermédiaire.</p></div></div>
+
+  <div class="contact">
+    <b>Une autre question ?</b>
+    <p>Écrivez-nous à <a href="mailto:info@c-direct.ca">info@c-direct.ca</a> — nous répondons rapidement.</p>
+  </div>
+</main>
+
+<footer><div class="in">
+  <span style="font-family:'IBM Plex Mono',monospace;font-size:13px">© C-Direct · 0 % commission</span>
+  <div>
+    <a href="/regles.html">Règles du réseau</a>
+    <a href="/conditions.html">Conditions</a>
+    <a href="/confidentialite.html">Confidentialité</a>
+  </div>
+</div></footer>
+
+<script>
+document.querySelectorAll('.qa button').forEach(b=>{
+  b.onclick = ()=> b.parentElement.classList.toggle('open');
+});
+</script>
+</body>
+</html>
