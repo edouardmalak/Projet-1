@@ -160,6 +160,12 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
     </div>
 
     <div id="zone-postuler" style="display:none">
+      <div id="bloc-remuneration" style="display:none;border:1px solid var(--ligne2);border-radius:8px;background:var(--panneau2);padding:14px 16px;margin-bottom:14px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:10px">Votre rémunération estimée</div>
+        <div id="remu-lignes"></div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid var(--ligne);margin-top:8px;padding-top:8px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px"><span>Total estimé</span><span id="remu-total-val" style="color:var(--vert-vif)">—</span></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--sourd);margin-top:8px;line-height:1.5">Indemnités calculées automatiquement par le réseau selon la distance (aller simple) — jamais négociées avec la pharmacie.</div>
+      </div>
       <button class="btn" id="btn-instant">Postuler au tarif affiché</button>
       <div class="indice-btn">Acceptation en un geste par la pharmacie — le plus rapide l'emporte</div>
       <button class="btn-sec" id="btn-offrir">Faire une offre</button>
@@ -257,18 +263,42 @@ function msg(texte, type){
   /* ---- Estimation (Phase 2.3) — base toujours affichée ; km + indemnités
      dès que les codes postaux permettent le calcul de distance. Défensif :
      ne doit JAMAIS casser la fiche si fsa-qc / regles / codes manquent. ---- */
-  let distApply = null;
+  let distApply = null, reglesReseau = null;
   try{
     if(typeof cdDistanceKm === 'function'){
       const maCP = profil.code_postal || null;
       distApply = (maCP && k.code_postal) ? cdDistanceKm(maCP, k.code_postal) : null;
     }
     const { data: rg } = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle();
+    reglesReseau = rg || null;
     if(rg && typeof cdEstimation === 'function'){
       const est = cdEstimation(k.tarif_horaire, k.heure_debut, k.heure_fin, distApply, rg);
       if(est && est.ligne){ $('bloc-estim').style.display = ''; $('estim').textContent = est.ligne; }
     }
   }catch(e){ /* l'estimation est un plus : jamais bloquante */ }
+
+  /* ---- Panneau de rémunération estimée (pharmacien qui postule) ---- */
+  function rendreRemuneration(tarif, hd, hf){
+    if(!reglesReseau || typeof cdEstimation !== 'function') return;
+    const est = cdEstimation(tarif, hd, hf, distApply, reglesReseau);
+    if(!est) return;
+    const bloc = $('bloc-remuneration'); if(!bloc) return;
+    const seuilP = reglesReseau.seuil_per_diem_km, seuilH = reglesReseau.seuil_hebergement_km;
+    const taux = parseFloat(reglesReseau.taux_km).toFixed(2).replace('.',',');
+    const row = (label, val, muted) => '<div style="display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-family:\'IBM Plex Mono\',monospace;font-size:12.5px;'+(muted?'color:var(--sourd)':'')+'"><span>'+label+'</span><span style="white-space:nowrap">'+val+'</span></div>';
+    const rows = [];
+    rows.push(row('Honoraires · '+cdArgent(tarif).replace(',00','')+'/h × '+(Math.round(est.heures*100)/100)+' h', cdArgent(est.base)));
+    if(est.kmAR != null) rows.push(row('Déplacement · '+est.kmAR+' km A/R × '+taux+' $', cdArgent(est.montantKm)));
+    else rows.push(row('Déplacement', 'Ajoutez votre code postal au profil', true));
+    if(est.perDiem) rows.push(row('Per diem (repas)', cdArgent(est.montantPerDiem)));
+    else rows.push(row('Per diem (repas)', 'Non admissible — aller simple < '+seuilP+' km', true));
+    if(est.hebergement) rows.push(row('Hébergement', cdArgent(est.montantHebergement)));
+    else rows.push(row('Hébergement', 'Non admissible — aller simple < '+seuilH+' km', true));
+    $('remu-lignes').innerHTML = rows.join('');
+    $('remu-total-val').textContent = cdArgent(est.total);
+    bloc.style.display = '';
+    if($('bloc-estim')) $('bloc-estim').style.display = 'none'; /* le panneau riche remplace la ligne terse */
+  }
 
   /* ---- Phase 3 : marquer complété (l'une OU l'autre des parties) ----
      Contrat attribué + date passée + je suis la pharmacie propriétaire
@@ -367,6 +397,15 @@ function msg(texte, type){
     } else if(k.statut === 'ouvert'){
       $('zone-postuler').style.display = '';
       $('o-tarif').value = k.tarif_horaire;
+      rendreRemuneration(k.tarif_horaire, k.heure_debut, k.heure_fin);
+      ['o-tarif','o-debut','o-fin'].forEach(id=>{
+        const el = $(id); if(!el) return;
+        el.addEventListener('input', ()=>{
+          const t = parseFloat($('o-tarif').value) || k.tarif_horaire;
+          const hd = $('o-debut').value || k.heure_debut, hf = $('o-fin').value || k.heure_fin;
+          rendreRemuneration(t, hd, hf);
+        });
+      });
 
       async function postuler(payload, apres, sujetAlerte, messageAlerte){
         ['btn-instant','btn-offrir','btn-envoyer'].forEach(b=>{ $(b).disabled = true; });

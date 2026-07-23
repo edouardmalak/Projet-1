@@ -194,6 +194,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 <script src="/supabase-config.js"></script>
 <script src="/auth.js"></script>
 <script src="/outils.js"></script>
+<script src="/fsa-qc.js"></script>
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
@@ -477,6 +478,17 @@ async function chargerCandidats(k, zone){
       nb.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--jaune);border:1px solid rgba(232,184,73,.4);background:rgba(232,184,73,.1);border-radius:99px;padding:2px 9px";
       nb.textContent = '★ ' + Number(c.note_moyenne).toFixed(1) + ' · ' + c.note_nombre + ' avis';
       meta.appendChild(nb);
+    }
+    /* coût total estimé (honoraires + déplacement + indemnités) */
+    if(regles && typeof cdEstimation === 'function'){
+      const est = cdEstimation(c.tarif_propose, c.heure_debut_proposee||k.heure_debut, c.heure_fin_proposee||k.heure_fin, c.distance_km, regles);
+      if(est){
+        const tot = document.createElement('span');
+        tot.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--vert-vif);border:1px solid rgba(23,201,128,.4);background:rgba(18,169,110,.1);border-radius:99px;padding:2px 9px;font-weight:700";
+        tot.textContent = '≈ ' + cdArgent(est.total) + ' total';
+        tot.title = 'Honoraires + déplacement' + (est.perDiem?' + per diem':'') + (est.hebergement?' + hébergement':'');
+        meta.appendChild(tot);
+      }
     }
     const puce = (txt, couleur) => {
       const s = document.createElement('span'); s.textContent = txt;
