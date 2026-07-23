@@ -35,16 +35,19 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 .jour.vide{background:transparent;border-color:transparent}
 .jour.auj{box-shadow:inset 0 0 0 1px var(--jaune)}
 .jour.a-contrat{border-color:var(--vert)}
+.jour.a-ouvert{border-color:var(--ligne2);border-style:dashed}
 .jour .n{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
 .pastille{margin-top:4px;display:block;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.03em;padding:2px 5px;border-radius:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;cursor:pointer}
 .pastille.attribue{background:rgba(232,184,73,.16);color:var(--jaune);border:1px solid rgba(232,184,73,.4)}
 .pastille.complete{background:rgba(18,169,110,.16);color:var(--vert-vif);border:1px solid rgba(23,201,128,.4)}
+.pastille.ouvert{background:rgba(126,148,138,.12);color:var(--sourd);border:1px dashed var(--ligne2)}
 .pastille:hover{filter:brightness(1.25)}
 .legende{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd)}
 .legende span{display:inline-flex;align-items:center;gap:7px}
 .pnt{width:12px;height:12px;border-radius:3px;display:inline-block}
 .pnt.attribue{background:rgba(232,184,73,.16);border:1px solid rgba(232,184,73,.4)}
 .pnt.complete{background:rgba(18,169,110,.16);border:1px solid rgba(23,201,128,.4)}
+.pnt.ouvert{background:rgba(126,148,138,.12);border:1px dashed var(--ligne2)}
 .chargement{padding:40px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
 </style>
 </head>
@@ -57,7 +60,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 </div>
 <div class="wrap">
   <h1>Calendrier</h1>
-  <p class="sous">Vos contrats confirmés par journée. Touchez un contrat pour l'ouvrir.</p>
+  <p class="sous">Vos contrats par journée — publiés en attente et confirmés. Touchez un contrat pour l'ouvrir.</p>
   <div class="carte">
     <div class="chargement" id="chargement">Chargement du calendrier…</div>
     <div id="cal" style="display:none">
@@ -72,6 +75,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
       <div class="grille-jours" id="jours-tete"></div>
       <div class="grille-jours" id="grille" style="margin-top:6px"></div>
       <div class="legende">
+        <span><i class="pnt ouvert"></i> Publié (en attente)</span>
         <span><i class="pnt attribue"></i> Attribué</span>
         <span><i class="pnt complete"></i> Complété</span>
       </div>
@@ -95,7 +99,7 @@ function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0
   cdEnteteConnecte();
   try{
     const { data } = await sb.from('contrats').select('numero_reference,date_contrat,statut')
-      .eq('pharmacie_id', profil.id).in('statut',['attribue','complete']);
+      .eq('pharmacie_id', profil.id).in('statut',['ouvert','attribue','complete']);
     (data||[]).forEach(k=>{ const j=String(k.date_contrat).slice(0,10); if(!parJour.has(j)) parJour.set(j,[]); parJour.get(j).push(k); });
   }catch(e){}
   $('chargement').style.display='none'; $('cal').style.display='';
@@ -119,7 +123,9 @@ function dessiner(){
     const cell=document.createElement('div'); cell.className='jour';
     if(date===ajd) cell.classList.add('auj');
     const liste = parJour.get(date) || [];
-    if(liste.length) cell.classList.add('a-contrat');
+    liste.sort((a,b)=> (a.statut==='ouvert'?1:0) - (b.statut==='ouvert'?1:0));
+    if(liste.some(x=>x.statut==='attribue'||x.statut==='complete')) cell.classList.add('a-contrat');
+    else if(liste.length) cell.classList.add('a-ouvert');
     const n=document.createElement('div'); n.className='n'; n.textContent=d; cell.appendChild(n);
     liste.slice(0,2).forEach(k=>{
       const a=document.createElement('a'); a.className='pastille '+k.statut; a.textContent=k.numero_reference;
