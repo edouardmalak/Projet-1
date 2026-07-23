@@ -21,7 +21,17 @@ body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',san
 .wrap{max-width:1100px;margin:0 auto;padding:24px 18px 50px}
 h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
 .sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:16px}
-#carte{height:66vh;min-height:420px;border:1px solid var(--ligne);border-radius:10px;overflow:hidden;background:var(--panneau)}
+.filtres{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.seg{display:inline-flex;border:1px solid var(--ligne2);border-radius:8px;overflow:hidden}
+.seg button{background:transparent;border:none;border-right:1px solid var(--ligne2);color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:8px 13px;cursor:pointer}
+.seg button:last-child{border-right:none}
+.seg button:hover{color:var(--texte)}
+.seg button.on{background:rgba(18,169,110,.16);color:var(--vert-vif)}
+.filtres input,.filtres select{background:var(--panneau2);border:1px solid var(--ligne2);border-radius:7px;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:7px 10px}
+.filtres input:focus,.filtres select:focus{outline:none;border-color:var(--vert)}
+.filtres .compte{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd)}
+.filtres .compte b{color:var(--vert-vif)}
+#carte{height:62vh;min-height:400px;border:1px solid var(--ligne);border-radius:10px;overflow:hidden;background:var(--panneau)}
 .leaflet-container{background:#0A100D;font-family:'Instrument Sans',sans-serif}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--panneau);color:var(--texte);border:1px solid var(--ligne2)}
 .leaflet-popup-content{margin:12px 14px;font-size:13px}
@@ -62,7 +72,29 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
 </div>
 <div class="wrap">
   <h1>Carte des contrats</h1>
-  <p class="sous" id="sous">Contrats ouverts près de vous. Positions approximatives (secteur du code postal).</p>
+  <p class="sous">Contrats ouverts près de vous. Positions approximatives (secteur du code postal).</p>
+
+  <div class="filtres">
+    <div class="seg" id="seg">
+      <button data-m="tous" class="on">Tous</button>
+      <button data-m="jour">Par jour</button>
+      <button data-m="mois">Par mois</button>
+      <button data-m="jsem">Jour de semaine</button>
+    </div>
+    <input type="date" id="f-jour" style="display:none">
+    <input type="month" id="f-mois" style="display:none">
+    <select id="f-jsem" style="display:none">
+      <option value="1">Lundi</option>
+      <option value="2">Mardi</option>
+      <option value="3">Mercredi</option>
+      <option value="4">Jeudi</option>
+      <option value="5">Vendredi</option>
+      <option value="6">Samedi</option>
+      <option value="0">Dimanche</option>
+    </select>
+    <span class="compte" id="compte">—</span>
+  </div>
+
   <div id="carte"><div class="chargement">Chargement de la carte…</div></div>
   <div class="legende">
     <span><i class="pnt vert"></i> Contrat disponible</span>
@@ -82,26 +114,63 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
-let profil = null;
+let profil = null, contrats = [], map = null, couche = null, maCP = null, maPos = null;
+let filtre = { mode:'tous', jour:null, mois:null, jsem:null };
 function esc(s){ return String(s||'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+function jourSemaine(d){ return new Date(String(d).slice(0,10)+'T12:00:00').getDay(); } // 0=dim..6=sam
+
+function passeFiltre(k){
+  const d = String(k.date_contrat).slice(0,10);
+  if(filtre.mode==='jour')  return filtre.jour ? d === filtre.jour : true;
+  if(filtre.mode==='mois')  return filtre.mois ? d.slice(0,7) === filtre.mois : true;
+  if(filtre.mode==='jsem')  return filtre.jsem!=null ? jourSemaine(d) === filtre.jsem : true;
+  return true; // tous
+}
 
 (async function(){
   profil = await cdExigerConnexion(['pharmacien']);
   cdEnteteConnecte();
-  let contrats = [];
   try{ const { data } = await sb.rpc('get_contrats_ouverts'); contrats = data || []; }catch(e){}
 
-  const map = L.map('carte', { zoomControl:true, scrollWheelZoom:true }).setView([47.0, -71.5], 6);
+  map = L.map('carte', { zoomControl:true, scrollWheelZoom:true }).setView([47.0, -71.5], 6);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution:'© OpenStreetMap · © CARTO', maxZoom:19, subdomains:'abcd'
   }).addTo(map);
+  couche = L.layerGroup().addTo(map);
 
-  const maCP = profil.code_postal || null;
-  const maPos = (maCP && window.CD_FSA_QC) ? CD_FSA_QC[cdFsa(maCP)] : null;
+  maCP = profil.code_postal || null;
+  maPos = (maCP && window.CD_FSA_QC) ? CD_FSA_QC[cdFsa(maCP)] : null;
+  if(maPos){
+    const icoMoi = L.divIcon({ className:'', iconSize:[20,20], iconAnchor:[10,20], html:'<div class="marqueur moi"></div>' });
+    L.marker(maPos, { icon:icoMoi }).addTo(map).bindPopup('<b>Votre secteur</b><br>'+esc(maCP));
+  }
 
-  // regrouper les contrats par secteur (FSA) pour éviter les marqueurs superposés
-  const groupes = {}; const hors = [];
-  contrats.forEach(k=>{
+  /* contrôles de filtre */
+  document.querySelectorAll('#seg button').forEach(b=>{
+    b.onclick = ()=>{
+      document.querySelectorAll('#seg button').forEach(x=>x.classList.toggle('on', x===b));
+      filtre.mode = b.dataset.m;
+      $('f-jour').style.display = filtre.mode==='jour' ? '' : 'none';
+      $('f-mois').style.display = filtre.mode==='mois' ? '' : 'none';
+      $('f-jsem').style.display = filtre.mode==='jsem' ? '' : 'none';
+      if(filtre.mode==='jsem' && filtre.jsem==null) filtre.jsem = parseInt($('f-jsem').value);
+      dessiner();
+    };
+  });
+  $('f-jour').onchange = ()=>{ filtre.jour = $('f-jour').value || null; dessiner(); };
+  $('f-mois').onchange = ()=>{ filtre.mois = $('f-mois').value || null; dessiner(); };
+  $('f-jsem').onchange = ()=>{ filtre.jsem = parseInt($('f-jsem').value); dessiner(); };
+
+  dessiner();
+  setTimeout(()=>map.invalidateSize(), 200);
+})();
+
+function dessiner(){
+  couche.clearLayers();
+  const visibles = contrats.filter(passeFiltre);
+
+  const groupes = {}, hors = [];
+  visibles.forEach(k=>{
     const pos = (k.code_postal && window.CD_FSA_QC) ? CD_FSA_QC[cdFsa(k.code_postal)] : null;
     if(!pos){ hors.push(k); return; }
     const cle = pos[0]+','+pos[1];
@@ -122,31 +191,22 @@ function esc(s){ return String(s||'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;
           '<a href="/c/'+encodeURIComponent(k.numero_reference)+'">Voir le contrat →</a></div>';
       }).join('') +
       (nb>8?'<div class="pop-c" style="color:var(--sourd);font-family:\'IBM Plex Mono\',monospace;font-size:11px">+ '+(nb-8)+' autre(s)…</div>':'');
-    L.marker(g.pos, { icon:icone }).addTo(map).bindPopup(contenu, { maxWidth:260 });
+    L.marker(g.pos, { icon:icone }).addTo(couche).bindPopup(contenu, { maxWidth:260 });
     bornes.push(g.pos);
   });
-
-  if(maPos){
-    const icoMoi = L.divIcon({ className:'', iconSize:[20,20], iconAnchor:[10,20],
-      html:'<div class="marqueur moi"></div>' });
-    L.marker(maPos, { icon:icoMoi }).addTo(map).bindPopup('<b>Votre secteur</b><br>'+esc(maCP));
-    bornes.push(maPos);
-  }
-
+  if(maPos) bornes.push(maPos);
   if(bornes.length){ map.fitBounds(bornes, { padding:[40,40], maxZoom:11 }); }
-  setTimeout(()=>map.invalidateSize(), 200);
 
-  const nbGeo = contrats.length - hors.length;
-  $('sous').textContent = nbGeo + ' contrat' + (nbGeo>1?'s':'') + ' disponible' + (nbGeo>1?'s':'') +
-    ' sur la carte. Positions approximatives (secteur du code postal).';
+  const nbGeo = visibles.length - hors.length;
+  $('compte').innerHTML = '<b>'+visibles.length+'</b> contrat'+(visibles.length>1?'s':'')+(visibles.length? ' · '+nbGeo+' sur la carte':'');
 
   if(hors.length){
     $('hors').style.display = '';
     $('hors-liste').innerHTML = hors.map(k=>
       '<a href="/c/'+encodeURIComponent(k.numero_reference)+'"><b>'+esc(k.numero_reference)+'</b> · '+
       esc(k.ville||'—')+' · '+cdArgent(k.tarif_horaire)+'/h</a>').join('');
-  }
-})();
+  } else { $('hors').style.display = 'none'; }
+}
 </script>
 </body>
 </html>
