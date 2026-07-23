@@ -86,6 +86,7 @@ a.lien{color:var(--vert-vif)}
           <div class="champ"><label>N° OPQ</label><input id="numero_opq" inputmode="numeric"></div>
           <div class="champ"><label>Tarif horaire minimum ($/h)</label><input id="tarif_horaire_min" type="number" step="0.01" min="0"></div>
         </div>
+        <div class="champ"><label>Adresse</label><input id="adresse_pharmacien" placeholder="123 rue Principale, app. 4"></div>
         <div class="trois">
           <div class="champ"><label>Ville de base</label><input id="ville_base"></div>
           <div class="champ"><label>Code postal</label><input id="cp_pharmacien"></div>
@@ -240,6 +241,7 @@ async function rendreMaNote(){
   if(profil.role==='pharmacien'){
     $('numero_opq').value=profil.numero_opq||'';
     $('tarif_horaire_min').value=profil.tarif_horaire_min??'';
+    $('adresse_pharmacien').value=profil.adresse||'';
     $('ville_base').value=profil.ville_base||'';
     $('cp_pharmacien').value=profil.code_postal||'';
     $('rayon_deplacement_km').value=profil.rayon_deplacement_km??'';
@@ -288,6 +290,7 @@ async function rendreMaNote(){
     if(profil.role==='pharmacien'){
       maj.numero_opq=$('numero_opq').value.trim()||null;
       maj.tarif_horaire_min=$('tarif_horaire_min').value||null;
+      maj.adresse=$('adresse_pharmacien').value.trim()||null;
       maj.ville_base=$('ville_base').value.trim()||null;
       maj.code_postal=$('cp_pharmacien').value.trim()||null;
       maj.rayon_deplacement_km=$('rayon_deplacement_km').value||null;
