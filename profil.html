@@ -7,12 +7,12 @@
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849;--rouge:#E5484D}
+:root{--fond:#FAFBF9;--panneau:#FFFFFF;--panneau2:#F1F6F2;--ligne:#D5E3DB;--ligne2:#C3D6CB;--vert:#0B6E4F;--vert-vif:#0E8A62;--texte:#1B2622;--sourd:#5A6B63;--jaune:#C97B12;--rouge:#C0392B}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
 background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
 .mono{font-family:'IBM Plex Mono',monospace}
-.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
 .topbar .in{max-width:900px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
 .croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
@@ -26,7 +26,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 .sec:first-child{margin-top:0;padding-top:0;border-top:none}
 .champ{margin-bottom:12px}
 .champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--sourd);margin-bottom:5px}
-.champ input,.champ select,.champ textarea{width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:11px 12px;font-size:14px;font-family:'IBM Plex Mono',monospace;background:#0A100D;color:var(--texte)}
+.champ input,.champ select,.champ textarea{width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:11px 12px;font-size:14px;font-family:'IBM Plex Mono',monospace;background:#F4F8F5;color:var(--texte)}
 .champ input:focus,.champ select:focus,.champ textarea:focus{outline:none;border-color:var(--vert);box-shadow:0 0 0 2px rgba(18,169,110,.18)}
 .champ input[readonly]{opacity:.6}
 .deux{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -36,7 +36,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 .coches input{accent-color:var(--vert)}
 .consent{display:flex;align-items:flex-start;gap:10px;background:var(--panneau2);border:1px solid var(--ligne2);border-radius:4px;padding:11px 12px;margin:6px 0 12px;cursor:pointer;font-size:12.5px;line-height:1.55;color:var(--sourd)}
 .consent input{width:16px;height:16px;margin-top:2px;accent-color:var(--vert);flex:none;cursor:pointer}
-.btn{width:100%;background:var(--vert);color:#04130C;border:none;border-radius:5px;padding:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.btn{width:100%;background:var(--vert);color:#FFFFFF;border:none;border-radius:5px;padding:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
 .btn:hover{background:var(--vert-vif)}
 .btn:disabled{opacity:.55;cursor:default}
 .btn-danger{width:100%;background:transparent;border:1px solid rgba(229,72,77,.5);color:var(--rouge);border-radius:5px;padding:12px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}

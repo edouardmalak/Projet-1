@@ -7,12 +7,12 @@
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849;--rouge:#E5484D}
+:root{--fond:#FAFBF9;--panneau:#FFFFFF;--panneau2:#F1F6F2;--ligne:#D5E3DB;--ligne2:#C3D6CB;--vert:#0B6E4F;--vert-vif:#0E8A62;--texte:#1B2622;--sourd:#5A6B63;--jaune:#C97B12;--rouge:#C0392B}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
 background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
 .mono{font-family:'IBM Plex Mono',monospace}
-.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
 .topbar .in{max-width:760px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
 .croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
@@ -38,7 +38,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
 .puces{display:flex;flex-wrap:wrap;gap:7px}
 .puce{font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.04em;background:var(--panneau2);border:1px solid var(--ligne2);border-radius:3px;padding:5px 10px}
 .notes{background:var(--panneau2);border:1px solid var(--ligne2);border-left:3px solid var(--vert);border-radius:4px;padding:12px 14px;font-size:13.5px;color:var(--texte);white-space:pre-wrap}
-.btn{width:100%;background:var(--vert);color:#04130C;border:none;border-radius:5px;padding:14px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:20px;transition:background .1s ease}
+.btn{width:100%;background:var(--vert);color:#FFFFFF;border:none;border-radius:5px;padding:14px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:20px;transition:background .1s ease}
 .btn:hover{background:var(--vert-vif)}
 .btn:disabled{opacity:.55;cursor:default}
 .btn-sec{width:100%;background:transparent;color:var(--vert-vif);border:1px solid var(--ligne2);border-radius:5px;padding:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:10px;transition:border-color .1s ease}
@@ -51,7 +51,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
 .f-offre .titre{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:12px}
 .champ{margin-bottom:11px}
 .champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--sourd);margin-bottom:4px}
-.champ input,.champ textarea{width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:10px 11px;font-size:14px;font-family:'IBM Plex Mono',monospace;background:#0A100D;color:var(--texte)}
+.champ input,.champ textarea{width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:10px 11px;font-size:14px;font-family:'IBM Plex Mono',monospace;background:#F4F8F5;color:var(--texte)}
 .champ input:focus,.champ textarea:focus{outline:none;border-color:var(--vert);box-shadow:0 0 0 2px rgba(18,169,110,.18)}
 .deux-p{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:480px){.deux-p{grid-template-columns:1fr}}

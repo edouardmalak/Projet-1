@@ -8,12 +8,12 @@
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%230B6E4F"/><path d="M6 3h4v3.5h3.5v3H10V13H6V9.5H2.5v-3H6z" fill="white"/></svg>'>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849;--rouge:#E5484D}
+:root{--fond:#FAFBF9;--panneau:#FFFFFF;--panneau2:#F1F6F2;--ligne:#D5E3DB;--ligne2:#C3D6CB;--vert:#0B6E4F;--vert-vif:#0E8A62;--texte:#1B2622;--sourd:#5A6B63;--jaune:#C97B12;--rouge:#C0392B}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
 background-image:linear-gradient(rgba(232,184,73,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(232,184,73,.03) 1px,transparent 1px);background-size:44px 44px}
 .mono{font-family:'IBM Plex Mono',monospace}
-.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
 .topbar .in{max-width:1000px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
 .croix{width:28px;height:28px;display:grid;place-items:center;background:var(--jaune);border-radius:5px;flex:none}
@@ -42,7 +42,7 @@ tbody tr:last-child td{border-bottom:none}
 .badge.ouvert{color:var(--vert-vif);border-color:rgba(23,201,128,.4)}
 .badge.attribue{color:var(--jaune);border-color:rgba(232,184,73,.4)}
 .champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--sourd);margin-bottom:4px}
-.champ input{width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:9px 11px;font-size:13.5px;font-family:'IBM Plex Mono',monospace;background:#0A100D;color:var(--texte)}
+.champ input{width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:9px 11px;font-size:13.5px;font-family:'IBM Plex Mono',monospace;background:#F4F8F5;color:var(--texte)}
 .champ input:focus{outline:none;border-color:var(--jaune);box-shadow:0 0 0 2px rgba(232,184,73,.15)}
 .grille-regles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .btn{width:100%;background:var(--jaune);color:#1A1405;border:none;border-radius:5px;padding:12px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:16px}
@@ -56,7 +56,7 @@ tbody tr:last-child td{border-bottom:none}
 @media(max-width:480px){.grille-regles{grid-template-columns:1fr}}
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 @media(max-width:720px){.kpis{grid-template-columns:1fr 1fr}}
-.kpi{background:#0A100D;border:1px solid var(--ligne);border-radius:7px;padding:14px 16px}
+.kpi{background:#F4F8F5;border:1px solid var(--ligne);border-radius:7px;padding:14px 16px}
 .kpi small{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--sourd);margin-bottom:5px}
 .kpi b{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:700;color:var(--texte)}
 .kpi.vert b{color:var(--vert-vif)} .kpi.jaune b{color:var(--jaune)}
@@ -469,7 +469,7 @@ function dessinerFactures(){
     /* surcharge manuelle : sélecteur + note d'audit obligatoire */
     const over = document.createElement('td');
     const sel = document.createElement('select');
-    sel.style.cssText = 'background:#0A100D;color:var(--texte);border:1px solid var(--ligne2);border-radius:4px;padding:5px 8px;font-family:"IBM Plex Mono",monospace;font-size:11.5px';
+    sel.style.cssText = 'background:#F4F8F5;color:var(--texte);border:1px solid var(--ligne2);border-radius:4px;padding:5px 8px;font-family:"IBM Plex Mono",monospace;font-size:11.5px';
     sel.innerHTML = '<option value="">— statut —</option>' +
       STATUTS_F.filter(s=>s!==f.statut).map(s=>'<option value="'+s+'">'+LIB_F[s]+'</option>').join('');
     sel.onchange = async ()=>{

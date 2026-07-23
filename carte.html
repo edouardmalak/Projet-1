@@ -9,10 +9,10 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-:root{--fond:#070B09;--panneau:#0D1411;--panneau2:#111A15;--ligne:#1E2E26;--ligne2:#2A4136;--vert:#12A96E;--vert-vif:#17C980;--texte:#E4EFE9;--sourd:#7E948A;--jaune:#E8B849}
+:root{--fond:#FAFBF9;--panneau:#FFFFFF;--panneau2:#F1F6F2;--ligne:#D5E3DB;--ligne2:#C3D6CB;--vert:#0B6E4F;--vert-vif:#0E8A62;--texte:#1B2622;--sourd:#5A6B63;--jaune:#C97B12;--rouge:#C0392B}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;min-height:100vh}
-.topbar{border-bottom:1px solid var(--ligne);background:rgba(7,11,9,.85);backdrop-filter:blur(4px)}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
 .topbar .in{max-width:1100px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
 .croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
@@ -32,7 +32,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
 .filtres .compte{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd)}
 .filtres .compte b{color:var(--vert-vif)}
 #carte{height:62vh;min-height:400px;border:1px solid var(--ligne);border-radius:10px;overflow:hidden;background:var(--panneau)}
-.leaflet-container{background:#0A100D;font-family:'Instrument Sans',sans-serif}
+.leaflet-container{background:#F4F8F5;font-family:'Instrument Sans',sans-serif}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--panneau);color:var(--texte);border:1px solid var(--ligne2)}
 .leaflet-popup-content{margin:12px 14px;font-size:13px}
 .pop-ville{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--sourd);margin-bottom:8px}
@@ -40,10 +40,10 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
 .pop-c:first-of-type{border-top:none}
 .pop-c .r{font-family:'IBM Plex Mono',monospace;color:var(--vert-vif);font-weight:700}
 .pop-c .d{color:var(--sourd);font-size:12px;font-family:'IBM Plex Mono',monospace;margin:2px 0 5px}
-.pop-c a{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#04130C;background:var(--vert);text-decoration:none;padding:4px 10px;border-radius:5px}
+.pop-c a{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#FFFFFF;background:var(--vert);text-decoration:none;padding:4px 10px;border-radius:5px}
 .pop-c a:hover{background:var(--vert-vif)}
-.marqueur{width:20px;height:20px;border-radius:50% 50% 50% 0;background:var(--vert);border:2px solid #04130C;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.5)}
-.marqueur .nb{transform:rotate(45deg);display:block;text-align:center;color:#04130C;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11px;line-height:16px}
+.marqueur{width:20px;height:20px;border-radius:50% 50% 50% 0;background:var(--vert);border:2px solid #FFFFFF;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.marqueur .nb{transform:rotate(45deg);display:block;text-align:center;color:#FFFFFF;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11px;line-height:16px}
 .marqueur.moi{background:var(--jaune);border-color:#1a1405}
 .chargement{padding:40px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
 .hors{margin-top:16px}
@@ -53,7 +53,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
 .hors a b{color:var(--vert-vif)}
 .legende{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd)}
 .legende span{display:inline-flex;align-items:center;gap:7px}
-.pnt{width:12px;height:12px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:inline-block;border:2px solid #04130C}
+.pnt{width:12px;height:12px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:inline-block;border:2px solid #FFFFFF}
 .pnt.vert{background:var(--vert)} .pnt.jaune{background:var(--jaune);border-color:#1a1405}
 </style>
 </head>
@@ -133,7 +133,7 @@ function passeFiltre(k){
   try{ const { data } = await sb.rpc('get_contrats_ouverts'); contrats = data || []; }catch(e){}
 
   map = L.map('carte', { zoomControl:true, scrollWheelZoom:true }).setView([47.0, -71.5], 6);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution:'© OpenStreetMap · © CARTO', maxZoom:19, subdomains:'abcd'
   }).addTo(map);
   couche = L.layerGroup().addTo(map);
