@@ -129,6 +129,25 @@ tbody tr:last-child td{border-bottom:none}
     </div>
   </div>
 
+  <!-- BLOCAGES / EXCLUSIONS -->
+  <div class="carte">
+    <div class="sec">Blocages<small id="n-excl"></small></div>
+    <p class="sous" style="margin:-4px 0 14px">Séparer une pharmacie et un pharmacien en cas de problème. Le blocage est mutuel : le pharmacien ne voit plus les affichages de cette pharmacie (et ne peut plus y postuler), et la pharmacie ne voit plus les candidatures de ce pharmacien.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+      <div class="champ" style="flex:1;min-width:180px"><label>Pharmacien</label><select id="ex-pharmacien"></select></div>
+      <div class="champ" style="flex:1;min-width:180px"><label>Pharmacie</label><select id="ex-pharmacie"></select></div>
+      <div class="champ" style="flex:2;min-width:200px"><label>Raison (facultatif)</label><input id="ex-raison" type="text" placeholder="ex. conflit signalé le…"></div>
+      <button class="btn" type="button" id="btn-bloquer" style="width:auto;margin-top:0;padding:11px 18px;white-space:nowrap">Bloquer</button>
+    </div>
+    <div class="msg" id="msg-excl"></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Pharmacien</th><th>Pharmacie</th><th>Raison</th><th>Depuis</th><th></th></tr></thead>
+        <tbody id="t-excl"><tr><td colspan="5" class="vide">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- CONTRATS -->
   <div class="carte">
     <div class="sec">Contrats<small id="n-contrats"></small></div>
@@ -318,6 +337,88 @@ function cdToast(texte, ok){
       tu.appendChild(tr);
     });
   }
+
+  /* ---- blocages / exclusions (pharmacien ↔ pharmacie, mutuel) ---- */
+  (function initBlocages(){
+    const liste = Array.isArray(users) ? users : [];
+    const nomDe = (u)=> u.role==='pharmacie'
+      ? (u.nom_pharmacie || ((u.prenom||'')+' '+(u.nom||'')).trim() || u.courriel || u.id)
+      : (((u.prenom||'')+' '+(u.nom||'')).trim() || u.courriel || u.id);
+    const remplir = (sel, role)=>{
+      const el = $(sel); if(!el) return;
+      const opts = liste.filter(u=>u.role===role)
+        .sort((a,b)=> nomDe(a).localeCompare(nomDe(b),'fr'))
+        .map(u=>'<option value="'+u.id+'">'+nomDe(u).replace(/</g,'&lt;')+'</option>').join('');
+      el.innerHTML = '<option value="">— choisir —</option>' + opts;
+    };
+    remplir('ex-pharmacien','pharmacien');
+    remplir('ex-pharmacie','pharmacie');
+
+    const nomParId = {}; liste.forEach(u=>{ nomParId[u.id] = nomDe(u); });
+
+    async function charger(){
+      const tb = $('t-excl');
+      const { data, error } = await sb.rpc('admin_lister_exclusions');
+      if(error){
+        tb.innerHTML = '<tr><td colspan="5" class="vide">Non activé — exécutez sql/21-exclusions.sql dans Supabase.</td></tr>';
+        $('n-excl').textContent = '';
+        return;
+      }
+      const rows = data || [];
+      $('n-excl').textContent = rows.length ? (rows.length + ' blocage' + (rows.length>1?'s':'')) : '';
+      if(!rows.length){ tb.innerHTML = '<tr><td colspan="5" class="vide">Aucun blocage.</td></tr>'; return; }
+      tb.innerHTML = '';
+      rows.forEach(r=>{
+        const tr = document.createElement('tr');
+        const td = (t)=>{ const c=document.createElement('td'); c.textContent = t || '—'; return c; };
+        const act = document.createElement('td');
+        const b = document.createElement('button');
+        b.textContent = 'Débloquer';
+        b.style.cssText = 'font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:3px;cursor:pointer;white-space:nowrap;background:transparent;color:var(--sourd);border:1px solid var(--ligne2)';
+        b.onclick = async ()=>{
+          if(!confirm('Débloquer ' + (r.pharmacien_nom||'ce pharmacien') + ' ↔ ' + (r.pharmacie_nom||'cette pharmacie') + ' ?')) return;
+          b.disabled = true;
+          const { error: e } = await sb.from('exclusions').delete()
+            .eq('pharmacien_id', r.pharmacien_id).eq('pharmacie_id', r.pharmacie_id);
+          if(e){ b.disabled = false; cdToast('Échec : ' + e.message, false); return; }
+          cdToast('Blocage retiré ✓', true);
+          charger();
+        };
+        act.appendChild(b);
+        tr.append(
+          td(r.pharmacien_nom),
+          td(r.pharmacie_nom),
+          td(r.raison),
+          td(r.created_at ? new Date(r.created_at).toLocaleDateString('fr-CA') : '—'),
+          act
+        );
+        tb.appendChild(tr);
+      });
+    }
+
+    $('btn-bloquer').onclick = async ()=>{
+      const pn = $('ex-pharmacien').value, pe = $('ex-pharmacie').value;
+      const raison = $('ex-raison').value.trim() || null;
+      if(!pn || !pe){ msg('msg-excl','Choisissez un pharmacien ET une pharmacie.', false); return; }
+      const b = $('btn-bloquer'); b.disabled = true;
+      const { data: sess } = await sb.auth.getSession();
+      const { error } = await sb.from('exclusions').insert({
+        pharmacien_id: pn, pharmacie_id: pe, raison,
+        cree_par: sess && sess.session ? sess.session.user.id : null
+      });
+      b.disabled = false;
+      if(error){
+        msg('msg-excl', /exclusions/.test(error.message) && /exist|relation/.test(error.message)
+          ? 'Non activé — exécutez sql/21-exclusions.sql dans Supabase.' : ('Échec : ' + error.message), false);
+        return;
+      }
+      msg('msg-excl','Blocage créé ✓ — ' + (nomParId[pn]||'') + ' ↔ ' + (nomParId[pe]||''), true);
+      $('ex-raison').value = '';
+      charger();
+    };
+
+    charger();
+  })();
 
   /* ---- contrats (lecture seule) ---- */
   const { data: contrats, error: ec } = await sb.from('contrats')

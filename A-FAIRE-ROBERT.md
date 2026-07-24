@@ -31,7 +31,19 @@ changing availabilities) shows a **Confirmer / Annuler** card first.
 
 ---
 
-## PART 1 — Run 3 database files (5 minutes) 🤖
+## NEW — Fix "Log in with Gmail" (5 minutes) 🧑
+
+Google sign-in currently fails with *"provider is not enabled"* — this is a Supabase setting, not a website bug (the button and code are fine; it now shows a friendly message instead of a raw error page).
+
+1. **Google Cloud Console** → APIs & Services → Credentials → your OAuth 2.0 Client (or create one, type "Web application"). Under **Authorized redirect URIs** add `https://fenlujjozanerbzyypjt.supabase.co/auth/v1/callback`; under **Authorized JavaScript origins** add `https://projet-1-1yi.pages.dev`. Copy the **Client ID** and **Client secret**.
+2. **Supabase** → Authentication → **Providers → Google** → toggle **Enabled**, paste the Client ID + secret → **Save**.
+3. **Supabase** → Authentication → **URL Configuration → Redirect URLs** → add `https://projet-1-1yi.pages.dev/acces?mode=suite` (and the `.html` version).
+
+That's it — the "Continuer avec Google" button will work.
+
+---
+
+## PART 1 — Run 4 database files (5 minutes) 🤖
 
 These are small text files of database instructions. They turn on: real distance math, the "N pharmacists available" hint, and the language + confirmed-contract email.
 
@@ -43,9 +55,10 @@ These are small text files of database instructions. They turn on: real distance
    - `sql/13-distance-code-postal.sql`
    - `sql/14-fsa-compatibles.sql`
    - `sql/15-langue-et-confirmation.sql`
+   - `sql/21-exclusions.sql`  ← **NEW** (the block/exclusion feature)
 3. Each should say "Success". That's it.
 
-**What they do:** #13 shows real driving distances/allowances on contracts. #14 powers the "X pharmacists compatible on {date}" line when you post a contract. #15 adds the French/English language choice and prepares the confirmed-contract email.
+**What they do:** #13 shows real driving distances/allowances on contracts. #14 powers the "X pharmacists compatible on {date}" line when you post a contract. #15 adds the French/English language choice and prepares the confirmed-contract email. **#21 turns on "Blocages"** in the admin console: separate a pharmacy and a pharmacist so they no longer see each other's postings/applications (mutual). Until #21 is run, the Blocages panel shows but saving says "Non activé".
 
 ---
 
