@@ -7,6 +7,8 @@
   Cache-Control: no-cache
 /assistant.js
   Cache-Control: no-cache
+/accueil-mascotte.js
+  Cache-Control: no-cache
 /auth.js
   Cache-Control: no-cache
 /design.css
