@@ -20,9 +20,9 @@ Légende : ✅ fait · ⏳ en cours · 🔲 à faire · 💤 en attente (décisi
    `edouardmalak+pharmacien@gmail.com` et `edouardmalak+pharmacie@gmail.com`.
    **Garder** `edouardmalak@gmail.com` (admin).
 
-2. ⏳ **Rotationner le jeton Twilio** — console Twilio → régénérer l'Auth Token,
-   puis mettre à jour le secret `TWILIO_AUTH_TOKEN` du Worker `c-direct-sms`.
-   (Sécurité : compte payant = vraie facture si le jeton fuit.)
+2. ✅ **Jeton Twilio rotationné** (2026-07-23) — token secondaire créé → collé dans
+   le secret `TWILIO_AUTH_TOKEN` du Worker → promu primaire (l'ancien, possiblement
+   exposé, est supprimé). À confirmer : test SMS end-to-end (le token pasté = valide).
 
 3. 💤 **Purger les ~24 contrats de test restants** (CD-100014 → CD-100037) —
    EN ATTENTE : Robert décide si on nettoie tout le tableau avant le lancement.
