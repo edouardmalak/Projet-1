@@ -1,0 +1,27 @@
+<svg viewBox="0 0 120 120" role="img" xmlns="http://www.w3.org/2000/svg"><title>Pharmacien C-Direct</title><desc>Pharmacien âgé souriant, sarrau blanc, lunettes rondes, moustache grise.</desc>
+<circle cx="60" cy="60" r="60" fill="#E7F1EB"/>
+<path d="M14 120 C14 86 34 72 60 72 C86 72 106 86 106 120 Z" fill="#FFFFFF"/>
+<path d="M60 78 C78 78 92 92 95 120 L25 120 C28 92 42 78 60 78 Z" fill="#F5F9F7"/>
+<path d="M60 74 L48 120 M60 74 L72 120" stroke="#DCE6E0" stroke-width="2" fill="none"/>
+<path d="M60 74 L50 86 L60 96 L70 86 Z" fill="#0B6E4F"/>
+<rect x="76" y="90" width="15" height="15" rx="2" fill="#0B6E4F"/>
+<path d="M83.5 93 v9 M79 97.5 h9" stroke="#fff" stroke-width="2"/>
+<path d="M52 64 h16 v10 c0 5 -16 5 -16 0 Z" fill="#E3AD82"/>
+<ellipse cx="34" cy="50" rx="8" ry="15" fill="#BFC3C4"/>
+<ellipse cx="86" cy="50" rx="8" ry="15" fill="#BFC3C4"/>
+<circle cx="60" cy="48" r="26" fill="#F0C6A0"/>
+<circle cx="34" cy="50" r="5.5" fill="#F0C6A0"/>
+<circle cx="86" cy="50" r="5.5" fill="#F0C6A0"/>
+<ellipse cx="52" cy="31" rx="9" ry="5" fill="#F7D6B4" opacity=".7"/>
+<path d="M44 41 q6 -4 12 0" stroke="#9A9EA0" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+<path d="M64 41 q6 -4 12 0" stroke="#9A9EA0" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+<circle cx="43" cy="56" r="5" fill="#F2A79C" opacity=".45"/>
+<circle cx="77" cy="56" r="5" fill="#F2A79C" opacity=".45"/>
+<g stroke="#20463B" stroke-width="2.6" fill="rgba(255,255,255,.25)"><circle cx="49" cy="48" r="8.5"/><circle cx="71" cy="48" r="8.5"/></g>
+<path d="M57.5 48 h5 M40.5 46 l-7 -2 M79.5 46 l7 -2" stroke="#20463B" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+<circle cx="49" cy="48.5" r="2.6" fill="#2B2B2B"/>
+<circle cx="71" cy="48.5" r="2.6" fill="#2B2B2B"/>
+<path d="M60 53 q3 4 -1 6" stroke="#D79B72" stroke-width="2" fill="none" stroke-linecap="round"/>
+<path d="M47 62 Q60 59 73 62 Q65 69 60 66 Q55 69 47 62 Z" fill="#B9BCBE"/>
+<path d="M52 67 Q60 73 68 67" stroke="#B4715A" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>

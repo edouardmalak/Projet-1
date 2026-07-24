@@ -12,6 +12,31 @@ if(!window.sbClient) return;
 const sb = window.sbClient;
 const URL_WORKER = (window.CD_CHAT_URL || '').replace(/\/+$/,'');
 
+/* Mascotte : pharmacien C-Direct (SVG inline, aucune requête réseau) */
+const MASCOTTE = '<svg viewBox="0 0 120 120" role="img" aria-label="Pharmacien C-Direct" xmlns="http://www.w3.org/2000/svg">'
++'<circle cx="60" cy="60" r="60" fill="#E7F1EB"/>'
++'<path d="M14 120 C14 86 34 72 60 72 C86 72 106 86 106 120 Z" fill="#FFFFFF"/>'
++'<path d="M60 78 C78 78 92 92 95 120 L25 120 C28 92 42 78 60 78 Z" fill="#F5F9F7"/>'
++'<path d="M60 74 L48 120 M60 74 L72 120" stroke="#DCE6E0" stroke-width="2" fill="none"/>'
++'<path d="M60 74 L50 86 L60 96 L70 86 Z" fill="#0B6E4F"/>'
++'<rect x="76" y="90" width="15" height="15" rx="2" fill="#0B6E4F"/>'
++'<path d="M83.5 93 v9 M79 97.5 h9" stroke="#fff" stroke-width="2"/>'
++'<path d="M52 64 h16 v10 c0 5 -16 5 -16 0 Z" fill="#E3AD82"/>'
++'<ellipse cx="34" cy="50" rx="8" ry="15" fill="#BFC3C4"/><ellipse cx="86" cy="50" rx="8" ry="15" fill="#BFC3C4"/>'
++'<circle cx="60" cy="48" r="26" fill="#F0C6A0"/>'
++'<circle cx="34" cy="50" r="5.5" fill="#F0C6A0"/><circle cx="86" cy="50" r="5.5" fill="#F0C6A0"/>'
++'<ellipse cx="52" cy="31" rx="9" ry="5" fill="#F7D6B4" opacity=".7"/>'
++'<path d="M44 41 q6 -4 12 0" stroke="#9A9EA0" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
++'<path d="M64 41 q6 -4 12 0" stroke="#9A9EA0" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
++'<circle cx="43" cy="56" r="5" fill="#F2A79C" opacity=".45"/><circle cx="77" cy="56" r="5" fill="#F2A79C" opacity=".45"/>'
++'<g stroke="#20463B" stroke-width="2.6" fill="rgba(255,255,255,.25)"><circle cx="49" cy="48" r="8.5"/><circle cx="71" cy="48" r="8.5"/></g>'
++'<path d="M57.5 48 h5 M40.5 46 l-7 -2 M79.5 46 l7 -2" stroke="#20463B" stroke-width="2.6" fill="none" stroke-linecap="round"/>'
++'<circle cx="49" cy="48.5" r="2.6" fill="#2B2B2B"/><circle cx="71" cy="48.5" r="2.6" fill="#2B2B2B"/>'
++'<path d="M60 53 q3 4 -1 6" stroke="#D79B72" stroke-width="2" fill="none" stroke-linecap="round"/>'
++'<path d="M47 62 Q60 59 73 62 Q65 69 60 66 Q55 69 47 62 Z" fill="#B9BCBE"/>'
++'<path d="M52 67 Q60 73 68 67" stroke="#B4715A" stroke-width="2" fill="none" stroke-linecap="round"/>'
++'</svg>';
+
 let profil = null, ouvert = false, occupe = false;
 let messages = [];          // historique format Anthropic
 let attenteAction = null;   // {resolve} pendant une confirmation
@@ -133,10 +158,15 @@ function resumeAction(nom, a){
 
 /* ================= UI ================= */
 const css = `
-#cda-btn{position:fixed;right:20px;bottom:20px;z-index:9990;width:56px;height:56px;border-radius:50%;
-  background:#0D2B24;color:#FAFAF7;border:none;cursor:pointer;box-shadow:0 6px 24px rgba(13,43,36,.35);
-  font-size:22px;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+#cda-btn{position:fixed;right:20px;bottom:20px;z-index:9990;width:60px;height:60px;border-radius:50%;
+  background:#E7F1EB;border:2px solid #0D2B24;cursor:pointer;box-shadow:0 6px 24px rgba(13,43,36,.35);
+  padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center;transition:transform .15s}
 #cda-btn:hover{transform:scale(1.06)}
+#cda-btn svg{width:100%;height:100%;display:block}
+.cda-ava{width:40px;height:40px;border-radius:50%;overflow:hidden;flex:0 0 auto;background:#E7F1EB}
+.cda-ava svg{width:100%;height:100%;display:block}
+.cda-ligne-ia{display:flex;gap:8px;align-items:flex-end}
+.cda-ligne-ia .cda-ava{width:30px;height:30px;margin-bottom:2px}
 #cda-panel{position:fixed;right:20px;bottom:88px;z-index:9991;width:min(380px,calc(100vw - 24px));
   height:min(560px,calc(100vh - 120px));background:#fff;border:1px solid rgba(13,43,36,.12);border-radius:16px;
   box-shadow:0 16px 48px rgba(13,43,36,.22);display:none;flex-direction:column;overflow:hidden;
@@ -276,16 +306,17 @@ async function monter(){
 
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
-  const btn = el('button','', ''); btn.id='cda-btn'; btn.title='Assistant C-Direct'; btn.innerHTML='&#128172;';
+  const btn = el('button','', ''); btn.id='cda-btn'; btn.title='Assistant C-Direct'; btn.innerHTML=MASCOTTE;
   btn.setAttribute('aria-label','Ouvrir l\'assistant C-Direct');
   const panel = el('div',''); panel.id='cda-panel';
 
   const tete = el('div','cda-tete');
+  const avaTete = el('div','cda-ava'); avaTete.innerHTML = MASCOTTE;
   const bloc = el('div','');
   bloc.appendChild(el('b','', 'Assistant C-Direct'));
   bloc.appendChild(el('small','', profil.role==='pharmacie' ? 'Publier, comparer, suivre — en une phrase' : 'Trouver des quarts, gérer vos dispos — en une phrase'));
   const fermer = el('button','cda-fermer','×'); fermer.onclick=()=>{ panel.classList.remove('ouvert'); };
-  tete.append(bloc, fermer);
+  tete.append(avaTete, bloc, fermer);
 
   corps = el('div','cda-corps');
   const pied = el('div','cda-saisie');
@@ -304,9 +335,12 @@ async function monter(){
     ouvert = !panel.classList.contains('ouvert');
     panel.classList.toggle('ouvert', ouvert);
     if(ouvert && !corps.childElementCount){
-      ajouterMsg('ia', 'Bonjour ' + (profil.prenom || '') + '! ' + (profil.role==='pharmacie'
+      const ligne = el('div','cda-ligne-ia');
+      const ava = el('div','cda-ava'); ava.innerHTML = MASCOTTE;
+      const bulle = el('div','cda-msg ia', 'Bonjour ' + (profil.prenom || '') + '! ' + (profil.role==='pharmacie'
         ? 'Je peux publier un quart, compter les pharmaciens compatibles, résumer vos candidatures ou vos factures. Dites-le simplement.'
         : 'Je peux chercher des quarts selon vos critères, gérer vos disponibilités ou résumer vos mandats et revenus. Dites-le simplement.'));
+      ligne.append(ava, bulle); corps.appendChild(ligne); corps.scrollTop = corps.scrollHeight;
     }
     if(ouvert) saisie.focus();
   };
