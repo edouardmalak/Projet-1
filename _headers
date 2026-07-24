@@ -1,0 +1,23 @@
+# Cloudflare Pages — en-têtes C-Direct
+# Anti-cache pour les fichiers critiques qui changent souvent :
+# le navigateur DOIT revalider avec le serveur avant de réutiliser sa
+# copie (ETag → 304 si inchangé, donc rapide, mais jamais périmé).
+# Évite le « Mode aperçu » fantôme quand supabase-config.js change.
+/supabase-config.js
+  Cache-Control: no-cache
+/assistant.js
+  Cache-Control: no-cache
+/auth.js
+  Cache-Control: no-cache
+/design.css
+  Cache-Control: no-cache
+/fiche.js
+  Cache-Control: no-cache
+/outils.js
+  Cache-Control: no-cache
+/fsa-qc.js
+  Cache-Control: no-cache
+
+# Les pages HTML : toujours revalider (le contenu évolue à chaque déploiement)
+/*.html
+  Cache-Control: no-cache
