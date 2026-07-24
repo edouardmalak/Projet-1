@@ -19,13 +19,14 @@ disponibilités). Worker **séparé** : ne touche ni le site Pages ni `c-direct-
 
 1. **Créer la clé API** : console.anthropic.com → API Keys → *Create key*.
    Ajoutez quelques dollars de crédit (Haiku coûte des sous par conversation).
-2. **Déployer le Worker** (depuis ce dossier) :
-   ```
-   cd workers/c-direct-chat
-   npx wrangler deploy
-   npx wrangler secret put ANTHROPIC_API_KEY   ← coller la clé ici, jamais dans git
-   ```
-   Notez l'URL affichée, ex. `https://c-direct-chat.edouardmalak.workers.dev`.
+2. **Déployer le Worker** — même recette que c-direct-sms (intégration git du
+   tableau de bord Cloudflare) : Workers & Pages → Create → Continue with GitHub
+   → repo `Projet-1` → nom `c-direct-chat`, commande de déploiement
+   `cd workers/c-direct-chat && npx wrangler deploy`, racine `/`.
+   Puis Settings → Variables and Secrets → Add → **encrypted** →
+   `ANTHROPIC_API_KEY` = la clé (jamais dans git). Redéployer.
+   (Équivalent CLI : `npx wrangler deploy` + `npx wrangler secret put ANTHROPIC_API_KEY`.)
+   URL attendue : `https://c-direct-chat.edouardmalak.workers.dev`.
 3. **Brancher le site** : dans `supabase-config.js`, remplir
    `window.CD_CHAT_URL = "https://c-direct-chat.edouardmalak.workers.dev";`
    puis commit + push (ou demandez à Claude : « branche l'assistant sur <URL> »).

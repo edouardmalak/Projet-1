@@ -16,10 +16,14 @@ mode**. To give it its brain:
 1. Go to **console.anthropic.com** → **API Keys** → **Create Key** → copy it
    (starts with `sk-ant-...`). Add a few dollars of credit (Haiku costs pennies
    per conversation).
-2. In a terminal, from the project folder:
-   `cd workers/c-direct-chat && npx wrangler deploy && npx wrangler secret put ANTHROPIC_API_KEY`
-   (paste the key when asked — it never goes in the code). Note the URL it prints.
-3. Tell me: **« branche l'assistant sur <cette URL> »** — I'll wire the site and push.
+2. **Cloudflare dashboard** (same recipe as c-direct-sms): **Workers & Pages →
+   Create → Continue with GitHub → repo `Projet-1`** → project name
+   `c-direct-chat`, deploy command `cd workers/c-direct-chat && npx wrangler deploy`,
+   root dir `/`. Once created: **Settings → Variables and Secrets → Add →
+   type "encrypted"** → name `ANTHROPIC_API_KEY`, value = your key → save + deploy.
+3. Tell me: **« branche l'assistant sur https://c-direct-chat.edouardmalak.workers.dev »**
+   — I'll wire the site and push. (I can also drive steps 2-3 with you in Chrome —
+   only the key paste is yours.)
 
 Full details: `workers/c-direct-chat/README.md`. Guardrails: the assistant only
 reads with the user's own permissions, and every action (posting a shift,
