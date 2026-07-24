@@ -123,6 +123,79 @@ window.cdDeconnexion = async function(){
   location.href = '/index.html';
 };
 
+/* ---- menu de navigation selon le rôle ----
+   Remplace les flèches « ← Retour » par un menu horizontal persistant
+   (comme un vrai bandeau de navigation). Injecté juste sous la topbar sur
+   toutes les pages connectées. Bilingue (suit cdLang), surligne la page
+   courante, masque les anciens liens « retour » devenus redondants.       */
+const CD_MENUS = {
+  pharmacien: [
+    ['/contrats.html',           'Contrats',         'Contracts'],
+    ['/mes-mandats.html',        'Mes mandats',      'My mandates'],
+    ['/disponibilites.html',     'Disponibilités',   'Availability'],
+    ['/messages.html',           'Messages',         'Messages'],
+    ['/evaluations.html',        'Évaluations',      'Reviews'],
+    ['/profil.html',             'Profil',           'Profile'],
+    ['/faq.html',                'FAQ',              'FAQ']
+  ],
+  pharmacie: [
+    ['/espace-pharmacie.html',   'Accueil',          'Home'],
+    ['/demande.html',            'Nouvelle demande', 'New request'],
+    ['/calendrier-pharmacie.html','Calendrier',      'Calendar'],
+    ['/messages.html',           'Messages',         'Messages'],
+    ['/evaluations.html',        'Évaluations',      'Reviews'],
+    ['/profil.html',             'Profil',           'Profile'],
+    ['/faq.html',                'FAQ',              'FAQ']
+  ],
+  admin: [
+    ['/admin.html',              'Console',          'Console'],
+    ['/nouveaux.html',           'Contrats',         'Contracts'],
+    ['/pharmacies.html',         'Pharmaciens',      'Pharmacists'],
+    ['/messages.html',           'Messages',         'Messages'],
+    ['/evaluations.html',        'Évaluations',      'Reviews'],
+    ['/profil.html',             'Profil',           'Profile'],
+    ['/faq.html',                'FAQ',              'FAQ']
+  ]
+};
+window.cdMenuRole = function(role){
+  if(document.getElementById('cd-menu')) return;         // idempotent
+  const items = CD_MENUS[role] || CD_MENUS.pharmacien;
+  const en = cdLang() === 'en';
+  const ici = (location.pathname || '/').replace(/\.html$/,'').replace(/\/+$/,'') || '/';
+
+  const strip = document.createElement('nav');
+  strip.id = 'cd-menu';
+  strip.setAttribute('aria-label', en ? 'Main menu' : 'Menu principal');
+  strip.style.cssText = 'display:flex;gap:2px;align-items:center;overflow-x:auto;'+
+    'background:rgba(255,255,255,.94);border-bottom:1px solid var(--ligne,#e3e8e5);'+
+    "padding:0 16px;height:46px;font-family:'IBM Plex Mono',monospace;-webkit-overflow-scrolling:touch";
+
+  items.forEach(([href, fr, an])=>{
+    const cle = href.replace(/\.html$/,'');
+    const actif = ici === cle;
+    const a = document.createElement('a');
+    a.href = href;
+    a.textContent = en ? an : fr;
+    a.setAttribute('aria-current', actif ? 'page' : 'false');
+    const couleur = actif ? 'var(--vert-vif,#0f8a5f)' : 'var(--sourd,#6b7772)';
+    a.style.cssText = 'white-space:nowrap;text-decoration:none;font-size:11.5px;letter-spacing:.06em;'+
+      'text-transform:uppercase;padding:8px 12px;border-radius:6px;color:'+couleur+';'+
+      (actif ? 'background:rgba(16,138,95,.10);font-weight:700' : 'font-weight:500');
+    if(!actif){
+      a.addEventListener('mouseenter', ()=> a.style.color='var(--vert-vif,#0f8a5f)');
+      a.addEventListener('mouseleave', ()=> a.style.color='var(--sourd,#6b7772)');
+    }
+    strip.appendChild(a);
+  });
+
+  const tb = document.querySelector('.topbar');
+  if(tb && tb.parentNode) tb.parentNode.insertBefore(strip, tb.nextSibling);
+  else document.body.insertBefore(strip, document.body.firstChild);
+
+  // masquer les anciennes flèches « ← Retour » (le menu les remplace)
+  document.querySelectorAll('.retour, a.retour, #lien-retour').forEach(el=>{ el.style.display = 'none'; });
+};
+
 /* ---- en-tête connecté : injecte « PRÉNOM · DÉCONNEXION » dans la topbar ---- */
 window.cdEnteteConnecte = async function(){
   const p = await cdProfil();
@@ -146,7 +219,7 @@ window.cdEnteteConnecte = async function(){
     nom.textContent = p.prenom || p.courriel || '';
     const sep = document.createElement('span'); sep.textContent = '·'; sep.style.opacity = '.5';
     const btn = document.createElement('button');
-    btn.textContent = 'Déconnexion';
+    btn.textContent = cdT('Déconnexion', 'Log out');
     btn.style.cssText = "background:none;border:none;cursor:pointer;color:inherit;font:inherit;text-decoration:underline;text-underline-offset:3px;opacity:.8";
     btn.onclick = cdDeconnexion;
     el.append(roleBadge, nom, sep, btn);
@@ -156,6 +229,7 @@ window.cdEnteteConnecte = async function(){
       if(/mode=(conn|insc)/.test(a.getAttribute('href'))) a.style.display = 'none';
     });
   }
+  if(p && p.role) cdMenuRole(p.role);
   return p;
 };
 
