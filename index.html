@@ -595,12 +595,15 @@ let role = "pharmacie", mode = "conn", lang = "fr";
 function setLang(l){
   lang = l;
   document.documentElement.lang = l;
+  try{ localStorage.setItem('cd-lang', l); }catch(e){}   /* suivie d'une page à l'autre + dans les courriels */
   $('fr').classList.toggle('on', l==='fr');
   $('en').classList.toggle('on', l==='en');
   document.querySelectorAll('[data-fr]').forEach(el=>{ el.innerHTML = el.dataset[l]; });
 }
 $('fr').onclick = ()=>setLang('fr');
 $('en').onclick = ()=>setLang('en');
+/* rétablir la langue choisie précédemment (défaut : FR) */
+(function(){ let l; try{ l = localStorage.getItem('cd-lang'); }catch(e){} if(l==='en'||l==='fr') setLang(l); })();
 
 /* ---- CTA de rôle (héro et cartes) ---- */
 function allerAcces(r){ window.location.href = 'acces.html?mode=insc&role=' + r; }

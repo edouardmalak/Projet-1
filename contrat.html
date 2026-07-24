@@ -325,8 +325,10 @@ function msg(texte, type){
       $('btn-completer').disabled = true;
       const { data: fid, error: e } = await sb.rpc('marquer_complete', { p_contrat: k.id });
       if(e){ $('btn-completer').disabled = false; msg('Erreur : ' + e.message, 'ko'); return; }
-      cdAlerteAdmin('Contrat complété — ' + k.numero_reference,
-        (profil.prenom||profil.courriel||'Un utilisateur') + ' (' + profil.role + ') a marqué ' + k.numero_reference + ' complété. Facture générée en brouillon.');
+      cdAlerteAdmin(cdT('Contrat complété — ' + k.numero_reference, 'Contract completed — ' + k.numero_reference),
+        cdT((profil.prenom||profil.courriel||'Un utilisateur') + ' (' + profil.role + ') a marqué ' + k.numero_reference + ' complété. Facture générée en brouillon.',
+            (profil.prenom||profil.courriel||'A user') + ' (' + profil.role + ') marked ' + k.numero_reference + ' as completed. Draft invoice generated.'),
+        { ref: k.numero_reference });
       if(profil.role === 'pharmacien' || k.ma_candidature_statut === 'accepte'){
         location.href = '/facture-vue.html?id=' + fid;   // le pharmacien révise son brouillon
       } else {
@@ -378,8 +380,10 @@ function msg(texte, type){
             const { error: e } = await sb.rpc('accepter_contre_offre', { p_candidature: ma.id });
             if(e){ $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = false; msg('Erreur : '+e.message,'ko'); return; }
             cdConfirmerContrat(k.numero_reference);   /* courriel « contrat confirmé » + PDF aux 2 parties */
-            cdAlerteAdmin('Contre-offre acceptée — ' + k.numero_reference,
-              (profil.prenom||profil.courriel||'Un pharmacien') + ' a accepté la contre-offre pour ' + k.numero_reference + ' (' + cdEntenteTexte(ma, k) + ').');
+            cdAlerteAdmin(cdT('Contre-offre acceptée — ' + k.numero_reference, 'Counter-offer accepted — ' + k.numero_reference),
+              cdT((profil.prenom||profil.courriel||'Un pharmacien') + ' a accepté la contre-offre pour ' + k.numero_reference + ' (' + cdEntenteTexte(ma, k) + ').',
+                  (profil.prenom||profil.courriel||'A pharmacist') + ' accepted the counter-offer for ' + k.numero_reference + ' (' + cdEntenteTexte(ma, k) + ').'),
+              { ref: k.numero_reference });
             location.reload();
           };
           $('btn-refuser-co').onclick = async ()=>{
@@ -390,8 +394,10 @@ function msg(texte, type){
               message: cdJalonAjouter(ma.message, {etape:'refuse', par:'pharmacien'})
             }).eq('id', ma.id);
             if(e){ $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = false; msg('Erreur : '+e.message,'ko'); return; }
-            cdAlerteAdmin('Contre-offre refusée — ' + k.numero_reference,
-              (profil.prenom||profil.courriel||'Un pharmacien') + ' a refusé la contre-offre pour ' + k.numero_reference + '.');
+            cdAlerteAdmin(cdT('Contre-offre refusée — ' + k.numero_reference, 'Counter-offer declined — ' + k.numero_reference),
+              cdT((profil.prenom||profil.courriel||'Un pharmacien') + ' a refusé la contre-offre pour ' + k.numero_reference + '.',
+                  (profil.prenom||profil.courriel||'A pharmacist') + ' declined the counter-offer for ' + k.numero_reference + '.'),
+              { ref: k.numero_reference });
             location.reload();
           };
         }
@@ -409,17 +415,19 @@ function msg(texte, type){
         });
       });
 
-      async function postuler(payload, apres, sujetAlerte, messageAlerte){
+      async function postuler(payload, apres, sujetAlerte, messageAlerte, extra){
         ['btn-instant','btn-offrir','btn-envoyer'].forEach(b=>{ $(b).disabled = true; });
         const { error: e } = await sb.from('candidatures').insert(payload);
         if(e){
           ['btn-instant','btn-offrir','btn-envoyer'].forEach(b=>{ $(b).disabled = false; });
-          msg(e.code === '23505' ? 'Vous avez déjà postulé à ce contrat.' : 'Erreur : ' + e.message, 'ko');
+          msg(e.code === '23505'
+              ? cdT('Vous avez déjà postulé à ce contrat.', 'You have already applied to this contract.')
+              : cdT('Erreur : ', 'Error: ') + e.message, 'ko');
           return;
         }
         $('zone-postuler').style.display = 'none';
         msg(apres, 'ok');
-        cdAlerteAdmin(sujetAlerte, messageAlerte);
+        cdAlerteAdmin(sujetAlerte, messageAlerte, extra);
       }
 
       /* vitesse 1 : tarif affiché, horaire affiché — acceptation en un geste */
@@ -429,9 +437,12 @@ function msg(texte, type){
         tarif_propose: k.tarif_horaire, distance_km: distApply,
         message: cdJalonAjouter(null, {etape:'candidature', par:'pharmacien',
           type:'instantanee', tarif:k.tarif_horaire, hd:k.heure_debut, hf:k.heure_fin})
-      }, 'Candidature envoyée au tarif affiché (' + cdArgent(k.tarif_horaire) + '/h). La pharmacie peut accepter en un geste.',
-      'Nouvelle candidature — ' + k.numero_reference,
-      (profil.prenom||profil.courriel||'Un pharmacien') + ' a postulé au tarif affiché (' + cdArgent(k.tarif_horaire) + '/h) sur ' + k.numero_reference + '.');
+      }, cdT('Candidature envoyée au tarif affiché (' + cdArgent(k.tarif_horaire) + '/h). La pharmacie peut accepter en un geste.',
+             'Application sent at the posted rate (' + cdArgent(k.tarif_horaire) + '/h). The pharmacy can accept in one click.'),
+      cdT('Nouvelle candidature — ' + k.numero_reference, 'New application — ' + k.numero_reference),
+      cdT((profil.prenom||profil.courriel||'Un pharmacien') + ' a postulé au tarif affiché (' + cdArgent(k.tarif_horaire) + '/h) sur ' + k.numero_reference + '.',
+          (profil.prenom||profil.courriel||'A pharmacist') + ' applied at the posted rate (' + cdArgent(k.tarif_horaire) + '/h) on ' + k.numero_reference + '.'),
+      { ref: k.numero_reference });
 
       /* vitesse 2 : offre négociée */
       $('btn-offrir').onclick = ()=>{ $('f-offre').classList.toggle('on'); };
@@ -449,9 +460,12 @@ function msg(texte, type){
           heure_debut_proposee: hd, heure_fin_proposee: hf,
           message: cdJalonAjouter(null, {etape:'candidature', par:'pharmacien',
             type:'negociee', tarif:tarif, hd:hd||k.heure_debut, hf:hf||k.heure_fin, message:texte})
-        }, 'Offre envoyée (' + cdArgent(tarif) + '/h' + (hd?', horaire proposé '+cdHeure(hd)+' – '+cdHeure(hf):'') + '). La pharmacie vous répondra.',
-        'Nouvelle offre négociée — ' + k.numero_reference,
-        (profil.prenom||profil.courriel||'Un pharmacien') + ' propose ' + cdArgent(tarif) + '/h' + (hd?' ('+cdHeure(hd)+'–'+cdHeure(hf)+')':'') + ' sur ' + k.numero_reference + (texte?' — « '+texte+' »':'') + '.');
+        }, cdT('Offre envoyée (' + cdArgent(tarif) + '/h' + (hd?', horaire proposé '+cdHeure(hd)+' – '+cdHeure(hf):'') + '). La pharmacie vous répondra.',
+               'Offer sent (' + cdArgent(tarif) + '/h' + (hd?', proposed hours '+cdHeure(hd)+' – '+cdHeure(hf):'') + '). The pharmacy will reply.'),
+        cdT('Nouvelle offre négociée — ' + k.numero_reference, 'New negotiated offer — ' + k.numero_reference),
+        cdT((profil.prenom||profil.courriel||'Un pharmacien') + ' propose ' + cdArgent(tarif) + '/h' + (hd?' ('+cdHeure(hd)+'–'+cdHeure(hf)+')':'') + ' sur ' + k.numero_reference + (texte?' — « '+texte+' »':'') + '.',
+            (profil.prenom||profil.courriel||'A pharmacist') + ' proposes ' + cdArgent(tarif) + '/h' + (hd?' ('+cdHeure(hd)+'–'+cdHeure(hf)+')':'') + ' on ' + k.numero_reference + (texte?' — "'+texte+'"':'') + '.'),
+        { ref: k.numero_reference });
       });
     } else {
       msg('Ce contrat n’est plus ouvert aux candidatures.', 'info');

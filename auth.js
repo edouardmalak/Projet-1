@@ -176,4 +176,39 @@ window.cdTelAffiche = function(e164){
 window.cdArgent = n => new Intl.NumberFormat('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' $';
 window.cdDate = d => new Date(d + (String(d).length===10 ? 'T12:00:00' : '')).toLocaleDateString('fr-CA',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
 window.cdHeure = h => String(h||'').slice(0,5).replace(':',' h ');
+
+/* ---- langue courante (FR/EN) ----
+   Persistée par le sélecteur de langue de l'accueil (localStorage 'cd-lang').
+   Sert à faire suivre la langue de l'utilisateur dans les courriels de
+   notification ET les textes de confirmation à l'écran, d'une page à l'autre.
+   Défaut : 'fr'. */
+window.cdLang = function(){
+  try{
+    const l = localStorage.getItem('cd-lang');
+    if(l === 'fr' || l === 'en') return l;
+  }catch(e){}
+  return (document.documentElement.lang || '').toLowerCase() === 'en' ? 'en' : 'fr';
+};
+
+/* ---- choisir un texte selon la langue ----
+   cdT('Bonjour', 'Hello')  → renvoie la variante FR ou EN.
+   cdT({fr:'…', en:'…'})    → même chose à partir d'un objet.            */
+window.cdT = function(fr, en){
+  if(fr && typeof fr === 'object') return fr[cdLang()] != null ? fr[cdLang()] : (fr.fr || '');
+  return cdLang() === 'en' ? (en != null ? en : fr) : fr;
+};
+
+/* applique la langue persistée dès le chargement (pages bilingues data-fr/data-en) */
+(function appliquerLanguePersistee(){
+  function poser(){
+    let l; try{ l = localStorage.getItem('cd-lang'); }catch(e){}
+    if(l !== 'en' && l !== 'fr') return;
+    document.documentElement.lang = l;
+    document.querySelectorAll('[data-fr]').forEach(el=>{
+      if(el.dataset[l] != null) el.innerHTML = el.dataset[l];
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', poser);
+  else poser();
+})();
 })();

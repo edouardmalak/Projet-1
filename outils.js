@@ -108,12 +108,42 @@ window.cdEntenteTexte = function(c, contrat){
    (voir sql/06-notifications-email.sql, Resend + pg_net).
    Best-effort : échoue en silence si hors-ligne. ---- */
 const CLE_ADMIN_ALERTE = "6d62e4bb-5cdd-42e9-8c64-5e9a9cf465eb";
-window.cdAlerteAdmin = async function(sujet, message){
+
+/* cdAlerteAdmin(sujet, message [, extra])
+   · sujet et message acceptent une chaîne OU un objet {fr, en} (la langue
+     de l'utilisateur — cdLang() — est alors appliquée automatiquement).
+   · extra.ref   : référence de contrat (ex. CD-100035) → ligne dédiée.
+   · extra.champs: { libellé: valeur, … } lignes supplémentaires libres.
+   Le courriel est structuré en champs nommés : Web3Forms les rend sous
+   forme de tableau propre et lisible plutôt qu'un bloc de texte brut.   */
+window.cdAlerteAdmin = async function(sujet, message, extra){
+  const lang = (typeof cdLang === 'function') ? cdLang() : 'fr';
+  const pick = v => (v && typeof v === 'object') ? (v[lang] != null ? v[lang] : (v.fr||v.en||'')) : v;
+  sujet = pick(sujet); message = pick(message); extra = extra || {};
+
+  const L = lang === 'en'
+    ? { from:'C-Direct — Notifications', event:'Event', detail:'Detail', ref:'Reference', when:'Date & time',
+        foot:'Automated notification from the C-Direct platform. Do not reply to this email.' }
+    : { from:'C-Direct — Notifications', event:'Évènement', detail:'Détail', ref:'Référence', when:'Date et heure',
+        foot:'Notification automatique de la plateforme C-Direct. Ne pas répondre à ce courriel.' };
+
+  const quand = new Date().toLocaleString(lang === 'en' ? 'en-CA' : 'fr-CA',
+                  { dateStyle:'full', timeStyle:'short' });
+
+  /* Web3Forms utilise les clés JSON comme libellés de lignes → ordre conservé. */
+  const payload = { access_key: CLE_ADMIN_ALERTE, from_name: L.from, subject: '[C-Direct] ' + sujet };
+  payload[L.event] = sujet;
+  if(message) payload[L.detail] = message;
+  if(extra.ref) payload[L.ref] = extra.ref;
+  if(extra.champs){ for(const k in extra.champs){ if(extra.champs[k] != null && extra.champs[k] !== '') payload[k] = extra.champs[k]; } }
+  payload[L.when] = quand;
+  payload[' '] = L.foot;   /* pied de page discret */
+
   try{
     await fetch('https://api.web3forms.com/submit', {
       method: 'POST',
       headers: {'Content-Type':'application/json; charset=utf-8','Accept':'application/json'},
-      body: JSON.stringify({access_key: CLE_ADMIN_ALERTE, subject: '[C-Direct] ' + sujet, from_name: 'C-Direct', message: message})
+      body: JSON.stringify(payload)
     });
   }catch(e){ /* best-effort, ne bloque jamais le flux */ }
 };

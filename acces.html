@@ -387,14 +387,35 @@ document.querySelectorAll('input[type=tel]').forEach(el=>{
   });
 });
 
-/* ---------- Google OAuth ---------- */
+/* ---------- Google OAuth ----------
+   skipBrowserRedirect : on récupère l'URL d'autorisation NOUS-MÊMES pour
+   pouvoir afficher un message propre si le fournisseur Google n'est pas
+   activé côté Supabase (sinon l'usager tombe sur une page JSON brute). */
 $('btn-google').onclick = async ()=>{
-  const { error } = await sb.auth.signInWithOAuth({
+  const b = $('btn-google'); b.disabled = true;
+  const { data, error } = await sb.auth.signInWithOAuth({
     provider:'google',
-    options:{ redirectTo: location.origin + location.pathname + '?mode=suite' }
+    options:{ redirectTo: location.origin + location.pathname + '?mode=suite', skipBrowserRedirect:true }
   });
-  if(error) alert(messageErreur(error));
+  if(error || !(data && data.url)){
+    b.disabled = false;
+    erreur('err-insc', cdT(
+      "La connexion Google n’est pas encore activée. Utilisez le courriel + mot de passe, ou réessayez plus tard.",
+      "Google sign-in isn’t enabled yet. Please use email + password, or try again later."));
+    return;
+  }
+  location.href = data.url;   /* redirection vers Google */
 };
+
+/* Retour OAuth en erreur : Supabase renvoie #error=…&error_description=… */
+(function(){
+  const h = new URLSearchParams((location.hash||'').replace(/^#/,''));
+  const err = h.get('error_description') || h.get('error');
+  if(err){
+    try{ history.replaceState(null,'',location.pathname + location.search); }catch(e){}
+    setTimeout(()=>{ try{ erreur('err-conn', decodeURIComponent(err.replace(/\+/g,' '))); }catch(e){} }, 300);
+  }
+})();
 
 /* ---------- connexion ---------- */
 $('btn-connexion').onclick = async ()=>{
@@ -453,8 +474,10 @@ $('f-inscription').addEventListener('submit', async e=>{
   });
   b.disabled=false; b.textContent='Créer mon compte';
   if(error){ erreur('err-insc', messageErreur(error)); return; }
-  cdAlerteAdmin('Nouvelle inscription — à valider',
-    (role||'?') + ' : ' + $('i-prenom').value + ' ' + $('i-nom').value + ' <' + $('i-courriel').value.trim() + '> — valider dans la console admin.');
+  cdAlerteAdmin(
+    cdT('Nouvelle inscription — à valider', 'New sign-up — pending approval'),
+    cdT((role||'?') + ' : ' + $('i-prenom').value + ' ' + $('i-nom').value + ' <' + $('i-courriel').value.trim() + '> — à valider dans la console admin.',
+        (role||'?') + ': ' + $('i-prenom').value + ' ' + $('i-nom').value + ' <' + $('i-courriel').value.trim() + '> — approve in the admin console.'));
   if(data.session){ await apresConnexion(); return; }
   const courrielInscrit = $('i-courriel').value.trim().replace(/</g,'&lt;').replace(/"/g,'&quot;');
   succes('COMPTE CRÉÉ.',
@@ -515,8 +538,10 @@ $('f-completer').addEventListener('submit', async e=>{
   }
   b.disabled=false;
   if(error){ erreur('err-completer', messageErreur(error)); return; }
-  cdAlerteAdmin('Nouvelle inscription (Google) — à valider',
-    (role||'?') + ' : ' + $('g-prenom').value + ' ' + $('g-nom').value + ' <' + (s.user.email||'') + '> — valider dans la console admin.');
+  cdAlerteAdmin(
+    cdT('Nouvelle inscription (Google) — à valider', 'New sign-up (Google) — pending approval'),
+    cdT((role||'?') + ' : ' + $('g-prenom').value + ' ' + $('g-nom').value + ' <' + (s.user.email||'') + '> — à valider dans la console admin.',
+        (role||'?') + ': ' + $('g-prenom').value + ' ' + $('g-nom').value + ' <' + (s.user.email||'') + '> — approve in the admin console.'));
   const p = await cdProfil(true);
   cdReprendreSuite(p.role);
 });
