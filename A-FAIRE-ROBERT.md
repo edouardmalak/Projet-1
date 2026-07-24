@@ -8,26 +8,39 @@ The website already works and won't break if you do none of this. These steps ju
 
 ---
 
-## NEW — Switch on the AI assistant (5 minutes) 🧑
+## ÉTAT ACTUEL — 2026-07-23 (mis à jour)
 
-The chat widget (💬 bottom-right) is already live on the dashboards in **preview
-mode**. To give it its brain:
+**Fait aujourd'hui (aucune action de votre part) :**
 
-1. Go to **console.anthropic.com** → **API Keys** → **Create Key** → copy it
-   (starts with `sk-ant-...`). Add a few dollars of credit (Haiku costs pennies
-   per conversation).
-2. **Cloudflare dashboard** (same recipe as c-direct-sms): **Workers & Pages →
-   Create → Continue with GitHub → repo `Projet-1`** → project name
-   `c-direct-chat`, deploy command `cd workers/c-direct-chat && npx wrangler deploy`,
-   root dir `/`. Once created: **Settings → Variables and Secrets → Add →
-   type "encrypted"** → name `ANTHROPIC_API_KEY`, value = your key → save + deploy.
-3. Tell me: **« branche l'assistant sur https://c-direct-chat.edouardmalak.workers.dev »**
-   — I'll wire the site and push. (I can also drive steps 2-3 with you in Chrome —
-   only the key paste is yours.)
+- Assistant IA (texte) construit + **déployé + branché** : Worker `c-direct-chat`
+  en ligne, clé API en secret chiffré, site relié. Mascotte pharmacien sur les
+  tableaux de bord + accueil du site. Anti-cache ajouté.
+- `sql/21` (blocages/exclusions) **exécuté** — la fonction Blocages de l'admin est active.
 
-Full details: `workers/c-direct-chat/README.md`. Guardrails: the assistant only
-reads with the user's own permissions, and every action (posting a shift,
-changing availabilities) shows a **Confirmer / Annuler** card first.
+**À vous — pour terminer / avant lancement :**
+
+1. **💳 Créditer l'assistant IA** — au moins **5 $** à console.anthropic.com →
+   Billing → *Buy credits*. Sans ça, l'assistant répond « crédit insuffisant ».
+   C'est la SEULE chose qui bloque sa première vraie conversation.
+2. **🔑 Rotationner le jeton Twilio** (maintenant payant = vraie facture si fuite) :
+   Twilio console → régénérer l'Auth Token → mettre à jour le secret
+   `TWILIO_AUTH_TOKEN` du Worker `c-direct-sms`. (Je vous guide.)
+3. **🧹 Purger les données de test** — script prêt : `sql/22-purge-donnees-test.sql`
+   (2 contrats CD-100012/100013). Puis supprimer les 2 comptes de test
+   (`+pharmacien` / `+pharmacie`) dans Authentication → Users. NE PAS supprimer
+   edouardmalak@gmail.com. (Je peux charger le script dans votre éditeur ; le clic
+   « Run » reste à vous.)
+4. **📧 DMARC** (courriels hors du spam) — Cloudflare → DNS → TXT `_dmarc` =
+   `v=DMARC1; p=none; rua=mailto:edouardmalak@gmail.com`.
+5. **🔓 Google sign-in** — encore désactivé : Supabase → Auth → Providers →
+   activer Google + coller Client ID/Secret.
+
+**Optionnel / plus tard :** SMS d'attribution (corriger le WEBHOOK_SECRET),
+SMS de bienvenue à l'opt-in, taxes des autres pharmaciens (`sql/17`).
+
+Détails assistant : `workers/c-direct-chat/README.md`. Garde-fous : l'assistant
+ne lit qu'avec les droits de l'usager, et toute action (publier un quart, changer
+les disponibilités) affiche une carte **Confirmer / Annuler**.
 
 ---
 
