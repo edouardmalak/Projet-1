@@ -109,6 +109,25 @@ export default {
     if(req.method === 'OPTIONS') return new Response(null, { status:204, headers:cors });
 
     const url = new URL(req.url);
+    if(req.method === 'GET' && url.pathname === '/diag'){
+      // Diagnostic sûr : petit appel test à Anthropic, renvoie le statut et le
+      // type d'erreur (jamais la clé). À retirer une fois l'assistant validé.
+      if(!env.ANTHROPIC_API_KEY) return json({ ia_active:false, raison:'secret ANTHROPIC_API_KEY manquant' }, 200, cors);
+      try{
+        const r = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'x-api-key':env.ANTHROPIC_API_KEY, 'anthropic-version':'2023-06-01' },
+          body: JSON.stringify({ model: MODELE, max_tokens: 8, messages:[{ role:'user', content:'ping' }] })
+        });
+        let corps=null; try{ corps = await r.json(); }catch(e){}
+        return json({
+          anthropic_status: r.status,
+          ok: r.ok,
+          error_type: corps && corps.error && corps.error.type || null,
+          error_message: corps && corps.error && String(corps.error.message||'').slice(0,200) || null
+        }, 200, cors);
+      }catch(e){ return json({ erreur_fetch: String(e).slice(0,200) }, 200, cors); }
+    }
     if(req.method === 'GET')
       return json({ ok:true, service:'c-direct-chat', ia_active: !!env.ANTHROPIC_API_KEY }, 200, cors);
 
