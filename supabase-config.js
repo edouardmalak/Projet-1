@@ -13,4 +13,4 @@ window.sbClient = window.supabase.createClient(window.SB_URL, window.SB_KEY);
 // URL du Worker de l'assistant IA (c-direct-chat). Vide = mode aperçu
 // (le widget s'affiche mais l'IA n'est pas branchée). À remplir après
 // déploiement du Worker — voir workers/c-direct-chat/README.md.
-window.CD_CHAT_URL = "";
+window.CD_CHAT_URL = "https://c-direct-chat.edouardmalak.workers.dev";
