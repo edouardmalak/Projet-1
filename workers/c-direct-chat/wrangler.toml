@@ -1,0 +1,16 @@
+# =====================================================================
+# C-DIRECT — Worker "c-direct-chat" (assistant IA des tableaux de bord)
+# Worker SÉPARÉ : ne touche ni le site Pages ni c-direct-sms.
+# Déployer depuis CE dossier : npx wrangler deploy
+# Secret requis (JAMAIS ici, JAMAIS dans git) :
+#   npx wrangler secret put ANTHROPIC_API_KEY
+# Sans ce secret, le Worker répond 503 et le site reste en mode aperçu.
+# =====================================================================
+name = "c-direct-chat"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+
+[vars]
+# Valeurs publiques (les mêmes que le site — la sécurité vient de la RLS)
+SUPABASE_URL = "https://fenlujjozanerbzyypjt.supabase.co"
+SUPABASE_ANON_KEY = "sb_publishable_gl9B3gY9gHX2iG_aaPoJZw_N4-qePHn"
