@@ -27,6 +27,12 @@
 5. **Rotation du jeton Twilio** (sécurité — possiblement exposé pendant la config).
 
 ## 🟡 Optionnel / plus tard
+- **Assistant VOCAL (Phase 7+)** : conversation parlée (pas de clavier) pour les
+  propriétaires — l'IA fait le travail (publication, recherche) avec pré-approbation
+  obligatoire avant toute action. Base déjà construite : l'assistant TEXTE
+  (widget 💬 + Worker `c-direct-chat`) fournit les outils et garde-fous; il ne
+  resterait qu'à ajouter la couche voix (Twilio Voice ou navigateur + STT/TTS,
+  ~0,10-0,15 $/min via Vapi/Retell, tester l'accent québécois avec Deepgram).
 - Mettre le même PDF MANDAT sur la **facture finale** (à la complétion), en plus de la confirmation.
 - Reste Phase 6 : SMS de bienvenue à l'opt-in, passe de contenu des pages publiques.
 - Extras Phase 2.4 : favoris, onglets (Disponibles/Confirmés), stat de réactivité.

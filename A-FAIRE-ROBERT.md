@@ -8,6 +8,25 @@ The website already works and won't break if you do none of this. These steps ju
 
 ---
 
+## NEW — Switch on the AI assistant (5 minutes) 🧑
+
+The chat widget (💬 bottom-right) is already live on the dashboards in **preview
+mode**. To give it its brain:
+
+1. Go to **console.anthropic.com** → **API Keys** → **Create Key** → copy it
+   (starts with `sk-ant-...`). Add a few dollars of credit (Haiku costs pennies
+   per conversation).
+2. In a terminal, from the project folder:
+   `cd workers/c-direct-chat && npx wrangler deploy && npx wrangler secret put ANTHROPIC_API_KEY`
+   (paste the key when asked — it never goes in the code). Note the URL it prints.
+3. Tell me: **« branche l'assistant sur <cette URL> »** — I'll wire the site and push.
+
+Full details: `workers/c-direct-chat/README.md`. Guardrails: the assistant only
+reads with the user's own permissions, and every action (posting a shift,
+changing availabilities) shows a **Confirmer / Annuler** card first.
+
+---
+
 ## PART 1 — Run 3 database files (5 minutes) 🤖
 
 These are small text files of database instructions. They turn on: real distance math, the "N pharmacists available" hint, and the language + confirmed-contract email.
