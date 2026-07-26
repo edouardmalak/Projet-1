@@ -32,6 +32,8 @@ p b{color:var(--texte)}
   <h1>Compte en attente de validation</h1>
   <p id="texte">Chaque compte C-Direct est vérifié manuellement avant l'activation — <b>inscription à l'OPQ</b> pour les pharmacien(ne)s, <b>établissement</b> pour les pharmacies. C'est ce qui fait la fiabilité du réseau.</p>
   <p>Vous serez avisé(e) dès l'activation. En attendant, assurez-vous que votre profil est complet — cela accélère la vérification.</p>
+  <p id="veille" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.05em;opacity:.7">
+    Cette page se met à jour toute seule — laissez-la ouverte.</p>
   <a class="btn" href="/profil.html">Compléter mon profil</a>
   <button class="lien" onclick="cdDeconnexion()">Déconnexion</button>
 </div>
@@ -43,7 +45,28 @@ p b{color:var(--texte)}
 (async function(){
   const p = await cdExigerConnexion();
   /* déjà validé (ou admin) : direction l'espace normal */
-  if(p.role === 'admin' || p.approuve === true) location.replace(cdAccueilPourRole(p.role));
+  if(p.role === 'admin' || p.approuve === true){ location.replace(cdAccueilPourRole(p.role)); return; }
+
+  /* L'admin valide depuis SA console : l'usager, lui, n'en sait rien et
+     resterait bloqué ici à recharger la page à la main. On vérifie donc
+     discrètement toutes les 15 s et on le fait entrer dès que c'est bon. */
+  const sb = window.sbClient;
+  let arret = false;
+  async function verifier(){
+    if(arret || document.hidden) return;
+    try{
+      const { data } = await sb.from('profiles').select('role,approuve').eq('id', p.id).maybeSingle();
+      if(data && (data.approuve === true || data.role === 'admin')){
+        arret = true;
+        const v = document.getElementById('veille');
+        if(v){ v.textContent = 'Compte activé — ouverture de votre espace…'; v.style.opacity = '1'; }
+        setTimeout(()=> location.replace(cdAccueilPourRole(data.role || p.role)), 900);
+      }
+    }catch(e){ /* silencieux : une coupure réseau ne doit rien casser */ }
+  }
+  const minuteur = setInterval(verifier, 15000);
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) verifier(); });
+  window.addEventListener('beforeunload', ()=> clearInterval(minuteur));
 })();
 </script>
 </body>
