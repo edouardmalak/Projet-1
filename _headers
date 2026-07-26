@@ -23,3 +23,5 @@
 # Les pages HTML : toujours revalider (le contenu évolue à chaque déploiement)
 /*.html
   Cache-Control: no-cache
+/fiche-accueil.html
+  Cache-Control: no-cache

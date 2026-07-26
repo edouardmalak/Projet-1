@@ -197,6 +197,17 @@ async function chargerMandats(){
     st.innerHTML = '<span class="chip '+m.statut+'">'+(CHIPS_K[m.statut]||m.statut)+'</span>';
     const act = document.createElement('td');
 
+    /* Fiche « ce que vous devez savoir » — dès que le quart est attribué */
+    if(m.statut === 'attribue' || m.statut === 'complete'){
+      const f = document.createElement('a');
+      f.className = 'btn-mini';
+      f.textContent = 'Ce que je dois savoir';
+      f.title = 'Contact sur place, arrivée, stationnement, code de couleurs — imprimable en PDF';
+      f.href = '/fiche-accueil.html?id=' + encodeURIComponent(m.contrat_id);
+      f.style.textDecoration = 'none';
+      act.appendChild(f);
+    }
+
     if(m.statut === 'attribue' && m.date_contrat <= aujourdhui){
       const b = document.createElement('button');
       b.className='btn-mini'; b.textContent='Marquer complété';
