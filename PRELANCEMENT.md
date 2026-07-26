@@ -14,6 +14,40 @@ Légende : ✅ fait · ⏳ en cours · 🔲 à faire · 💤 en attente (décisi
 
 ---
 
+## PHASE 8 — 5 nouvelles fonctions (construites 2026-07-26) ⏳
+
+Le code est en ligne. **Deux actions vous reviennent** pour tout activer :
+
+- 🔲 **Exécuter `sql/23-phase8.sql`** dans Supabase → SQL Editor.
+  Active : la majoration automatique, la fiche « ce que vous devez savoir »,
+  et la messagerie par fil unique. Sans ça, les nouvelles sections s'affichent
+  mais disent « non activé » — rien ne casse.
+  ⚠️ Contient un `cron.schedule` : la majoration tourne chaque heure (minute 7).
+
+- 🔲 **Google Agenda (optionnel)** — pour la synchro du calendrier :
+  1. Google Cloud Console → APIs & Services → **Enable** l'API *Google Calendar*.
+  2. Credentials → **Create OAuth client ID** → type *Web application*.
+     - Authorized JavaScript origins : `https://c-direct.ca` **et**
+       `https://projet-1-1yi.pages.dev`
+     - (aucun redirect URI nécessaire : jeton côté navigateur)
+  3. Copier le **Client ID** dans `supabase-config.js` →
+     `window.CD_GOOGLE_CLIENT_ID = "…"` puis me dire « sync Google prêt ».
+  4. Écran de consentement : tant qu'il est en *Testing*, ajouter les
+     pharmaciens en *Test users* — ou le publier pour l'ouvrir à tous.
+  Sans identifiant, le calendrier fonctionne normalement, le bouton reste inactif.
+
+**Ce qui a été construit :**
+
+| # | Fonction | Où |
+|---|---|---|
+| 1 | Majoration auto du tarif (paliers + plafond) | `profil.html` (pharmacie) · `sql/23` |
+| 2 | Fiche « ce que vous devez savoir » + PDF | `profil.html` · `fiche-accueil.html` · lien dans `mes-mandats.html` |
+| 3 | Messagerie : un seul fil par contrepartie + clôture mutuelle | `messages.html` · `sql/23` |
+| 4 | Calendrier plein écran, glisser-sélectionner, sync Google | `disponibilites.html` |
+| 5 | Sortie explicite sur `contre-offre.html` · page d'attente auto | `contre-offre.html` · `attente.html` |
+
+---
+
 ## À finir avant le lancement 🔲
 
 1. 🔲 **Supprimer les 2 comptes de test** — Supabase → Authentication → Users :
