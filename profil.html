@@ -139,6 +139,59 @@ a.lien{color:var(--vert-vif)}
           <div class="champ"><label>Rx / jour (weekend)</label><input id="rx_jour_weekend" type="number" min="0"></div>
         </div>
         <div class="champ"><label>Notes d'accès (stationnement, entrée…)</label><textarea id="notes_acces" rows="2"></textarea></div>
+
+        <!-- ============ MAJORATION AUTOMATIQUE DU TARIF ============ -->
+        <div class="sec">Majoration automatique du tarif</div>
+        <p style="font-size:13px;color:var(--sourd);margin:-6px 0 12px">
+          Si personne n'a pris le quart, C-Direct monte le taux tout seul, par paliers,
+          jusqu'à un plafond que vous fixez. Vous gardez le contrôle : rien ne dépasse le plafond.
+        </p>
+        <label class="consent" style="margin-bottom:10px">
+          <input type="checkbox" id="bump_actif">
+          <span>Activer la majoration automatique sur mes quarts non pourvus</span>
+        </label>
+        <div id="bump-champs" style="display:none">
+          <div class="deux">
+            <div class="champ"><label>Hausse par palier ($/h)</label>
+              <input id="bump_increment" type="number" step="0.50" min="0.5" max="50" placeholder="5"></div>
+            <div class="champ"><label>Toutes les … (heures)</label>
+              <input id="bump_intervalle_h" type="number" min="1" max="168" placeholder="24"></div>
+          </div>
+          <div class="champ"><label>Plafond à ne jamais dépasser ($/h)</label>
+            <input id="bump_max" type="number" step="0.50" min="1" max="500" placeholder="140"></div>
+          <div id="bump-apercu" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--vert-vif);margin-top:-4px"></div>
+        </div>
+
+        <!-- ============ CE QUE VOUS DEVEZ SAVOIR ============ -->
+        <div class="sec">Ce que le remplaçant doit savoir</div>
+        <p style="font-size:13px;color:var(--sourd);margin:-6px 0 12px">
+          Rempli une seule fois. Ces informations ne sont montrées qu'au pharmacien
+          <b>retenu</b> pour un quart — jamais au public — et lui sont envoyées en PDF
+          dès que le contrat est accepté.
+        </p>
+        <div class="deux">
+          <div class="champ"><label>Personne-ressource sur place</label>
+            <input id="info_contact_nom" placeholder="Marie Tremblay, ATP en chef"></div>
+          <div class="champ"><label>Son numéro</label>
+            <input id="info_contact_tel" type="tel" placeholder="514-555-0123"></div>
+        </div>
+        <div class="champ"><label>À l'arrivée (porte, code, à qui se présenter)</label>
+          <textarea id="info_arrivee" rows="2" placeholder="Entrée arrière, code 1234#. Demander Marie au comptoir."></textarea></div>
+        <div class="champ"><label>Stationnement</label>
+          <textarea id="info_stationnement" rows="2" placeholder="Gratuit derrière le bâtiment, 3 places réservées « employés »."></textarea></div>
+
+        <div class="champ"><label>Code de couleurs — plateaux / paniers</label>
+          <div style="font-size:12.5px;color:var(--sourd);margin-bottom:8px">
+            Ce qui varie le plus d'une pharmacie à l'autre. Décrivez ce que chaque couleur veut dire chez vous.
+          </div>
+          <div id="plateaux-liste"></div>
+          <button type="button" class="btn" id="btn-plateau"
+            style="background:transparent;border:1px solid var(--ligne);color:var(--texte);padding:8px 14px;font-size:13px;width:auto;margin-top:8px">
+            + Ajouter une couleur</button>
+        </div>
+
+        <div class="champ"><label>Autres consignes</label>
+          <textarea id="info_instructions" rows="3" placeholder="Livraisons à 14 h. Le télécopieur est derrière la caisse. Fermeture : compter le tiroir et verrouiller la voûte."></textarea></div>
       </div>
 
       <div class="sec">Notifications SMS</div>
@@ -213,6 +266,57 @@ async function rendreMaNote(){
     '</div>'+ listeAvis +'</div>';
 }
 
+/* ===== Majoration automatique : bascule + aperçu en clair ===== */
+function basculerBump(){
+  const on = $('bump_actif').checked;
+  $('bump-champs').style.display = on ? '' : 'none';
+  if(on) apercuBump();
+}
+function apercuBump(){
+  const inc = parseFloat($('bump_increment').value);
+  const h   = parseInt($('bump_intervalle_h').value, 10);
+  const max = parseFloat($('bump_max').value);
+  const box = $('bump-apercu');
+  if(!(inc > 0 && h > 0 && max > 0)){ box.textContent = ''; return; }
+  box.textContent = 'Exemple : un quart affiché à 100 $/h passera à '
+    + (100+inc).toFixed(2) + ' $ après ' + h + ' h, puis '
+    + (100+inc*2).toFixed(2) + ' $ après ' + (h*2) + ' h… jusqu’à '
+    + max.toFixed(2) + ' $ maximum.';
+}
+
+/* ===== Code de couleurs des plateaux : lignes éditables ===== */
+let plateaux = [];
+const HEX_SUGG = ['#C0392B','#E67E22','#F1C40F','#27AE60','#2980B9','#8E44AD','#7F8C8D','#2C3E50'];
+function rendrePlateaux(){
+  const box = $('plateaux-liste');
+  if(!plateaux.length){
+    box.innerHTML = '<div style="font-size:13px;color:var(--sourd);font-style:italic">'
+      + 'Aucune couleur définie — le remplaçant ne verra rien pour cette section.</div>';
+    return;
+  }
+  box.innerHTML = '';
+  plateaux.forEach((p, i)=>{
+    const ligne = document.createElement('div');
+    ligne.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap';
+    ligne.innerHTML =
+      '<input type="color" value="'+(p.hex||'#C0392B')+'" data-i="'+i+'" data-k="hex" '
+        + 'style="width:40px;height:36px;padding:2px;border:1px solid var(--ligne);border-radius:8px;cursor:pointer;background:none">'
+      + '<input placeholder="Nom (Rouge…)" value="'+String(p.couleur||'').replace(/"/g,'&quot;')+'" data-i="'+i+'" data-k="couleur" '
+        + 'style="flex:0 0 130px;min-width:110px">'
+      + '<input placeholder="Ce que ça veut dire ici" value="'+String(p.sens||'').replace(/"/g,'&quot;')+'" data-i="'+i+'" data-k="sens" '
+        + 'style="flex:1 1 200px;min-width:160px">'
+      + '<button type="button" data-sup="'+i+'" title="Retirer" '
+        + 'style="background:none;border:1px solid var(--ligne);border-radius:8px;color:var(--sourd);cursor:pointer;width:34px;height:34px;font-size:16px;line-height:1">&times;</button>';
+    box.appendChild(ligne);
+  });
+  box.querySelectorAll('input[data-k]').forEach(el=>{
+    el.addEventListener('input', ()=>{ plateaux[+el.dataset.i][el.dataset.k] = el.value; });
+  });
+  box.querySelectorAll('button[data-sup]').forEach(b=>{
+    b.addEventListener('click', ()=>{ plateaux.splice(+b.dataset.sup,1); rendrePlateaux(); });
+  });
+}
+
 (async function(){
   profil = await cdExigerConnexion();
   cdEnteteConnecte();
@@ -267,6 +371,26 @@ async function rendreMaNote(){
     $('logiciel').value=profil.logiciel||'';
     $('rx_jour_semaine').value=profil.rx_jour_semaine??'';
     $('rx_jour_weekend').value=profil.rx_jour_weekend??'';
+
+    /* majoration auto */
+    $('bump_actif').checked = !!profil.bump_actif;
+    $('bump_increment').value    = profil.bump_increment ?? '';
+    $('bump_intervalle_h').value = profil.bump_intervalle_h ?? '';
+    $('bump_max').value          = profil.bump_max ?? '';
+    basculerBump(); apercuBump();
+    $('bump_actif').addEventListener('change', basculerBump);
+    ['bump_increment','bump_intervalle_h','bump_max'].forEach(k=>
+      $(k).addEventListener('input', apercuBump));
+
+    /* fiche d'accueil */
+    ['info_contact_nom','info_arrivee','info_stationnement','info_instructions']
+      .forEach(k=>{ $(k).value = profil[k] || ''; });
+    $('info_contact_tel').value = cdTelAffiche(profil.info_contact_tel);
+    plateaux = Array.isArray(profil.info_plateaux) ? profil.info_plateaux.slice() : [];
+    rendrePlateaux();
+    $('btn-plateau').addEventListener('click', ()=>{
+      plateaux.push({ couleur:'', hex:'#C0392B', sens:'' }); rendrePlateaux();
+    });
   }
 
   /* format téléphone */
@@ -312,9 +436,50 @@ async function rendreMaNote(){
       maj.notes_acces=$('notes_acces').value.trim()||null;
       maj.rx_jour_semaine=$('rx_jour_semaine').value||null;
       maj.rx_jour_weekend=$('rx_jour_weekend').value||null;
+
+      /* --- majoration automatique (validée avant envoi) --- */
+      const bOn  = $('bump_actif').checked;
+      const bInc = parseFloat($('bump_increment').value);
+      const bH   = parseInt($('bump_intervalle_h').value, 10);
+      const bMax = parseFloat($('bump_max').value);
+      if(bOn){
+        if(!(bInc > 0 && bInc <= 50)){ msg('msg','Majoration : la hausse par palier doit être entre 0,50 $ et 50 $.',false); return; }
+        if(!(bH >= 1 && bH <= 168)){ msg('msg','Majoration : l’intervalle doit être entre 1 h et 168 h (7 jours).',false); return; }
+        if(!(bMax > 0 && bMax <= 500)){ msg('msg','Majoration : le plafond doit être entre 1 $ et 500 $.',false); return; }
+      }
+      maj.bump_actif       = bOn;
+      maj.bump_increment   = bOn ? bInc : null;
+      maj.bump_intervalle_h= bOn ? bH   : null;
+      maj.bump_max         = bOn ? bMax : null;
+
+      /* --- fiche « ce que vous devez savoir » --- */
+      maj.info_contact_nom   = $('info_contact_nom').value.trim()||null;
+      maj.info_contact_tel   = cdE164($('info_contact_tel').value);
+      maj.info_arrivee       = $('info_arrivee').value.trim()||null;
+      maj.info_stationnement = $('info_stationnement').value.trim()||null;
+      maj.info_instructions  = $('info_instructions').value.trim()||null;
+      maj.info_plateaux      = plateaux
+        .filter(p => (p.couleur||'').trim() || (p.sens||'').trim())
+        .map(p => ({ couleur:(p.couleur||'').trim(), hex:p.hex||'#C0392B', sens:(p.sens||'').trim() }));
     }
     $('btn-save').disabled=true;
-    const { error } = await sb.from('profiles').update(maj).eq('id', profil.id);
+    /* Les colonnes de sql/23 (majoration + fiche d'accueil) peuvent ne pas
+       exister encore : on les met de côté et on réessaie sans elles plutôt
+       que de faire échouer tout l'enregistrement. */
+    const CLES_23 = ['bump_actif','bump_increment','bump_intervalle_h','bump_max',
+      'info_contact_nom','info_contact_tel','info_arrivee','info_stationnement',
+      'info_instructions','info_plateaux'];
+    let { error } = await sb.from('profiles').update(maj).eq('id', profil.id);
+    if(error && /column .* does not exist|schema cache/i.test(error.message||'')){
+      const base = { ...maj }; CLES_23.forEach(k => delete base[k]);
+      const retry = await sb.from('profiles').update(base).eq('id', profil.id);
+      error = retry.error;
+      if(!error){
+        $('btn-save').disabled=false;
+        msg('msg','Profil enregistré. (Majoration + fiche d’accueil : non activées — exécuter sql/23.)', true);
+        return;
+      }
+    }
     if(error){ $('btn-save').disabled=false; msg('msg', error.message, false); return; }
     /* langue : mise à jour séparée et TOLÉRANTE — la colonne peut ne pas
        exister avant l'exécution de sql/15 ; son absence ne doit jamais
