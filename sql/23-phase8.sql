@@ -307,7 +307,7 @@ begin
                               nullif(trim(coalesce(pe.prenom,'')||' '||coalesce(pe.nom,'')),''))
            end,
            k.numero_reference,
-           (select m.contenu from public.messages m
+           (select m.corps from public.messages m
              where m.fil_id = f.id order by m.created_at desc limit 1),
            (select m.created_at from public.messages m
              where m.fil_id = f.id order by m.created_at desc limit 1),

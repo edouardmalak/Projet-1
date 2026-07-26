@@ -25,6 +25,8 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
 .conv:hover{border-color:var(--vert)}
 .conv .r{font-family:'IBM Plex Mono',monospace;color:var(--vert-vif);font-weight:700;letter-spacing:.05em}
 .conv .m{color:var(--sourd);font-size:13px;font-family:'IBM Plex Mono',monospace;margin-top:3px}
+.btn-cloture{background:transparent;border:1px solid var(--ligne);color:var(--sourd);border-radius:9px;padding:9px 15px;font:500 13px 'Instrument Sans',sans-serif;cursor:pointer}
+.btn-cloture:hover{border-color:var(--vert);color:var(--vert)}
 .vide{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-align:center;padding:30px 0}
 .fil{display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;padding:6px 2px 12px}
 .bulle{max-width:78%;padding:9px 13px;border-radius:12px;font-size:14px;line-height:1.45;word-wrap:break-word}
@@ -58,9 +60,11 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
-let profil = null, contratId = null, timer = null;
+const esc = s => String(s==null?'':s).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+let profil = null, contratId = null, filId = null, filEtat = null, timer = null;
 
 function refDepuisUrl(){ const q = new URLSearchParams(location.search).get('ref'); return q ? q.toUpperCase() : null; }
+function nonActive(e){ return /does not exist|schema cache/i.test((e && e.message) || ''); }
 
 (async function(){
   profil = await cdExigerConnexion(['pharmacien','pharmacie']);
@@ -69,67 +73,185 @@ function refDepuisUrl(){ const q = new URLSearchParams(location.search).get('ref
     ? '<a class="nav" href="/espace-pharmacie.html">Espace</a>'
     : '<a class="nav" href="/contrats.html">Contrats</a>');
   const ref = refDepuisUrl();
-  if(ref) ouvrirConversation(ref); else listerConversations();
+  const fil = new URLSearchParams(location.search).get('fil');
+  if(ref || fil) ouvrirConversation(ref); else listerConversations();
 })();
 
-/* ---------------- LISTE DES CONVERSATIONS ---------------- */
+/* ---------------- LISTE DES FILS ----------------
+   Un seul fil par contrepartie (et non plus un par contrat) : les
+   échanges avec une même pharmacie restent au même endroit. */
 async function listerConversations(){
   const wrap = $('wrap');
-  wrap.innerHTML = '<h1>Messagerie</h1><p class="sous">Vos contrats confirmés — une conversation par contrat.</p><div id="liste"></div>';
-  let contrats = [];
-  try{
-    if(profil.role === 'pharmacien'){
-      const { data } = await sb.rpc('get_mes_mandats');
-      contrats = (data||[]).filter(m=>m.statut==='attribue'||m.statut==='complete')
-        .map(m=>({ref:m.numero_reference, date:m.date_contrat, autre:m.nom_pharmacie||'Pharmacie', statut:m.statut}));
-    } else {
-      const { data } = await sb.from('contrats').select('numero_reference,date_contrat,statut')
-        .eq('pharmacie_id', profil.id).in('statut',['attribue','complete']).order('date_contrat',{ascending:false});
-      contrats = (data||[]).map(k=>({ref:k.numero_reference, date:k.date_contrat, autre:'Pharmacien(ne)', statut:k.statut}));
-    }
-  }catch(e){}
+  wrap.innerHTML = '<h1>Messagerie</h1>'
+    + '<p class="sous">Une seule conversation par contrepartie — tout l’historique au même endroit.</p>'
+    + '<div id="liste"><div class="vide">Chargement…</div></div>';
+
+  const { data, error } = await sb.rpc('mes_fils');
   const l = $('liste');
-  if(!contrats.length){ l.innerHTML = '<div class="vide">Aucune conversation — une conversation s\'ouvre dès qu\'un contrat est confirmé des deux côtés.</div>'; return; }
-  l.innerHTML = contrats.map(c =>
-    '<a class="conv" href="/messages.html?ref='+encodeURIComponent(c.ref)+'"><span class="r">'+c.ref+'</span>'+
-    '<div class="m">'+cdDate(c.date)+' · '+c.autre+'</div></a>').join('');
+  if(error){
+    l.innerHTML = '<div class="vide">'
+      + (nonActive(error) ? 'Messagerie par fil non activée — exécuter <b>sql/23</b> dans Supabase.'
+                          : 'Erreur : '+esc(error.message)) + '</div>';
+    return;
+  }
+  const fils = data || [];
+  if(!fils.length){
+    l.innerHTML = '<div class="vide">Aucune conversation — elle s’ouvre dès qu’un contrat est confirmé des deux côtés.</div>';
+    return;
+  }
+  l.innerHTML = fils.map(f=>{
+    const ferme = f.statut === 'ferme';
+    const quand = f.dernier_le
+      ? new Date(f.dernier_le).toLocaleString('fr-CA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+      : '';
+    const apercu = f.dernier_message
+      ? esc(String(f.dernier_message).slice(0,90)) + (String(f.dernier_message).length>90?'…':'')
+      : 'Aucun message';
+    /* demande de clôture en attente de MA réponse ? */
+    const jeSuisPharmacie = profil.role === 'pharmacie';
+    const moiFerme  = jeSuisPharmacie ? f.cloture_pharmacie : f.cloture_pharmacien;
+    const autreFerme= jeSuisPharmacie ? f.cloture_pharmacien : f.cloture_pharmacie;
+    let badge = '';
+    if(ferme) badge = '<span style="font-size:11px;color:var(--sourd);border:1px solid var(--ligne);border-radius:99px;padding:1px 8px;margin-left:8px">Fermée</span>';
+    else if(autreFerme && !moiFerme) badge = '<span style="font-size:11px;color:#8a5a00;background:#FFF3D6;border-radius:99px;padding:1px 8px;margin-left:8px">Clôture demandée</span>';
+    else if(moiFerme && !autreFerme) badge = '<span style="font-size:11px;color:var(--sourd);border:1px solid var(--ligne);border-radius:99px;padding:1px 8px;margin-left:8px">En attente de l’autre</span>';
+    return '<a class="conv" href="/messages.html?fil='+encodeURIComponent(f.fil_id)+'"'
+      + (ferme?' style="opacity:.62"':'') + '>'
+      + '<span class="r">'+esc(f.contrepartie_nom || 'Contrepartie')+'</span>'+badge
+      + '<div class="m">'+apercu+(quand?' · '+quand:'')+'</div></a>';
+  }).join('');
 }
 
 /* ---------------- UNE CONVERSATION ---------------- */
 async function ouvrirConversation(ref){
   const wrap = $('wrap');
-  const { data, error } = await sb.rpc('get_contrat_fiche', { p_ref: ref });
-  if(error || !data || !data.length){ wrap.innerHTML = '<a class="retour" href="/messages.html">← Messagerie</a><div class="vide">Conversation introuvable ou accès refusé.</div>'; return; }
-  const k = data[0];
-  contratId = k.id;
-  if(!(k.statut==='attribue' || k.statut==='complete')){
-    wrap.innerHTML = '<a class="retour" href="/messages.html">← Messagerie</a><div class="vide">La messagerie s\'ouvre une fois le contrat confirmé des deux côtés.</div>'; return;
+  const filDirect = new URLSearchParams(location.search).get('fil');
+
+  if(filDirect){
+    filId = filDirect;
+  } else {
+    const { data, error } = await sb.rpc('get_contrat_fiche', { p_ref: ref });
+    if(error || !data || !data.length){
+      wrap.innerHTML = '<a class="retour" href="/messages.html">← Messagerie</a><div class="vide">Conversation introuvable ou accès refusé.</div>'; return;
+    }
+    const k = data[0];
+    contratId = k.id;
+    if(!(k.statut==='attribue' || k.statut==='complete')){
+      wrap.innerHTML = '<a class="retour" href="/messages.html">← Messagerie</a><div class="vide">La messagerie s’ouvre une fois le contrat confirmé des deux côtés.</div>'; return;
+    }
+    const { data: fid, error: eF } = await sb.rpc('ouvrir_fil', { p_contrat: contratId });
+    if(eF){
+      wrap.innerHTML = '<a class="retour" href="/messages.html">← Messagerie</a><div class="vide">'
+        + (nonActive(eF) ? 'Messagerie par fil non activée — exécuter <b>sql/23</b>.' : esc(eF.message)) + '</div>';
+      return;
+    }
+    filId = fid;
   }
-  const autre = profil.role==='pharmacie' ? 'Pharmacien(ne)' : (k.ville ? 'Pharmacie · '+k.ville : 'Pharmacie');
+
   wrap.innerHTML =
     '<a class="retour" href="/messages.html">← Toutes les conversations</a>'+
-    '<h1>'+k.numero_reference+'</h1><p class="sous">'+cdDate(k.date_contrat)+' · '+autre+'</p>'+
+    '<h1 id="h-titre">Conversation</h1><p class="sous" id="h-sous"></p>'+
+    '<div id="bandeau"></div>'+
     '<div class="carte"><div class="fil" id="fil"><div class="vide">Chargement…</div></div>'+
-    '<div class="saisie"><textarea id="txt" placeholder="Votre message…" rows="1"></textarea>'+
-    '<button id="env">Envoyer</button></div></div>';
+    '<div class="saisie" id="saisie"><textarea id="txt" placeholder="Votre message…" rows="1"></textarea>'+
+    '<button id="env">Envoyer</button></div></div>'+
+    '<div style="margin-top:14px" id="zone-cloture"></div>';
+
   $('env').onclick = envoyer;
   $('txt').addEventListener('keydown', e=>{ if(e.key==='Enter' && (e.metaKey||e.ctrlKey)){ e.preventDefault(); envoyer(); } });
+  await rafraichirEtat();
   await charger();
-  timer = setInterval(charger, 5000);
+  timer = setInterval(async ()=>{ await charger(); await rafraichirEtat(); }, 5000);
+}
+
+/* état du fil (titre, bandeau, bouton de clôture) */
+async function rafraichirEtat(){
+  const { data } = await sb.rpc('mes_fils');
+  const f = (data||[]).find(x => x.fil_id === filId);
+  if(!f) return;
+  filEtat = f;
+
+  const t = $('h-titre'); if(t) t.textContent = f.contrepartie_nom || 'Conversation';
+  const s = $('h-sous');
+  if(s) s.textContent = (f.contrat_ref ? 'Depuis '+f.contrat_ref+' · ' : '')
+    + f.nb_messages + ' message' + (f.nb_messages>1?'s':'');
+
+  const jeSuisPharmacie = profil.role === 'pharmacie';
+  const moiFerme   = jeSuisPharmacie ? f.cloture_pharmacie  : f.cloture_pharmacien;
+  const autreFerme = jeSuisPharmacie ? f.cloture_pharmacien : f.cloture_pharmacie;
+  const ferme = f.statut === 'ferme';
+
+  const bandeau = $('bandeau');
+  const zone = $('zone-cloture');
+  const saisie = $('saisie');
+  if(!bandeau || !zone) return;
+
+  const boite = (fond, bord, txt) =>
+    '<div style="background:'+fond+';border:1px solid '+bord+';border-radius:10px;padding:12px 14px;font-size:13.5px;margin-bottom:14px">'+txt+'</div>';
+
+  if(ferme){
+    bandeau.innerHTML = boite('#F4F6F5','var(--ligne)',
+      '<b>Cette conversation est fermée.</b> L’historique reste consultable. '
+      + 'Une nouvelle conversation s’ouvrira automatiquement lors d’un prochain contrat ensemble.');
+    if(saisie) saisie.style.display = 'none';
+    zone.innerHTML = '';
+    return;
+  }
+  if(saisie) saisie.style.display = '';
+
+  if(autreFerme && !moiFerme){
+    bandeau.innerHTML = boite('#FFF8EC','#F0DFC0',
+      '<b>L’autre partie souhaite clore cette conversation.</b> Elle restera ouverte tant que '
+      + 'vous ne l’acceptez pas — prenez le temps de finir ce que vous aviez à vous dire.');
+    zone.innerHTML = '<button class="btn-cloture" id="b-clore">Accepter de clore</button>';
+  } else if(moiFerme && !autreFerme){
+    bandeau.innerHTML = boite('#F4F6F5','var(--ligne)',
+      'Vous avez demandé la clôture. En attente de l’accord de l’autre partie — '
+      + 'vous pouvez continuer d’écrire d’ici là.');
+    zone.innerHTML = '<button class="btn-cloture" id="b-annuler">Annuler ma demande</button>';
+  } else {
+    bandeau.innerHTML = '';
+    zone.innerHTML = '<button class="btn-cloture" id="b-clore">Clore la conversation</button>';
+  }
+
+  const bc = $('b-clore'), ba = $('b-annuler');
+  if(bc) bc.onclick = () => demanderCloture(true, autreFerme);
+  if(ba) ba.onclick = () => demanderCloture(false, false);
+}
+
+/* clôture mutuelle — avec l'avertissement doux */
+async function demanderCloture(veut, seraDefinitive){
+  if(veut){
+    const msg = seraDefinitive
+      ? 'Clore cette conversation ?\n\n'
+        + 'L’autre partie l’a déjà demandé : elle se fermera donc immédiatement.\n'
+        + 'Vous ne pourrez plus vous écrire ici. L’historique reste consultable, et une nouvelle\n'
+        + 'conversation s’ouvrira lors d’un prochain contrat ensemble.'
+      : 'Demander la clôture de cette conversation ?\n\n'
+        + 'Elle ne se fermera que si l’autre partie accepte aussi — vous pouvez continuer\n'
+        + 'à écrire entre-temps, et annuler votre demande à tout moment.\n\n'
+        + 'Avez-vous bien reçu toutes les informations dont vous avez besoin ?';
+    if(!confirm(msg)) return;
+  }
+  const { error } = await sb.rpc('demander_cloture', { p_fil: filId, p_veut: veut });
+  if(error){ alert('Erreur : '+error.message); return; }
+  await rafraichirEtat();
+  await charger();
 }
 
 let dernierN = 0;
 async function charger(){
   const { data, error } = await sb.from('messages').select('id,corps,expediteur_id,created_at')
-    .eq('contrat_id', contratId).order('created_at',{ascending:true});
+    .eq('fil_id', filId).order('created_at',{ascending:true});
   if(error) return;
   const fil = $('fil'); if(!fil) return;
-  if(!data.length){ fil.innerHTML = '<div class="vide">Aucun message. Écrivez le premier — c\'est direct, sans intermédiaire.</div>'; return; }
+  if(!data.length){ fil.innerHTML = '<div class="vide">Aucun message. Écrivez le premier — c’est direct, sans intermédiaire.</div>'; return; }
   fil.innerHTML = data.map(m=>{
     const moi = m.expediteur_id === profil.id;
     const h = new Date(m.created_at).toLocaleString('fr-CA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-    const corps = m.corps.replace(/[<>&]/g, s=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[s]));
-    return '<div class="bulle '+(moi?'moi':'autre')+'"><div class="qui">'+(moi?'Vous':(profil.role==='pharmacie'?'Pharmacien(ne)':'Pharmacie'))+'</div>'+corps.replace(/\n/g,'<br>')+'<div class="h">'+h+'</div></div>';
+    return '<div class="bulle '+(moi?'moi':'autre')+'"><div class="qui">'
+      + (moi?'Vous':(profil.role==='pharmacie'?'Pharmacien(ne)':'Pharmacie'))+'</div>'
+      + esc(m.corps).replace(/\n/g,'<br>')+'<div class="h">'+h+'</div></div>';
   }).join('');
   if(data.length !== dernierN){ fil.scrollTop = fil.scrollHeight; dernierN = data.length; }
 }
@@ -137,7 +259,14 @@ async function charger(){
 async function envoyer(){
   const txt = $('txt'); const corps = txt.value.trim(); if(!corps) return;
   $('env').disabled = true;
-  const { error } = await sb.from('messages').insert({ contrat_id: contratId, expediteur_id: profil.id, corps });
+  const ligne = { fil_id: filId, expediteur_id: profil.id, corps };
+  if(contratId) ligne.contrat_id = contratId;          /* compatibilité ancienne colonne */
+  else if(filEtat && filEtat.contrat_ref){
+    const { data: k } = await sb.from('contrats').select('id')
+      .eq('numero_reference', filEtat.contrat_ref).maybeSingle();
+    if(k) ligne.contrat_id = k.id;
+  }
+  const { error } = await sb.from('messages').insert(ligne);
   $('env').disabled = false;
   if(error){ alert('Erreur : '+error.message); return; }
   txt.value = '';
