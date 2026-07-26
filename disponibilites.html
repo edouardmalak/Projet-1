@@ -4,64 +4,91 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>C-Direct — Mes disponibilités</title>
-<meta name="robots" content="noindex,nofollow">
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3.5" fill="%230B6E4F"/><g fill="none" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.2v8.4M5.4 12.4h5.2M3.6 4.8h8.8"/><path d="M3.6 4.8 2.3 7.6a1.45 1.45 0 0 0 2.7 0Z"/><path d="M12.4 4.8l-1.35 2.8a1.45 1.45 0 0 0 2.7 0Z"/></g></svg>'>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--fond:#FAFBF9;--panneau:#FFFFFF;--panneau2:#F1F6F2;--ligne:#D5E3DB;--ligne2:#C3D6CB;--vert:#0B6E4F;--vert-vif:#0E8A62;--texte:#1B2622;--sourd:#5A6B63;--jaune:#C97B12;--rouge:#C0392B}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
-background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
-.topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
-.topbar .in{max-width:1000px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
-.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
-.topbar .droite{display:flex;align-items:center;gap:14px;color:var(--sourd)}
-.topbar .droite a.nav{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
-.topbar .droite a.nav:hover{color:var(--vert-vif)}
-.wrap{max-width:1000px;margin:0 auto;padding:36px 18px 70px}
-h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
-.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
-.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:22px;position:relative}
-.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vert),transparent)}
-.cal-tete{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px}
-.cal-mois{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;letter-spacing:.06em;text-transform:capitalize}
-.nav-mois{display:flex;gap:8px;align-items:center}
-.bnav{background:var(--panneau2);border:1px solid var(--ligne2);color:var(--texte);border-radius:5px;width:34px;height:34px;font-size:16px;cursor:pointer;font-family:'IBM Plex Mono',monospace}
+html,body{height:100%}
+body{background:var(--fond);color:var(--texte);font-family:Inter,-apple-system,'Segoe UI',sans-serif;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;overflow:hidden}
+
+/* --- barre du haut, compacte --- */
+.topbar{border-bottom:1px solid var(--ligne);background:var(--panneau);flex:0 0 auto}
+.topbar .in{max-width:1500px;margin:0 auto;padding:9px 20px;display:flex;align-items:center;gap:14px}
+.brand{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;letter-spacing:.12em}
+.croix{width:24px;height:24px;border-radius:6px;background:var(--vert);display:grid;place-items:center}
+.droite{margin-left:auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.nav{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
+.nav:hover{color:var(--vert)}
+
+/* --- corps : occupe tout le reste, jamais de scroll --- */
+.page{flex:1 1 auto;min-height:0;max-width:1500px;width:100%;margin:0 auto;padding:12px 20px 14px;display:flex;flex-direction:column;gap:10px}
+
+.entete{display:flex;align-items:center;gap:14px;flex-wrap:wrap;flex:0 0 auto}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:clamp(15px,1.7vh,20px);letter-spacing:.1em;text-transform:uppercase}
+.sous{color:var(--sourd);font-size:clamp(11px,1.35vh,13.5px)}
+.cmd{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mois-lbl{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:clamp(13px,1.8vh,17px);min-width:150px;text-align:center;text-transform:capitalize}
+.bnav{background:var(--panneau2);border:1px solid var(--ligne2);color:var(--texte);border-radius:7px;width:clamp(30px,3.7vh,36px);height:clamp(30px,3.7vh,36px);font-size:16px;cursor:pointer;font-family:'IBM Plex Mono',monospace}
 .bnav:hover{border-color:var(--vert)}
-.bauj{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:5px;padding:0 12px;height:34px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.bauj{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:7px;padding:0 13px;height:clamp(30px,3.7vh,36px);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
 .bauj:hover{border-color:var(--vert);color:var(--vert-vif)}
-.grille-jours{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.jour-tete{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);text-align:center;padding:6px 0}
-.jour{aspect-ratio:1/1;border:1px solid var(--ligne);border-radius:6px;background:var(--panneau2);display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;padding:7px 8px;cursor:pointer;transition:border-color .1s,background .1s;position:relative;min-height:52px}
+.bg{background:var(--panneau);border:1px solid var(--ligne2);color:var(--texte);border-radius:7px;padding:0 13px;height:clamp(30px,3.7vh,36px);font:600 12px Inter,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.bg:hover{border-color:var(--vert)}
+.bg[disabled]{opacity:.5;cursor:default}
+.pastille-etat{font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:3px 9px;border-radius:99px;border:1px solid var(--ligne2);color:var(--sourd);white-space:nowrap}
+.pastille-etat.on{background:rgba(14,138,98,.1);color:var(--vert-vif);border-color:var(--vert)}
+
+/* --- le calendrier remplit la hauteur restante --- */
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:12px;padding:10px 12px 12px;
+  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px}
+.jours-tete{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;flex:0 0 auto}
+.jour-tete{font-family:'IBM Plex Mono',monospace;font-size:clamp(9px,1.25vh,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);text-align:center;padding:2px 0 4px}
+.grille{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;flex:1 1 auto;min-height:0}
+.jour{border:1px solid var(--ligne);border-radius:7px;background:var(--panneau2);display:flex;flex-direction:column;
+  align-items:flex-start;padding:5px 7px;cursor:pointer;position:relative;min-height:0;overflow:hidden;
+  transition:border-color .09s,background .09s;user-select:none;-webkit-user-select:none}
 .jour:hover{border-color:var(--vert)}
 .jour.vide{background:transparent;border-color:transparent;cursor:default}
-.jour.passe{opacity:.4;cursor:not-allowed}
-.jour .n{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
-.jour.dispo{background:rgba(18,169,110,.16);border-color:var(--vert)}
+.jour.passe{opacity:.36;cursor:not-allowed}
+.jour .n{font-family:'IBM Plex Mono',monospace;font-size:clamp(12px,2.05vh,19px);font-weight:600;line-height:1.05}
+.jour.dispo{background:rgba(18,169,110,.17);border-color:var(--vert)}
 .jour.dispo .n{color:var(--vert-vif)}
-.jour.auj{box-shadow:inset 0 0 0 1px var(--jaune)}
-.pastille{margin-top:auto;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.04em;text-transform:uppercase;padding:1px 5px;border-radius:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pastille.contrat{background:rgba(232,184,73,.16);color:var(--jaune);border:1px solid rgba(232,184,73,.4)}
-.legende{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd)}
-.legende span{display:inline-flex;align-items:center;gap:7px}
-.pnt{width:12px;height:12px;border-radius:3px;display:inline-block}
-.pnt.dispo{background:rgba(18,169,110,.16);border:1px solid var(--vert)}
-.pnt.contrat{background:rgba(232,184,73,.16);border:1px solid rgba(232,184,73,.4)}
-.msg{display:none;border-radius:4px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:14px}
-.msg.ok{background:rgba(18,169,110,.1);color:var(--vert-vif);border:1px solid var(--ligne2);border-left:3px solid var(--vert)}
-.msg.ko{background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge)}
+.jour.auj{box-shadow:inset 0 0 0 2px var(--jaune)}
+.jour.vise{background:rgba(14,138,98,.30);border-color:var(--vert-vif)}
+.jour.vise-off{background:rgba(192,57,43,.14);border-color:var(--rouge)}
+.jour.gcal::after{content:'';position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;background:#4285F4}
+.etq{margin-top:auto;font-family:'IBM Plex Mono',monospace;font-size:clamp(7.5px,1.15vh,10.5px);letter-spacing:.03em;
+  text-transform:uppercase;padding:1px 5px;border-radius:4px;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;text-decoration:none;display:block}
+.etq.contrat{background:rgba(232,184,73,.18);color:var(--jaune);border:1px solid rgba(232,184,73,.45)}
+.pied{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-family:'IBM Plex Mono',monospace;
+  font-size:clamp(9.5px,1.25vh,11.5px);color:var(--sourd);flex:0 0 auto}
+.pied span{display:inline-flex;align-items:center;gap:6px}
+.pnt{width:11px;height:11px;border-radius:3px;display:inline-block}
+.pnt.dispo{background:rgba(18,169,110,.17);border:1px solid var(--vert)}
+.pnt.contrat{background:rgba(232,184,73,.18);border:1px solid rgba(232,184,73,.45)}
+.pnt.gcal{background:#4285F4;border-radius:50%}
+.astuce{margin-left:auto;font-style:italic}
+.msg{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:60;border-radius:9px;padding:10px 16px;
+  font-family:'IBM Plex Mono',monospace;font-size:12px;display:none;box-shadow:0 8px 26px rgba(8,38,28,.18)}
+.msg.ok{background:#0B6E4F;color:#fff}
+.msg.ko{background:#C0392B;color:#fff}
 .chargement{padding:40px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+@media(max-width:640px){
+  .droite .nav{display:none}
+  .astuce{display:none}
+  .page{padding:10px 12px 12px}
+}
 </style>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/design.css">
 </head>
 <body>
 
 <div class="topbar">
   <div class="in">
     <a class="brand" href="/index.html">
-      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.6v9.6M4.9 13.4h6.2M3 4.4h10"/><path d="M3 4.4 1.5 7.7a1.7 1.7 0 0 0 3.1 0Z"/><path d="M13 4.4l-1.55 3.3a1.7 1.7 0 0 0 3.1 0Z"/></svg></span>
+      <span class="croix"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.6v9.6M4.9 13.4h6.2M3 4.4h10"/><path d="M3 4.4 1.5 7.7a1.7 1.7 0 0 0 3.1 0Z"/><path d="M13 4.4l-1.55 3.3a1.7 1.7 0 0 0 3.1 0Z"/></svg></span>
       C-DIRECT
     </a>
     <div class="droite">
@@ -75,118 +102,339 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
   </div>
 </div>
 
-<div class="wrap">
-  <h1>Mes disponibilités</h1>
-  <p class="sous">Touchez une journée pour l'activer ou la retirer. Vos contrats attribués sont affichés en repère.</p>
+<div class="page">
+  <div class="entete">
+    <div>
+      <h1>Mes disponibilités</h1>
+      <div class="sous">Cliquez une journée, ou glissez pour sélectionner une plage.</div>
+    </div>
+    <div class="cmd">
+      <span class="pastille-etat" id="etat-gcal">Google Agenda : non connecté</span>
+      <button class="bg" id="b-gcal" title="Synchroniser avec Google Agenda">
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.2c0-.7-.06-1.36-.18-2H12v3.79h5.38a4.6 4.6 0 0 1-2 3.02v2.5h3.24c1.9-1.74 2.98-4.3 2.98-7.31Z"/><path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.43l-3.24-2.5c-.9.6-2.05.96-3.38.96-2.6 0-4.8-1.76-5.59-4.12H3.06v2.58A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.41 13.91a6 6 0 0 1 0-3.82V7.51H3.06a10 10 0 0 0 0 8.98l3.35-2.58Z"/><path fill="#EA4335" d="M12 5.98c1.47 0 2.79.5 3.83 1.5l2.87-2.87C16.95 2.99 14.7 2 12 2a10 10 0 0 0-8.94 5.51l3.35 2.58C7.2 7.73 9.4 5.98 12 5.98Z"/></svg>
+        <span id="b-gcal-txt">Connecter</span>
+      </button>
+      <button class="bauj" id="b-auj">Aujourd'hui</button>
+      <button class="bnav" id="b-prev" aria-label="Mois précédent">‹</button>
+      <div class="mois-lbl" id="mois-lbl">—</div>
+      <button class="bnav" id="b-next" aria-label="Mois suivant">›</button>
+    </div>
+  </div>
 
   <div class="carte">
     <div class="chargement" id="chargement">Chargement du calendrier…</div>
-    <div id="cal" style="display:none">
-      <div class="cal-tete">
-        <div class="cal-mois" id="mois-lbl">—</div>
-        <div class="nav-mois">
-          <button class="bauj" id="b-auj">Aujourd'hui</button>
-          <button class="bnav" id="b-prev" aria-label="Mois précédent">‹</button>
-          <button class="bnav" id="b-next" aria-label="Mois suivant">›</button>
-        </div>
-      </div>
-      <div class="grille-jours" id="jours-tete"></div>
-      <div class="grille-jours" id="grille" style="margin-top:6px"></div>
-      <div class="legende">
-        <span><i class="pnt dispo"></i> Disponible</span>
-        <span><i class="pnt contrat"></i> Contrat attribué</span>
-      </div>
+    <div id="cal" style="display:none;flex:1 1 auto;min-height:0;flex-direction:column;gap:6px">
+      <div class="jours-tete" id="jours-tete"></div>
+      <div class="grille" id="grille"></div>
     </div>
-    <div class="msg" id="msg"></div>
+    <div class="pied" id="pied" style="display:none">
+      <span><i class="pnt dispo"></i> Disponible</span>
+      <span><i class="pnt contrat"></i> Contrat attribué</span>
+      <span><i class="pnt gcal"></i> Dans Google Agenda</span>
+      <span class="astuce">Glissez pour sélectionner plusieurs jours · Maj+clic pour une plage</span>
+    </div>
   </div>
 </div>
+
+<div class="msg" id="msg"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
 <script src="/auth.js?v=20260723b"></script>
 <script src="/assistant.js?v=20260723b" defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 const JOURS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 let profil = null;
-let curseur = new Date();            // mois affiché
-const dispo = new Set();             // dates 'YYYY-MM-DD' disponibles
-const contrats = new Map();          // date -> référence contrat attribué
+let curseur = new Date();
+const dispo    = new Set();   // 'YYYY-MM-DD' disponibles (C-Direct)
+const gcalDates= new Map();   // 'YYYY-MM-DD' -> id d'événement Google
+const contrats = new Map();   // 'YYYY-MM-DD' -> référence
 
 function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function msg(t, ok){ const el=$('msg'); el.textContent=t; el.className='msg '+(ok?'ok':'ko'); el.style.display='block'; if(ok) setTimeout(()=>{el.style.display='none';},2500); }
+function msg(t, ok){ const el=$('msg'); el.textContent=t; el.className='msg '+(ok?'ok':'ko'); el.style.display='block';
+  clearTimeout(msg._t); msg._t=setTimeout(()=>{el.style.display='none';}, ok?2400:5000); }
 
+/* =====================================================================
+   CHARGEMENT
+===================================================================== */
 (async function(){
   profil = await cdExigerConnexion(['pharmacien']);
   cdEnteteConnecte();
   await chargerDonnees();
   $('chargement').style.display='none';
-  $('cal').style.display='';
-  // en-tête des jours
-  const jt=$('jours-tete'); JOURS.forEach(j=>{ const d=document.createElement('div'); d.className='jour-tete'; d.textContent=j; jt.appendChild(d); });
+  $('cal').style.display='flex';
+  $('pied').style.display='flex';
+  const jt=$('jours-tete');
+  JOURS.forEach(j=>{ const d=document.createElement('div'); d.className='jour-tete'; d.textContent=j; jt.appendChild(d); });
   $('b-prev').onclick=()=>{ curseur.setMonth(curseur.getMonth()-1); dessiner(); };
   $('b-next').onclick=()=>{ curseur.setMonth(curseur.getMonth()+1); dessiner(); };
   $('b-auj').onclick=()=>{ curseur=new Date(); dessiner(); };
+  document.addEventListener('keydown', e=>{
+    if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+    if(e.key==='ArrowLeft'){ curseur.setMonth(curseur.getMonth()-1); dessiner(); }
+    if(e.key==='ArrowRight'){ curseur.setMonth(curseur.getMonth()+1); dessiner(); }
+    if(e.key==='t'||e.key==='T'){ curseur=new Date(); dessiner(); }
+  });
   dessiner();
+  initGoogle();
 })();
 
 async function chargerDonnees(){
   try{
     const { data: ds } = await sb.from('disponibilites').select('date_dispo').eq('pharmacien_id', profil.id);
     (ds||[]).forEach(r=> dispo.add(String(r.date_dispo).slice(0,10)));
-  }catch(e){ /* défensif */ }
+  }catch(e){}
   try{
     const { data: mandats } = await sb.rpc('get_mes_mandats');
-    (mandats||[]).forEach(m=>{ if(m.statut==='attribue' || m.statut==='complete') contrats.set(String(m.date_contrat).slice(0,10), m.numero_reference); });
-  }catch(e){ /* défensif : le calendrier fonctionne sans les contrats */ }
+    (mandats||[]).forEach(m=>{ if(m.statut==='attribue'||m.statut==='complete')
+      contrats.set(String(m.date_contrat).slice(0,10), m.numero_reference); });
+  }catch(e){}
 }
 
+/* =====================================================================
+   DESSIN — la grille remplit exactement la hauteur disponible
+===================================================================== */
 function dessiner(){
   $('mois-lbl').textContent = MOIS[curseur.getMonth()] + ' ' + curseur.getFullYear();
   const grille=$('grille'); grille.innerHTML='';
   const an=curseur.getFullYear(), mo=curseur.getMonth();
-  const premier=new Date(an,mo,1);
-  let decal=(premier.getDay()+6)%7;              // lundi = 0
+  const decal=(new Date(an,mo,1).getDay()+6)%7;
   const nbJours=new Date(an,mo+1,0).getDate();
+  const lignes=Math.ceil((decal+nbJours)/7);
+  grille.style.gridTemplateRows='repeat('+lignes+',minmax(0,1fr))';
   const ajd=iso(new Date());
+
   for(let i=0;i<decal;i++){ const c=document.createElement('div'); c.className='jour vide'; grille.appendChild(c); }
   for(let d=1; d<=nbJours; d++){
     const date=iso(new Date(an,mo,d));
-    const cell=document.createElement('div'); cell.className='jour';
+    const cell=document.createElement('div');
+    cell.className='jour'; cell.dataset.date=date;
     const passe = date < ajd;
     if(passe) cell.classList.add('passe');
     if(date===ajd) cell.classList.add('auj');
     if(dispo.has(date)) cell.classList.add('dispo');
+    if(gcalDates.has(date)) cell.classList.add('gcal');
     const n=document.createElement('div'); n.className='n'; n.textContent=d; cell.appendChild(n);
     if(contrats.has(date)){
       const ref=contrats.get(date);
-      const p=document.createElement('a'); p.className='pastille contrat'; p.textContent=ref;
+      const p=document.createElement('a'); p.className='etq contrat'; p.textContent=ref;
       p.href='/c/'+encodeURIComponent(ref); p.title='Voir le contrat '+ref;
-      p.style.cssText='display:block;text-decoration:none;cursor:pointer';
-      p.onclick=(e)=>{ e.stopPropagation(); };
+      p.onclick=e=>e.stopPropagation();
+      p.onmousedown=e=>e.stopPropagation();
       cell.appendChild(p);
     }
-    if(!passe){ cell.onclick=()=>basculer(date, cell); }
     grille.appendChild(cell);
   }
+  brancherSelection();
 }
 
-async function basculer(date, cell){
-  const etaitDispo = dispo.has(date);
-  cell.style.pointerEvents='none';
-  if(etaitDispo){
-    const { error } = await sb.from('disponibilites').delete().eq('pharmacien_id', profil.id).eq('date_dispo', date);
-    cell.style.pointerEvents='';
-    if(error){ msg('Erreur : '+error.message, false); return; }
-    dispo.delete(date); cell.classList.remove('dispo');
+/* =====================================================================
+   SÉLECTION À LA GOOGLE AGENDA — clic, glisser, Maj+clic
+===================================================================== */
+let glisse=null; // {depuis, retirer}
+function cellules(){ return [...document.querySelectorAll('.jour[data-date]:not(.passe)')]; }
+function plage(a,b){ const [x,y]=a<=b?[a,b]:[b,a];
+  return cellules().filter(c=>c.dataset.date>=x && c.dataset.date<=y); }
+
+function brancherSelection(){
+  cellules().forEach(cell=>{
+    cell.addEventListener('mousedown', e=>{
+      e.preventDefault();
+      const date=cell.dataset.date;
+      if(e.shiftKey && dernierClic){ apercu(plage(dernierClic,date), !dispo.has(date)); glisse={depuis:dernierClic, retirer:dispo.has(date), shift:true}; return; }
+      glisse={ depuis:date, retirer:dispo.has(date) };
+      apercu([cell], !glisse.retirer);
+    });
+    cell.addEventListener('mouseenter', ()=>{
+      if(!glisse) return;
+      apercu(plage(glisse.depuis, cell.dataset.date), !glisse.retirer);
+    });
+    /* tactile */
+    cell.addEventListener('touchstart', ()=>{ glisse={depuis:cell.dataset.date, retirer:dispo.has(cell.dataset.date)}; }, {passive:true});
+  });
+}
+function apercu(cells, activer){
+  document.querySelectorAll('.jour.vise,.jour.vise-off').forEach(c=>c.classList.remove('vise','vise-off'));
+  cells.forEach(c=>c.classList.add(activer?'vise':'vise-off'));
+}
+let dernierClic=null;
+document.addEventListener('mouseup', async ()=>{
+  if(!glisse) return;
+  const vises=[...document.querySelectorAll('.jour.vise,.jour.vise-off')];
+  const g=glisse; glisse=null;
+  document.querySelectorAll('.jour.vise,.jour.vise-off').forEach(c=>c.classList.remove('vise','vise-off'));
+  if(!vises.length) return;
+  dernierClic = vises[vises.length-1].dataset.date;
+  await appliquer(vises.map(c=>c.dataset.date), !g.retirer);
+});
+document.addEventListener('touchend', async ()=>{
+  if(!glisse) return;
+  const g=glisse; glisse=null;
+  await appliquer([g.depuis], !g.retirer);
+});
+
+/* =====================================================================
+   ÉCRITURE — Supabase, puis Google si connecté
+===================================================================== */
+async function appliquer(dates, activer){
+  const cibles = dates.filter(d => activer ? !dispo.has(d) : dispo.has(d));
+  if(!cibles.length) return;
+  cibles.forEach(d=>{ activer ? dispo.add(d) : dispo.delete(d); });
+  dessiner();
+
+  let erreur=null;
+  if(activer){
+    const { error } = await sb.from('disponibilites')
+      .upsert(cibles.map(d=>({ pharmacien_id: profil.id, date_dispo: d })), { onConflict:'pharmacien_id,date_dispo' });
+    erreur = error;
   } else {
-    const { error } = await sb.from('disponibilites').insert({ pharmacien_id: profil.id, date_dispo: date });
-    cell.style.pointerEvents='';
-    if(error){ msg(error.code==='23505' ? 'Déjà marquée disponible.' : 'Erreur : '+error.message, false); return; }
-    dispo.add(date); cell.classList.add('dispo');
+    const { error } = await sb.from('disponibilites')
+      .delete().eq('pharmacien_id', profil.id).in('date_dispo', cibles);
+    erreur = error;
   }
+  if(erreur){
+    cibles.forEach(d=>{ activer ? dispo.delete(d) : dispo.add(d); });
+    dessiner(); msg('Erreur : '+erreur.message, false); return;
+  }
+  msg(cibles.length===1
+      ? (activer?'Journée ajoutée.':'Journée retirée.')
+      : cibles.length+(activer?' journées ajoutées.':' journées retirées.'), true);
+
+  if(gcalPret()) pousserVersGoogle(cibles, activer);
+}
+
+/* =====================================================================
+   GOOGLE AGENDA — synchronisation deux sens
+   Nécessite window.CD_GOOGLE_CLIENT_ID (voir supabase-config.js).
+   Les événements créés portent la marque privée cdirect=dispo : on ne
+   touche donc JAMAIS aux autres rendez-vous de l'usager.
+===================================================================== */
+const GSCOPE='https://www.googleapis.com/auth/calendar.events';
+const MARQUE='cdirect';
+let jeton=null, tokenClient=null;
+
+function gcalConfig(){ return (window.CD_GOOGLE_CLIENT_ID||'').trim(); }
+function gcalPret(){ return !!jeton; }
+function etatGcal(txt, on){ const e=$('etat-gcal'); e.textContent='Google Agenda : '+txt; e.classList.toggle('on', !!on); }
+
+function initGoogle(){
+  const cid=gcalConfig();
+  if(!cid){
+    etatGcal('non configuré');
+    $('b-gcal').onclick=()=> msg('Google Agenda pas encore configuré — voir PRELANCEMENT.md (identifiant OAuth à créer).', false);
+    return;
+  }
+  const attendre=setInterval(()=>{
+    if(!(window.google && google.accounts && google.accounts.oauth2)) return;
+    clearInterval(attendre);
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: cid, scope: GSCOPE,
+      callback: async (rep)=>{
+        if(rep && rep.access_token){
+          jeton = rep.access_token;
+          localStorage.setItem('cd_gcal_actif','1');
+          etatGcal('connecté', true);
+          $('b-gcal-txt').textContent='Synchroniser';
+          await synchroniser();
+        } else { msg('Connexion Google refusée.', false); }
+      }
+    });
+    etatGcal('non connecté');
+    $('b-gcal').onclick=()=>{
+      if(!jeton) tokenClient.requestAccessToken({ prompt:'' });
+      else synchroniser();
+    };
+    /* reconnexion silencieuse si l'usager s'était déjà connecté */
+    if(localStorage.getItem('cd_gcal_actif')==='1') tokenClient.requestAccessToken({ prompt:'none' });
+  }, 300);
+  setTimeout(()=>clearInterval(attendre), 12000);
+}
+
+async function gapi(chemin, options){
+  const r = await fetch('https://www.googleapis.com/calendar/v3'+chemin, {
+    ...options,
+    headers: { Authorization:'Bearer '+jeton, 'Content-Type':'application/json', ...(options&&options.headers) }
+  });
+  if(r.status===401){ jeton=null; etatGcal('session expirée'); $('b-gcal-txt').textContent='Reconnecter'; throw new Error('Session Google expirée'); }
+  if(!r.ok) throw new Error('Google ('+r.status+') : '+(await r.text()).slice(0,140));
+  return r.status===204 ? null : r.json();
+}
+
+/* lit les journées « Disponible » déjà présentes dans Google */
+async function lireGoogle(){
+  gcalDates.clear();
+  const min=new Date(); min.setMonth(min.getMonth()-2);
+  const max=new Date(); max.setMonth(max.getMonth()+14);
+  let page=null;
+  do{
+    const q='/calendars/primary/events?singleEvents=true&maxResults=2500'
+      + '&privateExtendedProperty='+encodeURIComponent(MARQUE+'=dispo')
+      + '&timeMin='+min.toISOString()+'&timeMax='+max.toISOString()
+      + (page?'&pageToken='+page:'');
+    const d = await gapi(q, { method:'GET' });
+    (d.items||[]).forEach(ev=>{
+      const jour = ev.start && (ev.start.date || String(ev.start.dateTime||'').slice(0,10));
+      if(jour) gcalDates.set(jour, ev.id);
+    });
+    page = d.nextPageToken;
+  } while(page);
+}
+
+/* écrit / supprime côté Google pour des dates précises */
+async function pousserVersGoogle(dates, activer){
+  try{
+    for(const d of dates){
+      if(activer){
+        if(gcalDates.has(d)) continue;
+        const lendemain=new Date(d+'T12:00:00'); lendemain.setDate(lendemain.getDate()+1);
+        const ev = await gapi('/calendars/primary/events', { method:'POST', body: JSON.stringify({
+          summary:'Disponible — C-Direct',
+          description:'Journée marquée disponible sur C-Direct.',
+          start:{ date:d }, end:{ date: iso(lendemain) },
+          transparency:'transparent',
+          extendedProperties:{ private:{ [MARQUE]:'dispo' } }
+        })});
+        gcalDates.set(d, ev.id);
+      } else {
+        const id = gcalDates.get(d);
+        if(!id) continue;
+        await gapi('/calendars/primary/events/'+encodeURIComponent(id), { method:'DELETE' });
+        gcalDates.delete(d);
+      }
+    }
+    dessiner();
+  }catch(e){ msg(e.message, false); }
+}
+
+/* synchronisation complète : union non destructive dans les deux sens */
+async function synchroniser(){
+  const b=$('b-gcal'); b.disabled=true; const t=$('b-gcal-txt'); const avant=t.textContent; t.textContent='Sync…';
+  try{
+    await lireGoogle();
+
+    const ajd = iso(new Date());
+    const versGoogle = [...dispo].filter(d => d>=ajd && !gcalDates.has(d));
+    const versCD     = [...gcalDates.keys()].filter(d => d>=ajd && !dispo.has(d));
+
+    if(versGoogle.length) await pousserVersGoogle(versGoogle, true);
+
+    if(versCD.length){
+      const { error } = await sb.from('disponibilites')
+        .upsert(versCD.map(d=>({ pharmacien_id: profil.id, date_dispo: d })), { onConflict:'pharmacien_id,date_dispo' });
+      if(error) throw new Error(error.message);
+      versCD.forEach(d=>dispo.add(d));
+    }
+
+    dessiner();
+    const n = versGoogle.length + versCD.length;
+    msg(n===0 ? 'Déjà synchronisé — rien à changer.'
+              : 'Synchronisé : '+versGoogle.length+' vers Google, '+versCD.length+' vers C-Direct.', true);
+  }catch(e){ msg(e.message, false); }
+  finally{ b.disabled=false; t.textContent = jeton ? 'Synchroniser' : avant; }
 }
 </script>
 </body>

@@ -14,3 +14,8 @@ window.sbClient = window.supabase.createClient(window.SB_URL, window.SB_KEY);
 // (le widget s'affiche mais l'IA n'est pas branchée). À remplir après
 // déploiement du Worker — voir workers/c-direct-chat/README.md.
 window.CD_CHAT_URL = "https://c-direct-chat.edouardmalak.workers.dev";
+
+// Identifiant client OAuth Google (synchronisation Google Agenda des
+// disponibilités). Vide = bouton inactif, le calendrier fonctionne
+// normalement sans. À créer dans Google Cloud Console — voir PRELANCEMENT.md.
+window.CD_GOOGLE_CLIENT_ID = "";
