@@ -28,8 +28,7 @@ Légende : ✅ fait · ⏳ en cours · 🔲 à faire · 💤 en attente (décisi
    EN ATTENTE : Robert décide si on nettoie tout le tableau avant le lancement.
    Quand décidé, Claude prépare le script (même méthode que `sql/22`).
 
-4. 🔲 **DMARC** — Cloudflare → DNS → TXT `_dmarc` =
-   `v=DMARC1; p=none; rua=mailto:edouardmalak@gmail.com` (courriels hors spam).
+4. ✅ **DMARC ajouté** (2026-07-23) — TXT `_dmarc` dans Cloudflare DNS.
 
 5. 🔲 **Activer Google sign-in** — Supabase → Auth → Providers → Google +
    Client ID/Secret + redirect URLs.
@@ -42,8 +41,21 @@ Légende : ✅ fait · ⏳ en cours · 🔲 à faire · 💤 en attente (décisi
 
 ## Optionnel / après lancement 🟡
 
-- 🟡 SMS d'attribution/lifecycle — corriger le `WEBHOOK_SECRET` (webhooks Supabase
-  ↔ Worker) pour que les textos « vous avez obtenu le contrat » partent.
+- ⏳ **SMS d'attribution/lifecycle — CAUSE TROUVÉE (2026-07-23).** Ce n'était pas un
+  « mismatch » : le secret **`WEBHOOK_SECRET` est tout simplement ABSENT** du Worker
+  `c-direct-sms`. Diagnostic : `GET https://c-direct-sms.edouardmalak.workers.dev/diag`
+  → `"webhook_secret_set": false`. Seuls 6 secrets ont été ajoutés (Twilio ×3,
+  Supabase ×2, Resend) ; le 7e a été oublié. Résultat : `secretValide()` renvoie
+  toujours faux → tous les webhooks Supabase reçoivent **401** → aucun SMS de cycle
+  de vie ne part.
+  **Correctif (Robert — c'est une valeur secrète) :**
+  1. Supabase → Integrations → Webhooks → ouvrir un des 4 webhooks → section
+     **HTTP Headers** → copier la valeur de l'en-tête `x-webhook-secret`.
+     (Si l'en-tête est absent là aussi : générer une valeur aléatoire solide et la
+     mettre AUX DEUX endroits — les 4 webhooks ET le Worker.)
+  2. Cloudflare → Workers → `c-direct-sms` → Settings → Variables and secrets →
+     **+ Add** → type **Secret** → nom `WEBHOOK_SECRET` → coller la valeur → Deploy.
+  3. Revérifier `/diag` : doit afficher `"webhook_secret_set": true`.
 - 🟡 SMS de bienvenue à l'opt-in (à construire ; touche le Worker live).
 - 🟡 Taxes des autres pharmaciens — `sql/17` (colonnes TPS/TVQ/société au profil).
 - 🟡 Retirer l'endpoint temporaire `/diag` du Worker `c-direct-chat` (nettoyage —
