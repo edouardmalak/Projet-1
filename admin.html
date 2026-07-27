@@ -194,6 +194,17 @@ tbody tr:last-child td{border-bottom:none}
       </table>
     </div>
   </div>
+
+  <!-- REGISTRE D'AUDIT (Phase Admin · Zone G) -->
+  <div class="carte">
+    <div class="sec">Registre d'audit<small id="n-audit">gestes admin — qui / quoi / quand</small></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Quand</th><th>Admin</th><th>Action</th><th>Cible</th><th>Détails</th></tr></thead>
+        <tbody id="t-audit"><tr><td colspan="5" class="vide">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -286,22 +297,24 @@ function cdToast(texte, ok){
         b.onclick = async ()=>{
           const nom = u.nom_pharmacie || ((u.prenom||'')+' '+(u.nom||'')).trim() || u.courriel;
           const vers = !u.approuve; /* true = valider · false = révoquer */
-          if(!confirm((vers ? 'VALIDER le compte de ' : 'RÉVOQUER la validation de ') + nom + ' ?')) return;
+          let raison = null;
+          if(!vers){
+            raison = prompt('RÉVOQUER la validation de ' + nom + ' — raison (facultatif, journalisée dans le registre d\'audit) :');
+            if(raison === null) return; /* annulé */
+          } else if(!confirm('VALIDER le compte de ' + nom + ' ?')) return;
           b.disabled = true;
-          /* .select() est ESSENTIEL : sans lui, supabase-js renvoie error:null
-             même quand la RLS ne modifie AUCUNE ligne (échec silencieux).
-             On lit la/les ligne(s) réellement modifiée(s) pour trancher. */
-          const { data: maj, error: e } = await sb.from('profiles').update({
-            approuve: vers,
-            approuve_date: vers ? new Date().toISOString() : null
-          }).eq('id', u.id).select('id,approuve');
+          /* RPC (pas d'update direct) : journalise qui / quand / raison
+             dans admin_audit_log — voir sql/24-admin-audit.sql. */
+          const { error: e } = await sb.rpc('admin_valider_compte', {
+            p_profil: u.id, p_valider: vers, p_raison: raison || null
+          });
           b.disabled = false;
-          if(e){ cdToast('Échec : ' + e.message, false); return; }
-          if(!maj || !maj.length){
-            cdToast('Aucune ligne modifiée. Votre compte n\'a pas les droits admin sur profiles (RLS), ou le SQL 12 n\'est pas appliqué. Vérifiez profiles.role = « admin » et réexécutez sql/12-validation-comptes.sql.', false);
+          if(e){
+            cdToast(/function|does not exist|schema cache/.test(e.message)
+              ? 'Non activé — exécutez sql/24-admin-audit.sql dans Supabase.' : ('Échec : ' + e.message), false);
             return;
           }
-          u.approuve = maj[0].approuve;
+          u.approuve = vers;
           etat.className = 'badge ' + (u.approuve ? 'ouvert' : 'attribue');
           etat.textContent = u.approuve ? 'Validé' : 'En attente';
           b.textContent = u.approuve ? 'Révoquer' : 'Valider';
@@ -378,8 +391,9 @@ function cdToast(texte, ok){
         b.onclick = async ()=>{
           if(!confirm('Débloquer ' + (r.pharmacien_nom||'ce pharmacien') + ' ↔ ' + (r.pharmacie_nom||'cette pharmacie') + ' ?')) return;
           b.disabled = true;
-          const { error: e } = await sb.from('exclusions').delete()
-            .eq('pharmacien_id', r.pharmacien_id).eq('pharmacie_id', r.pharmacie_id);
+          const { error: e } = await sb.rpc('admin_retirer_blocage', {
+            p_pharmacien: r.pharmacien_id, p_pharmacie: r.pharmacie_id
+          });
           if(e){ b.disabled = false; cdToast('Échec : ' + e.message, false); return; }
           cdToast('Blocage retiré ✓', true);
           charger();
@@ -401,15 +415,13 @@ function cdToast(texte, ok){
       const raison = $('ex-raison').value.trim() || null;
       if(!pn || !pe){ msg('msg-excl','Choisissez un pharmacien ET une pharmacie.', false); return; }
       const b = $('btn-bloquer'); b.disabled = true;
-      const { data: sess } = await sb.auth.getSession();
-      const { error } = await sb.from('exclusions').insert({
-        pharmacien_id: pn, pharmacie_id: pe, raison,
-        cree_par: sess && sess.session ? sess.session.user.id : null
+      const { error } = await sb.rpc('admin_creer_blocage', {
+        p_pharmacien: pn, p_pharmacie: pe, p_raison: raison
       });
       b.disabled = false;
       if(error){
-        msg('msg-excl', /exclusions/.test(error.message) && /exist|relation/.test(error.message)
-          ? 'Non activé — exécutez sql/21-exclusions.sql dans Supabase.' : ('Échec : ' + error.message), false);
+        msg('msg-excl', /function|does not exist|schema cache/.test(error.message)
+          ? 'Non activé — exécutez sql/24-admin-audit.sql (et sql/21 s\'il manque) dans Supabase.' : ('Échec : ' + error.message), false);
         return;
       }
       msg('msg-excl','Blocage créé ✓ — ' + (nomParId[pn]||'') + ' ↔ ' + (nomParId[pe]||''), true);
@@ -453,7 +465,50 @@ function cdToast(texte, ok){
   chargerFactures();
   brancherSms(profil);
   chargerSmsLog();
+  chargerAuditLog();
 })();
+
+/* ---- Registre d'audit (Phase Admin · Zone G) ----
+   Lit get_audit_log() — RPC security definer (sql/24-admin-audit.sql).
+   Chaque geste privilégié (valider/révoquer un compte, bloquer/débloquer
+   une paire, changer le statut d'une facture) y écrit désormais via
+   admin_logger(), un point d'écriture unique — le journal est
+   append-only : aucune policy d'écriture n'est ouverte au client. */
+const LIB_ACTION_AUDIT = {
+  compte_valide: 'Compte validé', compte_revoque: 'Compte révoqué',
+  blocage_cree: 'Blocage créé', blocage_retire: 'Blocage retiré',
+  facture_statut_maj: 'Statut facture modifié'
+};
+async function chargerAuditLog(){
+  const tb = $('t-audit');
+  const { data, error } = await sb.rpc('get_audit_log', { p_limite: 200 });
+  if(error){
+    tb.innerHTML = '<tr><td colspan="5" class="vide">Non activé — exécutez sql/24-admin-audit.sql dans Supabase.</td></tr>';
+    $('n-audit').textContent = '';
+    return;
+  }
+  const rows = data || [];
+  $('n-audit').textContent = rows.length ? (rows.length + ' entrée' + (rows.length>1?'s':'') + (rows.length>=200?' (200 max)':'')) : '';
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="5" class="vide">Aucune action journalisée.</td></tr>'; return; }
+  tb.innerHTML = '';
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    const td = (t)=>{ const c=document.createElement('td'); c.textContent = t || '—'; return c; };
+    const cible = document.createElement('td');
+    cible.textContent = (r.cible_type || '') + (r.cible_id ? ' · ' + r.cible_id.slice(0,8) : '');
+    const det = document.createElement('td');
+    det.style.whiteSpace='normal'; det.style.maxWidth='320px';
+    try{ det.textContent = r.details ? Object.entries(r.details).filter(([,v])=>v!=null && v!=='').map(([k,v])=>k+'='+v).join(' · ') : '—'; }
+    catch(e){ det.textContent = '—'; }
+    tr.append(
+      td(new Date(r.cree_le).toLocaleString('fr-CA',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})),
+      td(r.admin_nom || r.admin_courriel || '—'),
+      td(LIB_ACTION_AUDIT[r.action] || r.action),
+      cible, det
+    );
+    tb.appendChild(tr);
+  });
+}
 
 /* ---- Phase 4 : SMS test + journal (100 derniers) ----
    L'URL du Worker et le secret ne vivent JAMAIS dans le code / git :
