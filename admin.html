@@ -242,8 +242,16 @@ tbody tr:last-child td{border-bottom:none}
       <div class="champ" style="flex:1;min-width:220px"><label>Courriel du compte</label><input id="reinv-courriel" type="email" placeholder="personne@exemple.com"></div>
       <button class="btn" style="width:auto;margin-top:0;padding:11px 18px;white-space:nowrap" id="btn-reinviter" type="button">Renvoyer la confirmation</button>
     </div>
-    <p class="sous" style="margin:8px 0 0">Pour un compte déjà inscrit mais jamais confirmé (courriel perdu/expiré). Si l'inscription reste bloquée après ça (cas du doublon non confirmé), il faut supprimer le compte non confirmé côté Supabase Auth — dites-le-moi, ce geste touche l'authentification en production et je préfère vous le confirmer avant de l'automatiser.</p>
+    <p class="sous" style="margin:8px 0 0">Pour un compte déjà inscrit mais jamais confirmé (courriel perdu/expiré).</p>
     <div class="msg" id="msg-reinv"></div>
+
+    <!-- PURGER DOUBLON NON CONFIRMÉ (Zone Admin E) -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:16px">
+      <div class="champ" style="flex:1;min-width:220px"><label>Courriel du doublon à purger</label><input id="purge-courriel" type="email" placeholder="personne@exemple.com"></div>
+      <button class="btn" style="width:auto;margin-top:0;padding:11px 18px;white-space:nowrap;background:transparent;color:#E5484D;border:1px solid rgba(229,72,77,.5)" id="btn-purger" type="button">Purger (irréversible)</button>
+    </div>
+    <p class="sous" style="margin:8px 0 0">Si renvoyer la confirmation ne débloque pas l'inscription (cas du doublon jamais confirmé), ce bouton supprime définitivement le compte <b>Supabase Auth</b> — vérifié côté serveur avant suppression : refuse si le compte a déjà été confirmé une seule fois. Nécessite le Worker c-direct-sms à jour (voir <code>workers/c-direct-sms/README.md</code>) et une session admin valide. Geste journalisé dans le registre d'audit ci-dessous.</p>
+    <div class="msg" id="msg-purge"></div>
   </div>
 
   <!-- REGISTRE D'AUDIT (Phase Admin · Zone G) -->
@@ -533,6 +541,7 @@ function cdToast(texte, ok){
   chargerFileSms();
   chargerOptOuts();
   brancherReinviter();
+  brancherPurger();
   chargerAuditLog();
 })();
 
@@ -545,7 +554,12 @@ function cdToast(texte, ok){
 const LIB_ACTION_AUDIT = {
   compte_valide: 'Compte validé', compte_revoque: 'Compte révoqué',
   blocage_cree: 'Blocage créé', blocage_retire: 'Blocage retiré',
-  facture_statut_maj: 'Statut facture modifié'
+  facture_statut_maj: 'Statut facture modifié',
+  inscription_purgee: 'Doublon d\'inscription purgé',
+  verification_maj: 'Vérification mise à jour',
+  contrat_note: 'Note ajoutée (contrat)',
+  contrat_litige_signale: 'Contrat signalé en litige', contrat_litige_leve: 'Litige levé',
+  contrat_annule_admin: 'Contrat annulé (admin)', profil_note: 'Note ajoutée (profil)'
 };
 async function chargerAuditLog(){
   const tb = $('t-audit');
@@ -676,9 +690,8 @@ async function chargerOptOuts(){
 /* ---- Zone Admin E : renvoyer le courriel de confirmation d'inscription.
    Appelle directement l'API publique Supabase Auth (auth.resend) — pas
    besoin de service_role, donc aucun changement au Worker. Couvre le cas
-   courant (courriel perdu/expiré) ; le cas « doublon jamais confirmé »
-   exige de supprimer le compte non confirmé (service_role, hors service
-   client) — volontairement PAS automatisé ici (voir texte à l'écran). */
+   courant (courriel perdu/expiré). Le cas « doublon jamais confirmé »
+   est couvert par brancherPurger() ci-dessous. */
 function brancherReinviter(){
   $('btn-reinviter').onclick = async ()=>{
     const email = $('reinv-courriel').value.trim();
@@ -689,6 +702,47 @@ function brancherReinviter(){
     if(error){ msg('msg-reinv','Échec : ' + error.message, false); return; }
     msg('msg-reinv','Courriel de confirmation renvoyé ✓ — ' + email, true);
     $('reinv-courriel').value = '';
+  };
+}
+
+/* ---- Zone Admin E : purger un doublon d'inscription JAMAIS confirmé.
+   Appelle le Worker c-direct-sms (POST /admin/purger-inscription) qui
+   supprime le compte Supabase Auth via l'API service_role — geste
+   impossible à faire depuis le client. Le Worker revérifie lui-même
+   que le compte n'a jamais été confirmé avant de le supprimer, donc
+   ce bouton ne peut pas purger un vrai compte actif. Utilise le même
+   couple URL/secret Worker que le bouton « SMS test » (configSms),
+   mais s'authentifie ici avec le jeton de SESSION de l'admin connecté
+   (pas le secret partagé) pour que l'action soit attribuée nommément
+   dans le registre d'audit. */
+function brancherPurger(){
+  $('btn-purger').onclick = async ()=>{
+    const email = $('purge-courriel').value.trim();
+    if(!email){ msg('msg-purge','Entrez un courriel.', false); return; }
+    if(!confirm('Supprimer DÉFINITIVEMENT le compte Supabase Auth de ' + email + ' ?\n\nLe Worker refuse si ce compte a déjà été confirmé une seule fois — mais l\'action est irréversible et journalisée.')) return;
+    const { url } = configSms(false);
+    if(!url){ msg('msg-purge','Worker non configuré — cliquez « Configurer Worker » plus haut (URL requise).', false); return; }
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session){ msg('msg-purge','Session admin expirée — reconnectez-vous.', false); return; }
+    $('btn-purger').disabled = true;
+    try{
+      const r = await fetch(url + '/admin/purger-inscription', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+session.access_token },
+        body: JSON.stringify({ courriel: email })
+      });
+      const rep = await r.json().catch(()=>({}));
+      if(r.ok && rep.ok){
+        msg('msg-purge','Compte purgé ✓ — ' + email, true);
+        $('purge-courriel').value = '';
+        chargerAuditLog();
+      }else{
+        msg('msg-purge','Échec : ' + (rep.erreur || ('HTTP '+r.status)), false);
+      }
+    }catch(e){
+      msg('msg-purge','Injoignable : '+e.message+' — vérifiez l\'URL du Worker (et que la nouvelle version est déployée).', false);
+    }
+    $('btn-purger').disabled = false;
   };
 }
 

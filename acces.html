@@ -475,12 +475,31 @@ $('f-inscription').addEventListener('submit', async e=>{
   });
   b.disabled=false; b.textContent='Créer mon compte';
   if(error){ erreur('err-insc', messageErreur(error)); return; }
+  if(data.session){ await apresConnexion(); return; }
+  const courrielInscrit = $('i-courriel').value.trim().replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+  /* Anti-énumération Supabase : si ce courriel a déjà un compte JAMAIS
+     confirmé, signUp() ne renvoie PAS d'erreur — il renvoie un utilisateur
+     « fantôme » avec identities:[] et session:null (un nouveau courriel de
+     confirmation est envoyé automatiquement). Sans cette vérification,
+     l'écran affichait "COMPTE CRÉÉ" pour un doublon, ce qui est trompeur
+     et déclenchait une fausse alerte admin "Nouvelle inscription". */
+  const estDoublonNonConfirme = !!(data && data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0);
+
+  if(estDoublonNonConfirme){
+    succes('COURRIEL DÉJÀ INSCRIT.',
+      "Un compte existe déjà pour <b>" + courrielInscrit + "</b>, mais il n'a jamais été confirmé.<br><br>" +
+      "Un nouveau courriel de confirmation vient de lui être envoyé (vérifiez vos indésirables) — cliquez le lien pour l'activer, puis connectez-vous normalement.<br><br>" +
+      "Rien reçu après quelques minutes&nbsp;? " +
+      "<button style='background:none;border:none;color:var(--vert-vif);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-size:13px' " +
+      "onclick=\"renvoyerConfirmation('" + courrielInscrit + "', this)\">Renvoyer le courriel</button>");
+    return;
+  }
+
   cdAlerteAdmin(
     cdT('Nouvelle inscription — à valider', 'New sign-up — pending approval'),
     cdT((role||'?') + ' : ' + $('i-prenom').value + ' ' + $('i-nom').value + ' <' + $('i-courriel').value.trim() + '> — à valider dans la console admin.',
         (role||'?') + ': ' + $('i-prenom').value + ' ' + $('i-nom').value + ' <' + $('i-courriel').value.trim() + '> — approve in the admin console.'));
-  if(data.session){ await apresConnexion(); return; }
-  const courrielInscrit = $('i-courriel').value.trim().replace(/</g,'&lt;').replace(/"/g,'&quot;');
   succes('COMPTE CRÉÉ.',
     "Un courriel de confirmation vient de vous être envoyé (vérifiez vos indésirables).<br><br>" +
     "Cliquez le lien pour confirmer votre courriel. Votre compte sera ensuite <b>activé après vérification par l'équipe</b> (inscription OPQ pour les pharmacien(ne)s, établissement pour les pharmacies).<br><br>" +

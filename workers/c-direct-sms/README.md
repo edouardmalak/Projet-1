@@ -81,6 +81,7 @@ et journalise tout message entrant dans `sms_log`.
 | `POST /webhook` | header `X-Webhook-Secret` | INSERT contrats → diffusion pharmaciens + confirmation pharmacie |
 | `POST /twilio-inbound` | (appelé par Twilio) | ARRET/STOP/UNSUBSCRIBE/DESABONNER → opt-out ; tout le reste journalisé |
 | `POST /test` | header `X-Webhook-Secret` | `{ "to": "+1XXXXXXXXXX" }` → SMS test (bouton console admin) |
+| `POST /admin/purger-inscription` | `Authorization: Bearer <jeton session admin>` | `{ "courriel": "..." }` → supprime un compte Supabase Auth **jamais confirmé** (doublon d'inscription bloqué, bouton console admin « Inscription bloquée »). Revérifie `email_confirmed_at` côté serveur avant de supprimer — refuse tout compte déjà confirmé une seule fois. Journalisé dans `admin_audit_log`. |
 
 Test rapide en ligne de commande :
 

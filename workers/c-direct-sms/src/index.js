@@ -26,6 +26,8 @@ export default {
         return await routeDiffuser(request, env);
       if (request.method === 'POST' && url.pathname === '/facture')
         return await routeFacture(request, env);
+      if (request.method === 'POST' && url.pathname === '/admin/purger-inscription')
+        return await routePurgerInscription(request, env);
       if (request.method === 'GET' && url.pathname === '/diag')
         return json({
           version: 'confirmer-pdf-2026-07-21b',
@@ -560,6 +562,66 @@ async function routeFacture(request, env) {
     return json({ ok: true, res: await envoyerFactureFinale(env, fid) });
   } catch (e) {
     console.error('routeFacture:', e.stack || e.message);
+    return json({ erreur: 'Erreur interne', detail: e.message }, 500);
+  }
+}
+
+/* =====================================================================
+   ADMIN — purge d'une inscription DOUBLON JAMAIS CONFIRMÉE
+   (admin.html · Zone E « Inscription bloquée »). Nécessite service_role
+   (Admin Auth API), donc ne peut vivre que côté Worker. Protégée par
+   JWT + rôle admin (même schéma que routeFacture). Refuse tout compte
+   déjà confirmé — cette route ne sert QUE le cas doublon décrit à
+   l'écran. Geste irréversible : journalisé dans admin_audit_log.
+===================================================================== */
+async function routePurgerInscription(request, env) {
+  try {
+    const token = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+    if (!token) return json({ erreur: 'Non authentifié' }, 401);
+    const ru = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${token}` },
+    });
+    if (!ru.ok) return json({ erreur: 'Jeton invalide — reconnectez-vous' }, 401);
+    const appelant = await ru.json();
+    const appelantProfil = await sbSelect(env, `profiles?select=id,role&id=eq.${appelant.id}`);
+    if (!appelantProfil[0] || appelantProfil[0].role !== 'admin')
+      return json({ erreur: 'Non autorisé' }, 403);
+
+    const body = await request.json().catch(() => ({}));
+    const courriel = String(body.courriel || '').trim().toLowerCase();
+    if (!courriel) return json({ erreur: 'courriel manquant' }, 400);
+
+    const cibles = await sbSelect(env, `profiles?select=id,courriel,created_at&courriel=ilike.${encodeURIComponent(courriel)}`);
+    if (!cibles[0]) return json({ erreur: 'Aucun compte avec ce courriel' }, 404);
+    const uid = cibles[0].id;
+
+    const ru2 = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${uid}`, {
+      headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` },
+    });
+    if (!ru2.ok) return json({ erreur: 'Compte introuvable côté Supabase Auth', detail: await ru2.text() }, 404);
+    const brut = await ru2.json();
+    const cible = brut && brut.user ? brut.user : brut; // GoTrue : réponse parfois enveloppée dans { user: {...} }
+    if (cible.email_confirmed_at) {
+      return json({ erreur: 'Ce compte est confirmé — suppression refusée (cette route ne purge que les doublons jamais confirmés).' }, 400);
+    }
+
+    const rd = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${uid}`, {
+      method: 'DELETE',
+      headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` },
+    });
+    if (!rd.ok) return json({ erreur: 'Échec suppression Auth', detail: await rd.text() }, 500);
+
+    await sbInsert(env, 'admin_audit_log', [{
+      admin_id: appelant.id,
+      action: 'inscription_purgee',
+      cible_type: 'profile',
+      cible_id: uid,
+      details: { courriel, cree_le: cibles[0].created_at },
+    }]);
+
+    return json({ ok: true, purge: courriel });
+  } catch (e) {
+    console.error('routePurgerInscription:', e.stack || e.message);
     return json({ erreur: 'Erreur interne', detail: e.message }, 500);
   }
 }
