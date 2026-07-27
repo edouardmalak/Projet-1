@@ -270,7 +270,6 @@ let mode = params.get('mode') || 'insc';   /* insc | conn | oubli | reset | comp
 let role = ['pharmacien','pharmacie'].includes(params.get('role')) ? params.get('role') : null;
 let etape = 'entree';
 if(mode==='conn') etape='form';
-if(mode==='insc' && role) etape='form';
 
 const NOM_ROLE = { pharmacien:'PHARMACIEN(NE) REMPLAÇANT(E)', pharmacie:'PHARMACIE' };
 
