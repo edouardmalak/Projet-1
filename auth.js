@@ -149,8 +149,8 @@ const CD_MENUS = {
   ],
   admin: [
     ['/admin.html',              'Console',          'Console'],
+    ['/admin-verification.html', 'Vérification',     'Verification'],
     ['/nouveaux.html',           'Contrats',         'Contracts'],
-    ['/pharmacies.html',         'Pharmaciens',      'Pharmacists'],
     ['/messages.html',           'Messages',         'Messages'],
     ['/evaluations.html',        'Évaluations',      'Reviews'],
     ['/profil.html',             'Profil',           'Profile'],

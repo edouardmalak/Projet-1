@@ -266,7 +266,7 @@ function cdToast(texte, ok){
 
   /* ---- utilisateurs (lecture seule) ---- */
   const { data: users, error: eu } = await sb.from('profiles')
-    .select('id,role,nom,prenom,courriel,telephone,ville,ville_base,nom_pharmacie,sms_optin,created_at,approuve')
+    .select('id,role,nom,prenom,courriel,telephone,ville,ville_base,nom_pharmacie,sms_optin,created_at,approuve,statut_verification')
     .order('created_at',{ascending:false});
   const tu = $('t-users');
   if(eu){ tu.innerHTML = '<tr><td colspan="8" class="vide">Erreur : '+eu.message+'</td></tr>'; }
@@ -286,53 +286,65 @@ function cdToast(texte, ok){
       const val = document.createElement('td');
       if(u.role === 'admin'){ val.textContent = '—'; }
       else{
+        /* Statut riche (Zone Admin A · sql/25) avec repli sur l'ancien
+           booléen si la migration n'est pas encore appliquée. */
+        const LIB_STATUT = { en_attente:'En attente', verifie:'Validé', rejete:'Rejeté', suspendu:'Suspendu' };
+        u._statut = u.statut_verification || (u.approuve ? 'verifie' : 'en_attente');
         const etat = document.createElement('span');
-        etat.className = 'badge ' + (u.approuve ? 'ouvert' : 'attribue');
-        etat.textContent = u.approuve ? 'Validé' : 'En attente';
+        etat.className = 'badge ' + (u._statut==='verifie' ? 'ouvert' : u._statut==='rejete' ? '' : 'attribue');
+        if(u._statut==='rejete') etat.style.cssText = 'color:var(--rouge);border-color:rgba(229,72,77,.4)';
+        etat.textContent = LIB_STATUT[u._statut] || u._statut;
         const b = document.createElement('button');
-        b.textContent = u.approuve ? 'Révoquer' : 'Valider';
+        const estVerifie = u._statut === 'verifie';
+        b.textContent = estVerifie ? 'Suspendre' : 'Approuver';
         b.style.cssText = 'font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:3px;cursor:pointer;white-space:nowrap;' +
-          (u.approuve ? 'background:transparent;color:var(--sourd);border:1px solid var(--ligne2)'
+          (estVerifie ? 'background:transparent;color:var(--sourd);border:1px solid var(--ligne2)'
                       : 'background:var(--jaune);color:#1A1405;border:1px solid var(--jaune);font-weight:700');
+        const lienFile = document.createElement('a');
+        lienFile.href = '/admin-verification.html'; lienFile.textContent = 'Détails →';
+        lienFile.style.cssText = 'font-size:10px;color:var(--sourd);text-decoration:underline;text-underline-offset:2px';
         b.onclick = async ()=>{
           const nom = u.nom_pharmacie || ((u.prenom||'')+' '+(u.nom||'')).trim() || u.courriel;
-          const vers = !u.approuve; /* true = valider · false = révoquer */
+          const cible = estVerifie ? 'suspendu' : 'verifie'; /* approuver → verifie · suspendre un compte validé */
           let raison = null;
-          if(!vers){
-            raison = prompt('RÉVOQUER la validation de ' + nom + ' — raison (facultatif, journalisée dans le registre d\'audit) :');
-            if(raison === null) return; /* annulé */
-          } else if(!confirm('VALIDER le compte de ' + nom + ' ?')) return;
+          if(cible === 'suspendu'){
+            raison = prompt('SUSPENDRE le compte de ' + nom + ' — raison (obligatoire, journalisée) :');
+            if(raison === null || !raison.trim()) return;
+          } else if(!confirm('APPROUVER le compte de ' + nom + ' ?')) return;
           b.disabled = true;
           /* RPC (pas d'update direct) : journalise qui / quand / raison
-             dans admin_audit_log — voir sql/24-admin-audit.sql. */
-          const { error: e } = await sb.rpc('admin_valider_compte', {
-            p_profil: u.id, p_valider: vers, p_raison: raison || null
+             dans admin_audit_log — voir sql/24 + sql/25-verification-queue.sql.
+             Pour rejeter (plutôt que suspendre) ou revoir le détail complet
+             (OPQ/NEQ, complétude), utilisez /admin-verification.html. */
+          const { error: e } = await sb.rpc('admin_maj_verification', {
+            p_profil: u.id, p_statut: cible, p_raison: raison
           });
           b.disabled = false;
           if(e){
             cdToast(/function|does not exist|schema cache/.test(e.message)
-              ? 'Non activé — exécutez sql/24-admin-audit.sql dans Supabase.' : ('Échec : ' + e.message), false);
+              ? 'Non activé — exécutez sql/25-verification-queue.sql dans Supabase.' : ('Échec : ' + e.message), false);
             return;
           }
-          u.approuve = vers;
-          etat.className = 'badge ' + (u.approuve ? 'ouvert' : 'attribue');
-          etat.textContent = u.approuve ? 'Validé' : 'En attente';
-          b.textContent = u.approuve ? 'Révoquer' : 'Valider';
+          u.approuve = (cible === 'verifie');
+          u._statut = cible;
+          etat.className = 'badge ' + (cible==='verifie' ? 'ouvert' : 'attribue');
+          etat.textContent = LIB_STATUT[cible] || cible;
+          b.textContent = cible==='verifie' ? 'Suspendre' : 'Approuver';
           b.style.cssText = b.style.cssText.replace(/background:[^;]+;color:[^;]+;border:[^;]+/,
-            u.approuve ? 'background:transparent;color:var(--sourd);border:1px solid var(--ligne2)'
+            cible==='verifie' ? 'background:transparent;color:var(--sourd);border:1px solid var(--ligne2)'
                        : 'background:var(--jaune);color:#1A1405;border:1px solid var(--jaune)');
           /* compteur « en attente » mis à jour en direct */
           const restants = users.filter(x=>x.role!=='admin' && !x.approuve).length;
           $('n-users').textContent = users.length + ' compte' + (users.length>1?'s':'') +
             (restants ? ' · ' + restants + ' EN ATTENTE DE VALIDATION' : '');
-          cdToast((u.approuve ? 'Compte validé ✓ — ' : 'Validation révoquée — ') + nom, true);
+          cdToast(nom + ' → ' + (LIB_STATUT[cible]||cible) + ' ✓', true);
         };
         /* pile verticale : le bouton reste TOUJOURS visible/cliquable
            (sinon la largeur badge + bouton débordait hors du tableau
            défilant et le bouton finissait hors de vue à droite). */
         const boite = document.createElement('div');
         boite.style.cssText = 'display:inline-flex;flex-direction:column;align-items:flex-start;gap:6px';
-        boite.append(etat, b);
+        boite.append(etat, b, lienFile);
         val.append(boite);
       }
 
@@ -666,7 +678,7 @@ function dureeLisible(heures){
 async function chargerKPIs(){
   try{
     const [{data:profs}, {data:ks}, {data:cands}, {data:facts}] = await Promise.all([
-      sb.from('profiles').select('role,approuve'),
+      sb.from('profiles').select('role,approuve,statut_verification'),
       sb.from('contrats').select('id,statut,created_at'),
       sb.from('candidatures').select('contrat_id,statut,updated_at'),
       sb.rpc('get_factures')
@@ -674,7 +686,10 @@ async function chargerKPIs(){
     const P = profs||[], K = ks||[], C = cands||[], F = facts||[];
     const pn = P.filter(x=>x.role==='pharmacien').length;
     const pe = P.filter(x=>x.role==='pharmacie').length;
-    const attente = P.filter(x=>x.role!=='admin' && !x.approuve).length;
+    /* « en attente » = jamais examiné (statut_verification), avec repli sur
+       l'ancien booléen si sql/25 n'est pas encore appliqué */
+    const attente = P.filter(x=>x.role!=='admin' &&
+      (x.statut_verification ? x.statut_verification==='en_attente' : !x.approuve)).length;
     const pub = K.length;
     const remplis = K.filter(k=>k.statut==='attribue' || k.statut==='complete').length;
     const taux = pub ? Math.round(remplis/pub*100) : 0;
