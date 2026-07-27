@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Gestion des contrats</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3.5" fill="%230B6E4F"/><g fill="none" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.2v8.4M5.4 12.4h5.2M3.6 4.8h8.8"/><path d="M3.6 4.8 2.3 7.6a1.45 1.45 0 0 0 2.7 0Z"/><path d="M12.4 4.8l-1.35 2.8a1.45 1.45 0 0 0 2.7 0Z"/></g></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#FAFBF9;--panneau:#FFFFFF;--panneau2:#F1F6F2;--ligne:#D5E3DB;--ligne2:#C3D6CB;--vert:#0B6E4F;--vert-vif:#0E8A62;--texte:#1B2622;--sourd:#5A6B63;--jaune:#C97B12;--rouge:#C0392B}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+background-image:linear-gradient(rgba(232,184,73,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(232,184,73,.03) 1px,transparent 1px);background-size:44px 44px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1100px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--jaune);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:14px;color:var(--sourd)}
+.wrap{max-width:1100px;margin:0 auto;padding:36px 18px 70px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+h1 b{color:var(--jaune)}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:24px;position:relative;margin-bottom:20px}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--jaune),transparent)}
+.sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--jaune);margin-bottom:14px}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+th{padding:9px 11px;text-align:left;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--sourd);border-bottom:1px solid var(--ligne);white-space:nowrap}
+td{padding:10px 11px;border-bottom:1px solid var(--ligne);vertical-align:top;white-space:nowrap}
+tr.ligne-litige{background:rgba(229,72,77,.04)}
+.badge{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd);white-space:nowrap}
+.badge.ouvert{color:var(--vert-vif);border-color:rgba(23,201,128,.4);background:rgba(18,169,110,.08)}
+.badge.attribue{color:var(--jaune);border-color:rgba(232,184,73,.4);background:rgba(232,184,73,.08)}
+.badge.complete{color:var(--sourd);border-color:var(--ligne2);background:var(--panneau2)}
+.badge.annule{color:var(--rouge);border-color:rgba(229,72,77,.4);background:rgba(229,72,77,.05)}
+.badge.litige{color:#fff;background:var(--rouge);border-color:var(--rouge);font-weight:700}
+.filtres{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.filtres button{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:7px 13px;border-radius:4px;cursor:pointer;border:1px solid var(--ligne2);background:transparent;color:var(--sourd)}
+.filtres button.actif{background:var(--jaune);color:#1A1405;border-color:var(--jaune);font-weight:700}
+.chk{display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--rouge);margin-left:auto;cursor:pointer}
+.vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:24px 0}
+.lien-toggle{font-size:11px;color:var(--vert-vif);text-decoration:underline;text-underline-offset:2px;background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace}
+.detail-row td{background:var(--panneau2);white-space:normal;padding:16px}
+.detail-grille{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:720px){.detail-grille{grid-template-columns:1fr}}
+.detail-bloc h4{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);margin-bottom:6px}
+.detail-bloc p{font-size:13px;margin-bottom:2px}
+.detail-bloc .fiab{font-size:11.5px;color:var(--vert-vif);margin-top:4px}
+.notes-liste{margin-top:8px;max-height:160px;overflow-y:auto;border:1px solid var(--ligne);border-radius:5px;background:#fff}
+.note-item{padding:8px 10px;border-bottom:1px solid var(--ligne);font-size:12px}
+.note-item:last-child{border-bottom:none}
+.note-item .qui{color:var(--sourd);font-size:10.5px;margin-bottom:2px}
+.note-form{display:flex;gap:8px;margin-top:8px}
+.note-form input{flex:1;border:1px solid var(--ligne2);border-radius:4px;padding:8px 10px;font-size:13px;font-family:'Instrument Sans',sans-serif}
+.actions-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--ligne)}
+.btn-a{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:7px 12px;border-radius:3px;cursor:pointer;white-space:nowrap;border:1px solid var(--ligne2);background:#fff;color:var(--sourd)}
+.btn-a.non{color:var(--rouge);border-color:rgba(229,72,77,.4)}
+.btn-a.oui{background:var(--vert-vif);color:#fff;border-color:var(--vert-vif);font-weight:700}
+.btn-a:disabled{opacity:.5;cursor:default}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/design.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html">
+      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16"><g fill="none" stroke="#1A1405" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.6v9.6M4.9 13.4h6.2M3 4.4h10"/><path d="M3 4.4 1.5 7.7a1.7 1.7 0 0 0 3.1 0Z"/><path d="M13 4.4l-1.55 3.3a1.7 1.7 0 0 0 3.1 0Z"/></g></svg></span>
+      C-DIRECT
+    </a>
+    <div class="droite"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>Gestion <b>·</b> Contrats</h1>
+  <p class="sous">Tous les contrats du réseau — annuler, signaler un litige, noter, contacter les deux parties</p>
+
+  <div class="carte">
+    <div class="filtres" id="filtres"></div>
+    <div class="sec" id="n-liste">Chargement…</div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th>Statut</th><th>Réf</th><th>Date</th><th>Pharmacie</th><th>Locum</th>
+          <th>Tarif</th><th>Ville</th><th>Notes</th><th></th>
+        </tr></thead>
+        <tbody id="t-liste"><tr><td colspan="9" class="vide">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js?v=20260726b"></script>
+<script src="/auth.js?v=20260726b"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+let LISTE = [];
+let FILTRE = 'tous';
+let LITIGES_SEULEMENT = false;
+let OUVERT = null; /* id du contrat dont le détail est déplié */
+const LIB_STATUT = { ouvert:'Ouvert', attribue:'Attribué', complete:'Complété', annule:'Annulé' };
+
+function cdToast(texte, ok){
+  let t = document.getElementById('cd-toast');
+  if(!t){
+    t = document.createElement('div'); t.id='cd-toast';
+    t.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:9999;max-width:560px;padding:12px 18px;border-radius:6px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.45;letter-spacing:.02em;box-shadow:0 8px 30px rgba(0,0,0,.35);opacity:0;transition:opacity .2s;text-align:center';
+    document.body.appendChild(t);
+  }
+  t.textContent = texte;
+  t.style.background = ok ? 'rgba(18,169,110,.15)' : 'rgba(229,72,77,.15)';
+  t.style.color = ok ? '#0D8A61' : '#E5484D';
+  t.style.border = '1px solid ' + (ok ? 'rgba(23,201,128,.5)' : 'rgba(229,72,77,.5)');
+  t.style.opacity = '1';
+  clearTimeout(t._to);
+  t._to = setTimeout(()=>{ t.style.opacity='0'; }, ok ? 3500 : 9000);
+}
+
+(async function(){
+  const profil = await cdExigerConnexion(['admin']);
+  if(profil.role !== 'admin'){ location.replace(cdAccueilPourRole(profil.role)); return; }
+  cdEnteteConnecte();
+  await charger();
+})();
+
+async function charger(){
+  const { data, error } = await sb.rpc('get_contrats_admin');
+  if(error){
+    $('t-liste').innerHTML = '<tr><td colspan="9" class="vide">Non activé — exécutez sql/26-gestion-contrats.sql dans Supabase.</td></tr>';
+    $('n-liste').textContent = '';
+    $('filtres').innerHTML = '';
+    return;
+  }
+  LISTE = data || [];
+  dessinerFiltres();
+  dessiner();
+}
+
+function dessinerFiltres(){
+  const z = $('filtres'); z.innerHTML = '';
+  const ordre = ['tous','ouvert','attribue','complete','annule'];
+  ordre.forEach(s=>{
+    const n = s==='tous' ? LISTE.length : LISTE.filter(f=>f.statut===s).length;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = FILTRE===s ? 'actif' : '';
+    b.textContent = (s==='tous' ? 'Tous' : LIB_STATUT[s]) + ' (' + n + ')';
+    b.onclick = ()=>{ FILTRE = s; dessinerFiltres(); dessiner(); };
+    z.appendChild(b);
+  });
+  const nLitiges = LISTE.filter(f=>f.en_litige).length;
+  const chk = document.createElement('label');
+  chk.className = 'chk';
+  chk.innerHTML = '<input type="checkbox" id="chk-litiges"' + (LITIGES_SEULEMENT?' checked':'') + '> Litiges seulement (' + nLitiges + ')';
+  z.appendChild(chk);
+  chk.querySelector('input').onchange = (e)=>{ LITIGES_SEULEMENT = e.target.checked; dessiner(); };
+}
+
+function nomLocum(r){ return r.pharmacien_nom || (r.pharmacien_id ? (r.pharmacien_courriel||'—') : '— non assigné'); }
+
+function dessiner(){
+  const tb = $('t-liste');
+  let liste = FILTRE==='tous' ? LISTE : LISTE.filter(f=>f.statut===FILTRE);
+  if(LITIGES_SEULEMENT) liste = liste.filter(f=>f.en_litige);
+  $('n-liste').textContent = liste.length + ' contrat' + (liste.length>1?'s':'');
+  if(!liste.length){ tb.innerHTML = '<tr><td colspan="9" class="vide">Aucun contrat dans ce filtre.</td></tr>'; return; }
+  tb.innerHTML = '';
+  liste.forEach(r=>{
+    const tr = document.createElement('tr');
+    if(r.en_litige) tr.className = 'ligne-litige';
+    const td = (html)=>{ const c=document.createElement('td'); c.innerHTML = html; return c; };
+
+    let statutHtml = '<span class="badge ' + r.statut + '">' + (LIB_STATUT[r.statut]||r.statut) + '</span>';
+    if(r.en_litige) statutHtml += ' <span class="badge litige">Litige</span>';
+
+    tr.append(
+      td(statutHtml),
+      td('<b>' + (r.numero_reference||'—') + '</b>'),
+      td(r.date_contrat ? cdDate(r.date_contrat) : '—'),
+      td((r.nom_pharmacie||'—').replace(/</g,'&lt;')),
+      td(nomLocum(r).replace(/</g,'&lt;')),
+      td(cdArgent(r.tarif_horaire)+'/h'),
+      td(r.ville||'—'),
+      td(r.notes_count > 0 ? r.notes_count : '—')
+    );
+    const act = document.createElement('td');
+    const btn = document.createElement('button');
+    btn.className = 'lien-toggle';
+    btn.textContent = OUVERT===r.id ? 'Fermer ▴' : 'Détails ▾';
+    btn.onclick = ()=>{ OUVERT = OUVERT===r.id ? null : r.id; dessiner(); };
+    act.appendChild(btn);
+    tr.appendChild(act);
+    tb.appendChild(tr);
+
+    if(OUVERT===r.id) tb.appendChild(construireDetail(r));
+  });
+}
+
+function construireDetail(r){
+  const tr = document.createElement('tr');
+  tr.className = 'detail-row';
+  const td = document.createElement('td');
+  td.colSpan = 9;
+
+  const grille = document.createElement('div');
+  grille.className = 'detail-grille';
+
+  const blocPharmacie = document.createElement('div');
+  blocPharmacie.className = 'detail-bloc';
+  blocPharmacie.innerHTML = '<h4>Pharmacie</h4>' +
+    '<p><b>' + (r.nom_pharmacie||'—') + '</b></p>' +
+    '<p>' + (r.pharmacie_courriel||'—') + '</p>' +
+    '<p>' + (r.pharmacie_tel ? cdTelAffiche(r.pharmacie_tel) : '—') + '</p>' +
+    (r.pharmacie_contact_nom ? '<p>Contact : ' + r.pharmacie_contact_nom + (r.pharmacie_contact_tel ? ' · ' + cdTelAffiche(r.pharmacie_contact_tel) : '') + '</p>' : '');
+
+  const blocLocum = document.createElement('div');
+  blocLocum.className = 'detail-bloc';
+  if(r.pharmacien_id){
+    blocLocum.innerHTML = '<h4>Pharmacien(ne)</h4>' +
+      '<p><b>' + (r.pharmacien_nom||'—') + '</b></p>' +
+      '<p>' + (r.pharmacien_courriel||'—') + '</p>' +
+      '<p>' + (r.pharmacien_tel ? cdTelAffiche(r.pharmacien_tel) : '—') + '</p>' +
+      (r.pharmacien_opq ? '<p>OPQ ' + r.pharmacien_opq + '</p>' : '') +
+      (r.pharmacien_mandats ? '<p class="fiab">Fiabilité : ' + r.pharmacien_taux_completion + '% de complétion (' + r.pharmacien_mandats + ' mandat' + (r.pharmacien_mandats>1?'s':'') + ')</p>' : '');
+  } else {
+    blocLocum.innerHTML = '<h4>Pharmacien(ne)</h4><p style="color:var(--sourd)">Aucun candidat retenu pour l\'instant.</p>';
+  }
+
+  grille.append(blocPharmacie, blocLocum);
+
+  const notesWrap = document.createElement('div');
+  notesWrap.style.marginTop = '16px';
+  notesWrap.innerHTML = '<h4 style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);margin-bottom:6px">Notes internes' +
+    (r.litige_raison ? ' <span style="color:var(--rouge);text-transform:none;letter-spacing:0">· litige : « ' + r.litige_raison.replace(/</g,'&lt;') + ' »</span>' : '') + '</h4>';
+  const notesListe = document.createElement('div');
+  notesListe.className = 'notes-liste';
+  notesListe.innerHTML = '<div class="note-item" style="color:var(--sourd)">Chargement…</div>';
+  notesWrap.appendChild(notesListe);
+  sb.rpc('get_notes_contrat', { p_contrat: r.id }).then(({ data, error })=>{
+    if(error){ notesListe.innerHTML = '<div class="note-item" style="color:var(--sourd)">Aucune note (ou sql/26 non exécuté).</div>'; return; }
+    if(!data || !data.length){ notesListe.innerHTML = '<div class="note-item" style="color:var(--sourd)">Aucune note pour l\'instant.</div>'; return; }
+    notesListe.innerHTML = '';
+    data.forEach(n=>{
+      const it = document.createElement('div');
+      it.className = 'note-item';
+      it.innerHTML = '<div class="qui">' + (n.admin_nom||'admin') + ' · ' + new Date(n.cree_le).toLocaleString('fr-CA',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) + '</div>' +
+        n.note.replace(/</g,'&lt;');
+      notesListe.appendChild(it);
+    });
+  });
+
+  const noteForm = document.createElement('div');
+  noteForm.className = 'note-form';
+  const input = document.createElement('input');
+  input.placeholder = 'Ajouter une note interne…';
+  const btnNote = document.createElement('button');
+  btnNote.className = 'btn-a'; btnNote.textContent = 'Ajouter';
+  btnNote.onclick = async ()=>{
+    if(!input.value.trim()) return;
+    btnNote.disabled = true;
+    const { error } = await sb.rpc('admin_ajouter_note', { p_contrat: r.id, p_note: input.value.trim() });
+    btnNote.disabled = false;
+    if(error){ cdToast('Échec : ' + error.message, false); return; }
+    input.value = '';
+    r.notes_count = (r.notes_count||0) + 1;
+    dessiner();
+  };
+  noteForm.append(input, btnNote);
+  notesWrap.appendChild(noteForm);
+
+  const actionsRow = document.createElement('div');
+  actionsRow.className = 'actions-row';
+
+  const btnAnnuler = document.createElement('button');
+  btnAnnuler.className = 'btn-a non';
+  btnAnnuler.textContent = 'Annuler le contrat';
+  btnAnnuler.disabled = !(r.statut === 'ouvert' || r.statut === 'attribue');
+  btnAnnuler.onclick = async ()=>{
+    const raison = prompt('ANNULER ' + r.numero_reference + ' — raison (obligatoire) :');
+    if(raison === null || !raison.trim()) return;
+    if(!confirm('Confirmer l\'annulation de ' + r.numero_reference + ' ?')) return;
+    btnAnnuler.disabled = true;
+    const { data: res, error } = await sb.rpc('admin_annuler_contrat', { p_contrat: r.id, p_raison: raison.trim() });
+    if(error){ cdToast('Échec : ' + error.message, false); btnAnnuler.disabled = false; return; }
+    const pct = res && res.penalite_pct;
+    cdToast(r.numero_reference + ' annulé ✓' + (pct ? (' — pénalité ' + pct + '%') : ''), true);
+    await charger();
+  };
+
+  const btnLitige = document.createElement('button');
+  btnLitige.className = 'btn-a' + (r.en_litige ? '' : ' non');
+  btnLitige.textContent = r.en_litige ? 'Lever le litige' : 'Signaler un litige';
+  btnLitige.onclick = async ()=>{
+    let raison = null;
+    if(!r.en_litige){
+      raison = prompt('SIGNALER un litige sur ' + r.numero_reference + ' — raison (obligatoire) :');
+      if(raison === null || !raison.trim()) return;
+    } else if(!confirm('Lever le litige sur ' + r.numero_reference + ' ?')) return;
+    btnLitige.disabled = true;
+    const { error } = await sb.rpc('admin_signaler_litige', { p_contrat: r.id, p_actif: !r.en_litige, p_raison: raison });
+    btnLitige.disabled = false;
+    if(error){ cdToast('Échec : ' + error.message, false); return; }
+    cdToast(r.numero_reference + (r.en_litige ? ' — litige levé ✓' : ' — litige signalé ✓'), true);
+    await charger();
+  };
+
+  actionsRow.append(btnAnnuler, btnLitige);
+
+  td.append(grille, notesWrap, actionsRow);
+  tr.appendChild(td);
+  return tr;
+}
+</script>
+</body>
+</html>
