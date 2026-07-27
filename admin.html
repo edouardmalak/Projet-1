@@ -354,7 +354,7 @@ function cdToast(texte, ok){
           (estVerifie ? 'background:transparent;color:var(--sourd);border:1px solid var(--ligne2)'
                       : 'background:var(--jaune);color:#1A1405;border:1px solid var(--jaune);font-weight:700');
         const lienFile = document.createElement('a');
-        lienFile.href = '/admin-verification.html'; lienFile.textContent = 'Détails →';
+        lienFile.href = '/admin-utilisateur.html?id=' + u.id; lienFile.textContent = 'Fiche complète →';
         lienFile.style.cssText = 'font-size:10px;color:var(--sourd);text-decoration:underline;text-underline-offset:2px';
         b.onclick = async ()=>{
           const nom = u.nom_pharmacie || ((u.prenom||'')+' '+(u.nom||'')).trim() || u.courriel;

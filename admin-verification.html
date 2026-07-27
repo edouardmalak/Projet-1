@@ -198,7 +198,10 @@ function dessiner(){
       '</div>';
     }
 
-    tr.append(td(role), td('<b>' + nomDe(r).replace(/</g,'&lt;') + '</b>'), td(identifiants), td(complet), td(contact), td(inscrit), td(statutHtml));
+    const nomTd = document.createElement('td');
+    nomTd.innerHTML = '<b>' + nomDe(r).replace(/</g,'&lt;') + '</b><br><a href="/admin-utilisateur.html?id=' + r.id + '" style="font-size:10.5px;color:var(--vert-vif);text-decoration:underline;text-underline-offset:2px">Fiche complète →</a>';
+
+    tr.append(td(role), nomTd, td(identifiants), td(complet), td(contact), td(inscrit), td(statutHtml));
 
     const act = document.createElement('td');
     const boite = document.createElement('div');

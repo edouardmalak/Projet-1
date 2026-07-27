@@ -217,7 +217,8 @@ function construireDetail(r){
     '<p><b>' + (r.nom_pharmacie||'—') + '</b></p>' +
     '<p>' + (r.pharmacie_courriel||'—') + '</p>' +
     '<p>' + (r.pharmacie_tel ? cdTelAffiche(r.pharmacie_tel) : '—') + '</p>' +
-    (r.pharmacie_contact_nom ? '<p>Contact : ' + r.pharmacie_contact_nom + (r.pharmacie_contact_tel ? ' · ' + cdTelAffiche(r.pharmacie_contact_tel) : '') + '</p>' : '');
+    (r.pharmacie_contact_nom ? '<p>Contact : ' + r.pharmacie_contact_nom + (r.pharmacie_contact_tel ? ' · ' + cdTelAffiche(r.pharmacie_contact_tel) : '') + '</p>' : '') +
+    '<p><a href="/admin-utilisateur.html?id=' + r.pharmacie_id + '" style="color:var(--vert-vif);font-size:11.5px;text-decoration:underline">Fiche complète →</a></p>';
 
   const blocLocum = document.createElement('div');
   blocLocum.className = 'detail-bloc';
@@ -227,7 +228,8 @@ function construireDetail(r){
       '<p>' + (r.pharmacien_courriel||'—') + '</p>' +
       '<p>' + (r.pharmacien_tel ? cdTelAffiche(r.pharmacien_tel) : '—') + '</p>' +
       (r.pharmacien_opq ? '<p>OPQ ' + r.pharmacien_opq + '</p>' : '') +
-      (r.pharmacien_mandats ? '<p class="fiab">Fiabilité : ' + r.pharmacien_taux_completion + '% de complétion (' + r.pharmacien_mandats + ' mandat' + (r.pharmacien_mandats>1?'s':'') + ')</p>' : '');
+      (r.pharmacien_mandats ? '<p class="fiab">Fiabilité : ' + r.pharmacien_taux_completion + '% de complétion (' + r.pharmacien_mandats + ' mandat' + (r.pharmacien_mandats>1?'s':'') + ')</p>' : '') +
+      '<p><a href="/admin-utilisateur.html?id=' + r.pharmacien_id + '" style="color:var(--vert-vif);font-size:11.5px;text-decoration:underline">Fiche complète →</a></p>';
   } else {
     blocLocum.innerHTML = '<h4>Pharmacien(ne)</h4><p style="color:var(--sourd)">Aucun candidat retenu pour l\'instant.</p>';
   }
