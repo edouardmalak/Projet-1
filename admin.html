@@ -92,9 +92,33 @@ tbody tr:last-child td{border-bottom:none}
       <div class="kpi"><small>Pharmaciens</small><b id="k-pn">—</b><div class="sub" id="k-pn-sub"></div></div>
       <div class="kpi jaune"><small>Comptes en attente</small><b id="k-attente">—</b></div>
       <div class="kpi"><small>Délai médian d'attribution</small><b id="k-fill-time">—</b></div>
+      <div class="kpi vert"><small>GMV (valeur des mandats pourvus)</small><b id="k-gmv">—</b></div>
       <div class="kpi vert"><small>Total facturé</small><b id="k-fact">—</b></div>
       <div class="kpi vert"><small>Total payé</small><b id="k-paye">—</b></div>
       <div class="kpi jaune"><small>En retard</small><b id="k-retard">—</b></div>
+    </div>
+    <p class="sous" style="margin:14px 0 0">C-Direct fonctionne à 0&nbsp;% de commission — l'argent circule directement pharmacie → pharmacien (Interac), aucun frais ne transite par la plateforme. « GMV » et « Total facturé » ci-dessus sont donc la valeur des mandats, pas un revenu C-Direct.</p>
+  </div>
+
+  <!-- CONTRATS À RISQUE (Zone Admin B) -->
+  <div class="carte">
+    <div class="sec">Contrats à risque<small id="n-risque">non pourvus, &lt; 48 h avant le début</small></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Référence</th><th>Pharmacie</th><th>Ville</th><th>Tarif</th><th>Début dans</th></tr></thead>
+        <tbody id="t-risque"><tr><td colspan="5" class="vide">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REMPLISSAGE PAR RÉGION (Zone Admin B) -->
+  <div class="carte">
+    <div class="sec">Remplissage par région<small>ville de la pharmacie</small></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Région</th><th>Contrats</th><th>Pourvus</th><th>Taux</th><th>Délai médian</th></tr></thead>
+        <tbody id="t-regions"><tr><td colspan="5" class="vide">Chargement…</td></tr></tbody>
+      </table>
     </div>
   </div>
 
@@ -274,6 +298,8 @@ function cdToast(texte, ok){
   if(profil.role !== 'admin'){ location.replace(cdAccueilPourRole(profil.role)); return; }
   cdEnteteConnecte();
   chargerKPIs();
+  chargerContratsARisque();
+  chargerRegions();
   chargerSmsStats();
 
   /* ---- règles ---- */
@@ -782,7 +808,7 @@ async function chargerKPIs(){
   try{
     const [{data:profs}, {data:ks}, {data:cands}, {data:facts}] = await Promise.all([
       sb.from('profiles').select('role,approuve,statut_verification'),
-      sb.from('contrats').select('id,statut,created_at'),
+      sb.from('contrats').select('id,statut,created_at,heure_debut,heure_fin,tarif_horaire'),
       sb.from('candidatures').select('contrat_id,statut,updated_at'),
       sb.rpc('get_factures')
     ]);
@@ -816,7 +842,65 @@ async function chargerKPIs(){
     if($('k-fact'))   $('k-fact').textContent   = cdArgent(somme(F.filter(f=>f.statut!=='brouillon')));
     if($('k-paye'))   $('k-paye').textContent   = cdArgent(somme(F.filter(f=>f.statut==='payee')));
     if($('k-retard')) $('k-retard').textContent = cdArgent(somme(F.filter(f=>f.statut==='en_retard')));
+    /* GMV : valeur des mandats pourvus (attribué/complété), heures × tarif —
+       PAS un revenu C-Direct (0 % commission, voir note à l'écran) */
+    const heuresEntre = (hd,hf)=>{ if(!hd||!hf) return 0;
+      const [h1,m1]=hd.split(':').map(Number), [h2,m2]=hf.split(':').map(Number);
+      let h=(h2*60+m2-(h1*60+m1))/60; if(h<0) h+=24; return h; };
+    const gmv = K.filter(k=>k.statut==='attribue'||k.statut==='complete')
+      .reduce((s,k)=>s+heuresEntre(k.heure_debut,k.heure_fin)*num(k.tarif_horaire),0);
+    if($('k-gmv')) $('k-gmv').textContent = cdArgent(gmv);
   }catch(e){ /* les KPI ne doivent jamais casser la console */ }
+}
+
+/* ---- Zone Admin B : contrats à risque (non pourvus, < 48 h) ---- */
+async function chargerContratsARisque(){
+  const tb = $('t-risque');
+  const { data, error } = await sb.rpc('get_contrats_a_risque');
+  if(error){
+    tb.innerHTML = '<tr><td colspan="5" class="vide">Non activé — exécutez sql/28-dashboard-regions.sql dans Supabase.</td></tr>';
+    $('n-risque').textContent = ''; return;
+  }
+  const rows = data || [];
+  $('n-risque').textContent = rows.length ? (rows.length + ' contrat' + (rows.length>1?'s':'') + ' à risque') : 'aucun';
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="5" class="vide">Aucun contrat à risque — tout est pourvu ou hors fenêtre 48 h.</td></tr>'; return; }
+  tb.innerHTML = '';
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    const td = (t)=>{ const c=document.createElement('td'); c.textContent = t || '—'; return c; };
+    const restant = document.createElement('td');
+    const h = r.heures_restantes;
+    restant.innerHTML = '<span class="badge attribue" style="color:var(--rouge);border-color:rgba(229,72,77,.4)">' +
+      (h < 1 ? Math.round(h*60) + ' min' : Math.round(h) + ' h') + '</span>';
+    tr.append(
+      td(r.numero_reference), td(r.nom_pharmacie), td(r.ville),
+      td(cdArgent(r.tarif_horaire)+'/h'), restant
+    );
+    tb.appendChild(tr);
+  });
+}
+
+/* ---- Zone Admin B : remplissage par région (ville de la pharmacie) ---- */
+async function chargerRegions(){
+  const tb = $('t-regions');
+  const { data, error } = await sb.rpc('get_dashboard_regions');
+  if(error){
+    tb.innerHTML = '<tr><td colspan="5" class="vide">Non activé — exécutez sql/28-dashboard-regions.sql dans Supabase.</td></tr>';
+    return;
+  }
+  const rows = data || [];
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="5" class="vide">Aucune donnée.</td></tr>'; return; }
+  tb.innerHTML = '';
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    const td = (t)=>{ const c=document.createElement('td'); c.textContent = t || '—'; return c; };
+    tr.append(
+      td(r.region), td(r.contrats), td(r.remplis),
+      td((r.taux_remplissage!=null?r.taux_remplissage:0) + ' %'),
+      td(r.delai_median_h!=null ? dureeLisible(r.delai_median_h) : '—')
+    );
+    tb.appendChild(tr);
+  });
 }
 async function chargerSmsStats(){
   try{
