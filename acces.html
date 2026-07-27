@@ -269,7 +269,9 @@ const params = new URLSearchParams(location.search);
 let mode = params.get('mode') || 'insc';   /* insc | conn | oubli | reset | completer | suite */
 let role = ['pharmacien','pharmacie'].includes(params.get('role')) ? params.get('role') : null;
 let etape = 'entree';
-if(mode==='conn') etape='form';
+/* mode==='conn' démarre aussi sur l'écran d'entrée (bouton Google inclus) :
+   la connexion Google doit être proposée aux comptes déjà inscrits, pas
+   seulement à l'inscription. */
 
 const NOM_ROLE = { pharmacien:'PHARMACIEN(NE) REMPLAÇANT(E)', pharmacie:'PHARMACIE' };
 
@@ -364,7 +366,7 @@ $('r-pharmacien').onclick = ()=>{ role='pharmacien'; etape='form'; render(); };
 $('r-pharmacie').onclick  = ()=>{ role='pharmacie';  etape='form'; render(); };
 $('chg-role').onclick     = ()=>{ role=null; etape='role'; render(); };
 document.querySelectorAll('.vers-insc').forEach(b=> b.onclick = ()=>{ mode='insc'; etape='entree'; render(); });
-document.querySelectorAll('.vers-conn').forEach(b=> b.onclick = ()=>{ mode='conn'; etape='form'; render(); });
+document.querySelectorAll('.vers-conn').forEach(b=> b.onclick = ()=>{ mode='conn'; etape='entree'; render(); });
 $('lien-oubli').onclick = ()=>{ mode='oubli'; $('o-courriel').value=$('c-courriel').value; render(); };
 
 /* afficher / masquer les mots de passe */
