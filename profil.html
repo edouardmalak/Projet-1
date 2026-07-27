@@ -154,8 +154,21 @@ a.lien{color:var(--vert-vif)}
           <div class="deux">
             <div class="champ"><label>Hausse par palier ($/h)</label>
               <input id="bump_increment" type="number" step="0.50" min="0.5" max="50" placeholder="5"></div>
-            <div class="champ"><label>Toutes les … (heures)</label>
-              <input id="bump_intervalle_h" type="number" min="1" max="168" placeholder="24"></div>
+            <div class="champ"><label>Toutes les …</label>
+              <select id="bump_intervalle_min">
+                <option value="15">15 min</option>
+                <option value="30">30 min</option>
+                <option value="45">45 min</option>
+                <option value="60" selected>1 h</option>
+                <option value="120">2 h</option>
+                <option value="180">3 h</option>
+                <option value="360">6 h</option>
+                <option value="720">12 h</option>
+                <option value="1440">24 h</option>
+                <option value="2880">48 h</option>
+                <option value="4320">72 h</option>
+                <option value="10080">7 jours</option>
+              </select></div>
           </div>
           <div class="champ"><label>Plafond à ne jamais dépasser ($/h)</label>
             <input id="bump_max" type="number" step="0.50" min="1" max="500" placeholder="140"></div>
@@ -272,15 +285,20 @@ function basculerBump(){
   $('bump-champs').style.display = on ? '' : 'none';
   if(on) apercuBump();
 }
+function texteIntervalle(min){
+  if(min < 60) return min + ' min';
+  if(min < 1440) return (min/60) + ' h';
+  return (min/1440) + ' j';
+}
 function apercuBump(){
   const inc = parseFloat($('bump_increment').value);
-  const h   = parseInt($('bump_intervalle_h').value, 10);
+  const min = parseInt($('bump_intervalle_min').value, 10);
   const max = parseFloat($('bump_max').value);
   const box = $('bump-apercu');
-  if(!(inc > 0 && h > 0 && max > 0)){ box.textContent = ''; return; }
+  if(!(inc > 0 && min > 0 && max > 0)){ box.textContent = ''; return; }
   box.textContent = 'Exemple : un quart affiché à 100 $/h passera à '
-    + (100+inc).toFixed(2) + ' $ après ' + h + ' h, puis '
-    + (100+inc*2).toFixed(2) + ' $ après ' + (h*2) + ' h… jusqu’à '
+    + (100+inc).toFixed(2) + ' $ après ' + texteIntervalle(min) + ', puis '
+    + (100+inc*2).toFixed(2) + ' $ après ' + texteIntervalle(min*2) + '… jusqu’à '
     + max.toFixed(2) + ' $ maximum.';
 }
 
@@ -374,13 +392,20 @@ function rendrePlateaux(){
 
     /* majoration auto */
     $('bump_actif').checked = !!profil.bump_actif;
-    $('bump_increment').value    = profil.bump_increment ?? '';
-    $('bump_intervalle_h').value = profil.bump_intervalle_h ?? '';
-    $('bump_max').value          = profil.bump_max ?? '';
+    $('bump_increment').value = profil.bump_increment ?? '';
+    /* bump_intervalle_min (minutes) si dispo, sinon repli sur l'ancienne
+       colonne bump_intervalle_h (heures) tant que sql/30 n'est pas exécuté. */
+    const bMinExistant = profil.bump_intervalle_min ?? (profil.bump_intervalle_h ? profil.bump_intervalle_h*60 : null);
+    if(bMinExistant){
+      const opt = [...document.querySelectorAll('#bump_intervalle_min option')].find(o=>+o.value===+bMinExistant);
+      if(opt) $('bump_intervalle_min').value = bMinExistant;
+    }
+    $('bump_max').value = profil.bump_max ?? '';
     basculerBump(); apercuBump();
     $('bump_actif').addEventListener('change', basculerBump);
-    ['bump_increment','bump_intervalle_h','bump_max'].forEach(k=>
+    ['bump_increment','bump_intervalle_min','bump_max'].forEach(k=>
       $(k).addEventListener('input', apercuBump));
+    $('bump_intervalle_min').addEventListener('change', apercuBump);
 
     /* fiche d'accueil */
     ['info_contact_nom','info_arrivee','info_stationnement','info_instructions']
@@ -440,17 +465,18 @@ function rendrePlateaux(){
       /* --- majoration automatique (validée avant envoi) --- */
       const bOn  = $('bump_actif').checked;
       const bInc = parseFloat($('bump_increment').value);
-      const bH   = parseInt($('bump_intervalle_h').value, 10);
+      const bMin = parseInt($('bump_intervalle_min').value, 10);
       const bMax = parseFloat($('bump_max').value);
       if(bOn){
         if(!(bInc > 0 && bInc <= 50)){ msg('msg','Majoration : la hausse par palier doit être entre 0,50 $ et 50 $.',false); return; }
-        if(!(bH >= 1 && bH <= 168)){ msg('msg','Majoration : l’intervalle doit être entre 1 h et 168 h (7 jours).',false); return; }
+        if(!(bMin >= 15 && bMin <= 10080)){ msg('msg','Majoration : l’intervalle doit être entre 15 min et 7 jours.',false); return; }
         if(!(bMax > 0 && bMax <= 500)){ msg('msg','Majoration : le plafond doit être entre 1 $ et 500 $.',false); return; }
       }
-      maj.bump_actif       = bOn;
-      maj.bump_increment   = bOn ? bInc : null;
-      maj.bump_intervalle_h= bOn ? bH   : null;
-      maj.bump_max         = bOn ? bMax : null;
+      maj.bump_actif         = bOn;
+      maj.bump_increment     = bOn ? bInc : null;
+      maj.bump_intervalle_min= bOn ? bMin : null;
+      maj.bump_intervalle_h  = bOn ? Math.round(bMin/60) || null : null; // compat colonne héritée
+      maj.bump_max           = bOn ? bMax : null;
 
       /* --- fiche « ce que vous devez savoir » --- */
       maj.info_contact_nom   = $('info_contact_nom').value.trim()||null;
@@ -469,15 +495,24 @@ function rendrePlateaux(){
     const CLES_23 = ['bump_actif','bump_increment','bump_intervalle_h','bump_max',
       'info_contact_nom','info_contact_tel','info_arrivee','info_stationnement',
       'info_instructions','info_plateaux'];
+    const CLES_30 = ['bump_intervalle_min'];
     let { error } = await sb.from('profiles').update(maj).eq('id', profil.id);
     if(error && /column .* does not exist|schema cache/i.test(error.message||'')){
-      const base = { ...maj }; CLES_23.forEach(k => delete base[k]);
-      const retry = await sb.from('profiles').update(base).eq('id', profil.id);
+      /* d'abord on retente sans la colonne minutes (sql/30 pas encore exécuté),
+         en gardant bump_intervalle_h (compat) pour ne pas perdre le reste. */
+      const sansMin = { ...maj }; CLES_30.forEach(k => delete sansMin[k]);
+      let retry = await sb.from('profiles').update(sansMin).eq('id', profil.id);
       error = retry.error;
-      if(!error){
-        $('btn-save').disabled=false;
-        msg('msg','Profil enregistré. (Majoration + fiche d’accueil : non activées — exécuter sql/23.)', true);
-        return;
+      if(!error){ $('btn-save').disabled=false; msg('msg','Profil enregistré. (Palier en minutes : exécuter sql/30 pour l’activer.)', true); return; }
+      if(error && /column .* does not exist|schema cache/i.test(error.message||'')){
+        const base = { ...maj }; CLES_23.concat(CLES_30).forEach(k => delete base[k]);
+        retry = await sb.from('profiles').update(base).eq('id', profil.id);
+        error = retry.error;
+        if(!error){
+          $('btn-save').disabled=false;
+          msg('msg','Profil enregistré. (Majoration + fiche d’accueil : non activées — exécuter sql/23.)', true);
+          return;
+        }
       }
     }
     if(error){ $('btn-save').disabled=false; msg('msg', error.message, false); return; }
