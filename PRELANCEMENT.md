@@ -18,11 +18,11 @@ Légende : ✅ fait · ⏳ en cours · 🔲 à faire · 💤 en attente (décisi
 
 Le code est en ligne. **Deux actions vous reviennent** pour tout activer :
 
-- 🔲 **Exécuter `sql/23-phase8.sql`** dans Supabase → SQL Editor.
-  Active : la majoration automatique, la fiche « ce que vous devez savoir »,
-  et la messagerie par fil unique. Sans ça, les nouvelles sections s'affichent
-  mais disent « non activé » — rien ne casse.
-  ⚠️ Contient un `cron.schedule` : la majoration tourne chaque heure (minute 7).
+- ✅ **`sql/23-phase8.sql` EXÉCUTÉ** (2026-07-26) — vérifié 7/7 :
+  4 colonnes majoration · 6 colonnes fiche d'accueil · table `fils` ·
+  index « un seul fil ouvert » · `messages.fil_id` · les 5 fonctions ·
+  cron horaire `c-direct-hausses-auto` actif.
+  Les fonctions 1, 2 et 3 sont donc **pleinement opérationnelles**.
 
 - 🔲 **Google Agenda (optionnel)** — pour la synchro du calendrier :
   1. Google Cloud Console → APIs & Services → **Enable** l'API *Google Calendar*.
