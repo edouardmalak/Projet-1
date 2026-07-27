@@ -193,6 +193,33 @@ tbody tr:last-child td{border-bottom:none}
         <tbody id="t-sms"><tr><td colspan="6" class="vide">Chargement…</td></tr></tbody>
       </table>
     </div>
+
+    <!-- FILE D'ATTENTE SMS (Zone Admin E) -->
+    <div class="sec" style="margin-top:20px">File d'attente<small id="n-file-sms">pending/queued — le Worker vide la file chaque minute</small></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Statut</th><th>Type</th><th>Destinataire</th><th>Numéro</th><th>Prévu pour</th><th>Ville</th></tr></thead>
+        <tbody id="t-file-sms"><tr><td colspan="6" class="vide">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+
+    <!-- DÉSABONNÉS SMS (Zone Admin E) -->
+    <div class="sec" style="margin-top:20px">Désabonnés SMS<small id="n-optout">STOP / ARRÊT reconnus — suppression confirmée à l'envoi</small></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Nom</th><th>Courriel</th><th>Numéro</th><th>Désabonné le</th><th>Message reçu</th></tr></thead>
+        <tbody id="t-optout"><tr><td colspan="5" class="vide">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+
+    <!-- RENVOYER CONFIRMATION (Zone Admin E) -->
+    <div class="sec" style="margin-top:20px">Inscription bloquée<small>renvoyer le courriel de confirmation sans toucher à Supabase</small></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+      <div class="champ" style="flex:1;min-width:220px"><label>Courriel du compte</label><input id="reinv-courriel" type="email" placeholder="personne@exemple.com"></div>
+      <button class="btn" style="width:auto;margin-top:0;padding:11px 18px;white-space:nowrap" id="btn-reinviter" type="button">Renvoyer la confirmation</button>
+    </div>
+    <p class="sous" style="margin:8px 0 0">Pour un compte déjà inscrit mais jamais confirmé (courriel perdu/expiré). Si l'inscription reste bloquée après ça (cas du doublon non confirmé), il faut supprimer le compte non confirmé côté Supabase Auth — dites-le-moi, ce geste touche l'authentification en production et je préfère vous le confirmer avant de l'automatiser.</p>
+    <div class="msg" id="msg-reinv"></div>
   </div>
 
   <!-- REGISTRE D'AUDIT (Phase Admin · Zone G) -->
@@ -477,6 +504,9 @@ function cdToast(texte, ok){
   chargerFactures();
   brancherSms(profil);
   chargerSmsLog();
+  chargerFileSms();
+  chargerOptOuts();
+  brancherReinviter();
   chargerAuditLog();
 })();
 
@@ -560,6 +590,79 @@ function brancherSms(profil){
     }
     $('btn-sms-test').disabled = false;
     setTimeout(chargerSmsLog, 1500);
+  };
+}
+
+/* ---- Zone Admin E : file d'attente SMS ---- */
+async function chargerFileSms(){
+  const tb = $('t-file-sms');
+  const { data, error } = await sb.rpc('get_sms_queue', { p_limite: 200 });
+  if(error){
+    tb.innerHTML = '<tr><td colspan="6" class="vide">Non activé — exécutez sql/27-comms-monitoring.sql dans Supabase.</td></tr>';
+    $('n-file-sms').textContent = ''; return;
+  }
+  const rows = data || [];
+  const enAttente = rows.filter(r=>r.statut==='attente').length;
+  const enRetard = rows.filter(r=>r.en_retard).length;
+  $('n-file-sms').textContent = enAttente + ' en attente' + (enRetard ? ' · ' + enRetard + ' EN RETARD' : '');
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="6" class="vide">File vide.</td></tr>'; return; }
+  tb.innerHTML = '';
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    const td = (t)=>{ const c=document.createElement('td'); c.textContent = t || '—'; return c; };
+    const st = document.createElement('td');
+    st.innerHTML = '<span class="badge '+(r.en_retard?'':(r.statut==='attente'?'attribue':r.statut==='echec'?'':'ouvert'))+'">'+
+      (r.en_retard ? 'EN RETARD' : (r.statut||'—'))+'</span>';
+    if(r.en_retard || r.statut==='echec'){ st.firstChild.style.color='var(--rouge)'; st.firstChild.style.borderColor='rgba(229,72,77,.4)'; }
+    tr.append(
+      st, td(r.type||'—'), td(r.profil_nom||'—'), td(r.to_number||'—'),
+      td(r.envoyer_apres ? new Date(r.envoyer_apres).toLocaleString('fr-CA',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'),
+      td(r.ville||'—')
+    );
+    tb.appendChild(tr);
+  });
+}
+
+/* ---- Zone Admin E : désabonnés SMS (STOP/ARRÊT) ---- */
+async function chargerOptOuts(){
+  const tb = $('t-optout');
+  const { data, error } = await sb.rpc('get_opt_outs');
+  if(error){
+    tb.innerHTML = '<tr><td colspan="5" class="vide">Non activé — exécutez sql/27-comms-monitoring.sql dans Supabase.</td></tr>';
+    $('n-optout').textContent = ''; return;
+  }
+  const rows = data || [];
+  $('n-optout').textContent = rows.length ? (rows.length + ' désabonné' + (rows.length>1?'s':'')) : '';
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="5" class="vide">Aucun désabonnement.</td></tr>'; return; }
+  tb.innerHTML = '';
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    const td = (t)=>{ const c=document.createElement('td'); c.textContent = t || '—'; return c; };
+    tr.append(
+      td(r.nom||'—'), td(r.courriel||'—'), td(r.telephone ? cdTelAffiche(r.telephone) : '—'),
+      td(r.optout_le ? new Date(r.optout_le).toLocaleDateString('fr-CA') : '—'),
+      td(r.optout_evenement ? r.optout_evenement.slice(0,60) : '—')
+    );
+    tb.appendChild(tr);
+  });
+}
+
+/* ---- Zone Admin E : renvoyer le courriel de confirmation d'inscription.
+   Appelle directement l'API publique Supabase Auth (auth.resend) — pas
+   besoin de service_role, donc aucun changement au Worker. Couvre le cas
+   courant (courriel perdu/expiré) ; le cas « doublon jamais confirmé »
+   exige de supprimer le compte non confirmé (service_role, hors service
+   client) — volontairement PAS automatisé ici (voir texte à l'écran). */
+function brancherReinviter(){
+  $('btn-reinviter').onclick = async ()=>{
+    const email = $('reinv-courriel').value.trim();
+    if(!email){ msg('msg-reinv','Entrez un courriel.', false); return; }
+    $('btn-reinviter').disabled = true;
+    const { error } = await sb.auth.resend({ type: 'signup', email });
+    $('btn-reinviter').disabled = false;
+    if(error){ msg('msg-reinv','Échec : ' + error.message, false); return; }
+    msg('msg-reinv','Courriel de confirmation renvoyé ✓ — ' + email, true);
+    $('reinv-courriel').value = '';
   };
 }
 
