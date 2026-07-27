@@ -70,7 +70,7 @@ begin
            pe.contact_proprietaire, pe.cell_proprietaire,
            c.id, pn.id, nullif(trim(coalesce(pn.prenom,'') || ' ' || coalesce(pn.nom,'')), ''),
            pn.courriel, pn.telephone, pn.numero_opq,
-           s.taux_completion, s.total,
+           s.taux_completion, s.total::int,
            (select count(*) from public.contrat_notes_admin n where n.contrat_id = k.id),
            k.created_at
       from public.contrats k
