@@ -1,56 +1,103 @@
 # C-Direct — Plateforme de remplacement en pharmacie (Québec)
-**Propriétaire : Robert (Edouard) Malak · État : prêt à déployer · Hébergement : Netlify (gratuit)**
+
+**Propriétaire : Robert (Edouard) Malak**
+**Hébergement : Cloudflare Pages — https://projet-1-1yi.pages.dev (déploiement automatique à chaque push sur `main`)**
+**Base de données : Supabase · Notifications : Workers Cloudflare (`c-direct-sms`, `c-direct-chat`)**
+
+> ⚠️ **Ce dossier est servi publiquement.** Tout fichier à la racine du dépôt
+> (y compris les `.md`, `sql/*.sql` et `workers/**`) est téléchargeable par
+> n'importe qui à `https://…/<chemin>`. N'y écrivez jamais de numéro de taxes,
+> d'adresse personnelle, de clé d'API ni de secret. Les vraies données
+> personnelles vivent dans la table privée `profiles` (Supabase), et les
+> secrets dans les variables chiffrées des Workers.
 
 ## Ce que c'est
-Plateforme statique (10 fichiers, aucun serveur) reliant pharmacies et pharmaciens remplaçants EN DIRECT :
-0 % commission (cadre légal : jamais de pourcentage — éviter la classification d'agence de placement CNESST).
-Monétisation future permise : abonnement fixe pharmacies et/ou service de facturation à tarif fixe (à faire bénir par Martin Ouellet avant de facturer).
 
-## Carte du site
+Marché à deux côtés reliant pharmacies et pharmaciens remplaçants **en direct**,
+à **0 % de commission** (cadre légal : jamais de pourcentage, afin d'éviter la
+classification d'agence de placement). Monétisation envisagée : abonnement fixe
+ou service de facturation à tarif fixe — à faire valider juridiquement avant
+toute facturation.
+
+## Architecture réelle (depuis la Phase 2)
+
+Le site n'est plus statique : chaque page authentifiée parle à Supabase.
+
+- `supabase-config.js` — création du client Supabase (clé anon, publique par design)
+- `auth.js` — session, rôles, garde d'accès (`cdExigerConnexion`), menu par rôle, en-tête connecté
+- Sécurité — **RLS** sur toutes les tables + fonctions `security definer` ; le
+  navigateur ne voit que ce que la base autorise
+
+### Carte du site
+
 | Fichier | Rôle | Accès |
 |---|---|---|
-| index.html | Accueil bilingue FR/EN : présentation, comparaison vs agences, connexion + inscription | Public |
-| pharmacies.html | Portail pharmacies : 5 cartes pharmaciens, calendrier Google en temps réel par pharmacien | Code pharmacie |
-| espace-pharmacien.html | Portail pharmacien : calendrier, demandes, facturation-conciergerie | Code pharmacien |
-| demande.html | Étape 1 — la pharmacie crée la demande (n° contrat auto CD-AAAAMMJJ-###, distance auto) | Pharmacie |
-| reponse.html | Étape 2 — le pharmacien accepte ou contre-offre (taux seulement) | Pharmacien |
-| contre-offre.html | Étape 3 — la pharmacie accepte la contre-offre | Pharmacie |
-| facture.html | MANDAT format Belocum : 4 paramètres, TPS/TVQ, Interac, auto-rempli du contrat | Admin + auto |
-| profil.html | Inscription complète (une fois) : pharmacien (incorporé/TPS/TVQ) et pharmacie (lien personnalisé) | Public |
-| admin.html | Console admin : approbations, règles du réseau, outils | Code admin |
-| fiche.js | FICHIER CENTRAL : données pharmaciens + clé admin + RÈGLES du réseau | — |
+| `index.html` | Accueil bilingue FR/EN, présentation, connexion / inscription | Public |
+| `acces.html` | Connexion / inscription (courriel, Google) | Public |
+| `espace-pharmacie.html` | **Publication d'un contrat** (`#nouvelle-demande`), candidatures reçues, acceptation, KPI, factures | Pharmacie |
+| `calendrier-pharmacie.html` | Calendrier des contrats de la pharmacie | Pharmacie |
+| `contrats.html` | Tableau des contrats ouverts, filtres, favoris, score de compatibilité | Pharmacien |
+| `carte.html` | Les mêmes contrats sur une carte | Pharmacien |
+| `contrat.html` (`/c/CD-XXXXXX`) | Fiche d'un contrat : postuler, contre-offrir, fil de négociation | Pharmacien |
+| `disponibilites.html` | Calendrier des disponibilités du pharmacien | Pharmacien |
+| `mes-mandats.html` | Mandats attribués, factures, export comptable / T2125 | Pharmacien |
+| `fiche-accueil.html` | « Ce que vous devez savoir » : contact sur place, arrivée, stationnement, code de couleurs | Pharmacien + pharmacie |
+| `facture-vue.html` | MANDAT / facture d'un contrat (société, TPS, TVQ lus du profil) | Les 2 parties |
+| `messages.html` | Messagerie (un fil ouvert par paire, clôture mutuelle) | Les 2 parties |
+| `evaluations.html` | Évaluations réciproques | Les 2 parties |
+| `profil.html` | Profil complet — dont **TPS / TVQ / société** du pharmacien | Connecté |
+| `nouveaux.html` (`/nouveaux/{batch}`) | Lot de contrats publiés ensemble (digest SMS) | Pharmacien |
+| `admin*.html` | Console admin : vérification des comptes, contrats, blocages, KPI | Admin |
+| `attente.html` | Salle d'attente tant que le compte n'est pas approuvé | Connecté |
 
-## Règles du réseau (fiche.js → REGLES)
-- tauxMinimum : 95 $/h — plancher ; pharmacie et pharmacien peuvent offrir PLUS, jamais moins
-- tauxKm : 0,70 $/km — fixe ; aller-retour facturé automatiquement (distance calculée domicile↔pharmacie via OpenStreetMap)
-- perDiemJour : 125 $ et hebergementNuit : 250 $ — automatiques si > 100 km aller simple ; modifiables par PERSONNE
-- Règles ré-appliquées à la lecture de chaque page (anti-contournement par URL)
+### Flux réel
 
-## Flux complet
-Pharmacie (lien personnalisé) → demande.html → courriel au pharmacien → reponse.html (accepter / contre-offre taux) →
-[si contre-offre] contre-offre.html → acceptation → facture.html auto-remplie → « Envoyer aux deux parties » →
-paiement Interac DIRECT au pharmacien. Admin reçoit copie de chaque étape.
+```
+Pharmacie → espace-pharmacie.html#nouvelle-demande → insertion dans `contrats`
+   → Worker c-direct-sms : SMS + courriel aux pharmaciens compatibles
+Pharmacien → contrats.html / carte.html → /c/CD-XXXXXX → postuler OU contre-offrir
+   → négociation (fil de jalons) → la pharmacie accepte
+   → contrat attribué · facture (MANDAT) générée · courriel de confirmation + PDF
+   → paiement Interac DIRECT de la pharmacie au pharmacien (aucune somme ne
+     transite par C-Direct)
+```
 
-## À compléter avant lancement (chercher ✏️)
-1. fiche.js : courriel de Robert, clé Web3Forms de Robert, courriel Interac (+ CLE_ADMIN) — le reste est pré-rempli (Edouard Abdel Malak Pharmacien Inc, TPS 845655646RT0001, TVQ 1219458181TQ0002, domicile Boucherville, 114 $/h)
-2. index.html : clé Web3Forms admin (2 formulaires) + 3 codes d'accès
-3. admin.html : les 3 mêmes codes (doivent correspondre)
-4. profil.html : clé Web3Forms admin
-5. pharmacies.html : fiche des 5 pharmaciens (cartes + clés + calendriers) — lancer avec 2 réels, retirer les cartes vides
+### Règles du réseau
 
-## Déploiement
-Netlify → Deploys → téléverser TOUS les fichiers ensemble (index.html obligatoire pour la racine).
-Test complet : inscription fictive → approbation admin → demande → contre-offre → facture → envoi aux deux parties.
+Les règles qui font foi sont **en base** (table des règles, lue par le site) —
+plancher horaire, taux du kilomètre, per diem et hébergement automatiques
+au-delà du seuil de distance. Elles sont ré-appliquées côté serveur, donc
+non contournables par l'URL.
 
-## Onboarding d'un nouveau pharmacien (2 min)
-profil.html rempli par lui → courriel reçu → admin.html Étape 1 : COLLER le courriel → Analyser →
-vérifier OPQ (bouton registre) → Télécharger fiche.js mis à jour → re-téléverser sur Netlify →
-Étape 2 : courriel d'approbation prérempli avec code. (Fonctionne aussi avec l'inscription rapide d'index.html —
-les champs manquants sont marqués ✏️ dans le bloc généré.)
+## Base de données
 
-## Phase 2 (quand traction réelle)
-Backend (Supabase) : vrais comptes, contrats stockés, tableau de bord. QuickBooks + Virement Interac par facture.
-Monétisation : abonnement pharmacies fixe / service facturation fixe — validation Martin d'abord.
+Migrations numérotées dans `sql/`, à exécuter dans l'ordre via Supabase →
+SQL Editor. Les plus structurantes :
 
-## Site personnel séparé
-remplacement-rx.html : site solo de Robert (calendrier + réservation + Payer ma facture Interac) — antérieur à C-Direct, toujours utilisable.
+- `02` schéma · `03` RLS · `04`–`05` lecture des contrats et négociation
+- `07` factures · `13`–`14` distance et compatibilité (FSA)
+- `18`–`19` messagerie et évaluations · `21` blocages · `23` Phase 8
+- `31` correctif `accepte` (l'ancien code cherchait `acceptee`, valeur inexistante)
+- `32` TPS / TVQ / société déplacés de l'ancien fichier public vers `profiles`
+
+## Historique — pages retirées
+
+La toute première version était un site statique sans base de données :
+`demande.html` → `reponse.html` → `contre-offre.html` → `facture.html`, reliés
+par paramètres d'URL et un envoi Web3Forms, avec une liste de pharmaciens
+codée en dur dans `fiche.js`.
+
+Ces pages **ne créaient aucun contrat** et étaient accessibles sans connexion.
+Elles ont été supprimées ; `_redirects` renvoie les anciennes URL vers le
+parcours réel. `fiche.js` a été supprimé également (il exposait publiquement
+adresse, numéros de taxes et une clé d'API).
+
+## Points de restauration
+
+Étiquettes git `restore-phase-1` … `restore-phase-6-complete` (aucune supprimée).
+Pour revenir en arrière, indiquer laquelle.
+
+## À faire
+
+Voir `A-FAIRE-ROBERT.md` (étapes manuelles) et `A-FAIRE-PLUS-TARD.md` (reste).
+Checklist de lancement : `LAUNCH.md`.

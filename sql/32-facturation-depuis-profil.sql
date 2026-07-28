@@ -73,18 +73,21 @@ $$;
 revoke all on function public.get_factures() from public, anon;
 grant execute on function public.get_factures() to authenticated;
 
--- 3) Reprise des valeurs qui vivaient dans fiche.js (aucun écrasement :
---    on ne remplit que si le champ est encore vide).
---    NOTE (constaté à l'exécution) : 0 ligne touchée. Le compte
---    edouardmalak@gmail.com a le rôle « admin », et les seuls profils
---    « pharmacien » sont des comptes de test (+pharmacien, +pharmacien4).
---    Autrement dit fiche.js ne correspondait à AUCUNE facture réelle :
---    société/TPS/TVQ s'affichaient déjà « — » partout et aucune taxe
---    n'était appliquée. Le retrait de fiche.js ne change donc rien.
---    Les vrais numéros se saisissent maintenant dans la page Profil.
-update public.profiles
-   set societe = coalesce(nullif(trim(societe), ''), 'Edouard Abdel Malak Pharmacien Inc'),
-       tps     = coalesce(nullif(trim(tps),     ''), '845655646RT0001'),
-       tvq     = coalesce(nullif(trim(tvq),     ''), '1219458181TQ0002')
- where role = 'pharmacien'
-   and lower(courriel) = 'edouardmalak@gmail.com';
+-- 3) Reprise des valeurs de fiche.js : VOLONTAIREMENT ABSENTE.
+--
+--    Une reprise automatique avait été envisagée, puis retirée pour deux
+--    raisons :
+--
+--    a) Elle n'aurait servi à rien. Vérification faite en base : le compte
+--       edouardmalak@gmail.com porte le rôle « admin », et les seuls profils
+--       « pharmacien » sont des comptes de test (+pharmacien, +pharmacien4).
+--       fiche.js ne correspondait donc à AUCUNE facture réelle — société,
+--       TPS et TVQ affichaient déjà « — » partout et aucune taxe n'était
+--       appliquée. Retirer fiche.js ne change donc rien à l'existant.
+--
+--    b) Ce dossier est SERVI PUBLIQUEMENT : https://…/sql/32-….sql répond
+--       200 à n'importe qui. Écrire de vrais numéros de taxes ici aurait
+--       recréé, dans un autre fichier, la fuite que ce correctif ferme.
+--
+--    Les vrais numéros se saisissent dans la page Profil (champs déjà
+--    présents), et vivent uniquement dans la table privée profiles.

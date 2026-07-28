@@ -8,3 +8,23 @@
 /nouveaux/* /nouveaux 200
 # Lien pharmacie côté SMS (répondre à une candidature)
 /p/* /espace-pharmacie 200
+
+# ---------------------------------------------------------------------
+# Pages héritées (version pré-base de données), supprimées.
+# Elles étaient publiques, sans connexion, et ne créaient AUCUN contrat :
+# le formulaire envoyait un courriel Web3Forms et affichait « Demande
+# envoyée » sans rien écrire en base. On redirige plutôt que de laisser
+# un 404, au cas où un ancien lien traînerait dans un courriel.
+#   · demande      → le vrai formulaire de publication (espace pharmacie)
+#   · reponse      → le tableau des contrats du pharmacien
+#   · contre-offre → idem (la négociation vit dans la fiche contrat)
+#   · facture      → les mandats et factures du pharmacien
+# ---------------------------------------------------------------------
+/demande.html      /espace-pharmacie#nouvelle-demande  301
+/demande           /espace-pharmacie#nouvelle-demande  301
+/reponse.html      /contrats                            301
+/reponse           /contrats                            301
+/contre-offre.html /contrats                            301
+/contre-offre      /contrats                            301
+/facture.html      /mes-mandats                         301
+/facture           /mes-mandats                         301
