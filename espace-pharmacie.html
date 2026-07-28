@@ -208,7 +208,11 @@ let profil = null, regles = null;
 function msg(id, texte, ok){
   const el=$(id); el.textContent=texte;
   el.className='msg '+(ok?'ok':'ko'); el.style.display='block';
-  if(ok) setTimeout(()=>{ el.style.display='none'; }, 4000);
+  /* Annuler l'auto-masquage d'un message précédent : sinon un message
+     de succès affiché juste avant (ex. « diffusion en cours… ») efface,
+     4 s plus tard, le message d'erreur qui vient de le remplacer. */
+  if(el._cacherTimer){ clearTimeout(el._cacherTimer); el._cacherTimer = null; }
+  if(ok) el._cacherTimer = setTimeout(()=>{ el.style.display='none'; el._cacherTimer=null; }, 4000);
 }
 
 (async function(){
@@ -264,8 +268,27 @@ function msg(id, texte, ok){
     }).select('numero_reference').single();
     $('btn-pub').disabled = false;
     if(error){ msg('msg-pub', error.message, false); return; }
-    msg('msg-pub','Contrat '+data.numero_reference+' publié ✓', true);
-    cdDiffuserContrat(data.numero_reference);   /* SMS aux pharmaciens compatibles (site → Worker) */
+    msg('msg-pub','Contrat '+data.numero_reference+' publié ✓ — diffusion en cours…', true);
+    /* Diffusion SMS (site → Worker). On AFFICHE le compte rendu : sans lui,
+       un contrat que personne ne reçoit ressemble à un succès complet. */
+    cdDiffuserContrat(data.numero_reference).then(function(r){
+      var base = 'Contrat '+data.numero_reference+' publié ✓';
+      if(!r || r.erreur){
+        msg('msg-pub', base+' — mais la diffusion n\'a pas pu être lancée ('+
+            ((r && r.erreur) || 'raison inconnue')+'). Les pharmaciens le verront quand même dans « Contrats ouverts ».', false);
+        return;
+      }
+      var n = r.sms_envoyes || 0, vus = r.pharmaciens_evalues || 0;
+      if(n > 0){
+        msg('msg-pub', base+' — '+n+' pharmacien'+(n>1?'s':'')+' notifié'+(n>1?'s':'')+
+            ' par SMS sur '+vus+' évalué'+(vus>1?'s':'')+'.', true);
+      } else {
+        msg('msg-pub', base+', mais AUCUN pharmacien n\'a été notifié ('+vus+
+            ' évalué'+(vus>1?'s':'')+', tous écartés). Causes habituelles : la date ne figure pas '+
+            'dans leur calendrier de disponibilités, les SMS sont désactivés à leur profil, '+
+            'ou le logiciel demandé n\'est pas maîtrisé. Le contrat reste visible dans « Contrats ouverts ».', false);
+      }
+    });
     $('notes').value='';
     chargerContrats();
   });

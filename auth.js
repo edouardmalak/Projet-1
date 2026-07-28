@@ -88,18 +88,34 @@ window.cdConfirmerContrat = function(ref){
   }).catch(function(){});
 };
 
-/* ---- diffusion SMS d'un nouveau contrat (site → Worker, comme cdConfirmerContrat) ---- */
+/* ---- diffusion SMS d'un nouveau contrat (site → Worker) ----
+   Renvoie une PROMESSE qui aboutit toujours (jamais de rejet) avec le
+   compte rendu du Worker :
+     { ok, contrat, pharmaciens_evalues, retenus, filtres, sms_envoyes,
+       confirmation_pharmacie }
+   ou { erreur: '…' } si l'appel n'a pas pu se faire.
+
+   Historique : cette fonction avalait silencieusement le résultat
+   (.catch vide, valeur jetée). Résultat concret : quand le filtrage
+   écartait TOUS les pharmaciens — calendrier tenu sans la date, SMS
+   désactivé, logiciel non maîtrisé — la pharmacie voyait « publié ✓ »
+   sans jamais apprendre que personne n'avait été joint. On renvoie
+   donc le compte rendu pour que l'interface puisse le dire. */
 window.cdDiffuserContrat = function(ref){
-  if(!ref) return;
-  cdSession().then(function(s){
+  if(!ref) return Promise.resolve({ erreur: 'Référence manquante' });
+  return cdSession().then(function(s){
     var token = s && s.access_token;
-    if(!token) return;
-    fetch('https://c-direct-sms.edouardmalak.workers.dev/diffuser', {
+    if(!token) return { erreur: 'Session absente' };
+    return fetch('https://c-direct-sms.edouardmalak.workers.dev/diffuser', {
       method:'POST',
       headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
       body: JSON.stringify({ ref: ref })
-    }).catch(function(){});
-  }).catch(function(){});
+    }).then(function(r){
+      return r.json().catch(function(){ return { erreur: 'Réponse illisible ('+r.status+')' }; });
+    });
+  }).catch(function(e){
+    return { erreur: (e && e.message) || 'Diffusion injoignable' };
+  });
 };
 
 /* ---- envoi de la facture finale par courriel (site → Worker) ---- */
