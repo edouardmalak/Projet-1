@@ -1,0 +1,64 @@
+/* =====================================================================
+   C-Direct — Filtre d'accès public (Cloudflare Pages Functions)
+   ---------------------------------------------------------------------
+   POURQUOI CE FICHIER EXISTE
+
+   Cloudflare Pages publie TOUT le dépôt, pas seulement le site. Sans ce
+   filtre, n'importe qui pouvait télécharger :
+     · /workers/c-direct-sms/src/index.js  → tout le code du Worker
+     · /sql/03-rls.sql                     → schéma, RLS, corps des fonctions
+     · /A-FAIRE-ROBERT.md, /LAUNCH.md…     → notes internes
+
+   Aucun de ces fichiers n'est nécessaire au navigateur : le site ne les
+   demande jamais. On répond donc 404 (et non 403 : inutile de confirmer
+   qu'un fichier existe).
+
+   CE QUI RESTE ACCESSIBLE : tout le reste — pages .html, /c/CD-XXXXXX,
+   design.css, auth.js, supabase-config.js, images, etc. Le filtre laisse
+   passer par défaut ; il ne bloque que la liste explicite ci-dessous.
+
+   À SAVOIR : ce fichier fait passer chaque requête par Pages Functions.
+   S'il devait poser problème, le supprimer suffit à revenir exactement au
+   comportement précédent (le site redevient 100 % statique).
+   ===================================================================== */
+
+const PREFIXES_BLOQUES = [
+  '/sql/',        // migrations : schéma + RLS + corps des fonctions
+  '/workers/',    // code source des Workers (SMS, assistant)
+  '/.git/',       // par précaution (Pages l'exclut déjà)
+];
+
+const EXTENSIONS_BLOQUEES = [
+  '.md',          // notes internes, README, checklists de lancement
+  '.sql',         // au cas où un .sql traînerait hors de /sql/
+  '.toml',        // wrangler.toml et consorts
+  '.lock',
+];
+
+function estBloque(chemin) {
+  const p = chemin.toLowerCase();
+  if (PREFIXES_BLOQUES.some(prefixe => p.startsWith(prefixe))) return true;
+  if (EXTENSIONS_BLOQUEES.some(ext => p.endsWith(ext))) return true;
+  return false;
+}
+
+export async function onRequest(context) {
+  // Toute erreur inattendue ici ne doit JAMAIS casser le site :
+  // en cas de doute, on laisse passer la requête normalement.
+  try {
+    const chemin = new URL(context.request.url).pathname;
+    if (estBloque(chemin)) {
+      return new Response('Not found', {
+        status: 404,
+        headers: {
+          'content-type': 'text/plain; charset=utf-8',
+          'cache-control': 'no-store',
+          'x-robots-tag': 'noindex',
+        },
+      });
+    }
+  } catch (e) {
+    // on continue vers le contenu normal
+  }
+  return context.next();
+}

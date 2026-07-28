@@ -380,12 +380,16 @@ const T_CONF = {
   },
 };
 
-// Registre fiscal (repris de fiche.js) : numéros de taxes par courriel.
-// Sert de repli quand le profil du pharmacien n'a pas encore ses numéros.
-const REGISTRE_FISCAL = {
-  'edouardmalak@gmail.com': { tps: '845655646 RT0001', tvq: '1219458181 TQ0002', corp: 'Edouard Abdel Malak Pharmacien Inc' },
-};
-function normCourriel(e) { return String(e || '').toLowerCase().trim().replace(/\+[^@]*(?=@)/, ''); }
+// Les numéros de taxes viennent UNIQUEMENT du profil du pharmacien
+// (profiles.tps / tvq / societe, saisis dans profil.html).
+//
+// Il y avait ici un REGISTRE_FISCAL codé en dur, servant de repli. Il a été
+// retiré : ce fichier est servi publiquement par Cloudflare Pages
+// (https://…/workers/c-direct-sms/src/index.js), donc y laisser de vrais
+// numéros de TPS/TVQ revenait à les publier. Les valeurs ont été reportées
+// dans les profils concernés avant le retrait — le contenu des mandats est
+// donc inchangé. Un pharmacien sans numéros au profil voit simplement des
+// champs vides et aucune taxe appliquée, ce qui est le comportement voulu.
 
 async function envoyerConfirmationContrat(env, k, c) {
   if (!env.RESEND_API_KEY) return { ok: false, skip: 'RESEND_API_KEY absent' };
@@ -395,10 +399,9 @@ async function envoyerConfirmationContrat(env, k, c) {
     sbSelect(env, `profiles?select=${champs}&id=eq.${k.pharmacie_id}`),
   ]);
   const pn = pnA[0] || {}, pe = peA[0] || {};
-  const fiscal = REGISTRE_FISCAL[normCourriel(pn.courriel)] || {};
-  const pnTps = (pn.tps && String(pn.tps).trim()) || fiscal.tps || '';
-  const pnTvq = (pn.tvq && String(pn.tvq).trim()) || fiscal.tvq || '';
-  const pnCorp = (pn.societe && String(pn.societe).trim()) || fiscal.corp || '';
+  const pnTps = (pn.tps && String(pn.tps).trim()) || '';
+  const pnTvq = (pn.tvq && String(pn.tvq).trim()) || '';
+  const pnCorp = (pn.societe && String(pn.societe).trim()) || '';
   let taux_km = 0.70, per_diem_jour = 50, heberg_jour = 250;
   try {
     const rg = (await sbSelect(env, 'regles_reseau?select=taux_km,per_diem_jour,hebergement_jour&id=eq.1'))[0];
@@ -489,10 +492,9 @@ async function envoyerFactureFinale(env, facture_id) {
     sbSelect(env, `profiles?select=*&id=eq.${k.pharmacie_id}`),
   ]);
   const pn = pnA[0] || {}, pe = peA[0] || {};
-  const fiscal = REGISTRE_FISCAL[normCourriel(pn.courriel)] || {};
-  const pnTps = (pn.tps && String(pn.tps).trim()) || fiscal.tps || '';
-  const pnTvq = (pn.tvq && String(pn.tvq).trim()) || fiscal.tvq || '';
-  const pnCorp = (pn.societe && String(pn.societe).trim()) || fiscal.corp || '';
+  const pnTps = (pn.tps && String(pn.tps).trim()) || '';
+  const pnTvq = (pn.tvq && String(pn.tvq).trim()) || '';
+  const pnCorp = (pn.societe && String(pn.societe).trim()) || '';
   const N = v => Number(v) || 0;
   const heures = N(f.heures), tarif = N(f.tarif_horaire);
   const base = Math.round(heures * tarif * 100) / 100;
