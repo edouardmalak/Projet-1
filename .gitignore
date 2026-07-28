@@ -5,3 +5,7 @@ apercu-contrat-confirme.pdf
 apercu-mandat.pdf
 apercu-facture.pdf
 captures-concurrents/
+
+# Notes internes : le dépôt est servi publiquement par Cloudflare Pages,
+# donc tout fichier commité est téléchargeable. Ces documents restent locaux.
+C-Direct-actions-*.pdf
