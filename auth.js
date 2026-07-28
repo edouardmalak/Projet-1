@@ -131,6 +131,7 @@ window.cdDeconnexion = async function(){
 const CD_MENUS = {
   pharmacien: [
     ['/contrats.html',           'Contrats',         'Contracts'],
+    ['/carte.html',              'Carte',            'Map'],
     ['/mes-mandats.html',        'Mes mandats',      'My mandates'],
     ['/disponibilites.html',     'Disponibilités',   'Availability'],
     ['/messages.html',           'Messages',         'Messages'],
