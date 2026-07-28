@@ -147,4 +147,19 @@ window.cdAlerteAdmin = async function(sujet, message, extra){
     });
   }catch(e){ /* best-effort, ne bloque jamais le flux */ }
 };
+
+/* ---- élément signature : la balance qui s'équilibre (voir design.css) ----
+   À appeler au moment d'une VRAIE confirmation (entente conclue, facture
+   réglée) — jamais en décoration pure. Best-effort : ne bloque jamais le
+   flux si l'élément n'existe pas sur la page. */
+window.cdBalanceConfirm = function(selecteur){
+  try{
+    const el = document.querySelector(selecteur || '.topbar .croix');
+    if(!el) return;
+    el.classList.remove('balance-confirm');
+    void el.offsetWidth;               // relance l'animation même si déjà jouée
+    el.classList.add('balance-confirm');
+    el.addEventListener('animationend', ()=> el.classList.remove('balance-confirm'), { once:true });
+  }catch(e){ /* décoratif — ne jamais casser le flux */ }
+};
 })();

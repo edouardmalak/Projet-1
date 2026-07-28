@@ -6,20 +6,24 @@
    Inter serrée, coins doux, ombres presque invisibles.
    ===================================================================== */
 
-/* ---------- palette raffinée (surcharge les :root des pages) ---------- */
+/* ---------- palette raffinée (surcharge les :root des pages) ----------
+   v3 : mêmes bases (vert Sapin conservé, équité de marque), fond plus
+   chaud (Lin), texte plus doux (Encre/Pierre), + un accent chaud
+   (Argile) réservé aux touches signature (bandes plateaux, confirmations). */
 :root{
-  --fond:#F5F6F4;
+  --fond:#FAFBF9;       /* Lin */
   --panneau:#FFFFFF;
-  --panneau2:#F4F5F3;
+  --panneau2:#F5F6F4;
   --ligne:#E6E8E4;
   --ligne2:#D8DBD6;
-  --vert:#0B6E4F;
+  --vert:#0B6E4F;       /* Sapin */
   --vert-vif:#0D8A61;
-  --texte:#1D1D1F;
-  --sourd:#71766F;
+  --texte:#1B2622;      /* Encre */
+  --sourd:#5A6B63;      /* Pierre */
   --jaune:#B07207;
-  --rouge:#C0392B;
+  --rouge:#C0392B;      /* Alerte */
   --menthe:#EDF4EF;
+  --argile:#C97A4A;     /* Argile — accent chaud, usage parcimonieux */
 }
 
 /* ---------- typographie ---------- */
@@ -214,3 +218,27 @@ input:focus, select:focus, textarea:focus, .filtre-champ:focus{
 .lang button{font-family:'Inter',sans-serif;letter-spacing:0}
 .gratuit{font-family:'Inter',sans-serif;letter-spacing:0}
 nav.liens a{font-family:'Inter',sans-serif}
+
+/* ---------- v3 · élément signature : la balance qui s'équilibre ----------
+   Classe utilitaire, opt-in : aucune page n'est affectée tant qu'un script
+   n'ajoute pas .balance-confirm sur l'icône .croix (ou une autre balance)
+   au moment d'une confirmation réelle (contrat accepté, facture réglée).
+   Se retire seule après l'animation (voir cdBalanceConfirm dans outils.js). */
+@keyframes cd-balance-tip{
+  0%   { transform:rotate(0deg); }
+  22%  { transform:rotate(-9deg); }
+  48%  { transform:rotate(7deg); }
+  70%  { transform:rotate(-3deg); }
+  100% { transform:rotate(0deg); }
+}
+.balance-confirm{ animation:cd-balance-tip .7s cubic-bezier(.33,1,.68,1) 1; }
+.balance-confirm svg path, .balance-confirm svg circle{ transition:stroke .3s ease; }
+
+/* ---------- v3 · bandes « plateaux » (langage visuel réutilisable) ----------
+   Bande de 3px sur le bord d'une carte pour signaler un sens à l'œil avant
+   même de lire le texte. Ne change rien tant qu'une carte n'a pas l'une de
+   ces classes ajoutées à côté de .carte. */
+.bande-vert  { border-left:3px solid var(--vert) !important; }
+.bande-jaune { border-left:3px solid var(--jaune) !important; }
+.bande-rouge { border-left:3px solid var(--rouge) !important; }
+.bande-argile{ border-left:3px solid var(--argile) !important; }
