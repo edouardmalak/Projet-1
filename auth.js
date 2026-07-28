@@ -141,7 +141,10 @@ const CD_MENUS = {
   ],
   pharmacie: [
     ['/espace-pharmacie.html',   'Accueil',          'Home'],
-    ['/demande.html',            'Nouvelle demande', 'New request'],
+    /* Le vrai formulaire de publication vit dans espace-pharmacie.html.
+       (L'ancien /demande.html est une page héritée : aucune connexion,
+        aucune écriture en base — elle ne créait pas de contrat.) */
+    ['/espace-pharmacie.html#nouvelle-demande', 'Nouvelle demande', 'New request'],
     ['/calendrier-pharmacie.html','Calendrier',      'Calendar'],
     ['/messages.html',           'Messages',         'Messages'],
     ['/evaluations.html',        'Évaluations',      'Reviews'],
@@ -175,8 +178,13 @@ window.cdMenuRole = function(role){
     "overflow-x:auto;-webkit-overflow-scrolling:touch;font-family:'IBM Plex Mono',monospace;scrollbar-width:none";
 
   items.forEach(([href, fr, an])=>{
-    const cle = href.replace(/\.html$/,'');
-    const actif = ici === cle;
+    /* Une entrée qui pointe vers une ancre (#…) désigne une SECTION d'une
+       page déjà présente au menu : on ne la surligne jamais, sinon deux
+       entrées s'allumeraient en même temps (ex. Accueil + Nouvelle demande,
+       qui vivent toutes deux dans espace-pharmacie.html). */
+    const ancre = href.indexOf('#') !== -1;
+    const cle = href.replace(/#.*$/,'').replace(/\.html$/,'');
+    const actif = !ancre && ici === cle;
     const a = document.createElement('a');
     a.href = href;
     a.textContent = en ? an : fr;

@@ -224,7 +224,6 @@ table.m-tbl tr:last-child td{border-bottom:none}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
 <script src="/auth.js?v=20260723b"></script>
-<script src="/fiche.js"></script>
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
@@ -253,9 +252,11 @@ function msg(texte, type){
   $('grille').style.display = '';
   document.title = 'C-Direct — Facture F-' + String(f.numero_facture).padStart(6,'0');
 
-  /* ---- enrichissement fiche.js : société / TPS / TVQ / Interac ---- */
-  const fiche = (typeof PHARMACIENS !== 'undefined' ? PHARMACIENS : [])
-    .find(p => (p.courriel||'').toLowerCase() === (f.pharmacien_courriel||'').toLowerCase());
+  /* ---- société / TPS / TVQ : lus depuis le PROFIL du pharmacien ----
+     (auparavant tirés du fichier public fiche.js — voir sql/32) */
+  const fiche = (f.pharmacien_tps || f.pharmacien_tvq || f.pharmacien_societe)
+    ? { corp: f.pharmacien_societe, tps: f.pharmacien_tps, tvq: f.pharmacien_tvq }
+    : null;
 
   /* ---- statut ---- */
   $('chip').className = 'chip ' + f.statut;
@@ -284,7 +285,7 @@ function msg(texte, type){
     $('f-ph-corp').textContent = fiche.corp || '—';
     $('f-ph-tps').textContent = fiche.tps || '—';
     $('f-ph-tvq').textContent = fiche.tvq || '—';
-    $('f-interac').textContent = fiche.interac || f.pharmacien_courriel || '—';
+    $('f-interac').textContent = f.pharmacien_courriel || '—';
   } else {
     $('f-interac').textContent = f.pharmacien_courriel || '—';
   }
@@ -324,7 +325,7 @@ function msg(texte, type){
     $('l4-q').textContent = m4>0 ? 1 : '—'; $('l4-pu').textContent = fmt(m4).replace(" $","$/nuit"); $('l4-m').textContent = fmt(m4);
 
     const st = m1+m2+m3+m4;
-    const taxable = !!(fiche && fiche.tps);          /* taxes seulement si numéros au dossier */
+    const taxable = !!(f.pharmacien_tps);            /* taxes seulement si numéros au dossier (profil) */
     const tps = taxable ? st*0.05 : 0, tvq = taxable ? st*0.09975 : 0;
     $('f-soustotal').textContent = fmt(st);
     $('f-tps').textContent = fmt(tps); $('f-tvq').textContent = fmt(tvq);

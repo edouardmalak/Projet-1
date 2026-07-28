@@ -1,37 +1,35 @@
 // =====================================================
-// ✏️ FICHE CENTRALE DES PHARMACIENS — C-Direct
-// UN SEUL fichier à modifier pour activer un pharmacien.
-// (Utilisé par : demande.html, reponse.html,
-//  contre-offre.html et facture.html)
-// Quand un pharmacien remplit profil.html, vous recevez
-// par courriel son bloc prêt à coller ci-dessous.
+// C-Direct — VESTIGE de la version pré-base de données
+// -----------------------------------------------------
+// ⚠️ CE FICHIER EST SERVI PUBLIQUEMENT : https://…/fiche.js
+//    répond 200 à n'importe qui, sans authentification.
+//    N'Y METTEZ JAMAIS de donnée personnelle ou secrète :
+//    pas d'adresse, pas de numéro TPS/TVQ, pas de courriel
+//    Interac, pas de clé d'API.
+//
+// Il contenait auparavant la fiche complète d'un pharmacien
+// (domicile, TPS, TVQ, raison sociale, Interac) ainsi qu'une
+// clé Web3Forms. Ces données ont été retirées et vivent
+// désormais dans le PROFIL privé du pharmacien, en base :
+//   · colonnes profiles.tps / tvq / societe  (sql/32)
+//   · saisies par le pharmacien dans profil.html
+//   · lues par facture-vue.html via get_factures()
+//
+// Ce qui reste ci-dessous n'est utilisé que par les pages
+// héritées, non branchées à la base et non reliées au menu :
+//   demande.html · reponse.html · contre-offre.html · facture.html
+// Le vrai parcours vit dans espace-pharmacie.html (publication)
+// et contrats.html / contrat.html (candidature).
 // =====================================================
-const PHARMACIENS = [
-  {
-    nom: "Edouard Malak",
-    courriel: "edouardmalak@gmail.com",
-    cle: "6d62e4bb-5cdd-42e9-8c64-5e9a9cf465eb",
-    domicile: "1241 Rue de Lisieux, Boucherville, QC J4B 8E8",
-    corp: "Edouard Abdel Malak Pharmacien Inc",
-    tps: "845655646RT0001",
-    tvq: "1219458181TQ0002",
-    interac: "edouardmalak@gmail.com",
-    tauxH: 114, perDiem: 125, tauxKm: 0.70
-  }
-  // ← coller les nouveaux pharmaciens ici (bloc reçu par courriel via profil.html)
-];
 
+// Vide : la liste des pharmaciens vient de la base (table profiles),
+// jamais d'un fichier public.
+const PHARMACIENS = [];
 
 // =====================================================
-// ✏️ RÈGLES DU RÉSEAU — fixées par l'administrateur
-// Ces règles s'appliquent à TOUS les contrats :
-// · tauxMinimum : plancher du taux horaire. La pharmacie
-//   peut offrir PLUS, jamais moins. Idem pour le pharmacien.
-// · tauxKm : fixe (personne ne peut le changer)
-// · perDiemJour + hebergementNuit : montants fixes,
-//   appliqués AUTOMATIQUEMENT si la distance aller simple
-//   domicile ↔ pharmacie dépasse le seuil. Personne ne
-//   peut les modifier ni les retirer.
+// Règles du réseau — copie héritée, utilisée uniquement par
+// les pages listées plus haut. Les règles qui font foi sont
+// celles appliquées en base et affichées par le site.
 // =====================================================
 const REGLES = {
   tauxMinimum: 95,          // $/h — plancher réseau
@@ -41,5 +39,6 @@ const REGLES = {
   seuilKmAllerSimple: 100   // km aller simple déclenchant per diem + hébergement
 };
 
-// ✏️ Votre clé Web3Forms d'administrateur (copies de toutes les étapes)
-const CLE_ADMIN = "6d62e4bb-5cdd-42e9-8c64-5e9a9cf465eb";
+// Clé Web3Forms retirée (elle était lisible publiquement).
+// Les pages héritées qui la lisaient n'envoient donc plus rien.
+const CLE_ADMIN = "";
