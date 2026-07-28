@@ -13,10 +13,10 @@ body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',san
 background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
 .mono{font-family:'IBM Plex Mono',monospace}
 .topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
-.topbar .in{max-width:1000px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.topbar .in{max-width:1400px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
 .croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
-.topbar .droite{display:flex;align-items:center;gap:14px;color:var(--sourd)}
+.topbar .droite{display:flex;align-items:center;gap:10px;color:var(--sourd);min-width:0;flex-wrap:nowrap}
 .topbar .droite a.nav{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
 .topbar .droite a.nav:hover{color:var(--vert-vif)}
 .wrap{max-width:1000px;margin:0 auto;padding:36px 18px 70px}
@@ -85,7 +85,7 @@ tbody tr:last-child td{border-bottom:none}
       <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.6v9.6M4.9 13.4h6.2M3 4.4h10"/><path d="M3 4.4 1.5 7.7a1.7 1.7 0 0 0 3.1 0Z"/><path d="M13 4.4l-1.55 3.3a1.7 1.7 0 0 0 3.1 0Z"/></svg></span>
       C-DIRECT
     </a>
-    <div class="droite"><a class="nav" href="/carte.html">Carte</a><a class="nav" href="/disponibilites.html">Disponibilités</a><a class="nav" href="/messages.html">Messagerie</a><a class="nav" href="/evaluations.html">Évaluations</a><a class="nav" href="/mes-mandats.html">Mes mandats</a><a class="nav" href="/profil.html">Profil</a></div>
+    <div class="droite"></div>
   </div>
 </div>
 

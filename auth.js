@@ -163,12 +163,15 @@ window.cdMenuRole = function(role){
   const en = cdLang() === 'en';
   const ici = (location.pathname || '/').replace(/\.html$/,'').replace(/\/+$/,'') || '/';
 
-  const strip = document.createElement('nav');
+  // Un seul bandeau : le menu vit DANS la topbar (même ligne que le logo et
+  // le bloc session), pas dans une deuxième rangée en dessous. Défile
+  // horizontalement au besoin plutôt que de retomber à la ligne.
+  const strip = document.createElement('span');
   strip.id = 'cd-menu';
+  strip.setAttribute('role', 'navigation');
   strip.setAttribute('aria-label', en ? 'Main menu' : 'Menu principal');
-  strip.style.cssText = 'display:flex;gap:2px;align-items:center;overflow-x:auto;'+
-    'background:rgba(255,255,255,.94);border-bottom:1px solid var(--ligne,#e3e8e5);'+
-    "padding:0 16px;height:46px;font-family:'IBM Plex Mono',monospace;-webkit-overflow-scrolling:touch";
+  strip.style.cssText = "display:flex;align-items:center;gap:1px;flex:1 1 auto;min-width:0;"+
+    "overflow-x:auto;-webkit-overflow-scrolling:touch;font-family:'IBM Plex Mono',monospace;scrollbar-width:none";
 
   items.forEach(([href, fr, an])=>{
     const cle = href.replace(/\.html$/,'');
@@ -178,8 +181,8 @@ window.cdMenuRole = function(role){
     a.textContent = en ? an : fr;
     a.setAttribute('aria-current', actif ? 'page' : 'false');
     const couleur = actif ? 'var(--vert-vif,#0f8a5f)' : 'var(--sourd,#6b7772)';
-    a.style.cssText = 'white-space:nowrap;text-decoration:none;font-size:11.5px;letter-spacing:.06em;'+
-      'text-transform:uppercase;padding:8px 12px;border-radius:6px;color:'+couleur+';'+
+    a.style.cssText = 'white-space:nowrap;text-decoration:none;font-size:11px;letter-spacing:.04em;'+
+      'text-transform:uppercase;padding:6px 8px;border-radius:6px;color:'+couleur+';flex:none;'+
       (actif ? 'background:rgba(16,138,95,.10);font-weight:700' : 'font-weight:500');
     if(!actif){
       a.addEventListener('mouseenter', ()=> a.style.color='var(--vert-vif,#0f8a5f)');
@@ -188,9 +191,13 @@ window.cdMenuRole = function(role){
     strip.appendChild(a);
   });
 
-  const tb = document.querySelector('.topbar');
-  if(tb && tb.parentNode) tb.parentNode.insertBefore(strip, tb.nextSibling);
-  else document.body.insertBefore(strip, document.body.firstChild);
+  const conteneur = document.querySelector('.topbar .droite') || document.querySelector('.topbar .in');
+  if(conteneur){
+    conteneur.style.minWidth = '0';
+    conteneur.insertBefore(strip, conteneur.firstChild);
+  } else {
+    document.body.insertBefore(strip, document.body.firstChild);
+  }
 
   // masquer les anciennes flèches « ← Retour » (le menu les remplace)
   document.querySelectorAll('.retour, a.retour, #lien-retour').forEach(el=>{ el.style.display = 'none'; });
@@ -206,7 +213,7 @@ window.cdEnteteConnecte = async function(){
   if(conteneur){
     const el = document.createElement('span');
     el.id = 'cd-entete-session';
-    el.style.cssText = "display:inline-flex;align-items:center;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap";
+    el.style.cssText = "display:inline-flex;align-items:center;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;flex:none;margin-left:10px";
     /* badge de rôle — on sait TOUJOURS avec quel compte on est connecté */
     const roleBadge = document.createElement('span');
     const libelles = { admin:'ADMIN', pharmacie:'PHARMACIE', pharmacien:'PHARMACIEN(NE)' };
