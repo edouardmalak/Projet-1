@@ -179,7 +179,7 @@ const CD_MENUS = {
     ['/contrats.html',           'Contrats',         'Contracts'],
     ['/carte.html',              'Carte',            'Map'],
     ['/mes-mandats.html',        'Mes mandats',      'My mandates'],
-    ['/disponibilites.html',     'Disponibilités',   'Availability'],
+    ['/disponibilites.html',     'Calendrier',        'Calendar'],
     ['/messages.html',           'Messages',         'Messages'],
     ['/evaluations.html',        'Évaluations',      'Reviews'],
     ['/profil.html',             'Profil',           'Profile'],
