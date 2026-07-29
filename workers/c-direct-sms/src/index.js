@@ -679,15 +679,33 @@ function ajusterEnvoi(envisage) {
   return enSilence(envisage) ? prochain0700Utc(envisage) : envisage;
 }
 
+/* Le pharmacien respecte-t-il les heures de silence ? (sql/33)
+   Réglage individuel `profiles.sms_silence` :
+     true / absent / null → oui (comportement historique, défaut sûr)
+     false                → non, il accepte les SMS à toute heure
+   On ne renvoie false QUE sur un false explicite : ainsi un profil
+   incomplet, ou un Worker déployé avant la migration, garde l'ancien
+   comportement au lieu de se mettre à texter la nuit. */
+function respecteSilence(profil) {
+  return !(profil && profil.sms_silence === false);
+}
+
+/* instant d'envoi ajusté pour UN pharmacien donné */
+function ajusterEnvoiPour(profil, envisage) {
+  return respecteSilence(profil) ? ajusterEnvoi(envisage) : envisage;
+}
+
 /* mise en file (pharmaciens seulement) */
 async function enfilerSms(env, lignes) {
   if (!lignes.length) return true;
   return sbInsert(env, 'sms_queue', lignes);
 }
 
-/* envoi pharmacien : immédiat hors silence, sinon en file jusqu'à 07:00 */
-async function envoyerAuPharmacien(env, { profile_id, contrat_id = null, pharmacie_id = null, vers, corps, type, ville = null }) {
-  if (!enSilence()) {
+/* envoi pharmacien : immédiat hors silence, sinon en file jusqu'à 07:00.
+   `profil` (facultatif) permet de respecter le réglage individuel
+   sms_silence ; sans lui, on garde la règle globale d'avant. */
+async function envoyerAuPharmacien(env, { profile_id, contrat_id = null, pharmacie_id = null, vers, corps, type, ville = null, profil = null }) {
+  if (!enSilence() || !respecteSilence(profil)) {
     return envoyerEtLogger(env, { vers, corps, type, profile_id, contrat_id });
   }
   await enfilerSms(env, [{
@@ -1055,7 +1073,10 @@ async function diffusionNouveauContrat(env, k) {
      tampon ~5 min pour le groupage, décalé à 07:00 si heures de
      silence. Le Cron du Worker vide la file chaque minute (le suffixe
      opt-out du premier SMS est appliqué au moment de l'envoi). ---- */
-  const envoiPrevu = ajusterEnvoi(new Date(Date.now() + 5 * 60 * 1000)).toISOString();
+  /* L'heure d'envoi est calculée POUR CHAQUE destinataire : ceux qui ont
+     décoché « heures de silence » (sql/33) reçoivent tout de suite, les
+     autres attendent 07:00 comme avant. */
+  const envisage = new Date(Date.now() + 5 * 60 * 1000);
   await enfilerSms(env, retenus.map(r => ({
     profile_id: r.p.id,
     contrat_id: k.id,
@@ -1064,7 +1085,7 @@ async function diffusionNouveauContrat(env, k) {
     type: 'contrat_nouveau',
     corps: r.corps,
     ville: String(pharmacie.ville || 'Quebec').slice(0, 20),
-    envoyer_apres: envoiPrevu,
+    envoyer_apres: ajusterEnvoiPour(r.p, envisage).toISOString(),
   })));
   const nEnvoyes = retenus.length;   // mis en file — la confirmation annonce le compte
 
@@ -1114,7 +1135,7 @@ async function ciblesFiltrees(env, k) {
   const moisFin = finMois.toISOString().slice(0, 10);
 
   const [pharmaciens, pharmacies, reglesL] = await Promise.all([
-    sbSelect(env, `profiles?select=id,telephone,code_postal,rayon_deplacement_km,tarif_horaire_min,logiciels&role=eq.pharmacien&sms_optin=eq.true&approuve=eq.true&telephone=not.is.null`),
+    sbSelect(env, `profiles?select=id,telephone,code_postal,rayon_deplacement_km,tarif_horaire_min,logiciels,sms_silence&role=eq.pharmacien&sms_optin=eq.true&approuve=eq.true&telephone=not.is.null`),
     sbSelect(env, `profiles?select=id,telephone,ville,nom_pharmacie,code_postal,logiciel&id=eq.${k.pharmacie_id}`),
     sbSelect(env, `regles_reseau?select=taux_km&id=eq.1`),
   ]);

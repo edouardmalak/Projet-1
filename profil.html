@@ -212,6 +212,13 @@ a.lien{color:var(--vert-vif)}
         <input type="checkbox" id="sms_optin">
         <span>Je consens à recevoir des SMS de C-Direct concernant les contrats. Rép. ARRET en tout temps pour me désabonner.</span>
       </label>
+      <label class="consent" id="ligne-sms-silence" style="display:none">
+        <input type="checkbox" id="sms_silence">
+        <span>Respecter les heures de silence : aucun SMS entre <b>21 h et 7 h</b>.
+          Les contrats publiés la nuit me sont envoyés à 7 h le lendemain.
+          <br><small style="opacity:.8">Décochez pour être averti(e) immédiatement, à toute heure —
+          utile si vous voulez voir les contrats de dernière minute dès leur publication.</small></span>
+      </label>
 
       <button class="btn" type="submit" id="btn-save">Enregistrer</button>
       <div class="msg" id="msg"></div>
@@ -358,6 +365,13 @@ function rendrePlateaux(){
   $('prenom').value=profil.prenom||''; $('nom').value=profil.nom||'';
   $('courriel').value=profil.courriel||''; $('telephone').value=cdTelAffiche(profil.telephone);
   $('sms_optin').checked=!!profil.sms_optin;
+  /* Heures de silence : réglage propre au pharmacien (sql/33).
+     Défaut true = comportement historique (rien entre 21 h et 7 h).
+     `!== false` pour que l'absence de colonne/valeur reste « respecter ». */
+  if($('ligne-sms-silence') && profil.role==='pharmacien'){
+    $('ligne-sms-silence').style.display = '';
+    $('sms_silence').checked = profil.sms_silence !== false;
+  }
   if($('langue')) $('langue').value = profil.langue || 'fr';
   if($('tps')) $('tps').value = profil.tps || '';
   if($('tvq')) $('tvq').value = profil.tvq || '';
@@ -438,6 +452,8 @@ function rendrePlateaux(){
     };
     if($('sms_optin').checked && !profil.sms_optin) maj.sms_optin_date = new Date().toISOString();
     if(!$('sms_optin').checked) maj.sms_optin_date = null;
+    /* heures de silence — pharmacien seulement (sql/33) */
+    if(profil.role==='pharmacien' && $('sms_silence')) maj.sms_silence = $('sms_silence').checked;
     if(profil.role==='pharmacien'){
       maj.numero_opq=$('numero_opq').value.trim()||null;
       maj.tarif_horaire_min=$('tarif_horaire_min').value||null;
