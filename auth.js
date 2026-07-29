@@ -191,6 +191,8 @@ const CD_MENUS = {
        (L'ancien /demande.html est une page héritée : aucune connexion,
         aucune écriture en base — elle ne créait pas de contrat.) */
     ['/espace-pharmacie.html#nouvelle-demande', 'Nouvelle demande', 'New request'],
+    ['/espace-pharmacie.html#mes-contrats', 'Mes contrats', 'My contracts'],
+    ['/espace-pharmacie.html#factures-recues', 'Factures reçues', 'Invoices received'],
     ['/calendrier-pharmacie.html','Calendrier',      'Calendar'],
     ['/messages.html',           'Messages',         'Messages'],
     ['/evaluations.html',        'Évaluations',      'Reviews'],
