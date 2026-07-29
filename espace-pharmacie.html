@@ -156,19 +156,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
         <div class="indice">Plancher réseau : <b id="plancher">—</b></div>
         <div class="indice" id="compatibles" style="display:none;color:var(--vert-vif);margin-top:6px;font-weight:600"></div>
       </div>
-      <div class="deux">
-        <div class="champ"><label>Rx / jour (semaine)</label><input id="rx_jour_semaine" type="number" min="0"></div>
-        <div class="champ"><label>Rx / jour (weekend)</label><input id="rx_jour_weekend" type="number" min="0"></div>
-      </div>
-      <div class="champ"><label>Conditions</label>
-        <div class="coches">
-          <label><input type="checkbox" id="seul_pharmacien" checked> Seul(e) pharmacien(ne)</label>
-          <label><input type="checkbox" id="atp_presente" checked> ATP présente</label>
-        </div>
-      </div>
-      <div class="champ"><label>Services requis</label>
-        <div class="coches" id="coches-services"></div>
-      </div>
+      <div class="indice" style="margin:-6px 0 4px">Rx/jour, conditions et services requis viennent de votre <a href="/profil.html" style="color:var(--vert-vif)">profil</a> — modifiables là-bas, une seule fois.</div>
       <div class="champ"><label>Notes (accès, consignes…)</label><textarea id="notes" rows="2"></textarea></div>
       <button class="btn" type="submit" id="btn-pub">Publier le contrat</button>
       <div class="indice" style="margin-top:8px">En publiant, vous acceptez les <a href="/regles.html" target="_blank" rel="noopener" style="color:var(--vert-vif)">règles du réseau</a> — dont la protection d'annulation (50&nbsp;% à moins de 7&nbsp;jours, 100&nbsp;% à moins de 48&nbsp;h).</div>
@@ -201,8 +189,6 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
-const SERVICES = ['Bill 31','Bill 41','Dispills','INR','Préparations non stériles',
-                  'Suboxone','Méthadone','Vaccination','Santé voyage','Administration de médicaments'];
 let profil = null, regles = null;
 
 function msg(id, texte, ok){
@@ -222,10 +208,6 @@ function msg(id, texte, ok){
   chargerTableauBordPharmacie();
   ['date_contrat','tarif_horaire'].forEach(id=> $(id) && $(id).addEventListener('change', majCompatibles));
 
-  /* services */
-  $('coches-services').innerHTML = SERVICES.map(s=>
-    '<label><input type="checkbox" value="'+s.replace(/"/g,'&quot;')+'"> '+s+'</label>').join('');
-
   /* règles réseau (plancher tarifaire lu de la base) */
   const r = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle();
   regles = r.data;
@@ -235,9 +217,6 @@ function msg(id, texte, ok){
     if(!$('tarif_horaire').value) $('tarif_horaire').value = regles.tarif_horaire_minimum;
   }
 
-  /* pré-remplissage depuis le profil */
-  if(profil.rx_jour_semaine != null) $('rx_jour_semaine').value = profil.rx_jour_semaine;
-  if(profil.rx_jour_weekend != null) $('rx_jour_weekend').value = profil.rx_jour_weekend;
   $('date_contrat').min = new Date().toISOString().slice(0,10);
 
   /* publication */
@@ -259,11 +238,11 @@ function msg(id, texte, ok){
       heure_debut: $('heure_debut').value,
       heure_fin: $('heure_fin').value,
       tarif_horaire: tarif,
-      rx_jour_semaine: $('rx_jour_semaine').value || null,
-      rx_jour_weekend: $('rx_jour_weekend').value || null,
-      seul_pharmacien: $('seul_pharmacien').checked,
-      atp_presente: $('atp_presente').checked,
-      services: [...document.querySelectorAll('#coches-services input:checked')].map(i=>i.value),
+      rx_jour_semaine: profil.rx_jour_semaine ?? null,
+      rx_jour_weekend: profil.rx_jour_weekend ?? null,
+      seul_pharmacien: profil.seul_pharmacien !== false,
+      atp_presente: profil.atp_presente !== false,
+      services: profil.services_offerts || [],
       notes: $('notes').value.trim() || null
     }).select('numero_reference').single();
     $('btn-pub').disabled = false;

@@ -138,6 +138,15 @@ a.lien{color:var(--vert-vif)}
           <div class="champ"><label>Rx / jour (semaine)</label><input id="rx_jour_semaine" type="number" min="0"></div>
           <div class="champ"><label>Rx / jour (weekend)</label><input id="rx_jour_weekend" type="number" min="0"></div>
         </div>
+        <div class="champ"><label>Conditions habituelles</label>
+          <div class="coches">
+            <label><input type="checkbox" id="seul_pharmacien"> Seul(e) pharmacien(ne)</label>
+            <label><input type="checkbox" id="atp_presente"> ATP présente</label>
+          </div>
+        </div>
+        <div class="champ"><label>Services habituellement requis</label>
+          <div class="coches" id="coches-services-pharmacie"></div>
+        </div>
         <div class="champ"><label>Notes d'accès (stationnement, entrée…)</label><textarea id="notes_acces" rows="2"></textarea></div>
 
         <!-- ============ MAJORATION AUTOMATIQUE DU TARIF ============ -->
@@ -242,6 +251,8 @@ const $ = id => document.getElementById(id);
 const LOGICIELS = ['Kroll','AssystRx','Mentor','PrioRx','RxPro','Ubik','ReflexRx (XDRx)',"L'Ordonnance (Logipharm)",'Pharmaclik'];
 const COMPETENCES = ['Loi 41','Loi 31','Vaccination','INR / ACO','MAPA','Méthadone','Suboxone','Magistrales non stériles','Magistrales stériles','Dispills / piluliers','Clé DSQ','Soins pharmaceutiques avancés'];
 const LANGUES = ['Français','Anglais','Espagnol','Arabe','Créole','Mandarin','Autre'];
+const SERVICES_PHARMACIE = ['Bill 31','Bill 41','Dispills','INR','Préparations non stériles',
+                  'Suboxone','Méthadone','Vaccination','Santé voyage','Administration de médicaments'];
 let profil = null;
 
 function msg(id, texte, ok){
@@ -356,6 +367,8 @@ function rendrePlateaux(){
     '<label><input type="checkbox" value="'+l.replace(/"/g,'&quot;')+'"> '+l+'</label>').join('');
   $('coches-langues').innerHTML = LANGUES.map(l=>
     '<label><input type="checkbox" value="'+l.replace(/"/g,'&quot;')+'"> '+l+'</label>').join('');
+  $('coches-services-pharmacie').innerHTML = SERVICES_PHARMACIE.map(l=>
+    '<label><input type="checkbox" value="'+l.replace(/"/g,'&quot;')+'"> '+l+'</label>').join('');
   LOGICIELS.forEach(l=>{ const o=document.createElement('option'); o.textContent=l; $('logiciel').appendChild(o); });
 
   $('bloc-pharmacien').style.display = profil.role==='pharmacien' ? '' : 'none';
@@ -403,6 +416,12 @@ function rendrePlateaux(){
     $('logiciel').value=profil.logiciel||'';
     $('rx_jour_semaine').value=profil.rx_jour_semaine??'';
     $('rx_jour_weekend').value=profil.rx_jour_weekend??'';
+    $('seul_pharmacien').checked = profil.seul_pharmacien !== false;
+    $('atp_presente').checked = profil.atp_presente !== false;
+    (profil.services_offerts||[]).forEach(l=>{
+      const c=[...document.querySelectorAll('#coches-services-pharmacie input')].find(i=>i.value===l);
+      if(c) c.checked=true;
+    });
 
     /* majoration auto */
     $('bump_actif').checked = !!profil.bump_actif;
@@ -478,6 +497,9 @@ function rendrePlateaux(){
       maj.notes_acces=$('notes_acces').value.trim()||null;
       maj.rx_jour_semaine=$('rx_jour_semaine').value||null;
       maj.rx_jour_weekend=$('rx_jour_weekend').value||null;
+      maj.seul_pharmacien=$('seul_pharmacien').checked;
+      maj.atp_presente=$('atp_presente').checked;
+      maj.services_offerts=[...document.querySelectorAll('#coches-services-pharmacie input:checked')].map(i=>i.value);
 
       /* --- majoration automatique (validée avant envoi) --- */
       const bOn  = $('bump_actif').checked;
