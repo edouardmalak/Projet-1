@@ -1,6 +1,14 @@
 // =====================================================
 // AUTH.JS — helpers de session C-Direct (Supabase)
 // Charger après supabase-config.js sur chaque page.
+//
+// ⚠️ EN MODIFIANT CE FICHIER, CHANGEZ AUSSI SA « CLÉ DE CACHE ».
+// Les pages le chargent via <script src="/auth.js?v=AAAAMMJJx">. Le
+// navigateur garde en cache le CONTENU associé à cette clé : si le code
+// change mais pas la clé, l'usager continue d'exécuter l'ancienne version,
+// éventuellement avec une page neuve — d'où des erreurs incompréhensibles.
+// Commande (depuis le dossier du projet) :
+//     sed -i '' 's|auth\.js?v=[0-9a-z]*|auth.js?v=NOUVELLE_CLE|g' *.html
 // =====================================================
 (function(){
 const sb = window.sbClient;
@@ -128,6 +136,11 @@ window.cdDiffuserContrat = function(ref){
         })
         .catch(function(){ return r; });
     }).then(function(r){
+      /* Toujours 401 après rafraîchissement : la session est réellement
+         périmée. On le dit en clair — « Jeton invalide » n'aide personne. */
+      if(r.status === 401){
+        return { erreur: 'session expirée — déconnectez-vous et reconnectez-vous, puis republiez' };
+      }
       return r.json().catch(function(){ return { erreur: 'Réponse illisible ('+r.status+')' }; });
     });
   }).catch(function(e){
