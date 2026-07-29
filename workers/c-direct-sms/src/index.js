@@ -186,6 +186,36 @@ async function envoyerEmailResend(env, { to, subject, html, text, filename, pdfB
   return { ok: r.ok, status: r.status, id, to, erreur: r.ok ? null : txt.slice(0, 300) };
 }
 
+/* =====================================================================
+   COURRIEL « CONTRAT PUBLIÉ » (Resend) — bilingue, sans PDF.
+   Déclenché à la publication (INSERT sur contrats), en parallèle du SMS
+   de confirmation à la pharmacie. Purement informatif ; n'envoie rien si
+   RESEND_API_KEY est absent ou si la pharmacie n'a pas de courriel/n'a
+   pas de rôle courriel valide au profil (voir envoyerEmailResend).
+===================================================================== */
+async function envoyerEmailPublication(env, k, pharmacie, nEnvoyes) {
+  const lang = pharmacie.langue === 'en' ? 'en' : 'fr';
+  const lien = `https://c-direct.ca/c/${k.numero_reference}`;
+  const sujet = lang === 'en'
+    ? `Contract ${k.numero_reference} published`
+    : `Contrat ${k.numero_reference} publié`;
+  const phrase = lang === 'en'
+    ? `Your contract ${k.numero_reference} on ${k.date_contrat} has been published. ` +
+      `${nEnvoyes} pharmacist${nEnvoyes > 1 ? 's' : ''} notified by SMS so far.`
+    : `Votre contrat ${k.numero_reference} du ${k.date_contrat} a été publié. ` +
+      `${nEnvoyes} pharmacien${nEnvoyes > 1 ? 's' : ''} notifié${nEnvoyes > 1 ? 's' : ''} par SMS jusqu'ici.`;
+  const suivi = lang === 'en' ? 'Track it here:' : 'Suivi :';
+  const bonjour = lang === 'en' ? 'Hello' : 'Bonjour';
+  const signature = lang === 'en' ? '— C-Direct · 0% commission' : '— C-Direct · 0 % commission';
+  const html =
+    `<div style="font-family:Arial,Helvetica,sans-serif;color:#1b2622;font-size:15px;line-height:1.6;max-width:520px">` +
+    `<p>${bonjour},</p><p>${phrase}</p>` +
+    `<p>${suivi} <a href="${lien}">${lien}</a></p>` +
+    `<p style="color:#8a9a92;font-size:12px">${signature}</p></div>`;
+  const text = `${bonjour},\n\n${phrase}\n\n${suivi} ${lien}\n\n${signature}`;
+  return envoyerEmailResend(env, { to: pharmacie.courriel, subject: sujet, html, text });
+}
+
 /* repli ASCII (les polices standard du PDF n'ont pas toutes les accents) */
 function foldAscii(s) {
   return String(s == null ? '' : s)
@@ -1120,6 +1150,18 @@ async function diffusionNouveauContrat(env, k) {
     }
   }
 
+  /* ---- 5 · courriel de publication à la pharmacie (best-effort, jamais
+     bloquant : une erreur Resend ne doit pas faire échouer la diffusion) ---- */
+  let confirmationEmail = 'aucun courriel au profil';
+  if (pharmacie.courriel) {
+    try {
+      const r = await envoyerEmailPublication(env, k, pharmacie, nEnvoyes);
+      confirmationEmail = r.ok ? true : (r.skip || r.erreur || false);
+    } catch (e) {
+      confirmationEmail = e.message;
+    }
+  }
+
   return json({
     ok: true,
     contrat: k.numero_reference,
@@ -1128,6 +1170,7 @@ async function diffusionNouveauContrat(env, k) {
     filtres: cibles.nFiltres,
     sms_envoyes: nEnvoyes,
     confirmation_pharmacie: confirmation ? confirmation.ok : 'aucun téléphone au profil',
+    confirmation_email: confirmationEmail,
   });
 }
 
@@ -1150,7 +1193,7 @@ async function ciblesFiltrees(env, k) {
 
   const [pharmaciens, pharmacies, reglesL] = await Promise.all([
     sbSelect(env, `profiles?select=id,telephone,code_postal,rayon_deplacement_km,tarif_horaire_min,logiciels,sms_silence&role=eq.pharmacien&sms_optin=eq.true&approuve=eq.true&telephone=not.is.null`),
-    sbSelect(env, `profiles?select=id,telephone,ville,nom_pharmacie,code_postal,logiciel,sms_silence&id=eq.${k.pharmacie_id}`),
+    sbSelect(env, `profiles?select=id,telephone,courriel,langue,ville,nom_pharmacie,code_postal,logiciel,sms_silence&id=eq.${k.pharmacie_id}`),
     sbSelect(env, `regles_reseau?select=taux_km&id=eq.1`),
   ]);
   const pharmacie = pharmacies[0] || {};
