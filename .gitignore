@@ -9,3 +9,4 @@ captures-concurrents/
 # Notes internes : le dépôt est servi publiquement par Cloudflare Pages,
 # donc tout fichier commité est téléchargeable. Ces documents restent locaux.
 C-Direct-actions-*.pdf
+.fuse_hidden*
