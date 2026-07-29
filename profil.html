@@ -46,6 +46,10 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 .msg.ko{background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge)}
 a.lien{color:var(--vert-vif)}
 @media(max-width:520px){.deux,.trois,.coches{grid-template-columns:1fr}}
+.jour-horaire{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panneau2);border:1px solid var(--ligne2);border-radius:4px;padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:6px}
+.jour-horaire .nomj{width:76px;flex:none;color:var(--texte)}
+.jour-horaire input[type=time]{width:104px;border:1px solid var(--ligne2);border-radius:4px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:#fff;color:var(--texte)}
+.jour-horaire label{display:flex;align-items:center;gap:5px;margin-left:auto;color:var(--sourd);cursor:pointer}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/design.css">
@@ -147,6 +151,15 @@ a.lien{color:var(--vert-vif)}
         <div class="champ"><label>Services habituellement requis</label>
           <div class="coches" id="coches-services-pharmacie"></div>
         </div>
+        <div class="champ"><label>Heures d'ouverture</label>
+          <div id="horaires-ouverture"></div>
+        </div>
+        <div class="deux">
+          <div class="champ"><label>Plafond frais de déplacement ($)</label><input id="plafond_deplacement" type="number" min="0" step="0.01"></div>
+          <div class="champ"><label>Plafond per diem ($/jour)</label><input id="plafond_per_diem" type="number" min="0" step="0.01"></div>
+        </div>
+        <div class="champ"><label>Plafond hébergement ($/nuit)</label><input id="plafond_hebergement" type="number" min="0" step="0.01"></div>
+        <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px">Informatif pour l'instant — n'affecte pas encore le calcul des factures.</p>
         <div class="champ"><label>Notes d'accès (stationnement, entrée…)</label><textarea id="notes_acces" rows="2"></textarea></div>
 
         <!-- ============ MAJORATION AUTOMATIQUE DU TARIF ============ -->
@@ -253,6 +266,31 @@ const COMPETENCES = ['Loi 41','Loi 31','Vaccination','INR / ACO','MAPA','Méthad
 const LANGUES = ['Français','Anglais','Espagnol','Arabe','Créole','Mandarin','Autre'];
 const SERVICES_PHARMACIE = ['Bill 31','Bill 41','Dispills','INR','Préparations non stériles',
                   'Suboxone','Méthadone','Vaccination','Santé voyage','Administration de médicaments'];
+const JOURS_SEMAINE = [['lun','Lundi'],['mar','Mardi'],['mer','Mercredi'],['jeu','Jeudi'],['ven','Vendredi'],['sam','Samedi'],['dim','Dimanche']];
+function rendreHoraires(h){
+  h = h || {};
+  $('horaires-ouverture').innerHTML = JOURS_SEMAINE.map(([cle,nom])=>{
+    const j = h[cle] || {};
+    return '<div class="jour-horaire">'+
+      '<span class="nomj">'+nom+'</span>'+
+      '<input type="time" data-jour="'+cle+'" data-champ="ouvre" value="'+(j.ouvre||'08:00')+'">'+
+      '<span>à</span>'+
+      '<input type="time" data-jour="'+cle+'" data-champ="ferme" value="'+(j.ferme||'17:00')+'">'+
+      '<label><input type="checkbox" data-jour="'+cle+'" data-champ="ferme_jour"'+(j.ferme_jour?' checked':'')+'> Fermé</label>'+
+    '</div>';
+  }).join('');
+}
+function lireHoraires(){
+  const h = {};
+  JOURS_SEMAINE.forEach(([cle])=>{
+    h[cle] = {
+      ouvre: document.querySelector('input[data-jour="'+cle+'"][data-champ="ouvre"]').value,
+      ferme: document.querySelector('input[data-jour="'+cle+'"][data-champ="ferme"]').value,
+      ferme_jour: document.querySelector('input[data-jour="'+cle+'"][data-champ="ferme_jour"]').checked,
+    };
+  });
+  return h;
+}
 let profil = null;
 
 function msg(id, texte, ok){
@@ -422,6 +460,10 @@ function rendrePlateaux(){
       const c=[...document.querySelectorAll('#coches-services-pharmacie input')].find(i=>i.value===l);
       if(c) c.checked=true;
     });
+    rendreHoraires(profil.horaires_ouverture);
+    $('plafond_deplacement').value = profil.plafond_deplacement ?? '';
+    $('plafond_per_diem').value = profil.plafond_per_diem ?? '';
+    $('plafond_hebergement').value = profil.plafond_hebergement ?? '';
 
     /* majoration auto */
     $('bump_actif').checked = !!profil.bump_actif;
@@ -500,6 +542,10 @@ function rendrePlateaux(){
       maj.seul_pharmacien=$('seul_pharmacien').checked;
       maj.atp_presente=$('atp_presente').checked;
       maj.services_offerts=[...document.querySelectorAll('#coches-services-pharmacie input:checked')].map(i=>i.value);
+      maj.horaires_ouverture=lireHoraires();
+      maj.plafond_deplacement=$('plafond_deplacement').value||null;
+      maj.plafond_per_diem=$('plafond_per_diem').value||null;
+      maj.plafond_hebergement=$('plafond_hebergement').value||null;
 
       /* --- majoration automatique (validée avant envoi) --- */
       const bOn  = $('bump_actif').checked;
