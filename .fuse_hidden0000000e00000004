@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Fiche utilisateur</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3.5" fill="%230B6E4F"/><g fill="none" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.2v8.4M5.4 12.4h5.2M3.6 4.8h8.8"/><path d="M3.6 4.8 2.3 7.6a1.45 1.45 0 0 0 2.7 0Z"/><path d="M12.4 4.8l-1.35 2.8a1.45 1.45 0 0 0 2.7 0Z"/></g></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#FAFBF9;--panneau:#FFFFFF;--panneau2:#F1F6F2;--ligne:#D5E3DB;--ligne2:#C3D6CB;--vert:#0B6E4F;--vert-vif:#0E8A62;--texte:#1B2622;--sourd:#5A6B63;--jaune:#C97B12;--rouge:#C0392B}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+background-image:linear-gradient(rgba(232,184,73,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(232,184,73,.03) 1px,transparent 1px);background-size:44px 44px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1400px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--jaune);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:14px;color:var(--sourd)}
+.wrap{max-width:1000px;margin:0 auto;padding:36px 18px 70px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.06em;margin-bottom:4px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+.retour{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;display:inline-block;margin-bottom:14px}
+.retour:hover{color:var(--vert-vif)}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:24px;position:relative;margin-bottom:20px}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--jaune),transparent)}
+.sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--jaune);margin-bottom:14px}
+.sec small{color:var(--sourd);text-transform:none;letter-spacing:.04em;margin-left:8px}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+th{padding:9px 11px;text-align:left;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--sourd);border-bottom:1px solid var(--ligne);white-space:nowrap}
+td{padding:10px 11px;border-bottom:1px solid var(--ligne);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+.role{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd)}
+.role.pharmacie{color:var(--vert-vif);border-color:rgba(23,201,128,.4)}
+.badge{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd)}
+.badge.verifie,.badge.attribue,.badge.complete,.badge.envoye,.badge.payee{color:var(--vert-vif);border-color:rgba(23,201,128,.4);background:rgba(18,169,110,.08)}
+.badge.en_attente,.badge.brouillon{color:var(--jaune);border-color:rgba(232,184,73,.4);background:rgba(232,184,73,.08)}
+.badge.rejete,.badge.annule,.badge.en_retard{color:var(--rouge);border-color:rgba(229,72,77,.4);background:rgba(229,72,77,.05)}
+.badge.suspendu{color:var(--sourd);border-color:var(--ligne2);background:var(--panneau2)}
+.entete{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.entete h2{font-family:'IBM Plex Mono',monospace;font-size:18px}
+.champs-contact{margin-top:8px;font-size:13px;color:var(--sourd)}
+.champs-contact div{margin-bottom:2px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-a{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:8px 14px;border-radius:3px;cursor:pointer;white-space:nowrap;border:1px solid var(--ligne2);background:#fff;color:var(--sourd)}
+.btn-a.non{color:var(--rouge);border-color:rgba(229,72,77,.4)}
+.btn-a.oui{background:var(--vert-vif);color:#fff;border-color:var(--vert-vif);font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+@media(max-width:600px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi{background:#F4F8F5;border:1px solid var(--ligne);border-radius:7px;padding:14px 16px}
+.kpi small{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--sourd);margin-bottom:5px}
+.kpi b{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:700;color:var(--texte)}
+.vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:20px 0}
+.notes-liste{margin-top:8px;max-height:200px;overflow-y:auto;border:1px solid var(--ligne);border-radius:5px;background:#fff}
+.note-item{padding:8px 10px;border-bottom:1px solid var(--ligne);font-size:12px}
+.note-item:last-child{border-bottom:none}
+.note-item .qui{color:var(--sourd);font-size:10.5px;margin-bottom:2px}
+.note-form{display:flex;gap:8px;margin-top:8px}
+.note-form input{flex:1;border:1px solid var(--ligne2);border-radius:4px;padding:8px 10px;font-size:13px;font-family:'Instrument Sans',sans-serif}
+.msg{display:none;border-radius:4px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:12px}
+.msg.ok{background:rgba(18,169,110,.1);color:var(--vert-vif);border:1px solid var(--ligne2);border-left:3px solid var(--vert)}
+.msg.ko{background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge)}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/design.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html">
+      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16"><g fill="none" stroke="#1A1405" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.6v9.6M4.9 13.4h6.2M3 4.4h10"/><path d="M3 4.4 1.5 7.7a1.7 1.7 0 0 0 3.1 0Z"/><path d="M13 4.4l-1.55 3.3a1.7 1.7 0 0 0 3.1 0Z"/></g></svg></span>
+      C-DIRECT
+    </a>
+    <div class="droite"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <a class="retour" href="/admin-verification.html">← Retour à la vérification</a>
+  <h1 id="titre">Fiche utilisateur</h1>
+  <p class="sous">Profil complet — historique, fiabilité, notes internes, journal SMS</p>
+
+  <div id="contenu">
+    <p class="vide">Chargement…</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js?v=20260727a"></script>
+<script src="/auth.js?v=20260727a"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+const PID = params.get('id');
+const LIB_STATUT = { en_attente:'En attente', verifie:'Vérifié', rejete:'Rejeté', suspendu:'Suspendu' };
+const LIB_F = { brouillon:'Brouillon', envoyee:'Envoyée', payee:'Payée', en_retard:'En retard' };
+
+function cdToast(texte, ok){
+  let t = document.getElementById('cd-toast');
+  if(!t){
+    t = document.createElement('div'); t.id='cd-toast';
+    t.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:9999;max-width:560px;padding:12px 18px;border-radius:6px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.45;letter-spacing:.02em;box-shadow:0 8px 30px rgba(0,0,0,.35);opacity:0;transition:opacity .2s;text-align:center';
+    document.body.appendChild(t);
+  }
+  t.textContent = texte;
+  t.style.background = ok ? 'rgba(18,169,110,.15)' : 'rgba(229,72,77,.15)';
+  t.style.color = ok ? '#0D8A61' : '#E5484D';
+  t.style.border = '1px solid ' + (ok ? 'rgba(23,201,128,.5)' : 'rgba(229,72,77,.5)');
+  t.style.opacity = '1';
+  clearTimeout(t._to);
+  t._to = setTimeout(()=>{ t.style.opacity='0'; }, ok ? 3500 : 9000);
+}
+
+(async function(){
+  const profil = await cdExigerConnexion(['admin']);
+  if(profil.role !== 'admin'){ location.replace(cdAccueilPourRole(profil.role)); return; }
+  cdEnteteConnecte();
+  if(!PID){ $('contenu').innerHTML = '<p class="vide">Aucun identifiant fourni (?id=…).</p>'; return; }
+  await charger();
+})();
+
+function nomDe(d){
+  return d.role==='pharmacie'
+    ? (d.nom_pharmacie || ((d.prenom||'')+' '+(d.nom||'')).trim() || d.courriel || '—')
+    : (((d.prenom||'')+' '+(d.nom||'')).trim() || d.courriel || '—');
+}
+
+async function charger(){
+  const { data, error } = await sb.rpc('get_profil_detail', { p_profil: PID });
+  if(error){
+    $('contenu').innerHTML = '<p class="vide">Non activé — exécutez sql/29-fiche-utilisateur.sql dans Supabase. (' + error.message + ')</p>';
+    return;
+  }
+  const d = (data && data[0]) || null;
+  if(!d){ $('contenu').innerHTML = '<p class="vide">Profil introuvable.</p>'; return; }
+  document.title = 'C-Direct — ' + nomDe(d);
+  $('titre').textContent = nomDe(d);
+
+  const html = [];
+
+  /* ---- en-tête ---- */
+  html.push('<div class="carte"><div class="entete"><div>');
+  html.push('<span class="role ' + d.role + '">' + (d.role==='pharmacie'?'Pharmacie':'Pharmacien') + '</span> ');
+  html.push('<span class="badge ' + d.statut_verification + '">' + (LIB_STATUT[d.statut_verification]||d.statut_verification) + '</span>');
+  html.push('<div class="champs-contact">');
+  html.push('<div>' + (d.courriel||'—') + '</div>');
+  html.push('<div>' + (d.telephone ? cdTelAffiche(d.telephone) : '—') + (d.sms_optin===false ? ' <span style="color:var(--rouge)">(SMS désabonné)</span>' : '') + '</div>');
+  if(d.role==='pharmacie'){
+    if(d.neq) html.push('<div>NEQ ' + d.neq + '</div>');
+    if(d.banniere) html.push('<div>' + d.banniere + '</div>');
+    html.push('<div>' + [d.adresse,d.ville,d.code_postal].filter(Boolean).join(', ') + '</div>');
+    if(d.contact_proprietaire) html.push('<div>Contact : ' + d.contact_proprietaire + (d.cell_proprietaire?' · '+cdTelAffiche(d.cell_proprietaire):'') + '</div>');
+  } else {
+    if(d.numero_opq) html.push('<div>N° OPQ ' + d.numero_opq + '</div>');
+    if(d.ville_base) html.push('<div>' + d.ville_base + '</div>');
+  }
+  html.push('<div>Inscrit le ' + new Date(d.cree_le).toLocaleDateString('fr-CA') + '</div>');
+  if(d.verification_raison) html.push('<div style="color:var(--rouge);font-style:italic">« ' + d.verification_raison.replace(/</g,'&lt;') + ' »' + (d.verification_par_nom?' — '+d.verification_par_nom:'') + '</div>');
+  html.push('</div></div>');
+
+  html.push('<div class="actions" id="actions-statut"></div>');
+  html.push('</div>');
+
+  /* ---- fiabilité ---- */
+  html.push('<div class="kpis">');
+  if(d.role==='pharmacien'){
+    html.push('<div class="kpi"><small>Mandats complétés</small><b>' + (d.mandats_completes||0) + '</b></div>');
+    html.push('<div class="kpi"><small>Annulations</small><b>' + (d.mandats_annules||0) + '</b></div>');
+    html.push('<div class="kpi vert"><small>Taux de complétion</small><b>' + (d.taux_completion!=null?d.taux_completion:0) + ' %</b></div>');
+  } else {
+    html.push('<div class="kpi"><small>Contrats publiés</small><b>' + (d.contrats_publies||0) + '</b></div>');
+    html.push('<div class="kpi vert"><small>Contrats pourvus</small><b>' + (d.contrats_pourvus||0) + '</b></div>');
+    html.push('<div class="kpi"><small>Contrats annulés</small><b>' + (d.contrats_annules||0) + '</b></div>');
+  }
+  html.push('</div></div>');
+
+  /* ---- historique contrats ---- */
+  html.push('<div class="carte"><div class="sec">Historique des contrats<small id="n-hist-k"></small></div>' +
+    '<div class="table-scroll"><table><thead><tr><th>Réf</th><th>Statut</th><th>Date</th><th>Tarif</th><th>' +
+    (d.role==='pharmacie'?'Pharmacien':'Pharmacie') + '</th></tr></thead><tbody id="t-hist-k"><tr><td colspan="5" class="vide">Chargement…</td></tr></tbody></table></div></div>');
+
+  /* ---- historique factures ---- */
+  html.push('<div class="carte"><div class="sec">Historique des factures<small id="n-hist-f"></small></div>' +
+    '<div class="table-scroll"><table><thead><tr><th>N°</th><th>Type</th><th>Statut</th><th>Total</th><th>Échéance</th><th>Réf. contrat</th></tr></thead><tbody id="t-hist-f"><tr><td colspan="6" class="vide">Chargement…</td></tr></tbody></table></div></div>');
+
+  /* ---- journal SMS ---- */
+  html.push('<div class="carte"><div class="sec">Journal SMS<small id="n-hist-sms"></small></div>' +
+    '<div class="table-scroll"><table><thead><tr><th>Quand</th><th>Type</th><th>Statut</th><th>Message</th></tr></thead><tbody id="t-hist-sms"><tr><td colspan="4" class="vide">Chargement…</td></tr></tbody></table></div></div>');
+
+  /* ---- notes internes ---- */
+  html.push('<div class="carte"><div class="sec">Notes internes</div><div class="notes-liste" id="notes-liste"><div class="note-item" style="color:var(--sourd)">Chargement…</div></div>' +
+    '<div class="note-form"><input id="note-input" placeholder="Ajouter une note interne…"><button class="btn-a" id="btn-note">Ajouter</button></div>' +
+    '<div class="msg" id="msg-note"></div></div>');
+
+  $('contenu').innerHTML = html.join('');
+
+  construireActions(d);
+  chargerHistoriqueContrats();
+  chargerHistoriqueFactures();
+  chargerJournalSms(d);
+  chargerNotes();
+  brancherNote();
+}
+
+function construireActions(d){
+  const z = $('actions-statut');
+  const bouton = (libelle, classe, fn)=>{
+    const b = document.createElement('button');
+    b.className = 'btn-a ' + (classe||''); b.textContent = libelle; b.onclick = fn;
+    return b;
+  };
+  async function appliquer(statut, raisonObligatoire){
+    let raison = null;
+    if(raisonObligatoire){
+      raison = prompt((statut==='rejete'?'REJETER':'SUSPENDRE') + ' le compte de ' + nomDe(d) + ' — raison (obligatoire) :');
+      if(raison === null || !raison.trim()) return;
+    } else if(!confirm((statut==='verifie'?'APPROUVER':'RÉACTIVER') + ' le compte de ' + nomDe(d) + ' ?')) return;
+    const { error } = await sb.rpc('admin_maj_verification', { p_profil: d.id, p_statut: statut, p_raison: raison });
+    if(error){ cdToast('Échec : ' + error.message, false); return; }
+    cdToast(nomDe(d) + ' → ' + (LIB_STATUT[statut]||statut) + ' ✓', true);
+    charger();
+  }
+  if(d.statut_verification === 'en_attente'){
+    z.append(bouton('Approuver','oui', ()=>appliquer('verifie', false)), bouton('Rejeter','non', ()=>appliquer('rejete', true)));
+  } else if(d.statut_verification === 'verifie'){
+    z.append(bouton('Suspendre','non', ()=>appliquer('suspendu', true)));
+  } else if(d.statut_verification === 'rejete'){
+    z.append(bouton('Reconsidérer (en attente)','', ()=>appliquer('en_attente', false)), bouton('Approuver','oui', ()=>appliquer('verifie', false)));
+  } else if(d.statut_verification === 'suspendu'){
+    z.append(bouton('Réactiver','oui', ()=>appliquer('verifie', false)));
+  }
+}
+
+async function chargerHistoriqueContrats(){
+  const tb = $('t-hist-k');
+  const { data, error } = await sb.rpc('get_historique_contrats_profil', { p_profil: PID });
+  if(error){ tb.innerHTML = '<tr><td colspan="5" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
+  const rows = data || [];
+  $('n-hist-k').textContent = rows.length ? (rows.length + ' contrat' + (rows.length>1?'s':'')) : '';
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="5" class="vide">Aucun contrat.</td></tr>'; return; }
+  tb.innerHTML = '';
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    const td = (t)=>{ const c=document.createElement('td'); c.textContent = t || '—'; return c; };
+    const ref = document.createElement('td');
+    ref.innerHTML = '<a href="/c/'+encodeURIComponent(r.numero_reference)+'" style="color:var(--vert-vif);font-weight:700;text-decoration:none">'+r.numero_reference+'</a>';
+    const st = document.createElement('td');
+    st.innerHTML = '<span class="badge '+r.statut+'">'+r.statut+'</span>';
+    tr.append(ref, st, td(r.date_contrat ? cdDate(r.date_contrat) : '—'), td(cdArgent(r.tarif_horaire)+'/h'), td(r.autre_partie));
+    tb.appendChild(tr);
+  });
+}
+
+async function chargerHistoriqueFactures(){
+  const tb = $('t-hist-f');
+  const { data, error } = await sb.rpc('get_historique_factures_profil', { p_profil: PID });
+  if(error){ tb.innerHTML = '<tr><td colspan="6" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
+  const rows = data || [];
+  $('n-hist-f').textContent = rows.length ? (rows.length + ' facture' + (rows.length>1?'s':'')) : '';
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="6" class="vide">Aucune facture.</td></tr>'; return; }
+  tb.innerHTML = '';
+  rows.forEach(f=>{
+    const tr = document.createElement('tr');
+    const td = (t)=>{ const c=document.createElement('td'); c.textContent = t || '—'; return c; };
+    const st = document.createElement('td');
+    st.innerHTML = '<span class="badge '+f.statut+'">'+(LIB_F[f.statut]||f.statut)+'</span>';
+    tr.append(
+      td('F-'+String(f.numero_facture).padStart(6,'0')),
+      td(f.type_facture==='penalite_annulation'?'Pénalité':'Contrat'),
+      st, td(cdArgent(f.total)), td(f.date_echeance||'—'), td(f.numero_reference)
+    );
+    tb.appendChild(tr);
+  });
+}
+
+async function chargerJournalSms(d){
+  const tb = $('t-hist-sms');
+  const { data, error } = await sb.from('sms_log')
+    .select('created_at,type,statut,body,erreur')
+    .or('profile_id.eq.'+PID + (d.telephone ? ',to_number.eq.'+d.telephone : ''))
+    .order('created_at',{ascending:false}).limit(50);
+  if(error){ tb.innerHTML = '<tr><td colspan="4" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
+  const rows = data || [];
+  $('n-hist-sms').textContent = rows.length ? (rows.length + ' entrée' + (rows.length>1?'s':'') + ' (50 max)') : '';
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="4" class="vide">Aucun SMS.</td></tr>'; return; }
+  tb.innerHTML = '';
+  rows.forEach(s=>{
+    const tr = document.createElement('tr');
+    const td = (t)=>{ const c=document.createElement('td'); c.textContent = t || '—'; return c; };
+    const st = document.createElement('td');
+    const ok = s.statut==='envoye' || s.statut==='recu' || s.statut==='optout_applique';
+    st.innerHTML = '<span class="badge '+(ok?'verifie':'')+'">'+(s.statut||'—')+'</span>';
+    const msg = document.createElement('td');
+    msg.style.whiteSpace='normal'; msg.style.maxWidth='360px';
+    msg.textContent = (s.erreur?'⚠ '+s.erreur+' · ':'') + (s.body||'').slice(0,140);
+    tr.append(td(new Date(s.created_at).toLocaleString('fr-CA',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})), td(s.type||'—'), st, msg);
+    tb.appendChild(tr);
+  });
+}
+
+async function chargerNotes(){
+  const z = $('notes-liste');
+  const { data, error } = await sb.rpc('get_notes_profil', { p_profil: PID });
+  if(error){ z.innerHTML = '<div class="note-item" style="color:var(--sourd)">Aucune note (ou sql/29 non exécuté).</div>'; return; }
+  const rows = data || [];
+  if(!rows.length){ z.innerHTML = '<div class="note-item" style="color:var(--sourd)">Aucune note pour l\'instant.</div>'; return; }
+  z.innerHTML = '';
+  rows.forEach(n=>{
+    const it = document.createElement('div');
+    it.className = 'note-item';
+    it.innerHTML = '<div class="qui">' + (n.admin_nom||'admin') + ' · ' + new Date(n.cree_le).toLocaleString('fr-CA',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) + '</div>' + n.note.replace(/</g,'&lt;');
+    z.appendChild(it);
+  });
+}
+
+function brancherNote(){
+  $('btn-note').onclick = async ()=>{
+    const val = $('note-input').value.trim();
+    if(!val) return;
+    $('btn-note').disabled = true;
+    const { error } = await sb.rpc('admin_ajouter_note_profil', { p_profil: PID, p_note: val });
+    $('btn-note').disabled = false;
+    if(error){
+      const el = $('msg-note'); el.textContent = 'Échec : ' + error.message; el.className='msg ko'; el.style.display='block';
+      return;
+    }
+    $('note-input').value = '';
+    chargerNotes();
+  };
+}
+</script>
+</body>
+</html>
