@@ -103,13 +103,30 @@ window.cdConfirmerContrat = function(ref){
    donc le compte rendu pour que l'interface puisse le dire. */
 window.cdDiffuserContrat = function(ref){
   if(!ref) return Promise.resolve({ erreur: 'Référence manquante' });
-  return cdSession().then(function(s){
-    var token = s && s.access_token;
-    if(!token) return { erreur: 'Session absente' };
+
+  function appeler(token){
     return fetch('https://c-direct-sms.edouardmalak.workers.dev/diffuser', {
       method:'POST',
       headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
       body: JSON.stringify({ ref: ref })
+    });
+  }
+
+  return cdSession().then(function(s){
+    var token = s && s.access_token;
+    if(!token) return { erreur: 'Session absente' };
+
+    return appeler(token).then(function(r){
+      /* Jeton expiré (onglet resté ouvert longtemps) : le Worker répond 401
+         « Jeton invalide ». On rafraîchit la session et on réessaie UNE fois
+         plutôt que d'annoncer un échec à la pharmacie. */
+      if(r.status !== 401) return r;
+      return sb.auth.refreshSession()
+        .then(function(res){
+          var neuf = res && res.data && res.data.session && res.data.session.access_token;
+          return neuf ? appeler(neuf) : r;
+        })
+        .catch(function(){ return r; });
     }).then(function(r){
       return r.json().catch(function(){ return { erreur: 'Réponse illisible ('+r.status+')' }; });
     });

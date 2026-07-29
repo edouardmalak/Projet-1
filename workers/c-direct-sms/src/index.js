@@ -1099,11 +1099,25 @@ async function diffusionNouveauContrat(env, k) {
     const corps = `C-Direct: Votre contrat ${k.numero_reference} du ${dateCourte(k.date_contrat)} est publie. ` +
                   `${nEnvoyes} pharmacien${nEnvoyes > 1 ? 's' : ''} notifie${nEnvoyes > 1 ? 's' : ''}. Suivi: c-direct.ca` +
                   (dejaContactes.has(pharmacie.telephone) ? '' : SUFFIXE_OPTOUT);
-    confirmation = await envoyerEtLogger(env, {
-      vers: pharmacie.telephone, corps,
-      type: 'contrat_publie_confirmation',
-      profile_id: pharmacie.id, contrat_id: k.id,
-    });
+    /* La pharmacie a elle aussi son réglage d'heures de silence (sql/33).
+       Par défaut elle reçoit sa confirmation tout de suite, même la nuit —
+       c'est le comportement historique. Si elle a coché « respecter les
+       heures de silence », la confirmation est mise en file jusqu'à 07:00. */
+    if (enSilence() && respecteSilence(pharmacie) && pharmacie.sms_silence === true) {
+      await enfilerSms(env, [{
+        profile_id: pharmacie.id, contrat_id: k.id, pharmacie_id: k.pharmacie_id,
+        to_number: pharmacie.telephone, type: 'contrat_publie_confirmation',
+        corps, ville: String(pharmacie.ville || 'Quebec').slice(0, 20),
+        envoyer_apres: prochain0700Utc().toISOString(),
+      }]);
+      confirmation = { ok: true, differe: true };
+    } else {
+      confirmation = await envoyerEtLogger(env, {
+        vers: pharmacie.telephone, corps,
+        type: 'contrat_publie_confirmation',
+        profile_id: pharmacie.id, contrat_id: k.id,
+      });
+    }
   }
 
   return json({
@@ -1136,7 +1150,7 @@ async function ciblesFiltrees(env, k) {
 
   const [pharmaciens, pharmacies, reglesL] = await Promise.all([
     sbSelect(env, `profiles?select=id,telephone,code_postal,rayon_deplacement_km,tarif_horaire_min,logiciels,sms_silence&role=eq.pharmacien&sms_optin=eq.true&approuve=eq.true&telephone=not.is.null`),
-    sbSelect(env, `profiles?select=id,telephone,ville,nom_pharmacie,code_postal,logiciel&id=eq.${k.pharmacie_id}`),
+    sbSelect(env, `profiles?select=id,telephone,ville,nom_pharmacie,code_postal,logiciel,sms_silence&id=eq.${k.pharmacie_id}`),
     sbSelect(env, `regles_reseau?select=taux_km&id=eq.1`),
   ]);
   const pharmacie = pharmacies[0] || {};

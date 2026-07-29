@@ -285,8 +285,13 @@ function msg(id, texte, ok){
     if(diffusion) diffusion.then(function(r){
       var base = 'Contrat '+data.numero_reference+' publié ✓';
       if(!r || r.erreur){
-        msg('msg-pub', base+' — mais la diffusion n\'a pas pu être lancée ('+
-            ((r && r.erreur) || 'raison inconnue')+'). Les pharmaciens le verront quand même dans « Contrats ouverts ».', false);
+        /* Échec de l'appel DIRECT site → Worker uniquement. La diffusion
+           part aussi par la voie automatique (webhook base de données),
+           donc les SMS sont généralement envoyés malgré ce message : on
+           informe sans alarmer, et sans promettre non plus. */
+        msg('msg-pub', base+' — l\'envoi immédiat depuis cette page n\'a pas répondu ('+
+            ((r && r.erreur) || 'raison inconnue')+'). La diffusion automatique prend le relais ; '+
+            'vérifiez dans quelques minutes. Le contrat est bien publié et visible dans « Contrats ouverts ».', false);
         return;
       }
       var n = r.sms_envoyes || 0, vus = r.pharmaciens_evalues || 0;

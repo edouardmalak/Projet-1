@@ -26,4 +26,20 @@ alter table public.profiles
 
 comment on column public.profiles.sms_silence is
   'true = respecter les heures de silence 21:00-07:00 pour les SMS (défaut). '
-  'false = le pharmacien accepte les SMS a toute heure.';
+  'false = le compte accepte les SMS a toute heure.';
+
+-- ---------------------------------------------------------------------
+-- Le réglage est offert aux DEUX rôles, mais leur comportement d'origine
+-- diffère, et on ne veut rien changer à l'existant :
+--
+--   · PHARMACIEN — recevait déjà ses SMS de contrat seulement hors
+--     21:00–07:00. Le défaut `true` reproduit donc exactement l'ancien
+--     comportement : rien à faire.
+--
+--   · PHARMACIE — recevait TOUJOURS sa confirmation de publication
+--     immédiatement, y compris la nuit. Le défaut `true` aurait donc
+--     introduit un report à 07:00 que personne n'a demandé. On remet les
+--     comptes pharmacie à `false` : confirmation immédiate, comme avant.
+--     Une pharmacie qui veut le silence coche la case dans Profil.
+-- ---------------------------------------------------------------------
+update public.profiles set sms_silence = false where role = 'pharmacie';
