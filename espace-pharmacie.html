@@ -298,6 +298,17 @@ function msg(id, texte, ok){
       if(n > 0){
         msg('msg-pub', base+' — '+n+' pharmacien'+(n>1?'s':'')+' notifié'+(n>1?'s':'')+
             ' par SMS sur '+vus+' évalué'+(vus>1?'s':'')+'.', true);
+      } else if(vus === 0){
+        /* Personne n'a même été ÉVALUÉ : la liste de départ était vide.
+           Ce n'est pas un problème de filtrage du contrat, mais de comptes —
+           inutile de parler de dates ou de logiciel, ça envoie sur une
+           fausse piste (le message précédent disait « tous écartés » alors
+           que personne n'avait été examiné : contradictoire). */
+        msg('msg-pub', base+', mais AUCUN pharmacien n\'était joignable : aucun compte '+
+            'ne remplit les conditions de base pour recevoir un SMS. Vérifiez dans un profil '+
+            'pharmacien que « Je consens à recevoir des SMS » est coché, que le compte est '+
+            'approuvé, et qu\'un numéro de téléphone est enregistré. '+
+            'Le contrat reste visible dans « Contrats ouverts ».', false);
       } else {
         msg('msg-pub', base+', mais AUCUN pharmacien n\'a été notifié ('+vus+
             ' évalué'+(vus>1?'s':'')+', tous écartés). Causes habituelles : la date ne figure pas '+
