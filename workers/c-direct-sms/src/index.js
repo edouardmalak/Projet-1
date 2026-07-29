@@ -118,6 +118,16 @@ async function sbUpdate(env, chemin, patch) {
   if (!r.ok) { console.error(`Supabase PATCH ${chemin} → ${r.status}: ${await r.text()}`); return []; }
   return r.json();
 }
+async function sbRpc(env, fn, args) {
+  const r = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: sbHeaders(env),
+    body: JSON.stringify(args || {}),
+  });
+  const txt = await r.text();
+  if (!r.ok) throw new Error(`Supabase RPC ${fn} → ${r.status}: ${txt}`);
+  try { return JSON.parse(txt); } catch (e) { return txt; }
+}
 
 /* =====================================================================
    TWILIO — REST via fetch + Basic auth (pas de SDK)
@@ -1055,7 +1065,7 @@ async function dejaTraite(env, cle) {
 }
 
 /* charges utiles fréquentes */
-const CHAMPS_PROFIL = 'id,telephone,sms_optin,prenom,nom,ville,nom_pharmacie,adresse,code_postal,logiciel,notes_acces,cell_proprietaire';
+const CHAMPS_PROFIL = 'id,telephone,sms_optin,prenom,nom,ville,nom_pharmacie,adresse,code_postal,logiciel,notes_acces,cell_proprietaire,confirmation_auto_favoris';
 async function chargerContrat(env, id) { return (await sbSelect(env, `contrats?select=*&id=eq.${id}`))[0]; }
 async function chargerProfil(env, id) { return (await sbSelect(env, `profiles?select=${CHAMPS_PROFIL}&id=eq.${id}`))[0]; }
 const initiale = nom => (nom ? nom.trim().charAt(0).toUpperCase() + '.' : '');
@@ -1279,6 +1289,36 @@ async function candidatureNouvelle(env, c) {
     return json({ ok: true, ignore: 'Pharmacie sans téléphone' });
 
   const qui = `${pharmacien?.prenom || 'Un pharmacien'} ${initiale(pharmacien?.nom)}`.trim();
+
+  /* ---- Instant Booking : acceptation automatique d'un favori ----
+     La fonction accepter_candidature_auto() RE-VÉRIFIE elle-même toutes
+     les conditions (toggle actif, favori, non exclu, tarif affiché) —
+     ce test ici n'est qu'un raccourci pour éviter un appel RPC inutile. */
+  let autoAcceptee = false;
+  if (pharmacie.confirmation_auto_favoris && c.type_candidature === 'instantanee') {
+    try {
+      autoAcceptee = (await sbRpc(env, 'accepter_candidature_auto', { p_candidature: c.id })) === true;
+    } catch (e) { console.error('accepter_candidature_auto:', e.message); }
+  }
+
+  if (autoAcceptee) {
+    const corps = `C-Direct: ${k.numero_reference} confirme automatiquement avec ${qui} ` +
+      `(favori, Instant Booking). Details: c-direct.ca/c/${k.numero_reference}`;
+    const res = await envoyerEtLogger(env, {
+      vers: pharmacie.telephone, corps,
+      type: 'instant_booking_confirme',
+      profile_id: pharmacie.id, contrat_id: k.id,
+    });
+    /* Courriel « contrat confirmé » + PDF : normalement déclenché par le
+       clic client (/confirmer) juste après une acceptation manuelle — ici
+       personne ne clique, donc on l'appelle nous-mêmes. Isolé : une
+       erreur Resend ne doit jamais faire échouer la confirmation SMS
+       ci-dessus, déjà envoyée. */
+    try { await envoyerConfirmationContrat(env, k, c); }
+    catch (e) { console.error('envoyerConfirmationContrat (auto):', e.message); }
+    return json({ ok: res.ok, instant_booking: true });
+  }
+
   const corps = c.type_candidature === 'instantanee'
     ? `C-Direct: ${qui} accepte ${k.numero_reference} du ${dateCourte(k.date_contrat)} au tarif affiche. ` +
       `Confirmez en 1 clic: c-direct.ca/p/${k.numero_reference}`

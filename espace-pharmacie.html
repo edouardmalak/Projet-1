@@ -71,6 +71,8 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 .btn-mini.jaune:hover{background:rgba(232,184,73,.08)}
 .btn-mini.rouge{background:transparent;color:var(--rouge);border:1px solid rgba(229,72,77,.5)}
 .btn-mini.rouge:hover{background:rgba(229,72,77,.08)}
+.btn-mini.coeur{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);padding:6px 9px;font-size:13px}
+.btn-mini.coeur.actif{color:var(--rouge);border-color:rgba(229,72,77,.5)}
 .actions{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
 .type-c{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd)}
 .type-c.instantanee{color:var(--vert-vif);border-color:rgba(23,201,128,.4)}
@@ -190,6 +192,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 let profil = null, regles = null;
+const favoris = new Set(); /* pharmacien_id des favoris (Instant Booking) */
 
 function msg(id, texte, ok){
   const el=$(id); el.textContent=texte;
@@ -207,6 +210,10 @@ function msg(id, texte, ok){
   $('sous').textContent = (profil.nom_pharmacie || 'Pharmacie') + (profil.ville ? ' · ' + profil.ville : '');
   chargerTableauBordPharmacie();
   ['date_contrat','tarif_horaire'].forEach(id=> $(id) && $(id).addEventListener('change', majCompatibles));
+
+  /* favoris (Instant Booking) — chargés une fois, tenus à jour en mémoire */
+  const { data: favs } = await sb.from('favoris_pharmaciens').select('pharmacien_id').eq('pharmacie_id', profil.id);
+  (favs||[]).forEach(f=> favoris.add(f.pharmacien_id));
 
   /* règles réseau (plancher tarifaire lu de la base) */
   const r = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle();
@@ -489,6 +496,26 @@ async function chargerCandidats(k, zone){
     row.className = 'candidat'; row.style.border = 'none'; row.style.padding = '0';
     const nom = document.createElement('span');
     nom.className='nom'; nom.textContent = (c.prenom||'')+' '+(c.nom||'');
+    const coeur = document.createElement('button');
+    coeur.type='button';
+    const estFavori = favoris.has(c.pharmacien_id);
+    coeur.className = 'btn-mini coeur' + (estFavori?' actif':'');
+    coeur.textContent = estFavori ? '♥' : '♡';
+    coeur.title = estFavori ? 'Retirer des favoris' : 'Ajouter aux favoris (Instant Booking)';
+    coeur.onclick = async ev=>{
+      ev.stopPropagation();
+      coeur.disabled = true;
+      if(favoris.has(c.pharmacien_id)){
+        const { error } = await sb.from('favoris_pharmaciens').delete()
+          .eq('pharmacie_id', profil.id).eq('pharmacien_id', c.pharmacien_id);
+        if(!error){ favoris.delete(c.pharmacien_id); coeur.textContent='♡'; coeur.classList.remove('actif'); coeur.title='Ajouter aux favoris (Instant Booking)'; }
+      } else {
+        const { error } = await sb.from('favoris_pharmaciens')
+          .insert({ pharmacie_id: profil.id, pharmacien_id: c.pharmacien_id });
+        if(!error){ favoris.add(c.pharmacien_id); coeur.textContent='♥'; coeur.classList.add('actif'); coeur.title='Retirer des favoris'; }
+      }
+      coeur.disabled = false;
+    };
     const type = document.createElement('span');
     type.className = 'type-c ' + (c.type_candidature||'');
     type.textContent = c.type_candidature === 'instantanee' ? 'Tarif affiché' : 'Négociée';
@@ -499,7 +526,7 @@ async function chargerCandidats(k, zone){
     det.textContent = (c.ville_base||'—') + ' · ' + cdArgent(c.tarif_propose) + '/h' + horaire;
     const etat = document.createElement('span');
     etat.className = 'etat '+c.statut; etat.textContent = etats[c.statut]||c.statut;
-    row.append(nom, type, det, etat);
+    row.append(nom, coeur, type, det, etat);
     bloc.appendChild(row);
 
     /* réputation + compétences — pour choisir selon le profil, pas juste le tarif */

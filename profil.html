@@ -151,6 +151,10 @@ a.lien{color:var(--vert-vif)}
         <div class="champ"><label>Services habituellement requis</label>
           <div class="coches" id="coches-services-pharmacie"></div>
         </div>
+        <label class="consent">
+          <input type="checkbox" id="confirmation_auto_favoris">
+          <span>Confirmer automatiquement (Instant Booking) les candidatures au tarif affiché de mes pharmaciens favoris — désactivé par défaut. Gérez vos favoris depuis la liste des candidatures dans « Mes contrats ».</span>
+        </label>
         <div class="champ"><label>Heures d'ouverture</label>
           <div id="horaires-ouverture"></div>
         </div>
@@ -460,6 +464,7 @@ function rendrePlateaux(){
       const c=[...document.querySelectorAll('#coches-services-pharmacie input')].find(i=>i.value===l);
       if(c) c.checked=true;
     });
+    $('confirmation_auto_favoris').checked = !!profil.confirmation_auto_favoris;
     rendreHoraires(profil.horaires_ouverture);
     $('plafond_deplacement').value = profil.plafond_deplacement ?? '';
     $('plafond_per_diem').value = profil.plafond_per_diem ?? '';
@@ -542,6 +547,7 @@ function rendrePlateaux(){
       maj.seul_pharmacien=$('seul_pharmacien').checked;
       maj.atp_presente=$('atp_presente').checked;
       maj.services_offerts=[...document.querySelectorAll('#coches-services-pharmacie input:checked')].map(i=>i.value);
+      maj.confirmation_auto_favoris=$('confirmation_auto_favoris').checked;
       maj.horaires_ouverture=lireHoraires();
       maj.plafond_deplacement=$('plafond_deplacement').value||null;
       maj.plafond_per_diem=$('plafond_per_diem').value||null;
