@@ -1181,8 +1181,9 @@ async function diffusionNouveauContrat(env, k) {
      · distance FSA(pharmacien, pharmacie) <= rayon_deplacement_km
      · tarif_horaire >= tarif_horaire_min du pharmacien
      · logiciel de la pharmacie ∈ logiciels du pharmacien
-     · si le pharmacien a DES disponibilités ce mois-là → il en faut
-       une le date_contrat
+     · disponibilités : purement informatif — une date non cochée n'exclut
+       JAMAIS un pharmacien (défaut = disponible tant que rien n'indique
+       le contraire).
    Chaque exclusion est journalisée : statut 'filtre' + raison.
    Message par destinataire : km A/R + montant km quand calculables.
 ===================================================================== */
@@ -1229,11 +1230,8 @@ async function ciblesFiltrees(env, k) {
         !p.logiciels.includes(pharmacie.logiciel)) {
       exclusions.push({ p, raison: `logiciel ${pharmacie.logiciel} non maitrise` }); continue;
     }
-    /* 4 · disponibilités : un calendrier non tenu ne bloque jamais */
-    const sesDispos = disposParPh.get(p.id);
-    if (sesDispos && sesDispos.size && !sesDispos.has(String(k.date_contrat))) {
-      exclusions.push({ p, raison: 'indispo (calendrier tenu, date absente)' }); continue;
-    }
+    /* 4 · disponibilités : informatif seulement — une date non cochée
+       n'exclut plus personne (voir en-tête de fonction). */
 
     /* message par destinataire — km A/R + montant quand calculables */
     let corps;
