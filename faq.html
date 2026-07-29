@@ -104,5 +104,15 @@ document.querySelectorAll('.qa button').forEach(b=>{
   b.onclick = ()=> b.parentElement.classList.toggle('open');
 });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js?v=20260723b"></script>
+<script src="/auth.js?v=20260729a"></script>
+<script>
+/* Page publique : pas de cdExigerConnexion (aucune redirection forcée).
+   Si un compte est connecté, cdEnteteConnecte() affiche le même bandeau
+   de menu que les autres pages et masque automatiquement la flèche
+   « ← Accueil » (voir .retour dans auth.js). Sans session, rien ne change. */
+cdEnteteConnecte();
+</script>
 </body>
 </html>
