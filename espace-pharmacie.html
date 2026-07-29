@@ -194,7 +194,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260723b"></script>
+<script src="/auth.js?v=20260728a"></script>
 <script src="/assistant.js?v=20260723b" defer></script>
 <script src="/outils.js"></script>
 <script src="/fsa-qc.js"></script>
@@ -270,8 +270,19 @@ function msg(id, texte, ok){
     if(error){ msg('msg-pub', error.message, false); return; }
     msg('msg-pub','Contrat '+data.numero_reference+' publié ✓ — diffusion en cours…', true);
     /* Diffusion SMS (site → Worker). On AFFICHE le compte rendu : sans lui,
-       un contrat que personne ne reçoit ressemble à un succès complet. */
-    cdDiffuserContrat(data.numero_reference).then(function(r){
+       un contrat que personne ne reçoit ressemble à un succès complet.
+
+       DÉFENSIF : une version plus ancienne de auth.js (encore en cache chez
+       l'usager) renvoie `undefined` au lieu d'une promesse. On vérifie donc
+       avant d'enchaîner, sinon `.then()` lèverait une erreur et casserait la
+       fin de la publication (champ notes non vidé, liste non rafraîchie).
+       La diffusion elle-même part dans les deux cas. */
+    var diffusion = cdDiffuserContrat(data.numero_reference);
+    if(!diffusion || typeof diffusion.then !== 'function'){
+      msg('msg-pub','Contrat '+data.numero_reference+' publié ✓', true);
+      diffusion = null;
+    }
+    if(diffusion) diffusion.then(function(r){
       var base = 'Contrat '+data.numero_reference+' publié ✓';
       if(!r || r.erreur){
         msg('msg-pub', base+' — mais la diffusion n\'a pas pu être lancée ('+
