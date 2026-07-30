@@ -65,6 +65,19 @@ tbody tr:last-child td{border-bottom:none}
 .msg{display:none;border-radius:4px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:12px}
 .msg.ok{background:rgba(18,169,110,.1);color:var(--vert-vif);border:1px solid var(--ligne2);border-left:3px solid var(--vert)}
 .msg.ko{background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge)}
+.cal-noms{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--sourd);text-align:center}
+.cal-grille{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-jour{aspect-ratio:1;border:1px solid var(--ligne);border-radius:5px;padding:4px 5px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd);position:relative;background:var(--panneau)}
+.cal-jour.vide{border-color:transparent;background:transparent}
+.cal-jour.dot::after{content:"";position:absolute;bottom:5px;left:5px;width:7px;height:7px;border-radius:50%}
+.cal-jour.paye{border-color:var(--ligne2)} .cal-jour.paye::after{background:var(--vert-vif)}
+.cal-jour.attente::after{background:var(--jaune)}
+.cal-jour.retard::after{background:var(--rouge)}
+.cal-jour.avenir::after{background:var(--ligne2)}
+.cal-jour.aujourdhui{border-color:var(--vert);box-shadow:0 0 0 1px var(--vert)}
+.cal-legende{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--sourd)}
+.cal-legende span{display:flex;align-items:center;gap:5px}
+.cal-legende i{display:inline-block;width:8px;height:8px;border-radius:50%}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/design.css">
@@ -86,11 +99,37 @@ tbody tr:last-child td{border-bottom:none}
   <p class="sous">Vos remplacements attribués, vos factures et l'état des paiements — <a href="/regles.html" style="color:var(--vert-vif)">règles du réseau</a></p>
 
   <!-- ARGENT -->
+  <div class="sec" style="margin-bottom:8px">Vue d'ensemble
+    <select id="periode-filtre" style="margin-left:auto;background:var(--panneau);border:1px solid var(--ligne2);border-radius:4px;padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--texte);text-transform:uppercase;letter-spacing:.06em">
+      <option value="tout">Tout</option>
+      <option value="mois">Ce mois-ci</option>
+      <option value="3mois">3 derniers mois</option>
+      <option value="annee">Cette année</option>
+    </select>
+  </div>
   <div class="totaux">
     <div class="total facture"><small>Facturé</small><b id="t-facture">—</b></div>
     <div class="total paye"><small>Payé</small><b id="t-paye">—</b></div>
     <div class="total attente"><small>En attente</small><b id="t-attente">—</b></div>
     <div class="total retard"><small>En retard</small><b id="t-retard">—</b></div>
+  </div>
+
+  <!-- CALENDRIER -->
+  <div class="carte">
+    <div class="sec">Calendrier<small id="cal-mois-lbl"></small>
+      <button class="btn-mini ghost" id="cal-prev" style="margin-left:auto">‹</button>
+      <button class="btn-mini ghost" id="cal-next">›</button>
+    </div>
+    <div class="cal-noms">
+      <span>Dim</span><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span>
+    </div>
+    <div class="cal-grille" id="cal-grille"></div>
+    <div class="cal-legende">
+      <span><i style="background:var(--vert-vif)"></i>Payé</span>
+      <span><i style="background:var(--jaune)"></i>En attente</span>
+      <span><i style="background:var(--rouge)"></i>En retard</span>
+      <span><i style="background:var(--ligne2)"></i>À venir / non facturé</span>
+    </div>
   </div>
 
   <!-- CONTRATS -->
@@ -157,6 +196,9 @@ const $ = id => document.getElementById(id);
 const CHIPS_F = {brouillon:'Brouillon', envoyee:'Envoyée', payee:'Payée', en_retard:'En retard'};
 const CHIPS_K = {attribue:'Confirmé', complete:'Complété', annule:'Annulé', ouvert:'Ouvert'};
 let profil = null;
+let toutesMandats = [], toutesFactures = [];
+const auj = new Date();
+let calAnnee = auj.getFullYear(), calMois = auj.getMonth(); /* 0-11 */
 
 function msg(id, texte, ok){
   const el=$(id); el.textContent=texte;
@@ -167,8 +209,12 @@ function msg(id, texte, ok){
 (async function(){
   profil = await cdExigerConnexion(['pharmacien']);
   cdEnteteConnecte();
-  chargerMandats();
-  chargerFactures();
+  $('periode-filtre').addEventListener('change', appliquerPeriode);
+  $('cal-prev').onclick = ()=>{ calMois--; if(calMois<0){calMois=11; calAnnee--;} rendreCalendrier(); };
+  $('cal-next').onclick = ()=>{ calMois++; if(calMois>11){calMois=0; calAnnee++;} rendreCalendrier(); };
+  await chargerMandats();
+  await chargerFactures();
+  rendreCalendrier();
 })();
 
 /* ================= CONTRATS ================= */
@@ -176,6 +222,7 @@ async function chargerMandats(){
   const { data, error } = await sb.rpc('get_mes_mandats');
   const tb = $('t-mandats');
   if(error){ tb.innerHTML = '<tr><td colspan="7" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
+  toutesMandats = data || [];
   if(!data || !data.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">Aucun remplacement attribué pour l\'instant.</td></tr>'; return; }
   $('n-mandats').textContent = data.length + ' remplacement' + (data.length>1?'s':'');
   tb.innerHTML = '';
@@ -248,15 +295,8 @@ async function chargerFactures(){
   const tb = $('t-factures');
   if(error){ tb.innerHTML = '<tr><td colspan="7" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
   const factures = (data||[]).filter(f => f.pharmacien_id === profil.id);
-
-  /* totaux : facturé = tout ce qui a été envoyé (incl. payé) */
-  const somme = arr => arr.reduce((s,f)=> s + (parseFloat(f.total)||0), 0);
-  $('t-facture').textContent = cdArgent(somme(factures.filter(f=>f.statut!=='brouillon')));
-  $('t-paye').textContent    = cdArgent(somme(factures.filter(f=>f.statut==='payee')));
-  $('t-attente').textContent = cdArgent(somme(factures.filter(f=>f.statut==='envoyee')));
-  $('t-retard').textContent  = cdArgent(somme(factures.filter(f=>f.statut==='en_retard')));
-
-  rendreComptabilite(factures);
+  toutesFactures = factures;
+  appliquerPeriode();
 
   if(!factures.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">Aucune facture — marquez un remplacement complété pour générer la première.</td></tr>'; return; }
   $('n-factures').textContent = factures.length + ' facture' + (factures.length>1?'s':'');
@@ -322,6 +362,67 @@ async function chargerFactures(){
               td(cdArgent(f.total)), st, td(f.date_echeance||'—'), act);
     tb.appendChild(tr);
   });
+}
+
+/* ================= VUE D'ENSEMBLE (période) ================= */
+function _dansPeriode(dateStr, periode){
+  if(!dateStr || periode==='tout') return true;
+  const d = new Date(dateStr+'T00:00:00');
+  const n = new Date();
+  if(periode==='mois') return d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth();
+  if(periode==='3mois'){ const seuil=new Date(n.getFullYear(),n.getMonth()-2,1); return d>=seuil; }
+  if(periode==='annee') return d.getFullYear()===n.getFullYear();
+  return true;
+}
+function appliquerPeriode(){
+  const periode = $('periode-filtre').value;
+  const factures = toutesFactures.filter(f=> _dansPeriode(f.date_contrat, periode));
+  const somme = arr => arr.reduce((s,f)=> s + (parseFloat(f.total)||0), 0);
+  $('t-facture').textContent = cdArgent(somme(factures.filter(f=>f.statut!=='brouillon')));
+  $('t-paye').textContent    = cdArgent(somme(factures.filter(f=>f.statut==='payee')));
+  $('t-attente').textContent = cdArgent(somme(factures.filter(f=>f.statut==='envoyee')));
+  $('t-retard').textContent  = cdArgent(somme(factures.filter(f=>f.statut==='en_retard')));
+  rendreComptabilite(factures);
+}
+
+/* ================= CALENDRIER ================= */
+const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+function rendreCalendrier(){
+  const grille = $('cal-grille'); if(!grille) return;
+  $('cal-mois-lbl').textContent = MOIS_FR[calMois] + ' ' + calAnnee;
+
+  /* statut de facture par contrat, pour colorer le bon jour */
+  const factureParContrat = {};
+  toutesFactures.forEach(f=>{ if(f.contrat_id) factureParContrat[f.contrat_id] = f; });
+
+  const parJour = {}; /* 'YYYY-MM-DD' -> classe css */
+  toutesMandats.forEach(m=>{
+    if(!m.date_contrat) return;
+    const f = factureParContrat[m.contrat_id];
+    let classe = 'avenir';
+    if(f){
+      if(f.statut==='payee') classe='paye';
+      else if(f.statut==='en_retard') classe='retard';
+      else if(f.statut==='envoyee' || f.statut==='brouillon') classe='attente';
+    }
+    parJour[m.date_contrat] = classe;
+  });
+
+  const premier = new Date(calAnnee, calMois, 1);
+  const nbJours = new Date(calAnnee, calMois+1, 0).getDate();
+  const decalage = premier.getDay(); /* 0=dim */
+  const ajd = new Date().toISOString().slice(0,10);
+
+  grille.innerHTML = '';
+  for(let i=0;i<decalage;i++){ const c=document.createElement('div'); c.className='cal-jour vide'; grille.appendChild(c); }
+  for(let j=1;j<=nbJours;j++){
+    const iso = calAnnee+'-'+String(calMois+1).padStart(2,'0')+'-'+String(j).padStart(2,'0');
+    const c = document.createElement('div');
+    c.className = 'cal-jour' + (parJour[iso] ? ' dot '+parJour[iso] : '') + (iso===ajd ? ' aujourdhui' : '');
+    c.textContent = j;
+    if(parJour[iso]) c.title = 'Mandat le ' + cdDate(iso);
+    grille.appendChild(c);
+  }
 }
 
 /* ================= COMPTABILITÉ (Phase 6.2) ================= */
