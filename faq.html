@@ -13,7 +13,8 @@
 body{background:var(--blanc);color:var(--encre);font-family:'Instrument Sans',sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
 .in{max-width:820px;margin:0 auto;padding:0 24px}
 .topbar{border-bottom:1px solid var(--ligne);background:var(--blanc);position:sticky;top:0;z-index:20}
-.topbar .in{height:64px;display:flex;align-items:center;justify-content:space-between}
+.topbar .in{max-width:1400px;height:64px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.topbar .droite{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:nowrap}
 .brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--encre);font-weight:600;white-space:nowrap}
 .croix{width:32px;height:32px;display:grid;place-items:center;background:var(--vert);border-radius:8px;flex:none}
 .retour{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--vert);text-decoration:none}
@@ -47,6 +48,7 @@ footer a:first-child{margin-left:0}
 <div class="topbar"><div class="in">
   <a class="brand" href="/index.html"><span class="croix"><svg width="16" height="16" viewBox="0 0 16 16"><g fill="none" stroke="#fff" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.6v9.6M4.9 13.4h6.2M3 4.4h10"/><path d="M3 4.4 1.5 7.7a1.7 1.7 0 0 0 3.1 0Z"/><path d="M13 4.4l-1.55 3.3a1.7 1.7 0 0 0 3.1 0Z"/></g></svg></span>C-Direct</a>
   <a class="retour" href="/index.html">← Accueil</a>
+  <div class="droite"></div>
 </div></div>
 
 <header class="hero"><div class="in">
@@ -106,7 +108,7 @@ document.querySelectorAll('.qa button').forEach(b=>{
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260729b"></script>
+<script src="/auth.js?v=20260730a"></script>
 <script>
 /* Page publique : pas de cdExigerConnexion (aucune redirection forcée).
    Si un compte est connecté, cdEnteteConnecte() affiche le même bandeau

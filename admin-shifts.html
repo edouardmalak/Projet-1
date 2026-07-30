@@ -96,7 +96,7 @@ tr.ligne-litige{background:rgba(229,72,77,.04)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260726b"></script>
-<script src="/auth.js?v=20260729b"></script>
+<script src="/auth.js?v=20260730a"></script>
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
@@ -104,7 +104,7 @@ let LISTE = [];
 let FILTRE = 'tous';
 let LITIGES_SEULEMENT = false;
 let OUVERT = null; /* id du contrat dont le détail est déplié */
-const LIB_STATUT = { ouvert:'Ouvert', attribue:'Attribué', complete:'Complété', annule:'Annulé' };
+const LIB_STATUT = { ouvert:'Ouvert', attribue:'Confirmé', complete:'Complété', annule:'Annulé' };
 
 function cdToast(texte, ok){
   let t = document.getElementById('cd-toast');

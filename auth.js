@@ -176,11 +176,11 @@ window.cdDeconnexion = async function(){
    courante, masque les anciens liens « retour » devenus redondants.       */
 const CD_MENUS = {
   pharmacien: [
-    ['/contrats.html',           'Contrats',         'Contracts'],
+    ['/contrats.html',           'Trouver un contrat', 'Contracts'],
     ['/carte.html',              'Carte',            'Map'],
-    ['/mes-mandats.html',        'Mes mandats',      'My mandates'],
+    ['/mes-mandats.html',        'Mandats confirmés', 'My mandates'],
     ['/disponibilites.html',     'Calendrier',        'Calendar'],
-    ['/messages.html',           'Messages',         'Messages'],
+    ['/messages.html',           'Clavardage',       'Messages'],
     ['/evaluations.html',        'Évaluations',      'Reviews'],
     ['/dispensaire.html',        'Dispensaire',       'Dispensary'],
     ['/profil.html',             'Profil',           'Profile'],
@@ -195,7 +195,7 @@ const CD_MENUS = {
     ['/espace-pharmacie.html#mes-contrats', 'Mes contrats', 'My contracts'],
     ['/espace-pharmacie.html#factures-recues', 'Factures reçues', 'Invoices received'],
     ['/calendrier-pharmacie.html','Calendrier',      'Calendar'],
-    ['/messages.html',           'Messages',         'Messages'],
+    ['/messages.html',           'Clavardage',       'Messages'],
     ['/evaluations.html',        'Évaluations',      'Reviews'],
     ['/dispensaire.html',        'Dispensaire',       'Dispensary'],
     ['/profil.html',             'Profil',           'Profile'],
@@ -206,7 +206,7 @@ const CD_MENUS = {
     ['/admin-verification.html', 'Vérification',     'Verification'],
     ['/admin-shifts.html',       'Contrats',         'Contracts'],
     ['/admin-articles.html',     'Dispensaire',       'Dispensary'],
-    ['/messages.html',           'Messages',         'Messages'],
+    ['/messages.html',           'Clavardage',       'Messages'],
     ['/evaluations.html',        'Évaluations',      'Reviews'],
     ['/profil.html',             'Profil',           'Profile'],
     ['/faq.html',                'FAQ',              'FAQ']

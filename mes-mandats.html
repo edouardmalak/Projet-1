@@ -62,6 +62,10 @@ tbody tr:last-child td{border-bottom:none}
 .btn-lot:hover{background:var(--vert-vif)}
 .btn-lot:disabled{opacity:.55;cursor:default}
 .vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:16px 0}
+.onglets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.onglet{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:99px;padding:7px 14px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.onglet:hover{border-color:var(--vert)}
+.onglet.actif{background:var(--vert);border-color:var(--vert);color:#FFFFFF}
 .msg{display:none;border-radius:4px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:12px}
 .msg.ok{background:rgba(18,169,110,.1);color:var(--vert-vif);border:1px solid var(--ligne2);border-left:3px solid var(--vert)}
 .msg.ko{background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge)}
@@ -157,6 +161,11 @@ tbody tr:last-child td{border-bottom:none}
   <!-- CONTRATS -->
   <div class="carte">
     <div class="sec">Mes remplacements<small id="n-mandats"></small></div>
+    <div class="onglets" id="onglets-mandats">
+      <button class="onglet actif" data-onglet="confirme" type="button">Confirmé</button>
+      <button class="onglet" data-onglet="demande" type="button">Demandé</button>
+      <button class="onglet" data-onglet="complete" type="button">Complété</button>
+    </div>
     <div class="table-scroll">
       <table>
         <thead><tr><th>Référence</th><th>Date</th><th>Heures</th><th>Pharmacie</th><th>Tarif</th><th>Statut</th><th>Actions</th></tr></thead>
@@ -209,7 +218,7 @@ tbody tr:last-child td{border-bottom:none}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260729b"></script>
+<script src="/auth.js?v=20260730a"></script>
 <script src="/assistant.js?v=20260723b" defer></script>
 <script src="/outils.js"></script>
 <script>
@@ -218,7 +227,8 @@ const $ = id => document.getElementById(id);
 const CHIPS_F = {brouillon:'Brouillon', envoyee:'Envoyée', payee:'Payée', en_retard:'En retard'};
 const CHIPS_K = {attribue:'Confirmé', complete:'Complété', annule:'Annulé', ouvert:'Ouvert'};
 let profil = null;
-let toutesMandats = [], toutesFactures = [], toutesRevenusExt = [];
+let toutesMandats = [], mandatsEnAttente = [], toutesFactures = [], toutesRevenusExt = [];
+let ongletMandat = 'confirme';
 const auj = new Date();
 let calAnnee = auj.getFullYear(), calMois = auj.getMonth(); /* 0-11 */
 
@@ -235,6 +245,13 @@ function msg(id, texte, ok){
   $('cal-prev').onclick = ()=>{ calMois--; if(calMois<0){calMois=11; calAnnee--;} rendreCalendrier(); };
   $('cal-next').onclick = ()=>{ calMois++; if(calMois>11){calMois=0; calAnnee++;} rendreCalendrier(); };
   $('btn-ajouter-ext').onclick = ajouterRevenuExterne;
+  $('onglets-mandats').querySelectorAll('.onglet').forEach(b=>{
+    b.onclick = ()=>{
+      ongletMandat = b.dataset.onglet;
+      $('onglets-mandats').querySelectorAll('.onglet').forEach(x=>x.classList.toggle('actif', x===b));
+      rendreMandats();
+    };
+  });
   await chargerMandats();
   await chargerFactures();
   await chargerRevenusExternes();
@@ -242,15 +259,51 @@ function msg(id, texte, ok){
 })();
 
 /* ================= CONTRATS ================= */
+const CHIPS_DEMANDE = {propose:'Envoyée', contre_offre:'Contre-offre'};
+
 async function chargerMandats(){
-  const { data, error } = await sb.rpc('get_mes_mandats');
-  const tb = $('t-mandats');
-  if(error){ tb.innerHTML = '<tr><td colspan="7" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
+  const [{ data, error }, { data: attente, error: eAttente }] = await Promise.all([
+    sb.rpc('get_mes_mandats'),
+    sb.rpc('get_mes_candidatures_en_attente')
+  ]);
+  if(error){ $('t-mandats').innerHTML = '<tr><td colspan="7" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
   toutesMandats = data || [];
-  if(!data || !data.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">Aucun remplacement attribué pour l\'instant.</td></tr>'; return; }
-  $('n-mandats').textContent = data.length + ' remplacement' + (data.length>1?'s':'');
-  tb.innerHTML = '';
+  mandatsEnAttente = eAttente ? [] : (attente || []);
+  rendreMandats();
+}
+
+function rendreMandats(){
+  const tb = $('t-mandats');
   const aujourdhui = new Date().toISOString().slice(0,10);
+
+  if(ongletMandat === 'demande'){
+    $('n-mandats').textContent = mandatsEnAttente.length + ' candidature' + (mandatsEnAttente.length>1?'s':'') + ' en attente';
+    if(!mandatsEnAttente.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">Aucune candidature en attente pour l\'instant.</td></tr>'; return; }
+    tb.innerHTML = '';
+    mandatsEnAttente.forEach(m=>{
+      const tr = document.createElement('tr');
+      const td = t=>{ const c=document.createElement('td'); c.textContent=t; return c; };
+      const ref = document.createElement('td'); ref.className='ref';
+      ref.innerHTML = '<a href="/c/'+encodeURIComponent(m.numero_reference)+'">'+m.numero_reference+'</a>';
+      const st = document.createElement('td');
+      st.innerHTML = '<span class="chip envoyee">'+(CHIPS_DEMANDE[m.candidature_statut]||m.candidature_statut)+'</span>';
+      const act = document.createElement('td');
+      const f = document.createElement('a');
+      f.className = 'btn-mini ghost'; f.textContent = 'Voir l\'offre'; f.style.textDecoration = 'none';
+      f.href = '/c/' + encodeURIComponent(m.numero_reference);
+      act.appendChild(f);
+      tr.append(ref, td(cdDate(m.date_contrat)), td(cdHeure(m.heure_debut)+'–'+cdHeure(m.heure_fin)),
+                td(m.nom_pharmacie||'—'), td(cdArgent(m.tarif)+'/h'), st, act);
+      tb.appendChild(tr);
+    });
+    return;
+  }
+
+  const cible = ongletMandat === 'complete' ? ['complete','annule'] : ['attribue'];
+  const data = toutesMandats.filter(m => cible.includes(m.statut));
+  $('n-mandats').textContent = data.length + ' remplacement' + (data.length>1?'s':'');
+  if(!data.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">Aucun remplacement '+(ongletMandat==='complete'?'complété':'confirmé')+' pour l\'instant.</td></tr>'; return; }
+  tb.innerHTML = '';
 
   data.forEach(m=>{
     const tr = document.createElement('tr');
@@ -261,7 +314,7 @@ async function chargerMandats(){
     st.innerHTML = '<span class="chip '+m.statut+'">'+(CHIPS_K[m.statut]||m.statut)+'</span>';
     const act = document.createElement('td');
 
-    /* Fiche « ce que vous devez savoir » — dès que le quart est attribué */
+    /* Fiche « ce que vous devez savoir » — dès que le quart est confirmé */
     if(m.statut === 'attribue' || m.statut === 'complete'){
       const f = document.createElement('a');
       f.className = 'btn-mini';

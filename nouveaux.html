@@ -70,7 +70,7 @@ tbody tr.pour-vous:hover{background:rgba(18,169,110,.12)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260729b"></script>
+<script src="/auth.js?v=20260730a"></script>
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
@@ -105,7 +105,7 @@ function batchDepuisUrl(){
     const td = (t, cls)=>{ const c=document.createElement('td'); if(cls) c.className=cls; c.textContent=t; return c; };
     const etat = document.createElement('td');
     etat.innerHTML = k.statut !== 'ouvert'
-      ? '<span class="badge ferme">' + (k.statut==='attribue'?'Attribué':k.statut) + '</span>'
+      ? '<span class="badge ferme">' + (k.statut==='attribue'?'Confirmé':k.statut) + '</span>'
       : (k.correspond ? '<span class="badge match">Pour vous</span>' : '');
     tr.append(
       td(k.numero_reference, 'ref'),

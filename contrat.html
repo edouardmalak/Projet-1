@@ -44,6 +44,8 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
 .btn-sec{width:100%;background:transparent;color:var(--vert-vif);border:1px solid var(--ligne2);border-radius:5px;padding:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:10px;transition:border-color .1s ease}
 .btn-sec:hover{border-color:var(--vert)}
 .btn-sec:disabled{opacity:.55;cursor:default}
+.btn-clavarder{display:inline-flex;align-items:center;gap:8px;background:var(--vert-vif);color:#FFFFFF;text-decoration:none;border-radius:6px;padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;margin:2px 0 10px}
+.btn-clavarder:hover{background:var(--vert)}
 .indice-btn{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--sourd);text-align:center;margin-top:6px;letter-spacing:.04em}
 .f-offre{display:none;border:1px solid var(--ligne2);border-radius:6px;background:var(--panneau2);padding:16px;margin-top:14px}
 .f-offre.on{display:block;animation:glisse .18s ease}
@@ -111,7 +113,8 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
       <span class="badge" id="badge">—</span>
     </div>
     <p class="sous" id="sous">—</p>
-    <a id="lien-messagerie" href="#" style="display:none;margin:2px 0 10px;text-decoration:none;color:var(--vert-vif);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.04em">Messagerie avec l'autre partie →</a>
+    <div id="bloc-parties" style="display:none;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--sourd);line-height:1.8"></div>
+    <a id="lien-messagerie" class="btn-clavarder" href="#" style="display:none">💬 Clavarder</a>
     <a id="lien-evaluer" href="#" style="display:none;margin:2px 0 10px 18px;text-decoration:none;color:var(--jaune);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.04em">★ Évaluer l'autre partie →</a>
 
     <div class="grille">
@@ -188,7 +191,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260729b"></script>
+<script src="/auth.js?v=20260730a"></script>
 <script src="/outils.js"></script>
 <script src="/fsa-qc.js"></script>
 <script>
@@ -237,13 +240,28 @@ function msg(texte, type){
   $('ref').textContent = k.numero_reference;
   document.title = 'C-Direct — ' + k.numero_reference;
 
-  const badges = {ouvert:['ouvert','OUVERT'], attribue:['attribue','ATTRIBUÉ'],
+  const badges = {ouvert:['ouvert','OUVERT'], attribue:['attribue','CONFIRMÉ'],
                   complete:['autre','COMPLÉTÉ'], annule:['autre','ANNULÉ']};
   const b = badges[k.statut] || ['autre', k.statut];
   $('badge').className = 'badge ' + b[0]; $('badge').textContent = b[1];
 
   $('sous').textContent = (k.ville || 'Ville non précisée') + ' · publié le ' +
     new Date(k.created_at).toLocaleDateString('fr-CA');
+
+  /* ---- Nom + note + favoris des deux parties — révélés une fois le
+     contrat confirmé (même règle que la messagerie/l'évaluation) ---- */
+  const etoile = (moy, nb) => (moy != null && nb) ? ('★ ' + Number(moy).toFixed(1) + ' (' + nb + ' avis)') : 'Pas encore évalué(e)';
+  if(k.pharmacie_nom || k.pharmacien_nom){
+    const lignes = [];
+    if(k.pharmacie_nom) lignes.push('<div><b style="color:var(--texte)">' + k.pharmacie_nom + '</b> · ' + etoile(k.pharmacie_note_moyenne, k.pharmacie_note_nombre) + '</div>');
+    if(k.pharmacien_nom){
+      const fav = k.pharmacien_favoris_nombre ? ' · ♥ ' + k.pharmacien_favoris_nombre + ' pharmacie' + (k.pharmacien_favoris_nombre>1?'s':'') + ' favori' : '';
+      lignes.push('<div><b style="color:var(--texte)">' + k.pharmacien_nom + '</b> · ' + etoile(k.pharmacien_note_moyenne, k.pharmacien_note_nombre) + fav + '</div>');
+    }
+    $('bloc-parties').innerHTML = lignes.join('');
+    $('bloc-parties').style.display = '';
+  }
+
   $('date').textContent = cdDate(k.date_contrat);
   $('heures').textContent = cdHeure(k.heure_debut) + ' – ' + cdHeure(k.heure_fin);
   $('tarif').textContent = cdArgent(k.tarif_horaire) + '/h';

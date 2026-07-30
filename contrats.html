@@ -144,7 +144,7 @@ tbody tr:last-child td{border-bottom:none}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260729b"></script>
+<script src="/auth.js?v=20260730a"></script>
 <script src="/assistant.js?v=20260723b" defer></script>
 <script src="/fsa-qc.js"></script>
 <script>
@@ -285,8 +285,14 @@ function dessiner(){
 
   contrats = data || [];
   contrats.forEach(k=>{ k._est = calcEstim(k); k._match = calcMatch(k); });
-  if(!contrats.length){ $('vide').style.display = 'block'; return; }
 
+  /* Le bandeau de filtres (dont ♥ Favoris) et ses écouteurs doivent rester
+     actifs même quand la liste est vide pour l'instant — sinon un pharmacien
+     qui a mis des contrats en favori les voit « disparaître » avec tout le
+     bandeau dès qu'aucun contrat n'est ouvert, ce qui donne l'impression que
+     les favoris ne fonctionnent plus (alors qu'ils sont toujours enregistrés
+     en local, prêts à réapparaître dès qu'un nouveau contrat compatible est
+     publié). dessiner() gère déjà proprement l'état « aucun résultat ». */
   $('filtres').style.display = 'flex';
   ['f-ville','f-tarif','f-logiciel','f-dist'].forEach(id=> $(id).addEventListener('input', dessiner));
   $('f-tri').addEventListener('change', dessiner);

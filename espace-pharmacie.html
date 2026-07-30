@@ -184,7 +184,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260729b"></script>
+<script src="/auth.js?v=20260730a"></script>
 <script src="/assistant.js?v=20260723b" defer></script>
 <script src="/outils.js"></script>
 <script src="/fsa-qc.js"></script>
@@ -375,7 +375,7 @@ async function chargerContrats(){
   (cands||[]).forEach(c=>{ compte[c.contrat_id] = (compte[c.contrat_id]||0)+1; });
 
   liste.innerHTML = '';
-  const badges = {ouvert:['ouvert','OUVERT'], attribue:['attribue','ATTRIBUÉ'],
+  const badges = {ouvert:['ouvert','OUVERT'], attribue:['attribue','CONFIRMÉ'],
                   complete:['autre','COMPLÉTÉ'], annule:['autre','ANNULÉ']};
   contrats.forEach(k=>{
     const n = compte[k.id]||0;

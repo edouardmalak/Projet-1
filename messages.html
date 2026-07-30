@@ -57,7 +57,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260729b"></script>
+<script src="/auth.js?v=20260730a"></script>
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
@@ -174,8 +174,16 @@ async function rafraichirEtat(){
 
   const t = $('h-titre'); if(t) t.textContent = f.contrepartie_nom || 'Conversation';
   const s = $('h-sous');
-  if(s) s.textContent = (f.contrat_ref ? 'Depuis '+f.contrat_ref+' · ' : '')
-    + f.nb_messages + ' message' + (f.nb_messages>1?'s':'');
+  if(s){
+    const note = (f.contrepartie_note_moyenne != null && f.contrepartie_note_nombre)
+      ? '★ ' + Number(f.contrepartie_note_moyenne).toFixed(1) + ' (' + f.contrepartie_note_nombre + ' avis) · '
+      : '';
+    const fav = f.contrepartie_favoris_nombre
+      ? '♥ ' + f.contrepartie_favoris_nombre + ' pharmacie' + (f.contrepartie_favoris_nombre>1?'s':'') + ' favori · '
+      : '';
+    s.textContent = note + fav + (f.contrat_ref ? 'Depuis '+f.contrat_ref+' · ' : '')
+      + f.nb_messages + ' message' + (f.nb_messages>1?'s':'');
+  }
 
   const jeSuisPharmacie = profil.role === 'pharmacie';
   const moiFerme   = jeSuisPharmacie ? f.cloture_pharmacie  : f.cloture_pharmacien;
