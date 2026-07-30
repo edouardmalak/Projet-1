@@ -50,6 +50,10 @@ a.lien{color:var(--vert-vif)}
 .jour-horaire .nomj{width:76px;flex:none;color:var(--texte)}
 .jour-horaire input[type=time]{width:104px;border:1px solid var(--ligne2);border-radius:4px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:#fff;color:var(--texte)}
 .jour-horaire label{display:flex;align-items:center;gap:5px;margin-left:auto;color:var(--sourd);cursor:pointer}
+.slider-logiciel{display:flex;align-items:center;gap:10px;background:var(--panneau2);border:1px solid var(--ligne2);border-radius:4px;padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:6px}
+.slider-logiciel .noml{width:150px;flex:none;color:var(--texte)}
+.slider-logiciel input[type=range]{flex:1;accent-color:var(--vert)}
+.slider-logiciel .pct{width:40px;flex:none;text-align:right;color:var(--vert-vif);font-weight:600}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/design.css">
@@ -106,7 +110,8 @@ a.lien{color:var(--vert-vif)}
         </div>
         <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px">Nécessaire pour facturer les taxes (TPS/TVQ) sur vos mandats. Laissez vide si vous n'êtes pas inscrit.</p>
         <div class="champ"><label>Logiciels maîtrisés</label>
-          <div class="coches" id="coches-logiciels"></div>
+          <div id="sliders-logiciels"></div>
+          <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-2px">Purement informatif : affiché aux pharmacies sur vos candidatures, n'exclut jamais automatiquement d'un contrat.</p>
         </div>
         <div class="champ"><label>Compétences additionnelles</label>
           <div class="coches" id="coches-competences"></div>
@@ -402,9 +407,15 @@ function rendrePlateaux(){
 
   if(profil.role !== 'admin') rendreMaNote();
 
-  /* cases logiciels (pharmacien) + select logiciel (pharmacie) */
-  $('coches-logiciels').innerHTML = LOGICIELS.map(l=>
-    '<label><input type="checkbox" value="'+l.replace(/"/g,'&quot;')+'"> '+l+'</label>').join('');
+  /* sliders logiciels 0-100% (pharmacien) + select logiciel (pharmacie) */
+  $('sliders-logiciels').innerHTML = LOGICIELS.map((l,i)=>
+    '<div class="slider-logiciel"><span class="noml">'+l+'</span>'+
+    '<input type="range" min="0" max="100" step="5" value="0" data-logiciel="'+l.replace(/"/g,'&quot;')+'" id="niv-'+i+'">'+
+    '<span class="pct" id="niv-'+i+'-val">0%</span></div>').join('');
+  LOGICIELS.forEach((l,i)=>{
+    const r = document.getElementById('niv-'+i);
+    r.addEventListener('input', ()=>{ document.getElementById('niv-'+i+'-val').textContent = r.value+'%'; });
+  });
   $('coches-competences').innerHTML = COMPETENCES.map(l=>
     '<label><input type="checkbox" value="'+l.replace(/"/g,'&quot;')+'"> '+l+'</label>').join('');
   $('coches-langues').innerHTML = LANGUES.map(l=>
@@ -438,10 +449,17 @@ function rendrePlateaux(){
     $('ville_base').value=profil.ville_base||'';
     $('cp_pharmacien').value=profil.code_postal||'';
     $('rayon_deplacement_km').value=profil.rayon_deplacement_km??'';
-    (profil.logiciels||[]).forEach(l=>{
-      const c=[...document.querySelectorAll('#coches-logiciels input')].find(i=>i.value===l);
-      if(c) c.checked=true;
-    });
+    (function(){
+      const niveaux = profil.logiciels_niveaux || {};
+      const connus = profil.logiciels || [];
+      [...document.querySelectorAll('#sliders-logiciels input[type=range]')].forEach(r=>{
+        const l = r.dataset.logiciel;
+        /* niveau enregistré sinon 100% si déjà coché avant ce changement (continuité), sinon 0 */
+        const v = (niveaux[l] != null) ? niveaux[l] : (connus.includes(l) ? 100 : 0);
+        r.value = v;
+        const lbl = document.getElementById(r.id+'-val'); if(lbl) lbl.textContent = v+'%';
+      });
+    })();
     (profil.competences||[]).forEach(l=>{
       const c=[...document.querySelectorAll('#coches-competences input')].find(i=>i.value===l);
       if(c) c.checked=true;
@@ -528,7 +546,11 @@ function rendrePlateaux(){
       maj.ville_base=$('ville_base').value.trim()||null;
       maj.code_postal=$('cp_pharmacien').value.trim()||null;
       maj.rayon_deplacement_km=$('rayon_deplacement_km').value||null;
-      maj.logiciels=[...document.querySelectorAll('#coches-logiciels input:checked')].map(i=>i.value);
+      { const niveaux={};
+        [...document.querySelectorAll('#sliders-logiciels input[type=range]')].forEach(r=>{ niveaux[r.dataset.logiciel]=parseInt(r.value,10); });
+        maj.logiciels_niveaux = niveaux;
+        maj.logiciels = LOGICIELS.filter(l=> (niveaux[l]||0) > 0);
+      }
       maj.competences=[...document.querySelectorAll('#coches-competences input:checked')].map(i=>i.value);
     }
     if(profil.role==='pharmacie'){

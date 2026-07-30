@@ -554,7 +554,10 @@ async function chargerCandidats(k, zone){
       s.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:" + couleur + ";border:1px solid var(--ligne2);border-radius:99px;padding:2px 8px";
       return s;
     };
-    (c.logiciels||[]).forEach(l => meta.appendChild(puce(l, 'var(--vert-vif)')));
+    (c.logiciels||[]).forEach(l => {
+      const niv = c.logiciels_niveaux && c.logiciels_niveaux[l];
+      meta.appendChild(puce(l + (niv!=null ? ' ' + niv + '%' : ''), 'var(--vert-vif)'));
+    });
     (c.competences||[]).forEach(l => meta.appendChild(puce(l, 'var(--sourd)')));
     (c.langues_parlees||[]).forEach(l => meta.appendChild(puce(l, 'var(--sourd)')));
     if(meta.children.length) bloc.appendChild(meta);
