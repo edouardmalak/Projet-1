@@ -102,9 +102,9 @@ tbody tr:last-child td{border-bottom:none}
   </div>
 
   <div class="filtres" id="filtres">
-    <input class="filtre-champ" id="f-ville" placeholder="Ville" style="flex:1 1 130px">
-    <input class="filtre-champ" id="f-tarif" type="number" min="0" step="1" placeholder="Tarif min $/h" style="flex:1 1 120px">
-    <input class="filtre-champ" id="f-logiciel" placeholder="Logiciel" style="flex:1 1 120px">
+    <select class="filtre-champ" id="f-ville" style="flex:1 1 130px"><option value="">Ville</option></select>
+    <select class="filtre-champ" id="f-tarif" style="flex:1 1 120px"><option value="">Tarif</option></select>
+    <select class="filtre-champ" id="f-logiciel" style="flex:1 1 120px"><option value="">Logiciel</option></select>
     <input class="filtre-champ" id="f-dist" type="number" min="0" step="10" placeholder="Distance max km" style="flex:1 1 130px">
     <select class="filtre-champ" id="f-tri" style="flex:1 1 130px">
       <option value="compat">Compatibilité ↓</option>
@@ -189,17 +189,45 @@ function estFavori(ref){ return favSet().has(ref); }
 function toggleFavori(ref){ const s=favSet(); s.has(ref)?s.delete(ref):s.add(ref); favSave(s); }
 let favOnly = false;
 
+/* remplit Ville/Tarif/Logiciel avec seulement les valeurs présentes parmi
+   les contrats actuellement ouverts (pas une liste figée) — se met à jour
+   à chaque chargement de la liste. */
+function remplirFiltresDynamiques(){
+  const distinct = (fn) => [...new Set(contrats.map(fn).filter(v=>v!=null && v!==''))];
+  const villes = distinct(k=>k.ville).sort((a,b)=>a.localeCompare(b,'fr'));
+  const tarifs = distinct(k=>k.tarif_horaire).sort((a,b)=>parseFloat(a)-parseFloat(b));
+  const logiciels = distinct(k=>k.logiciel).sort((a,b)=>a.localeCompare(b,'fr'));
+
+  const remplir = (id, libelleDefaut, valeurs, formatter) => {
+    const sel = $(id);
+    const valActuelle = sel.value;
+    sel.innerHTML = '';
+    const opt0 = document.createElement('option'); opt0.value = ''; opt0.textContent = libelleDefaut;
+    sel.appendChild(opt0);
+    valeurs.forEach(v=>{
+      const opt = document.createElement('option');
+      opt.value = String(v);
+      opt.textContent = formatter ? formatter(v) : v;
+      sel.appendChild(opt);
+    });
+    if(valeurs.some(v=>String(v)===valActuelle)) sel.value = valActuelle;
+  };
+  remplir('f-ville', 'Ville', villes);
+  remplir('f-tarif', 'Tarif', tarifs, t=>cdArgent(t)+'/h');
+  remplir('f-logiciel', 'Logiciel', logiciels);
+}
+
 function dessiner(){
-  const vv = ($('f-ville').value||'').trim().toLowerCase();
-  const tmin = parseFloat($('f-tarif').value) || 0;
-  const lg = ($('f-logiciel').value||'').trim().toLowerCase();
+  const vv = $('f-ville').value;
+  const tarifSel = $('f-tarif').value;
+  const lg = $('f-logiciel').value;
   const dmax = parseFloat($('f-dist').value);
   const tri = $('f-tri').value;
   let list = contrats.filter(k=>{
     if(favOnly && !estFavori(k.numero_reference)) return false;
-    if(vv && !(k.ville||'').toLowerCase().includes(vv)) return false;
-    if(tmin && parseFloat(k.tarif_horaire) < tmin) return false;
-    if(lg && !(k.logiciel||'').toLowerCase().includes(lg)) return false;
+    if(vv && k.ville !== vv) return false;
+    if(tarifSel && String(k.tarif_horaire) !== tarifSel) return false;
+    if(lg && k.logiciel !== lg) return false;
     if(!isNaN(dmax)){ const km = k._est && k._est.distanceKm; if(km==null || km>dmax) return false; }
     return true;
   });
@@ -285,6 +313,7 @@ function dessiner(){
 
   contrats = data || [];
   contrats.forEach(k=>{ k._est = calcEstim(k); k._match = calcMatch(k); });
+  remplirFiltresDynamiques();
 
   /* Le bandeau de filtres (dont ♥ Favoris) et ses écouteurs doivent rester
      actifs même quand la liste est vide pour l'instant — sinon un pharmacien
@@ -294,7 +323,8 @@ function dessiner(){
      en local, prêts à réapparaître dès qu'un nouveau contrat compatible est
      publié). dessiner() gère déjà proprement l'état « aucun résultat ». */
   $('filtres').style.display = 'flex';
-  ['f-ville','f-tarif','f-logiciel','f-dist'].forEach(id=> $(id).addEventListener('input', dessiner));
+  ['f-ville','f-tarif','f-logiciel'].forEach(id=> $(id).addEventListener('change', dessiner));
+  $('f-dist').addEventListener('input', dessiner);
   $('f-tri').addEventListener('change', dessiner);
   $('f-fav').onclick = ()=>{ favOnly = !favOnly; $('f-fav').classList.toggle('on', favOnly); dessiner(); };
   $('f-reset').onclick = ()=>{

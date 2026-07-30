@@ -62,6 +62,13 @@ tbody tr:last-child td{border-bottom:none}
 .btn-lot:hover{background:var(--vert-vif)}
 .btn-lot:disabled{opacity:.55;cursor:default}
 .vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:16px 0}
+.grille-mandats{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;margin-bottom:20px}
+.col-calendrier{position:sticky;top:16px}
+.col-calendrier .carte, .col-remplacements .carte{margin-bottom:0}
+@media(max-width:860px){
+  .grille-mandats{grid-template-columns:1fr}
+  .col-calendrier{position:static}
+}
 .onglets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
 .onglet{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:99px;padding:7px 14px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .onglet:hover{border-color:var(--vert)}
@@ -119,22 +126,47 @@ tbody tr:last-child td{border-bottom:none}
     <div class="total retard"><small>En retard</small><b id="t-retard">—</b></div>
   </div>
 
-  <!-- CALENDRIER -->
-  <div class="carte">
-    <div class="sec">Calendrier<small id="cal-mois-lbl"></small>
-      <button class="btn-mini ghost" id="cal-prev" style="margin-left:auto">‹</button>
-      <button class="btn-mini ghost" id="cal-next">›</button>
+  <!-- CALENDRIER (fixe, à gauche) + MES REMPLACEMENTS (défile, à droite) —
+       vue combinée : le calendrier reste toujours visible pendant qu'on
+       parcourt les mandats. -->
+  <div class="grille-mandats">
+    <div class="col-calendrier">
+      <div class="carte">
+        <div class="sec">Calendrier<small id="cal-mois-lbl"></small>
+          <button class="btn-mini ghost" id="cal-prev" style="margin-left:auto">‹</button>
+          <button class="btn-mini ghost" id="cal-next">›</button>
+        </div>
+        <div class="cal-noms">
+          <span>Dim</span><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span>
+        </div>
+        <div class="cal-grille" id="cal-grille"></div>
+        <div class="cal-legende">
+          <span><i style="background:var(--vert-vif)"></i>Payé</span>
+          <span><i style="background:var(--jaune)"></i>En attente</span>
+          <span><i style="background:var(--rouge)"></i>En retard</span>
+          <span><i style="background:var(--ligne2)"></i>À venir / non facturé</span>
+          <span><i style="background:var(--bleu)"></i>Revenu hors C-Direct</span>
+        </div>
+      </div>
     </div>
-    <div class="cal-noms">
-      <span>Dim</span><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span>
-    </div>
-    <div class="cal-grille" id="cal-grille"></div>
-    <div class="cal-legende">
-      <span><i style="background:var(--vert-vif)"></i>Payé</span>
-      <span><i style="background:var(--jaune)"></i>En attente</span>
-      <span><i style="background:var(--rouge)"></i>En retard</span>
-      <span><i style="background:var(--ligne2)"></i>À venir / non facturé</span>
-      <span><i style="background:var(--bleu)"></i>Revenu hors C-Direct</span>
+
+    <!-- CONTRATS -->
+    <div class="col-remplacements">
+      <div class="carte">
+        <div class="sec">Mes remplacements<small id="n-mandats"></small></div>
+        <div class="onglets" id="onglets-mandats">
+          <button class="onglet actif" data-onglet="confirme" type="button">Confirmé</button>
+          <button class="onglet" data-onglet="demande" type="button">Demandé</button>
+          <button class="onglet" data-onglet="complete" type="button">Complété</button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Référence</th><th>Date</th><th>Heures</th><th>Pharmacie</th><th>Tarif</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody id="t-mandats"><tr><td colspan="7" class="vide">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="msg" id="msg-mandats"></div>
+      </div>
     </div>
   </div>
 
@@ -156,23 +188,6 @@ tbody tr:last-child td{border-bottom:none}
       </table>
     </div>
     <div class="msg" id="msg-revenus-ext"></div>
-  </div>
-
-  <!-- CONTRATS -->
-  <div class="carte">
-    <div class="sec">Mes remplacements<small id="n-mandats"></small></div>
-    <div class="onglets" id="onglets-mandats">
-      <button class="onglet actif" data-onglet="confirme" type="button">Confirmé</button>
-      <button class="onglet" data-onglet="demande" type="button">Demandé</button>
-      <button class="onglet" data-onglet="complete" type="button">Complété</button>
-    </div>
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Référence</th><th>Date</th><th>Heures</th><th>Pharmacie</th><th>Tarif</th><th>Statut</th><th>Actions</th></tr></thead>
-        <tbody id="t-mandats"><tr><td colspan="7" class="vide">Chargement…</td></tr></tbody>
-      </table>
-    </div>
-    <div class="msg" id="msg-mandats"></div>
   </div>
 
   <!-- FACTURES -->
