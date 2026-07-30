@@ -158,6 +158,7 @@ tbody tr:last-child td{border-bottom:none}
           <button class="onglet actif" data-onglet="confirme" type="button">Confirmé</button>
           <button class="onglet" data-onglet="demande" type="button">Demandé</button>
           <button class="onglet" data-onglet="complete" type="button">Complété</button>
+          <button class="onglet" data-onglet="annule" type="button">Annulé</button>
         </div>
         <div class="table-scroll">
           <table>
@@ -314,10 +315,12 @@ function rendreMandats(){
     return;
   }
 
-  const cible = ongletMandat === 'complete' ? ['complete','annule'] : ['attribue'];
+  const cibles = { confirme:['attribue'], complete:['complete'], annule:['annule'] };
+  const cible = cibles[ongletMandat] || cibles.confirme;
   const data = toutesMandats.filter(m => cible.includes(m.statut));
+  const libellesVide = { confirme:'confirmé', complete:'complété', annule:'annulé' };
   $('n-mandats').textContent = data.length + ' remplacement' + (data.length>1?'s':'');
-  if(!data.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">Aucun remplacement '+(ongletMandat==='complete'?'complété':'confirmé')+' pour l\'instant.</td></tr>'; return; }
+  if(!data.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">Aucun remplacement '+(libellesVide[ongletMandat]||'confirmé')+' pour l\'instant.</td></tr>'; return; }
   tb.innerHTML = '';
 
   data.forEach(m=>{
