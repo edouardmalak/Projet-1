@@ -182,6 +182,7 @@ const CD_MENUS = {
     ['/disponibilites.html',     'Calendrier',        'Calendar'],
     ['/messages.html',           'Messages',         'Messages'],
     ['/evaluations.html',        'Évaluations',      'Reviews'],
+    ['/dispensaire.html',        'Dispensaire',       'Dispensary'],
     ['/profil.html',             'Profil',           'Profile'],
     ['/faq.html',                'FAQ',              'FAQ']
   ],
@@ -196,6 +197,7 @@ const CD_MENUS = {
     ['/calendrier-pharmacie.html','Calendrier',      'Calendar'],
     ['/messages.html',           'Messages',         'Messages'],
     ['/evaluations.html',        'Évaluations',      'Reviews'],
+    ['/dispensaire.html',        'Dispensaire',       'Dispensary'],
     ['/profil.html',             'Profil',           'Profile'],
     ['/faq.html',                'FAQ',              'FAQ']
   ],
@@ -203,6 +205,7 @@ const CD_MENUS = {
     ['/admin.html',              'Console',          'Console'],
     ['/admin-verification.html', 'Vérification',     'Verification'],
     ['/admin-shifts.html',       'Contrats',         'Contracts'],
+    ['/admin-articles.html',     'Dispensaire',       'Dispensary'],
     ['/messages.html',           'Messages',         'Messages'],
     ['/evaluations.html',        'Évaluations',      'Reviews'],
     ['/profil.html',             'Profil',           'Profile'],

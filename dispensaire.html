@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Dispensaire</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3.5" fill="%230B6E4F"/><g fill="none" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.2v8.4M5.4 12.4h5.2M3.6 4.8h8.8"/><path d="M3.6 4.8 2.3 7.6a1.45 1.45 0 0 0 2.7 0Z"/><path d="M12.4 4.8l-1.35 2.8a1.45 1.45 0 0 0 2.7 0Z"/></g></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#FAFBF9;--panneau:#FFFFFF;--panneau2:#F1F6F2;--ligne:#D5E3DB;--ligne2:#C3D6CB;--vert:#0B6E4F;--vert-vif:#0E8A62;--texte:#1B2622;--sourd:#5A6B63;--jaune:#C97B12;--rouge:#C0392B}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1400px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:10px;color:var(--sourd);min-width:0;flex-wrap:nowrap}
+.wrap{max-width:800px;margin:0 auto;padding:36px 18px 70px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+.filtres{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.filtres button{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px;border-radius:99px;cursor:pointer;border:1px solid var(--ligne2);background:var(--panneau);color:var(--sourd)}
+.filtres button.actif{background:var(--vert);color:#fff;border-color:var(--vert);font-weight:700}
+.art{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:22px;margin-bottom:16px;position:relative;cursor:pointer}
+.art::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vert),transparent)}
+.art .cat{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:2px 9px;border-radius:3px;border:1px solid var(--ligne2);color:var(--vert-vif);display:inline-block;margin-bottom:8px}
+.art h2{font-size:17px;margin-bottom:8px}
+.art .corps{color:var(--sourd);font-size:14px;white-space:pre-wrap;max-height:4.5em;overflow:hidden}
+.art.ouvert .corps{max-height:none;color:var(--texte)}
+.art .voirplus{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--vert-vif);margin-top:8px;display:inline-block}
+.vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:50px 0}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/design.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html">
+      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.6v9.6M4.9 13.4h6.2M3 4.4h10"/><path d="M3 4.4 1.5 7.7a1.7 1.7 0 0 0 3.1 0Z"/><path d="M13 4.4l-1.55 3.3a1.7 1.7 0 0 0 3.1 0Z"/></svg></span>
+      C-DIRECT
+    </a>
+    <div class="droite"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>Dispensaire</h1>
+  <p class="sous">Carrière, finances et pratique — des articles pour les pharmaciens et pharmacies du réseau</p>
+
+  <div class="filtres" id="filtres">
+    <button data-c="tout" class="actif">Tous</button>
+    <button data-c="carriere">Carrière</button>
+    <button data-c="finances">Finances</button>
+    <button data-c="patients">Patients / clients</button>
+  </div>
+
+  <div id="liste"><div class="vide">Chargement…</div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js?v=20260726a"></script>
+<script src="/auth.js?v=20260729b"></script>
+<script>
+const sb = window.sbClient;
+const LIB_CAT = { carriere:'Carrière', finances:'Finances', patients:'Patients / clients' };
+let ARTICLES = [], FILTRE = 'tout';
+
+function rendre(){
+  const liste = document.getElementById('liste');
+  const arr = FILTRE==='tout' ? ARTICLES : ARTICLES.filter(a=>a.categorie===FILTRE);
+  if(!arr.length){ liste.innerHTML = '<div class="vide">Rien à lire ici pour l\'instant — revenez bientôt.</div>'; return; }
+  liste.innerHTML = '';
+  arr.forEach(a=>{
+    const div = document.createElement('div'); div.className = 'art';
+    div.innerHTML = '<span class="cat"></span><h2></h2><div class="corps"></div><span class="voirplus">Lire la suite ↓</span>';
+    div.querySelector('.cat').textContent = LIB_CAT[a.categorie] || a.categorie;
+    div.querySelector('h2').textContent = a.titre;
+    div.querySelector('.corps').textContent = a.corps;
+    div.onclick = ()=>{
+      div.classList.toggle('ouvert');
+      div.querySelector('.voirplus').textContent = div.classList.contains('ouvert') ? 'Réduire ↑' : 'Lire la suite ↓';
+    };
+    liste.appendChild(div);
+  });
+}
+
+document.getElementById('filtres').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  FILTRE = b.dataset.c;
+  [...document.querySelectorAll('#filtres button')].forEach(x=>x.classList.toggle('actif', x===b));
+  rendre();
+});
+
+(async function(){
+  await cdExigerConnexion();
+  cdEnteteConnecte();
+  const { data, error } = await sb.from('articles').select('*').eq('publie', true).order('created_at', { ascending:false });
+  if(error){ document.getElementById('liste').innerHTML = '<div class="vide">Erreur : '+error.message+'</div>'; return; }
+  ARTICLES = data || [];
+  rendre();
+})();
+</script>
+</body>
+</html>
