@@ -27,6 +27,7 @@
 5. **Rotation du jeton Twilio** (sécurité — possiblement exposé pendant la config).
 
 ## 🟡 Optionnel / plus tard
+- **`espace-pharmacien.html` semble orpheline** : aucune inclusion supabase-config.js/auth.js, aucun lien depuis `cdAccueilPourRole()` ni `CD_MENUS` — la vraie page d'accueil du pharmacien est `contrats.html`. À confirmer avec Robert si elle peut être supprimée (laissée en place pour l'instant, 2026-07-30).
 - **Assistant VOCAL (Phase 7+)** : conversation parlée (pas de clavier) pour les
   propriétaires — l'IA fait le travail (publication, recherche) avec pré-approbation
   obligatoire avant toute action. Base déjà construite : l'assistant TEXTE
@@ -39,4 +40,4 @@
 - Checklist de lancement complète : `LAUNCH.md`.
 
 ## Points de restauration (git tags — aucun supprimé)
-`restore-phase-1` … `restore-phase-6-complete`, `restore-confirmation-pdf`. Pour revenir en arrière : dites-moi lequel.
+`restore-phase-1` … `restore-phase-6-complete`, `restore-confirmation-pdf`, … `restore-2026-07-30-1324` (renommages menu, Attribué→Confirmé, onglet Demandé, note/favoris sur fiche+clavardage). Pour revenir en arrière : dites-moi lequel.
