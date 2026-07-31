@@ -1,0 +1,22 @@
+# =====================================================================
+# C-DIRECT — Worker "c-direct-payments"
+# Worker séparé du déploiement Pages et des autres Workers (le site
+# statique n'est pas touché). Squelette seulement pour l'instant — les
+# routes Stripe (create-auth-hold, capture-auth-hold, void-auth-hold,
+# webhooks Connect) seront ajoutées dans une passe dédiée, en suivant
+# la documentation Stripe officielle pour chaque étape.
+# Déployer depuis CE dossier : npx wrangler deploy
+# Secrets (JAMAIS ici, JAMAIS dans git) : npx wrangler secret put <NOM>
+# =====================================================================
+name = "c-direct-payments"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+
+# Secrets attendus (à ajouter via `wrangler secret put`, pas ici) :
+#   STRIPE_SECRET_KEY         → clé secrète Stripe (sk_test_... en sandbox)
+#   STRIPE_WEBHOOK_SECRET     → signature des webhooks Connect (whsec_...)
+#   SUPABASE_URL              → https://fenlujjozanerbzyypjt.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY → Supabase → Settings → API → service_role
+
+# Cron Triggers : ajoutés dans la passe dédiée (T-24h autorisation,
+# échelles de relance/règlement). Rien pour l'instant.
