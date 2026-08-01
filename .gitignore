@@ -10,3 +10,7 @@ captures-concurrents/
 # donc tout fichier commité est téléchargeable. Ces documents restent locaux.
 C-Direct-actions-*.pdf
 .fuse_hidden*
+
+# Cache local de Wrangler (contient l'ID de compte Cloudflare) — jamais commité
+.wrangler/
+**/.wrangler/
