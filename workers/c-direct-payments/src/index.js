@@ -169,10 +169,20 @@ async function routeOnboardingStart(request, env) {
   let compteId = ligne?.stripe_account_id;
 
   if (!compteId) {
-    // Compte connecté Express — "Stripe handles pricing" : on NE précise PAS
-    // controller.fees / controller.losses / controller.requirement_collection,
-    // les valeurs par défaut (account, stripe, stripe) sont exactement celles
-    // voulues pour ce modèle (voir skill c-direct-payments, §pricing).
+    // Compte connecté Express créé via `controller` (pas le `type=express`
+    // déprécié) : Stripe EXIGE alors explicitement que la PLATEFORME (pas le
+    // compte connecté, pas Stripe) paie les frais Stripe et soit responsable
+    // des soldes négatifs/rétrofacturations — confirmé par un vrai rejet API
+    // (« your platform must collect fees and be liable for negative balances
+    // or refunds and chargebacks »), pas une hypothèse. C'est l'inverse de ce
+    // que la doc générique Connect pricing laissait supposer par défaut.
+    // Conséquence à traiter dans la machine à états (phase suivante) :
+    // application_fee_amount devra couvrir le fee Stripe EN PLUS des 39 $ de
+    // C-Direct (sinon C-Direct perd ~3 $/quart), et C-Direct — pas Stripe —
+    // encaisse le risque d'un solde négatif si un pharmacien connecté a une
+    // rétrofacturation après avoir déjà été payé. Rien de tout ça ne change
+    // ce que la pharmacie paie ou ce que le pharmacien reçoit — seulement la
+    // plomberie interne des frais Stripe. À garder en tête pour la phase 2.
     const compte = await stripeApi(
       env,
       'POST',
@@ -180,7 +190,11 @@ async function routeOnboardingStart(request, env) {
       {
         country: 'CA',
         email: u.email,
-        controller: { stripe_dashboard: { type: 'express' } },
+        controller: {
+          stripe_dashboard: { type: 'express' },
+          fees: { payer: 'application' },
+          losses: { payments: 'application' },
+        },
         capabilities: {
           card_payments: { requested: true },
           transfers: { requested: true },
