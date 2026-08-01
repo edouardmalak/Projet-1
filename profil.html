@@ -119,6 +119,14 @@ a.lien{color:var(--vert-vif)}
         <div class="champ"><label>Langues parlées</label>
           <div class="coches" id="coches-langues"></div>
         </div>
+
+        <div class="sec" style="margin-top:14px">Paiements</div>
+        <p style="font-size:12px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px">
+          Nécessaire pour recevoir vos paiements de mandats via Stripe. Configuré une seule fois.</p>
+        <div id="paiement-pharmacien-statut" style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--sourd);margin-bottom:10px">Chargement…</div>
+        <button type="button" class="btn" id="btn-onboarding-stripe"
+          style="background:transparent;border:1px solid var(--ligne);color:var(--texte)">Configurer mes paiements</button>
+        <div class="msg" id="msg-paiement-pharmacien"></div>
       </div>
 
       <!-- PHARMACIE -->
@@ -236,6 +244,19 @@ a.lien{color:var(--vert-vif)}
 
         <div class="champ"><label>Autres consignes</label>
           <textarea id="info_instructions" rows="3" placeholder="Livraisons à 14 h. Le télécopieur est derrière la caisse. Fermeture : compter le tiroir et verrouiller la voûte."></textarea></div>
+
+        <div class="sec" style="margin-top:14px">Garantie de paiement</div>
+        <p style="font-size:12px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px">
+          Une carte enregistrée qui sert de garantie — elle n'est chargée que si un paiement Interac
+          n'est pas confirmé à temps par le remplaçant. Pour la plupart des pharmacies, elle ne sera
+          jamais débitée.</p>
+        <div id="carte-statut" style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--sourd);margin-bottom:10px">Chargement…</div>
+        <div id="form-carte">
+          <div id="payment-element" style="margin-bottom:10px"></div>
+          <button type="button" class="btn" id="btn-ajouter-carte"
+            style="background:transparent;border:1px solid var(--ligne);color:var(--texte)">Enregistrer cette carte</button>
+        </div>
+        <div class="msg" id="msg-carte"></div>
       </div>
 
       <div class="sec">Notifications SMS</div>
@@ -267,8 +288,12 @@ a.lien{color:var(--vert-vif)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js?v=20260723b"></script>
 <script src="auth.js?v=20260730a"></script>
+<script src="https://js.stripe.com/v3/"></script>
 <script>
 const sb = window.sbClient;
+/* Clé PUBLIQUE Stripe (sandbox) — pas un secret, safe côté client */
+const STRIPE_PUBLISHABLE_KEY = 'STRIPE_PUBLISHABLE_KEY_A_CONFIRMER';
+const URL_PAIEMENTS = 'https://c-direct-payments.edouardmalak.workers.dev';
 const $ = id => document.getElementById(id);
 const LOGICIELS = ['Kroll','AssystRx','Mentor','PrioRx','RxPro','Ubik','ReflexRx (XDRx)',"L'Ordonnance (Logipharm)",'Pharmaclik'];
 const COMPETENCES = ['Loi 41','Loi 31','Vaccination','INR / ACO','MAPA','Méthadone','Suboxone','Magistrales non stériles','Magistrales stériles','Dispills / piluliers','Clé DSQ','Soins pharmaceutiques avancés'];
@@ -306,6 +331,72 @@ function msg(id, texte, ok){
   const el=$(id); el.textContent=texte;
   el.className='msg '+(ok?'ok':'ko'); el.style.display='block';
   if(ok) setTimeout(()=>{ el.style.display='none'; }, 3500);
+}
+
+/* ---- Paiements Stripe (onboarding pharmacien + carte pharmacie) ---- */
+let stripeCarteInitialisee = false;
+
+async function chargerStatutPaiement(){
+  if(profil.role === 'pharmacien' && $('paiement-pharmacien-statut')){
+    const { data } = await sb.from('stripe_comptes').select('stripe_account_id').eq('profil_id', profil.id).maybeSingle();
+    $('paiement-pharmacien-statut').textContent = (data && data.stripe_account_id)
+      ? 'Compte de paiement configuré ✓'
+      : 'Aucun compte de paiement configuré — nécessaire pour être payé de vos mandats.';
+  }
+  if(profil.role === 'pharmacie' && $('carte-statut')){
+    const { data } = await sb.from('stripe_comptes').select('stripe_customer_id').eq('profil_id', profil.id).maybeSingle();
+    $('carte-statut').textContent = (data && data.stripe_customer_id)
+      ? 'Une carte est enregistrée.'
+      : 'Aucune carte enregistrée pour l’instant.';
+    initialiserFormulaireCarte();
+  }
+}
+
+if($('btn-onboarding-stripe')) $('btn-onboarding-stripe').addEventListener('click', async () => {
+  const btn = $('btn-onboarding-stripe'); btn.disabled = true;
+  try{
+    const s = await cdSession();
+    const r = await fetch(URL_PAIEMENTS + '/pharmacien/onboarding-start', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+(s && s.access_token || '') },
+      body: JSON.stringify({ return_url: location.origin + '/profil.html?onboarding=retour' })
+    });
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.erreur || 'Erreur');
+    location.href = data.url;
+  }catch(e){
+    btn.disabled = false;
+    msg('msg-paiement-pharmacien', 'Erreur : '+e.message, false);
+  }
+});
+
+async function initialiserFormulaireCarte(){
+  if(stripeCarteInitialisee || typeof Stripe === 'undefined') return;
+  stripeCarteInitialisee = true;
+  try{
+    const s = await cdSession();
+    const r = await fetch(URL_PAIEMENTS + '/pharmacie/setup-intent', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+(s && s.access_token || '') },
+    });
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.erreur || 'Erreur');
+
+    const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+    const elements = stripe.elements({ clientSecret: data.client_secret });
+    elements.create('payment').mount('#payment-element');
+
+    $('btn-ajouter-carte').addEventListener('click', async () => {
+      const btn = $('btn-ajouter-carte'); btn.disabled = true;
+      const { error } = await stripe.confirmSetup({ elements, redirect: 'if_required' });
+      btn.disabled = false;
+      if(error){ msg('msg-carte', error.message, false); return; }
+      msg('msg-carte', 'Carte enregistrée ✓', true);
+      chargerStatutPaiement();
+    });
+  }catch(e){
+    if($('carte-statut')) $('carte-statut').textContent = 'Erreur de chargement : '+e.message;
+  }
 }
 
 /* ---- ma réputation (évaluations reçues, révélées) ---- */
@@ -426,6 +517,7 @@ function rendrePlateaux(){
 
   $('bloc-pharmacien').style.display = profil.role==='pharmacien' ? '' : 'none';
   $('bloc-pharmacie').style.display  = profil.role==='pharmacie'  ? '' : 'none';
+  if(profil.role==='pharmacien' || profil.role==='pharmacie') chargerStatutPaiement();
 
   /* remplissage */
   $('prenom').value=profil.prenom||''; $('nom').value=profil.nom||'';
