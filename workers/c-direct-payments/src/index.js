@@ -200,7 +200,14 @@ async function routeOnboardingStart(request, env) {
           transfers: { requested: true },
         },
       },
-      { idempotencyKey: `${u.id}:create-express-account` }
+      // Clé fraîche à chaque appel (pas déterministe sur u.id) : une clé
+      // stable causait un blocage dès qu'un essai précédent avait échoué
+      // avec des paramètres différents (Stripe refuse alors la réutilisation
+      // — « Keys for idempotent requests can only be used with the same
+      // parameters »). Ce n'est pas un risque de doublon : la vérification
+      // juste au-dessus (`if (!compteId)`) est déjà ce qui empêche de créer
+      // un second compte connecté pour le même utilisateur.
+      { idempotencyKey: `${u.id}:create-express-account:${crypto.randomUUID()}` }
     );
     compteId = compte.id;
 
