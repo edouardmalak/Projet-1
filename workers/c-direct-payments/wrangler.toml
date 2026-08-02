@@ -18,5 +18,11 @@ compatibility_date = "2026-07-01"
 #   SUPABASE_URL              → https://fenlujjozanerbzyypjt.supabase.co
 #   SUPABASE_SERVICE_ROLE_KEY → Supabase → Settings → API → service_role
 
-# Cron Triggers : ajoutés dans la passe dédiée (T-24h autorisation,
-# échelles de relance/règlement). Rien pour l'instant.
+# Cron Triggers — cycle garanties de paiement (sql/43 + executerCycleGaranties
+# dans src/index.js) : crée les autorisations T-24h dues, fixe les délais de
+# confirmation à l'envoi de facture, capture les garanties échues. Toutes les
+# 15 min, même cadence que le cron hausses-auto de Supabase (sql/30).
+# Relance multi-paliers (T-18h/carte de secours/SMS) PAS encore construite —
+# ce cycle ne fait que créer UNE FOIS + capturer/annuler, voir index.js.
+[triggers]
+crons = ["*/15 * * * *"]

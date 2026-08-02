@@ -242,6 +242,16 @@ const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 const CHIPS_F = {brouillon:'Brouillon', envoyee:'Envoyée', payee:'Payée', en_retard:'En retard'};
 const CHIPS_K = {attribue:'Confirmé', complete:'Complété', annule:'Annulé', ouvert:'Ouvert'};
+const CHIPS_G = {
+  awaiting_authorization:'Garantie en préparation…',
+  authorized:'Garantie de paiement active',
+  pending_locum_confirmation:'Garantie active — en attente de votre confirmation',
+  confirmed_exact:'Payé — confirmé par vous',
+  amount_mismatch:'Écart signalé — garantie toujours active',
+  captured:'Payé automatiquement (délai dépassé)',
+  authorization_failed:'Garantie non créée — contactez le support',
+};
+const URL_PAIEMENTS = 'https://c-direct-payments.edouardmalak.workers.dev';
 let profil = null;
 let toutesMandats = [], mandatsEnAttente = [], toutesFactures = [], toutesRevenusExt = [];
 let ongletMandat = 'confirme';
@@ -364,10 +374,59 @@ function rendreMandats(){
       act.appendChild(b);
     }
 
+    /* Garantie de paiement (Stripe) — l'autorisation carte se crée à T-24h,
+       donc peut déjà exister même si le contrat est encore 'attribue'.
+       Le pharmacien est la SEULE source de vérité pour confirmer un
+       paiement Interac/chèque reçu (voir skill c-direct-payments) : deux
+       boutons distincts, jamais une case "payé" générique. */
+    if(m.statut_garantie){
+      const gWrap = document.createElement('div'); gWrap.style.marginTop='6px';
+      const gChip = document.createElement('div');
+      gChip.style.cssText='font-size:11px;color:var(--sourd);margin-bottom:4px';
+      gChip.textContent = (CHIPS_G[m.statut_garantie]||m.statut_garantie) + (m.montant_carte ? ' · '+cdArgent(m.montant_carte) : '');
+      gWrap.appendChild(gChip);
+
+      if(['authorized','pending_locum_confirmation','amount_mismatch'].includes(m.statut_garantie)){
+        const bOk = document.createElement('button');
+        bOk.className='btn-mini'; bOk.textContent='Reçu, montant exact ✓';
+        const bEcart = document.createElement('button');
+        bEcart.className='btn-mini rouge'; bEcart.style.marginLeft='6px'; bEcart.textContent='Montant différent';
+        bOk.onclick = ()=> confirmerPaiement(m.candidature_id, true, [bOk,bEcart]);
+        bEcart.onclick = ()=>{
+          if(!confirm('Signaler que le montant reçu ne correspond PAS à '+(cdArgent(m.montant_carte)||'ce qui était prévu')+' ?\n\nLa garantie restera active — rien n\'est annulé automatiquement.')) return;
+          confirmerPaiement(m.candidature_id, false, [bOk,bEcart]);
+        };
+        gWrap.appendChild(bOk); gWrap.appendChild(bEcart);
+      }
+      act.appendChild(gWrap);
+    }
+
     tr.append(ref, td(cdDate(m.date_contrat)), td(cdHeure(m.heure_debut)+'–'+cdHeure(m.heure_fin)),
               td(m.nom_pharmacie||'—'), td(cdArgent(m.tarif)+'/h'), st, act);
     tb.appendChild(tr);
   });
+}
+
+/* Confirmation de paiement (garantie Stripe) — appelle le Worker, jamais
+   une écriture directe côté client (Stripe cancel/capture vivent côté
+   serveur uniquement). */
+async function confirmerPaiement(candidatureId, montantExact, boutons){
+  boutons.forEach(b=>b.disabled=true);
+  try{
+    const s = await cdSession();
+    const r = await fetch(URL_PAIEMENTS + '/pharmacien/confirmer-paiement', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+(s && s.access_token || '') },
+      body: JSON.stringify({ candidature_id: candidatureId, montant_exact: montantExact }),
+    });
+    const data = await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(data.erreur || 'Erreur');
+    msg('msg-mandats', montantExact ? 'Confirmé — garantie libérée ✓' : 'Écart signalé — garantie toujours active', true);
+    await chargerMandats();
+  }catch(e){
+    boutons.forEach(b=>b.disabled=false);
+    msg('msg-mandats', 'Erreur : '+e.message, false);
+  }
 }
 
 /* annulation par le pharmacien : contrat remis en ligne (Phase 3.3) */

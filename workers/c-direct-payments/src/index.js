@@ -46,11 +46,30 @@ export default {
       if (request.method === 'POST' && url.pathname === '/pharmacie/setup-confirm')
         return await routeSetupConfirm(request, env);
 
+      if (request.method === 'POST' && url.pathname === '/pharmacien/confirmer-paiement')
+        return await routeConfirmerPaiement(request, env);
+
+      // Déclenche manuellement le même cycle que le cron planifié (voir
+      // `scheduled` plus bas) — utile pour tester sans attendre le
+      // prochain passage. Réservé aux admins (vérifie profiles.role).
+      if (request.method === 'POST' && url.pathname === '/admin/executer-cycle-garanties')
+        return await routeAdminExecuterCycle(request, env);
+
       return json({ erreur: 'Route inconnue' }, 404);
     } catch (e) {
       console.error('Erreur worker:', e.stack || e.message);
       return json({ erreur: e.message || 'Erreur interne' }, e.status && e.status < 500 ? e.status : 500);
     }
+  },
+
+  // Cloudflare Cron Trigger (voir wrangler.toml [triggers]) — même cycle
+  // que /admin/executer-cycle-garanties, lancé automatiquement. Ce Worker
+  // n'auto-déploie PAS depuis GitHub (contrairement à Pages) : après tout
+  // changement de code, `npx wrangler deploy` doit être relancé à la main.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(
+      executerCycleGaranties(env).catch((e) => console.error('Cycle garanties (cron) :', e.stack || e.message))
+    );
   },
 };
 
@@ -297,9 +316,13 @@ async function routeSetupIntent(request, env) {
   return json({ client_secret: setupIntent.client_secret });
 }
 
-/* Vérification légère après confirmation côté client (Stripe.js) — ne réécrit
-   rien de nouveau (le customer_id est déjà enregistré ; la carte est déjà
-   attachée par Stripe au customer dès la confirmation réussie). */
+/* Vérification après confirmation côté client (Stripe.js). Le customer_id
+   est déjà enregistré (routeSetupIntent) ; ici on récupère en plus l'ID de
+   la carte elle-même (setup_intent.payment_method) et on le stocke — il
+   faudra la CLONER vers le compte connecté du pharmacien à chaque quart
+   (state machine, sql/43), donc il faut son ID précis, pas juste "une
+   carte existe sur ce customer". On la met aussi en défaut du customer
+   (hygiène : la prochaine carte ajoutée ne la remplace pas silencieusement). */
 async function routeSetupConfirm(request, env) {
   const u = await utilisateurConnecte(request, env);
   const body = await request.json().catch(() => ({}));
@@ -307,5 +330,281 @@ async function routeSetupConfirm(request, env) {
 
   const si = await stripeApi(env, 'GET', `setup_intents/${body.setup_intent_id}`);
   const reussi = si.status === 'succeeded';
+
+  if (reussi && si.payment_method) {
+    await sbUpsert(
+      env,
+      'stripe_comptes',
+      [{ profil_id: u.id, stripe_payment_method_id: si.payment_method, updated_at: new Date().toISOString() }],
+      'profil_id'
+    );
+    if (si.customer) {
+      await stripeApi(env, 'POST', `customers/${si.customer}`, {
+        invoice_settings: { default_payment_method: si.payment_method },
+      });
+    }
+  }
+
   return json({ ok: reussi, statut: si.status });
+}
+
+/* =====================================================================
+   GARANTIE DE PAIEMENT — machine à états (autorisation T-24h → capture
+   ou annulation). Voir sql/43-garanties-paiement.sql pour le schéma et
+   les RPC lister_* (elles font tout le filtrage SQL ; ce Worker ne fait
+   qu'appeler Stripe et écrire le résultat).
+
+   PÉRIMÈTRE DE CETTE PASSE (le reste est noté, pas construit en douce) :
+   - Autorisation créée une fois à T-24h ; PAS de relance multi-paliers
+     (T-18h / carte de secours / SMS T-12h / escalade T-6h) — à construire
+     séparément (tâche #19 restante).
+   - Le palier "pending_locum_confirmation" (la pharmacie clique "je l'ai
+     envoyé", délai +60 min) n'est PAS câblé côté UI pharmacie — seule la
+     confirmation du PHARMACIEN (source de vérité unique, voir skill)
+     est implémentée ici.
+   - Le webhook account.updated n'existe pas encore : le statut
+     charges_enabled/payouts_enabled est vérifié en direct (GET) à
+     chaque tentative d'autorisation plutôt que mis en cache.
+   - Palier "next business day 16:00" (pharmacies avec comptable) pas
+     implémenté — tout le monde est sur le délai standard de 3h.
+===================================================================== */
+
+const FRAIS_CDIRECT_DOLLARS = 39;
+const FRAIS_STRIPE_POURCENT = 0.029;
+const FRAIS_STRIPE_FIXE_DOLLARS = 0.30;
+
+// card_price = (locum_rate + cdirect_fee + 0.30) / (1 - 0.029) — voir skill
+// c-direct-payments § Pricing. Le fee Stripe est payé par la PLATEFORME (pas
+// le compte connecté) parce que controller.fees.payer='application' a été
+// forcé à la création du compte Express (tâche #18) ; l'application_fee_amount
+// doit donc couvrir le fee C-Direct ET le fee Stripe pour que le pharmacien
+// reçoive exactement montant_locum et que C-Direct nette bien 39 $.
+function calculerMontantCarte(montantLocum) {
+  return (montantLocum + FRAIS_CDIRECT_DOLLARS + FRAIS_STRIPE_FIXE_DOLLARS) / (1 - FRAIS_STRIPE_POURCENT);
+}
+
+async function estAdmin(env, profilId) {
+  const [ligne] = await sbSelect(env, `profiles?id=eq.${profilId}&select=role`);
+  return ligne?.role === 'admin';
+}
+
+async function journaliser(env, garantieId, ancienStatut, nouveauStatut, note) {
+  await fetch(`${env.SUPABASE_URL}/rest/v1/garanties_paiement_journal`, {
+    method: 'POST',
+    headers: sbHeaders(env),
+    body: JSON.stringify([{ garantie_id: garantieId, ancien_statut: ancienStatut, nouveau_statut: nouveauStatut, note }]),
+  });
+}
+
+async function majGarantie(env, id, champs) {
+  const r = await fetch(`${env.SUPABASE_URL}/rest/v1/garanties_paiement?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: sbHeaders(env, { Prefer: 'return=minimal' }),
+    body: JSON.stringify({ ...champs, updated_at: new Date().toISOString() }),
+  });
+  if (!r.ok) throw new Error(`Supabase PATCH garanties_paiement → ${r.status}: ${await r.text()}`);
+}
+
+/* Phase A — crée l'autorisation carte pour une candidature dont le quart
+   démarre bientôt. Clone la carte plateforme vers le compte connecté du
+   pharmacien (jamais on_behalf_of, jamais réutilisée — un clone par
+   quart, consommé par la charge : docs.stripe.com/connect/direct-charges-multiple-accounts),
+   puis crée une PaymentIntent à capture manuelle EN CHARGE DIRECTE
+   (Stripe-Account: compte connecté) — hors ligne (off_session: true),
+   personne n'est présent à T-24h. */
+async function autoriserCandidature(env, ligne) {
+  const { candidature_id, pharmacien_id, pharmacie_id, montant_locum } = ligne;
+
+  // Ligne "en cours" tout de suite pour ne pas retraiter la même candidature
+  // deux fois si le cycle prend plus de temps que l'intervalle du cron.
+  const [garantie] = await fetch(`${env.SUPABASE_URL}/rest/v1/garanties_paiement`, {
+    method: 'POST',
+    headers: sbHeaders(env, { Prefer: 'return=representation' }),
+    body: JSON.stringify([{
+      candidature_id,
+      statut: 'awaiting_authorization',
+      montant_locum_cents: Math.round(montant_locum * 100),
+    }]),
+  }).then((r) => r.json());
+
+  try {
+    const [comptePharmacien] = await sbSelect(env, `stripe_comptes?profil_id=eq.${pharmacien_id}&select=stripe_account_id,stripe_account_statut`);
+    const [comptePharmacie] = await sbSelect(env, `stripe_comptes?profil_id=eq.${pharmacie_id}&select=stripe_customer_id,stripe_payment_method_id`);
+
+    if (!comptePharmacien?.stripe_account_id) {
+      throw new Error('Le pharmacien n’a pas encore configuré ses paiements (onboarding Stripe non fait)');
+    }
+    if (!comptePharmacie?.stripe_customer_id || !comptePharmacie?.stripe_payment_method_id) {
+      throw new Error('La pharmacie n’a pas encore enregistré de carte de garantie');
+    }
+
+    // Gate T-24h sur charges_enabled && payouts_enabled (skill : « Defer
+    // Stripe onboarding... gate the T-24h authorization on charges_enabled
+    // && payouts_enabled »). Vérifié en direct — pas encore de cache webhook.
+    const compte = await stripeApi(env, 'GET', `accounts/${comptePharmacien.stripe_account_id}`);
+    if (!compte.charges_enabled || !compte.payouts_enabled) {
+      throw new Error(`Compte pharmacien pas encore actif (charges_enabled=${compte.charges_enabled}, payouts_enabled=${compte.payouts_enabled})`);
+    }
+
+    // Clone à usage unique de la carte plateforme vers le compte connecté.
+    const clone = await stripeApi(
+      env, 'POST', 'payment_methods',
+      { customer: comptePharmacie.stripe_customer_id, payment_method: comptePharmacie.stripe_payment_method_id },
+      { compteConnecte: comptePharmacien.stripe_account_id }
+    );
+
+    const montantCarte = calculerMontantCarte(montant_locum);
+    const montantCarteCents = Math.round(montantCarte * 100);
+    const montantLocumCents = Math.round(montant_locum * 100);
+    const fraisApplicationCents = montantCarteCents - montantLocumCents;
+
+    const pi = await stripeApi(
+      env, 'POST', 'payment_intents',
+      {
+        amount: montantCarteCents,
+        currency: 'cad',
+        payment_method: clone.id,
+        confirm: true,
+        off_session: true,
+        capture_method: 'manual',
+        application_fee_amount: fraisApplicationCents,
+        'expand[]': 'latest_charge',
+        metadata: { candidature_id, garantie_id: garantie.id },
+      },
+      { compteConnecte: comptePharmacien.stripe_account_id, idempotencyKey: `${garantie.id}:autoriser` }
+    );
+
+    if (pi.status !== 'requires_capture') {
+      throw new Error(`Statut inattendu après autorisation : ${pi.status} (${pi.last_payment_error?.message || 'sans détail'})`);
+    }
+
+    const captureBeforeUnix = pi.latest_charge?.payment_method_details?.card?.capture_before;
+
+    await majGarantie(env, garantie.id, {
+      statut: 'authorized',
+      stripe_payment_intent_id: pi.id,
+      montant_carte_cents: montantCarteCents,
+      capture_before: captureBeforeUnix ? new Date(captureBeforeUnix * 1000).toISOString() : null,
+      tentative_autorisation: 1,
+      derniere_erreur: null,
+    });
+    await journaliser(env, garantie.id, 'awaiting_authorization', 'authorized', `PI ${pi.id}, capture_before=${captureBeforeUnix}`);
+    return { ok: true };
+  } catch (e) {
+    await majGarantie(env, garantie.id, {
+      statut: 'authorization_failed',
+      tentative_autorisation: 1,
+      derniere_erreur: String(e.message || e).slice(0, 500),
+    });
+    await journaliser(env, garantie.id, 'awaiting_authorization', 'authorization_failed', String(e.message || e).slice(0, 500));
+    return { ok: false, erreur: e.message };
+  }
+}
+
+async function capturerGarantie(env, ligne) {
+  const { garantie_id, stripe_payment_intent_id, pharmacien_id } = ligne;
+  try {
+    const [compte] = await sbSelect(env, `stripe_comptes?profil_id=eq.${pharmacien_id}&select=stripe_account_id`);
+    await stripeApi(
+      env, 'POST', `payment_intents/${stripe_payment_intent_id}/capture`, {},
+      { compteConnecte: compte.stripe_account_id }
+    );
+    await majGarantie(env, garantie_id, { statut: 'captured' });
+    await journaliser(env, garantie_id, null, 'captured', 'Délai dépassé sans confirmation — capture automatique');
+    return { ok: true };
+  } catch (e) {
+    await journaliser(env, garantie_id, null, 'captured', `ÉCHEC capture : ${String(e.message || e).slice(0, 500)}`);
+    return { ok: false, erreur: e.message };
+  }
+}
+
+/* Le cycle complet — appelé par le cron ET par /admin/executer-cycle-garanties.
+   Trois phases indépendantes ; une erreur sur une ligne n'interrompt pas
+   les autres (chaque helper avale ses propres erreurs et les journalise). */
+async function executerCycleGaranties(env) {
+  const resultat = { autorisations: [], echeances_fixees: 0, captures: [] };
+
+  const candidatsDus = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/lister_candidatures_a_autoriser`, {
+    method: 'POST', headers: sbHeaders(env), body: JSON.stringify({}),
+  }).then((r) => r.json());
+
+  for (const ligne of Array.isArray(candidatsDus) ? candidatsDus : []) {
+    resultat.autorisations.push({ candidature_id: ligne.candidature_id, ...(await autoriserCandidature(env, ligne)) });
+  }
+
+  const echeancesAFixer = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/lister_echeances_a_fixer`, {
+    method: 'POST', headers: sbHeaders(env), body: JSON.stringify({}),
+  }).then((r) => r.json());
+
+  for (const ligne of Array.isArray(echeancesAFixer) ? echeancesAFixer : []) {
+    const echeance = new Date(new Date(ligne.date_envoi).getTime() + 3 * 3600 * 1000).toISOString();
+    await majGarantie(env, ligne.garantie_id, { echeance_confirmation: echeance });
+    resultat.echeances_fixees++;
+  }
+
+  const aCapturer = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/lister_garanties_a_capturer`, {
+    method: 'POST', headers: sbHeaders(env), body: JSON.stringify({}),
+  }).then((r) => r.json());
+
+  for (const ligne of Array.isArray(aCapturer) ? aCapturer : []) {
+    resultat.captures.push({ garantie_id: ligne.garantie_id, ...(await capturerGarantie(env, ligne)) });
+  }
+
+  return resultat;
+}
+
+/* Le PHARMACIEN confirme avoir reçu son paiement (Interac/chèque hors
+   Stripe) — SEULE source de vérité (skill : « the locum is the only
+   source of truth »). montant_exact=true → on ANNULE l'autorisation
+   (garantie plus nécessaire, 0 $ prélevé). montant_exact=false → on
+   flague l'écart SANS annuler (la garantie doit rester active). */
+async function routeConfirmerPaiement(request, env) {
+  const u = await utilisateurConnecte(request, env);
+  const body = await request.json().catch(() => ({}));
+  const { candidature_id, montant_exact } = body;
+  if (!candidature_id || typeof montant_exact !== 'boolean')
+    return json({ erreur: 'candidature_id et montant_exact (booléen) requis' }, 400);
+
+  const [candidature] = await sbSelect(env, `candidatures?id=eq.${candidature_id}&select=pharmacien_id`);
+  if (!candidature) return json({ erreur: 'Candidature introuvable' }, 404);
+  if (candidature.pharmacien_id !== u.id) {
+    const e = new Error('Seul le pharmacien de ce mandat peut confirmer son paiement'); e.status = 403; throw e;
+  }
+
+  const [garantie] = await sbSelect(env, `garanties_paiement?candidature_id=eq.${candidature_id}&select=*`);
+  if (!garantie) return json({ erreur: 'Aucune garantie de paiement pour ce mandat' }, 404);
+  if (!['authorized', 'pending_locum_confirmation', 'amount_mismatch'].includes(garantie.statut)) {
+    return json({ erreur: `Garantie non confirmable dans son état actuel (${garantie.statut})` }, 409);
+  }
+
+  if (!montant_exact) {
+    await majGarantie(env, garantie.id, { statut: 'amount_mismatch' });
+    await journaliser(env, garantie.id, garantie.statut, 'amount_mismatch', 'Signalé par le pharmacien — garantie NON annulée');
+    return json({ ok: true, statut: 'amount_mismatch' });
+  }
+
+  const [compte] = await sbSelect(env, `stripe_comptes?profil_id=eq.${u.id}&select=stripe_account_id`);
+  try {
+    await stripeApi(
+      env, 'POST', `payment_intents/${garantie.stripe_payment_intent_id}/cancel`,
+      { cancellation_reason: 'requested_by_customer' },
+      { compteConnecte: compte.stripe_account_id }
+    );
+  } catch (e) {
+    // « Returns an error if the PaymentIntent is already canceled or isn't
+    // in a cancelable state » — traité comme un succès terminal (journalisé),
+    // pas une erreur à remonter à l'utilisateur (docs.stripe.com/api/payment_intents/cancel).
+    await journaliser(env, garantie.id, garantie.statut, 'confirmed_exact', `Annulation Stripe : ${e.message}`);
+  }
+
+  await majGarantie(env, garantie.id, { statut: 'confirmed_exact' });
+  await journaliser(env, garantie.id, garantie.statut, 'confirmed_exact', 'Confirmé par le pharmacien : reçu, montant exact');
+  return json({ ok: true, statut: 'confirmed_exact' });
+}
+
+async function routeAdminExecuterCycle(request, env) {
+  const u = await utilisateurConnecte(request, env);
+  if (!(await estAdmin(env, u.id))) { const e = new Error('Accès refusé'); e.status = 403; throw e; }
+  const resultat = await executerCycleGaranties(env);
+  return json(resultat);
 }
