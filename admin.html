@@ -196,6 +196,18 @@ tbody tr:last-child td{border-bottom:none}
     <div class="msg" id="msg-factures"></div>
   </div>
 
+  <!-- GARANTIES DE PAIEMENT EN DIFFICULTÉ (Phase 4 · tâche #21) -->
+  <div class="carte">
+    <div class="sec">Garanties de paiement en difficulté<small id="n-garanties-diff"></small></div>
+    <p class="sous" style="margin:-4px 0 14px">Autorisations T-24h qui échouent encore après relance. Le palier <b>T-6h-escalade</b> veut dire que la pharmacie a déjà reçu 2 SMS et qu'on approche du quart sans garantie active — vérifier manuellement.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Référence</th><th>Date</th><th>Pharmacie</th><th>Pharmacien</th><th>Palier</th><th>Essais</th><th>Prochaine tentative</th><th>Dernière erreur</th></tr></thead>
+        <tbody id="t-garanties-diff"><tr><td colspan="8" class="vide">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- SMS (Phase 4) -->
   <div class="carte">
     <div class="sec">SMS<small>pipeline Twilio via Worker c-direct-sms</small></div>
@@ -309,6 +321,7 @@ function cdToast(texte, ok){
   chargerContratsARisque();
   chargerRegions();
   chargerSmsStats();
+  chargerGarantiesEnDifficulte();
 
   /* ---- règles ---- */
   const { data: regles } = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle();
@@ -935,6 +948,40 @@ async function chargerContratsARisque(){
 }
 
 /* ---- Zone Admin B : remplissage par région (ville de la pharmacie) ---- */
+/* ---- Garanties de paiement en difficulté (Phase 4 · tâche #21) ---- */
+async function chargerGarantiesEnDifficulte(){
+  const tb = $('t-garanties-diff');
+  const { data, error } = await sb.rpc('admin_lister_garanties_en_difficulte');
+  if(error){
+    tb.innerHTML = '<tr><td colspan="8" class="vide">Non activé — exécutez sql/46-relance-paliers.sql dans Supabase.</td></tr>';
+    $('n-garanties-diff').textContent = ''; return;
+  }
+  const rows = data || [];
+  $('n-garanties-diff').textContent = rows.length ? (rows.length + ' en difficulté') : 'aucune';
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="8" class="vide">Aucune garantie en échec.</td></tr>'; return; }
+  tb.innerHTML = '';
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    const td = (t)=>{ const c=document.createElement('td'); c.textContent = (t===0? '0' : t) || '—'; return c; };
+    const palierTd = document.createElement('td');
+    const urgent = r.palier === 'T-6h-escalade';
+    palierTd.innerHTML = '<span class="badge attribue" style="' +
+      (urgent ? 'color:var(--rouge);border-color:rgba(229,72,77,.4)' : 'color:var(--jaune,#E5A83D);border-color:rgba(229,168,61,.4)') +
+      '">' + (r.palier || 'T-24h') + '</span>';
+    tr.append(
+      td(r.numero_reference),
+      td(r.date_contrat ? new Date(r.date_contrat).toLocaleDateString('fr-CA') : '—'),
+      td(r.pharmacie_nom),
+      td(r.pharmacien_nom),
+      palierTd,
+      td(r.tentative_autorisation),
+      td(r.prochaine_tentative ? new Date(r.prochaine_tentative).toLocaleString('fr-CA') : '—'),
+      td(r.derniere_erreur)
+    );
+    tb.appendChild(tr);
+  });
+}
+
 async function chargerRegions(){
   const tb = $('t-regions');
   const { data, error } = await sb.rpc('get_dashboard_regions');

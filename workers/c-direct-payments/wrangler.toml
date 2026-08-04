@@ -22,7 +22,10 @@ compatibility_date = "2026-07-01"
 # dans src/index.js) : crée les autorisations T-24h dues, fixe les délais de
 # confirmation à l'envoi de facture, capture les garanties échues. Toutes les
 # 15 min, même cadence que le cron hausses-auto de Supabase (sql/30).
-# Relance multi-paliers (T-18h/carte de secours/SMS) PAS encore construite —
-# ce cycle ne fait que créer UNE FOIS + capturer/annuler, voir index.js.
+# Échelle de relance (T-18h retry / SMS T-12h / escalade T-6h) construite
+# sql/46 + index.js (calculerProchainePhase) — carte de secours toujours
+# PAS construite (pas de 2e carte en DB). Ce trigger nécessite le plan
+# Workers Paid (le compte a déjà 5 crons via c-direct-sms, plafond gratuit) —
+# voir project memory si absent au dashboard.
 [triggers]
 crons = ["*/15 * * * *"]

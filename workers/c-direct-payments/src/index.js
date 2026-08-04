@@ -405,6 +405,70 @@ async function majGarantie(env, id, champs) {
   if (!r.ok) throw new Error(`Supabase PATCH garanties_paiement → ${r.status}: ${await r.text()}`);
 }
 
+/* =====================================================================
+   ÉCHELLE DE RELANCE (tâche #21) — T-24h (1re tentative, gérée par
+   lister_candidatures_a_autoriser) → retry T-18h → SMS T-12h →
+   escalade T-6h → authorization_failed. Voir sql/46-relance-paliers.sql.
+
+   Palier « carte de secours » (entre T-18h et T-12h dans le skill)
+   PAS construit : stripe_comptes n'a qu'une seule stripe_payment_method_id
+   par pharmacie, aucune notion de deuxième carte n'existe encore côté
+   DB/UI. Noté ici plutôt que silencieusement omis — à construire si une
+   pharmacie a effectivement besoin d'une carte de secours en pratique.
+===================================================================== */
+function calculerProchainePhase(debutQuartIso) {
+  const maintenant = Date.now();
+  const debut = new Date(debutQuartIso).getTime();
+  const heuresRestantes = (debut - maintenant) / 3600000;
+
+  if (heuresRestantes > 18) {
+    return { palier: 'T-18h', prochaineTentative: new Date(debut - 18 * 3600000), sms: false };
+  }
+  if (heuresRestantes > 12) {
+    return { palier: 'T-12h-sms', prochaineTentative: new Date(debut - 12 * 3600000), sms: true };
+  }
+  if (heuresRestantes > 6) {
+    return { palier: 'T-6h-escalade', prochaineTentative: new Date(debut - 6 * 3600000), sms: true };
+  }
+  // Sous les 6h (ou quart déjà commencé) : plus de paliers programmés à
+  // l'avance — on retente à chaque cycle (15 min) jusqu'au plafond de 5
+  // tentatives, mais on ne renvoie PAS de 2e SMS à chaque essai (le SMS
+  // du palier T-6h-escalade a déjà été envoyé une fois en y entrant).
+  return { palier: 'T-6h-escalade', prochaineTentative: new Date(maintenant + 15 * 60000), sms: false };
+}
+
+/* Insertion directe dans sms_queue (jamais d'appel Twilio depuis ce
+   Worker — c-direct-sms vide la file chaque minute). envoyer_apres=now()
+   court-circuite délibérément les heures de silence : ceci est une
+   alerte transactionnelle sur un problème de paiement pour un quart
+   imminent, pas une diffusion — même traitement que les confirmations
+   pharmacie existantes (voir commentaire dans c-direct-sms/src/index.js
+   « Confirmations pharmacie et rappel_veille : non concernés »).
+   Échec d'envoi avalé + journalisé : ne doit jamais faire échouer le
+   cycle de garanties lui-même. */
+async function alerterPharmacieCarte(env, { pharmacie_id, corps }) {
+  try {
+    const [pharmacie] = await sbSelect(env, `profiles?id=eq.${pharmacie_id}&select=telephone,nom_pharmacie`);
+    if (!pharmacie?.telephone) return { ok: false, raison: 'Pharmacie sans numéro de téléphone enregistré' };
+    const r = await fetch(`${env.SUPABASE_URL}/rest/v1/sms_queue`, {
+      method: 'POST',
+      headers: sbHeaders(env, { Prefer: 'return=minimal' }),
+      body: JSON.stringify([{
+        profile_id: pharmacie_id,
+        pharmacie_id,
+        to_number: pharmacie.telephone,
+        type: 'garantie_paiement_echec',
+        corps,
+        envoyer_apres: new Date().toISOString(),
+      }]),
+    });
+    if (!r.ok) return { ok: false, raison: `Supabase INSERT sms_queue → ${r.status}: ${await r.text()}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, raison: String(e.message || e) };
+  }
+}
+
 /* Phase A — crée l'autorisation carte pour une candidature dont le quart
    démarre bientôt. Clone la carte plateforme vers le compte connecté du
    pharmacien (jamais on_behalf_of, jamais réutilisée — un clone par
@@ -413,7 +477,10 @@ async function majGarantie(env, id, champs) {
    (Stripe-Account: compte connecté) — hors ligne (off_session: true),
    personne n'est présent à T-24h. */
 async function autoriserCandidature(env, ligne) {
-  const { candidature_id, pharmacien_id, pharmacie_id, montant_locum, tentative_precedente } = ligne;
+  const {
+    candidature_id, pharmacien_id, pharmacie_id, montant_locum, tentative_precedente,
+    debut_quart, numero_reference, palier_precedent,
+  } = ligne;
 
   // Upsert (pas un simple insert) : candidature_id est UNIQUE, et depuis
   // sql/45 cette fonction peut être appelée en RETENTATIVE sur une ligne
@@ -501,17 +568,39 @@ async function autoriserCandidature(env, ligne) {
       capture_before: captureBeforeUnix ? new Date(captureBeforeUnix * 1000).toISOString() : null,
       tentative_autorisation: (tentative_precedente || 0) + 1,
       derniere_erreur: null,
+      palier: null,
+      prochaine_tentative: null,
     });
     await journaliser(env, garantie.id, 'awaiting_authorization', 'authorized', `PI ${pi.id}, capture_before=${captureBeforeUnix}`);
     return { ok: true };
   } catch (e) {
+    const erreurTexte = String(e.message || e).slice(0, 500);
+    const phase = calculerProchainePhase(debut_quart);
+    const changeDePalier = phase.palier !== palier_precedent;
+
+    let alerte = null;
+    if (phase.sms && changeDePalier) {
+      const urgent = phase.palier === 'T-6h-escalade';
+      const dateAffichee = new Date(debut_quart).toLocaleDateString('fr-CA', { timeZone: 'America/Montreal' });
+      const corps = urgent
+        ? `C-Direct URGENT : la garantie de paiement du quart ${numero_reference || ''} (${dateAffichee}) est toujours en echec a 6h du debut. Corrigez votre carte de garantie immediatement : https://c-direct.ca/profil.html`
+        : `C-Direct : la carte de garantie pour le quart ${numero_reference || ''} (${dateAffichee}) n'a pas pu etre autorisee. Verifiez/mettez a jour votre carte avant le debut du quart : https://c-direct.ca/profil.html`;
+      alerte = await alerterPharmacieCarte(env, { pharmacie_id, corps });
+    }
+
     await majGarantie(env, garantie.id, {
       statut: 'authorization_failed',
       tentative_autorisation: (tentative_precedente || 0) + 1,
-      derniere_erreur: String(e.message || e).slice(0, 500),
+      derniere_erreur: erreurTexte,
+      palier: phase.palier,
+      prochaine_tentative: phase.prochaineTentative.toISOString(),
     });
-    await journaliser(env, garantie.id, 'awaiting_authorization', 'authorization_failed', String(e.message || e).slice(0, 500));
-    return { ok: false, erreur: e.message };
+    await journaliser(
+      env, garantie.id, 'awaiting_authorization', 'authorization_failed',
+      `${erreurTexte} — palier=${phase.palier}, prochaine_tentative=${phase.prochaineTentative.toISOString()}` +
+        (alerte ? `, sms_pharmacie=${alerte.ok ? 'envoyé' : 'échec:' + alerte.raison}` : '')
+    );
+    return { ok: false, erreur: e.message, palier: phase.palier };
   }
 }
 
