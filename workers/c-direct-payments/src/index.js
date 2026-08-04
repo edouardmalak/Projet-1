@@ -413,13 +413,15 @@ async function majGarantie(env, id, champs) {
    (Stripe-Account: compte connecté) — hors ligne (off_session: true),
    personne n'est présent à T-24h. */
 async function autoriserCandidature(env, ligne) {
-  const { candidature_id, pharmacien_id, pharmacie_id, montant_locum } = ligne;
+  const { candidature_id, pharmacien_id, pharmacie_id, montant_locum, tentative_precedente } = ligne;
 
-  // Ligne "en cours" tout de suite pour ne pas retraiter la même candidature
-  // deux fois si le cycle prend plus de temps que l'intervalle du cron.
-  const [garantie] = await fetch(`${env.SUPABASE_URL}/rest/v1/garanties_paiement`, {
+  // Upsert (pas un simple insert) : candidature_id est UNIQUE, et depuis
+  // sql/45 cette fonction peut être appelée en RETENTATIVE sur une ligne
+  // qui existe déjà (statut='authorization_failed') — un insert planterait
+  // sur la contrainte unique. on_conflict réutilise la même ligne.
+  const [garantie] = await fetch(`${env.SUPABASE_URL}/rest/v1/garanties_paiement?on_conflict=candidature_id`, {
     method: 'POST',
-    headers: sbHeaders(env, { Prefer: 'return=representation' }),
+    headers: sbHeaders(env, { Prefer: 'resolution=merge-duplicates,return=representation' }),
     body: JSON.stringify([{
       candidature_id,
       statut: 'awaiting_authorization',
@@ -485,7 +487,7 @@ async function autoriserCandidature(env, ligne) {
       stripe_payment_intent_id: pi.id,
       montant_carte_cents: montantCarteCents,
       capture_before: captureBeforeUnix ? new Date(captureBeforeUnix * 1000).toISOString() : null,
-      tentative_autorisation: 1,
+      tentative_autorisation: (tentative_precedente || 0) + 1,
       derniere_erreur: null,
     });
     await journaliser(env, garantie.id, 'awaiting_authorization', 'authorized', `PI ${pi.id}, capture_before=${captureBeforeUnix}`);
@@ -493,7 +495,7 @@ async function autoriserCandidature(env, ligne) {
   } catch (e) {
     await majGarantie(env, garantie.id, {
       statut: 'authorization_failed',
-      tentative_autorisation: 1,
+      tentative_autorisation: (tentative_precedente || 0) + 1,
       derniere_erreur: String(e.message || e).slice(0, 500),
     });
     await journaliser(env, garantie.id, 'awaiting_authorization', 'authorization_failed', String(e.message || e).slice(0, 500));
