@@ -445,7 +445,19 @@ async function autoriserCandidature(env, ligne) {
     // && payouts_enabled »). Vérifié en direct — pas encore de cache webhook.
     const compte = await stripeApi(env, 'GET', `accounts/${comptePharmacien.stripe_account_id}`);
     if (!compte.charges_enabled || !compte.payouts_enabled) {
-      throw new Error(`Compte pharmacien pas encore actif (charges_enabled=${compte.charges_enabled}, payouts_enabled=${compte.payouts_enabled})`);
+      // Détail temporaire de debug (tâche #20) : `requirements` explique
+      // PRÉCISÉMENT ce qui bloque payouts_enabled (ex. external_account
+      // manquant) au lieu de juste constater qu'il est false — sans ça on
+      // ne fait que deviner à chaque tentative. À retirer une fois le
+      // premier cycle bout-en-bout confirmé.
+      const req = compte.requirements || {};
+      const detail = [
+        req.disabled_reason ? `disabled_reason=${req.disabled_reason}` : null,
+        req.currently_due?.length ? `currently_due=${req.currently_due.join(',')}` : null,
+        req.past_due?.length ? `past_due=${req.past_due.join(',')}` : null,
+        req.eventually_due?.length ? `eventually_due=${req.eventually_due.join(',')}` : null,
+      ].filter(Boolean).join(' | ');
+      throw new Error(`Compte pharmacien pas encore actif (charges_enabled=${compte.charges_enabled}, payouts_enabled=${compte.payouts_enabled})${detail ? ' — ' + detail : ''}`);
     }
 
     // Clone à usage unique de la carte plateforme vers le compte connecté.
