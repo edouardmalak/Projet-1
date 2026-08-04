@@ -49,6 +49,9 @@ export default {
       if (request.method === 'POST' && url.pathname === '/pharmacien/confirmer-paiement')
         return await routeConfirmerPaiement(request, env);
 
+      if (request.method === 'POST' && url.pathname === '/pharmacie/jai-envoye')
+        return await routePharmacieJaiEnvoye(request, env);
+
       // Déclenche manuellement le même cycle que le cron planifié (voir
       // `scheduled` plus bas) — utile pour tester sans attendre le
       // prochain passage. Réservé aux admins (vérifie profiles.role).
@@ -703,6 +706,58 @@ async function routeConfirmerPaiement(request, env) {
   await majGarantie(env, garantie.id, { statut: 'confirmed_exact' });
   await journaliser(env, garantie.id, garantie.statut, 'confirmed_exact', 'Confirmé par le pharmacien : reçu, montant exact');
   return json({ ok: true, statut: 'confirmed_exact' });
+}
+
+/* La PHARMACIE déclare avoir envoyé le paiement hors Stripe (Interac ou
+   chèque, après un quart complété). C'est une réclamation NON vérifiée
+   (skill : « the locum is the only source of truth ») — ça ne libère
+   JAMAIS la garantie soi-même. Ça fait deux choses, rien de plus :
+   1) statut → pending_locum_confirmation (affiché différemment côté
+      pharmacien, qui voit alors qu'une confirmation est attendue) ;
+   2) échéance += 60 min à partir de maintenant (ou de l'échéance
+      existante si elle est déjà plus tard), pour laisser au pharmacien
+      le temps de confirmer avant toute capture automatique.
+   Idempotent : un second clic sur une garantie déjà en
+   pending_locum_confirmation ne repousse PAS l'échéance à nouveau
+   (sinon un clic répété pourrait repousser indéfiniment la capture de
+   sécurité — jamais l'intention du délai de grâce). */
+async function routePharmacieJaiEnvoye(request, env) {
+  const u = await utilisateurConnecte(request, env);
+  const body = await request.json().catch(() => ({}));
+  const { candidature_id } = body;
+  if (!candidature_id) return json({ erreur: 'candidature_id requis' }, 400);
+
+  const [candidature] = await sbSelect(env, `candidatures?id=eq.${candidature_id}&select=contrat_id`);
+  if (!candidature) return json({ erreur: 'Candidature introuvable' }, 404);
+  const [contrat] = await sbSelect(env, `contrats?id=eq.${candidature.contrat_id}&select=pharmacie_id`);
+  if (!contrat || contrat.pharmacie_id !== u.id) {
+    const e = new Error('Seule la pharmacie de ce mandat peut déclarer un envoi de paiement'); e.status = 403; throw e;
+  }
+
+  const [garantie] = await sbSelect(env, `garanties_paiement?candidature_id=eq.${candidature_id}&select=*`);
+  if (!garantie) return json({ erreur: 'Aucune garantie de paiement pour ce mandat' }, 404);
+
+  if (garantie.statut === 'pending_locum_confirmation') {
+    return json({ ok: true, statut: garantie.statut, deja_declare: true });
+  }
+  if (garantie.statut !== 'authorized') {
+    return json({ erreur: `Rien à déclarer dans l'état actuel de la garantie (${garantie.statut})` }, 409);
+  }
+
+  const base = garantie.echeance_confirmation && new Date(garantie.echeance_confirmation) > new Date()
+    ? new Date(garantie.echeance_confirmation)
+    : new Date();
+  const nouvelleEcheance = new Date(base.getTime() + 60 * 60000);
+
+  await majGarantie(env, garantie.id, {
+    statut: 'pending_locum_confirmation',
+    echeance_confirmation: nouvelleEcheance.toISOString(),
+  });
+  await journaliser(
+    env, garantie.id, garantie.statut, 'pending_locum_confirmation',
+    `Déclaré par la pharmacie ("j'ai envoyé") — échéance repoussée à ${nouvelleEcheance.toISOString()}`
+  );
+  return json({ ok: true, statut: 'pending_locum_confirmation', echeance_confirmation: nouvelleEcheance.toISOString() });
 }
 
 async function routeAdminExecuterCycle(request, env) {

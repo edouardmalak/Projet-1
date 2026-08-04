@@ -191,6 +191,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
+const URL_PAIEMENTS = 'https://c-direct-payments.edouardmalak.workers.dev';
 let profil = null, regles = null;
 const favoris = new Set(); /* pharmacien_id des favoris (Instant Booking) */
 
@@ -311,12 +312,31 @@ function msg(id, texte, ok){
 })();
 
 /* ---- Phase 3 : factures reçues (envoyées par les pharmaciens) ---- */
+const CHIPS_GARANTIE = {
+  authorized: 'Garantie de paiement active — la carte n\'a pas été débitée',
+  pending_locum_confirmation: 'Déclaré envoyé — en attente de confirmation du pharmacien',
+  confirmed_exact: 'Confirmé reçu par le pharmacien',
+  amount_mismatch: 'Le pharmacien signale un écart — vérifiez le montant envoyé',
+  captured: 'Carte débitée automatiquement (délai dépassé)',
+};
+
 async function chargerFactures(){
   const { data, error } = await sb.rpc('get_factures');
   const zone = $('liste-factures');
   if(error){ zone.innerHTML = '<div class="vide">Erreur : '+error.message+'</div>'; return; }
   const factures = (data||[]).filter(f => f.pharmacie_id === profil.id && f.statut !== 'brouillon');
   if(!factures.length){ zone.innerHTML = '<div class="vide">Aucune facture reçue pour l\'instant.</div>'; return; }
+
+  /* Garanties de paiement (Stripe) correspondantes, une requête groupée
+     plutôt qu'une par facture. RLS (sql/43) autorise déjà la pharmacie à
+     lire ses propres garanties. */
+  const idsCandidatures = [...new Set(factures.map(f=>f.candidature_id).filter(Boolean))];
+  const garantiesParCandidature = {};
+  if(idsCandidatures.length){
+    const { data: gs } = await sb.from('garanties_paiement')
+      .select('candidature_id,statut').in('candidature_id', idsCandidatures);
+    (gs||[]).forEach(g=> garantiesParCandidature[g.candidature_id] = g.statut);
+  }
 
   const chips = {envoyee:['attribue','À PAYER'], payee:['ouvert','PAYÉE'], en_retard:['rouge','EN RETARD']};
   zone.innerHTML = '';
@@ -342,6 +362,7 @@ async function chargerFactures(){
     if(c[0]==='rouge'){ badge.style.color='var(--rouge)'; badge.style.borderColor='rgba(229,72,77,.4)'; }
     tete.append(num, meta, total, badge);
 
+    const statutGarantie = garantiesParCandidature[f.candidature_id];
     if(f.statut === 'envoyee' || f.statut === 'en_retard'){
       const b = document.createElement('button');
       b.className='btn-mini'; b.textContent='Marquer payée';
@@ -350,12 +371,32 @@ async function chargerFactures(){
         b.disabled = true;
         const { error: e } = await sb.rpc('marquer_facture_payee', { p_facture: f.facture_id });
         if(e){ b.disabled=false; msg('msg-factures','Erreur : '+e.message,false); return; }
+        /* Déclare aussi côté garantie Stripe (carte de garantie, si le
+           mandat en a une active) — au mieux : la carte reste protégée
+           par la capture automatique même si cet appel échoue, donc on
+           ne bloque jamais le "Marquer payée" légataire là-dessus. */
+        if(statutGarantie === 'authorized' && f.candidature_id){
+          try{
+            const s = await cdSession();
+            await fetch(URL_PAIEMENTS + '/pharmacie/jai-envoye', {
+              method:'POST',
+              headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+(s && s.access_token || '') },
+              body: JSON.stringify({ candidature_id: f.candidature_id }),
+            });
+          }catch(_e){ /* silencieux — la garantie carte protège quand même le pharmacien */ }
+        }
         msg('msg-factures','Facture marquée payée ✓',true);
         chargerFactures();
       };
       tete.appendChild(b);
     }
     div.appendChild(tete);
+    if(statutGarantie && CHIPS_GARANTIE[statutGarantie]){
+      const hint = document.createElement('div');
+      hint.style.cssText = 'font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--sourd);margin-top:4px';
+      hint.textContent = CHIPS_GARANTIE[statutGarantie];
+      div.appendChild(hint);
+    }
     zone.appendChild(div);
   });
 }
