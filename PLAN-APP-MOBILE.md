@@ -121,3 +121,35 @@ Rien n'est bloqué pour continuer le site normalement. Deux gestes utiles
 dès maintenant côté Robert, en parallèle et sans urgence : démarrer
 l'inscription Apple Developer, et créer le compte Stripe pour que je puisse
 commencer la Phase 1 dès que la clé de test est disponible.
+
+## 2026-08-04 — Phase 2.3 faite (fichiers de liens profonds)
+
+Fichiers créés et déployés : `.well-known/apple-app-site-association`,
+`apple-app-site-association` (copie racine, filet de sécurité pour les
+anciens appareils), `.well-known/assetlinks.json`. `_headers` mis à jour
+pour forcer `Content-Type: application/json` sur les trois (Cloudflare Pages
+ne peut pas deviner le type d'un fichier sans extension) + `Cache-Control:
+no-cache` pour pouvoir les corriger sans attendre l'expiration du cache.
+Vérifié que `functions/_middleware.js` ne bloque pas `/.well-known/`
+(seuls `/sql/`, `/workers/`, `/.git/` et les extensions .md/.sql/.toml/.lock
+sont filtrés).
+
+**IMPORTANT — contenu actuellement PLACEHOLDER, pas fonctionnel :**
+- `appIDs` dans apple-app-site-association = `"REMPLACER_PAR_TEAM_ID.ca.cdirect.app"`
+  (faux exprès — le vrai Team ID vient du compte Apple Developer, pas encore créé)
+- `package_name` dans assetlinks.json = `"ca.cdirect.app"` (nom de package
+  provisoire, à confirmer au moment de créer le projet Flutter)
+- `sha256_cert_fingerprints` = que des zéros (la vraie empreinte ne peut
+  exister qu'une fois l'app compilée et signée au moins une fois)
+- `components`/paths = wildcard `/*` volontairement large — comme les
+  `appIDs` sont faux, aucune vraie app ne peut s'associer via ce fichier de
+  toute façon, donc resserrer les chemins n'a aucun effet tant que l'app
+  n'existe pas. À reserrer si utile une fois l'app réelle en préparation.
+
+Puisque `appIDs`/`package_name`/l'empreinte sont tous des placeholders,
+aucune vraie app ne peut se vérifier contre ces fichiers pour l'instant —
+donc zéro risque à les avoir en ligne maintenant. **À faire au moment de la
+Phase 3** (une fois le compte Apple Developer + Google Play créés et le
+projet Flutter initialisé) : remplacer les 3 valeurs ci-dessus par les
+vraies, dans les 3 fichiers (les deux copies de apple-app-site-association
+doivent rester identiques).

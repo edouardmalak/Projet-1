@@ -25,3 +25,18 @@
   Cache-Control: no-cache
 /fiche-accueil.html
   Cache-Control: no-cache
+
+# Liens profonds (deep links) — préparation pour la future app mobile.
+# Content-Type explicite : Apple/Google exigent du JSON, et Cloudflare Pages
+# ne peut pas deviner le type d'un fichier sans extension (apple-app-site-association).
+# Contenu actuellement PLACEHOLDER (Team ID / package name / empreinte
+# réels pas encore disponibles) — voir PLAN-APP-MOBILE.md.
+/.well-known/apple-app-site-association
+  Content-Type: application/json
+  Cache-Control: no-cache
+/apple-app-site-association
+  Content-Type: application/json
+  Cache-Control: no-cache
+/.well-known/assetlinks.json
+  Content-Type: application/json
+  Cache-Control: no-cache

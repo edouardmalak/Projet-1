@@ -1,0 +1,17 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "REMPLACER_PAR_TEAM_ID.ca.cdirect.app"
+        ],
+        "components": [
+          {
+            "/": "/*",
+            "comment": "Placeholder large — app pas encore construite. Reserrer si besoin une fois l'app soumise."
+          }
+        ]
+      }
+    ]
+  }
+}
