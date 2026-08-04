@@ -124,15 +124,32 @@ commencer la Phase 1 dès que la clé de test est disponible.
 
 ## 2026-08-04 — Phase 2.3 faite (fichiers de liens profonds)
 
-Fichiers créés et déployés : `.well-known/apple-app-site-association`,
-`apple-app-site-association` (copie racine, filet de sécurité pour les
-anciens appareils), `.well-known/assetlinks.json`. `_headers` mis à jour
-pour forcer `Content-Type: application/json` sur les trois (Cloudflare Pages
-ne peut pas deviner le type d'un fichier sans extension) + `Cache-Control:
-no-cache` pour pouvoir les corriger sans attendre l'expiration du cache.
-Vérifié que `functions/_middleware.js` ne bloque pas `/.well-known/`
-(seuls `/sql/`, `/workers/`, `/.git/` et les extensions .md/.sql/.toml/.lock
-sont filtrés).
+**Piège Cloudflare Pages découvert + corrigé en cours de route** : premier essai
+= dossier `.well-known/apple-app-site-association` + `.well-known/assetlinks.json`,
+poussé et vérifié en direct dans Chrome. Résultat surprenant : `GET
+/.well-known/assetlinks.json` répondait 200 mais servait le HTML de la page
+d'accueil au lieu du JSON. Cause confirmée par recherche : **Cloudflare Pages
+n'expédie jamais un dossier dont le nom commence par un point** — `.well-known/`
+est silencieusement ignoré au build, aucune erreur nulle part. Le fichier
+racine `apple-app-site-association` (pas dans un dossier à point), lui,
+s'est déployé et servi correctement — ça a confirmé que c'était bien le
+dossier à point le coupable, pas autre chose.
+
+**Correctif appliqué** : contenu réel déplacé à la racine du site (sans point)
+— `apple-app-site-association` et `assetlinks.json` — puis `_redirects` réécrit
+pour que les URLs standards que Apple/Google exigent continuent de fonctionner :
+```
+/.well-known/apple-app-site-association /apple-app-site-association 200
+/.well-known/assetlinks.json            /assetlinks.json             200
+```
+(même technique de réécriture 200 déjà utilisée ailleurs dans ce fichier pour
+`/c/CD-XXXXXX`.) Le dossier `.well-known/` a été supprimé du dépôt (mort,
+jamais servi, aurait pu induire en erreur plus tard). `_headers` mis à jour
+pour forcer `Content-Type: application/json` sur les 4 chemins (racine +
+`.well-known/`, les deux fichiers) — Cloudflare Pages ne peut pas deviner le
+type d'un fichier sans extension — + `Cache-Control: no-cache`. Vérifié que
+`functions/_middleware.js` ne bloque rien de tout ça (seuls `/sql/`,
+`/workers/`, `/.git/` et les extensions .md/.sql/.toml/.lock sont filtrés).
 
 **IMPORTANT — contenu actuellement PLACEHOLDER, pas fonctionnel :**
 - `appIDs` dans apple-app-site-association = `"REMPLACER_PAR_TEAM_ID.ca.cdirect.app"`

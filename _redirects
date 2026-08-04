@@ -8,6 +8,13 @@
 /nouveaux/* /nouveaux 200
 # Lien pharmacie côté SMS (répondre à une candidature)
 /p/* /espace-pharmacie 200
+# Liens profonds (app mobile) — Cloudflare Pages n'expédie JAMAIS un dossier
+# commençant par un point (.well-known/ est ignoré au build, testé et confirmé
+# 2026-08-04 : la vraie assetlinks.json restait invisible, 200 mais contenu
+# = page d'accueil). Fichiers réels déplacés à la racine (sans point) et
+# réécrits ici vers les chemins standards qu'Apple/Google exigent.
+/.well-known/apple-app-site-association /apple-app-site-association 200
+/.well-known/assetlinks.json            /assetlinks.json             200
 
 # ---------------------------------------------------------------------
 # Pages héritées (version pré-base de données), supprimées.
