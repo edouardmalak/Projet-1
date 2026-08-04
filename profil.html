@@ -388,9 +388,25 @@ async function initialiserFormulaireCarte(){
 
     $('btn-ajouter-carte').addEventListener('click', async () => {
       const btn = $('btn-ajouter-carte'); btn.disabled = true;
-      const { error } = await stripe.confirmSetup({ elements, redirect: 'if_required' });
+      const { error, setupIntent } = await stripe.confirmSetup({ elements, redirect: 'if_required' });
+      if(error){ btn.disabled = false; msg('msg-carte', error.message, false); return; }
+
+      /* Stripe a bien enregistré la carte à ce stade, mais notre BD ne
+         connaît pas encore SON id précis (nécessaire pour la CLONER vers
+         le compte du pharmacien à chaque quart, sql/43) — il faut ce
+         second appel pour que la garantie de paiement fonctionne. */
+      if(setupIntent && setupIntent.id){
+        try{
+          const s2 = await cdSession();
+          await fetch(URL_PAIEMENTS + '/pharmacie/setup-confirm', {
+            method: 'POST',
+            headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+(s2 && s2.access_token || '') },
+            body: JSON.stringify({ setup_intent_id: setupIntent.id }),
+          });
+        }catch(e){ /* carte déjà enregistrée côté Stripe ; pas bloquant pour l'utilisateur */ }
+      }
+
       btn.disabled = false;
-      if(error){ msg('msg-carte', error.message, false); return; }
       msg('msg-carte', 'Carte enregistrée ✓', true);
       chargerStatutPaiement();
     });
