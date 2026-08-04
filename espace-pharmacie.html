@@ -158,6 +158,12 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
         <div class="indice">Plancher réseau : <b id="plancher">—</b></div>
         <div class="indice" id="compatibles" style="display:none;color:var(--vert-vif);margin-top:6px;font-weight:600"></div>
       </div>
+      <div id="prix-dual" style="display:none;margin:-2px 0 12px;padding:10px 12px;background:#F4F8F5;border:1px solid var(--ligne2);border-radius:5px;font-family:'IBM Plex Mono',monospace;font-size:12.5px">
+        <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:6px;font-weight:700">Ce que vous paierez (estimation de base)</div>
+        <div style="display:flex;justify-content:space-between"><span>Virement Interac</span><b id="prix-interac">—</b></div>
+        <div style="display:flex;justify-content:space-between;margin-top:3px"><span>Carte (si la garantie est capturée)</span><b id="prix-carte">—</b></div>
+        <div style="margin-top:6px;color:var(--sourd);font-size:10.5px">Le pharmacien reçoit le même montant net sur les deux rails — la différence est le frais de carte Stripe (2,9&nbsp;% + 0,30&nbsp;$), absorbé par C-Direct sur Interac. Indemnités de déplacement non incluses ici (dépendent du pharmacien retenu).</div>
+      </div>
       <div class="indice" style="margin:-6px 0 4px">Rx/jour, conditions et services requis viennent de votre <a href="/profil.html" style="color:var(--vert-vif)">profil</a> — modifiables là-bas, une seule fois.</div>
       <div class="champ"><label>Notes (accès, consignes…)</label><textarea id="notes" rows="2"></textarea></div>
       <button class="btn" type="submit" id="btn-pub">Publier le contrat</button>
@@ -211,6 +217,8 @@ function msg(id, texte, ok){
   $('sous').textContent = (profil.nom_pharmacie || 'Pharmacie') + (profil.ville ? ' · ' + profil.ville : '');
   chargerTableauBordPharmacie();
   ['date_contrat','tarif_horaire'].forEach(id=> $(id) && $(id).addEventListener('change', majCompatibles));
+  ['heure_debut','heure_fin','tarif_horaire'].forEach(id=> $(id) && $(id).addEventListener('input', majPrixDual));
+  majPrixDual();
 
   /* favoris (Instant Booking) — chargés une fois, tenus à jour en mémoire */
   const { data: favs } = await sb.from('favoris_pharmaciens').select('pharmacien_id').eq('pharmacie_id', profil.id);
@@ -721,6 +729,22 @@ async function chargerTableauBordPharmacie(){
     if($('pb-med')) $('pb-med').textContent = delais.length ? _duree(_mediane(delais)) : '—';
     $('carte-pb').style.display='';
   }catch(e){ /* le tableau de bord ne doit jamais casser la page */ }
+}
+
+/* double tarification (skill c-direct-payments § Pricing) — estimation
+   de base (heures × tarif seulement, sans indemnités de déplacement qui
+   dépendent du pharmacien retenu) affichée en direct pendant la saisie. */
+function majPrixDual(){
+  const zone = $('prix-dual'); if(!zone || typeof cdPrixDual !== 'function') return;
+  const hd = $('heure_debut').value, hf = $('heure_fin').value, tarif = parseFloat($('tarif_horaire').value);
+  if(!hd || !hf || !tarif){ zone.style.display = 'none'; return; }
+  const [h1,m1] = hd.split(':').map(Number), [h2,m2] = hf.split(':').map(Number);
+  let heures = (h2*60+m2 - (h1*60+m1))/60; if(heures <= 0) heures += 24;
+  const montantLocum = heures * tarif;
+  const prix = cdPrixDual(montantLocum);
+  $('prix-interac').textContent = cdArgent(prix.interac);
+  $('prix-carte').textContent = cdArgent(prix.carte);
+  zone.style.display = '';
 }
 
 /* repère « N pharmaciens compatibles » (Phase 6.1) — nécessite sql/14 ;

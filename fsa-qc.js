@@ -76,4 +76,19 @@ window.cdEstimation = function(tarif, hd, hf, distanceKm, regles){
   e.ligne = p.join(' · ') + ' · Total estimé ≈ ' + cdArgent(e.total);
   return e;
 };
+
+/* ---- Double tarification (skill c-direct-payments § Pricing) ----
+   À partir du montant NET dû au pharmacien (ex. cdEstimation(...).total),
+   calcule les deux prix tout-inclus que la PHARMACIE peut payer — Interac
+   (juste + 39 $ de frais C-Direct) ou carte (grossi pour absorber en plus
+   les frais Stripe, 2,9 % + 0,30 $, puisque la plateforme les paie —
+   voir workers/c-direct-payments/src/index.js calculerMontantCarte, MÊME
+   formule des deux côtés). Le pharmacien reçoit exactement montantLocum
+   sur les deux rails ; seul ce que paie la pharmacie diffère. */
+window.cdPrixDual = function(montantLocum){
+  const FRAIS_CDIRECT = 39, FRAIS_STRIPE_POURCENT = 0.029, FRAIS_STRIPE_FIXE = 0.30;
+  const interac = montantLocum + FRAIS_CDIRECT;
+  const carte = (montantLocum + FRAIS_CDIRECT + FRAIS_STRIPE_FIXE) / (1 - FRAIS_STRIPE_POURCENT);
+  return { interac: Math.round(interac*100)/100, carte: Math.round(carte*100)/100 };
+};
 })();

@@ -127,6 +127,23 @@ a.lien{color:var(--vert-vif)}
         <button type="button" class="btn" id="btn-onboarding-stripe"
           style="background:transparent;border:1px solid var(--ligne);color:var(--texte)">Configurer mes paiements</button>
         <div class="msg" id="msg-paiement-pharmacien"></div>
+
+        <div class="sec" style="margin-top:14px">Courriel Interac (autodépôt)</div>
+        <p style="font-size:12px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px">
+          L'adresse où les pharmacies vous enverront leurs virements Interac — distincte de votre courriel de
+          connexion, vérifiée par code. Tout changement est retardé de 72h par sécurité : voir vos
+          <a href="/facture-vue.html" style="color:var(--vert-vif)">factures</a> qui basculent sur la carte de
+          garantie pendant ce délai plutôt que d'afficher une adresse pas encore confirmée.
+        </p>
+        <div id="interac-statut" style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--sourd);margin-bottom:10px">Chargement…</div>
+        <div class="champ"><label>Courriel Interac</label><input id="courriel_interac" type="email" placeholder="votre-autodepot@exemple.com"></div>
+        <button type="button" class="btn" id="btn-interac-envoyer"
+          style="background:transparent;border:1px solid var(--ligne);color:var(--texte)">Envoyer un code de vérification</button>
+        <div id="interac-code-zone" style="display:none;margin-top:10px">
+          <div class="champ"><label>Code reçu par courriel (6 chiffres)</label><input id="interac_code" inputmode="numeric" maxlength="6" placeholder="000000"></div>
+          <button type="button" class="btn" id="btn-interac-confirmer">Confirmer</button>
+        </div>
+        <div class="msg" id="msg-interac"></div>
       </div>
 
       <!-- PHARMACIE -->
@@ -336,6 +353,73 @@ function msg(id, texte, ok){
 /* ---- Paiements Stripe (onboarding pharmacien + carte pharmacie) ---- */
 let stripeCarteInitialisee = false;
 
+const URL_SMS = 'https://c-direct-sms.edouardmalak.workers.dev';
+
+/* ---- Courriel Interac vérifié (sql/47, anti-fraude) ---- */
+async function chargerStatutInterac(){
+  if(profil.role !== 'pharmacien' || !$('interac-statut')) return;
+  const { data } = await sb.from('profiles')
+    .select('courriel_interac,courriel_interac_verifie,courriel_interac_cooldown_jusqua')
+    .eq('id', profil.id).maybeSingle();
+  const zone = $('interac-statut');
+  if(!data || !data.courriel_interac){
+    zone.textContent = 'Aucun courriel Interac configuré — vos paiements resteront sur carte de garantie jusqu\'à ce que vous en ajoutiez un.';
+  } else if(data.courriel_interac_verifie && (!data.courriel_interac_cooldown_jusqua || new Date(data.courriel_interac_cooldown_jusqua) <= new Date())){
+    zone.textContent = 'Vérifié et actif : ' + data.courriel_interac;
+    zone.style.color = 'var(--vert-vif)';
+  } else if(data.courriel_interac_verifie && data.courriel_interac_cooldown_jusqua){
+    zone.textContent = 'Changé récemment — actif à partir du ' + new Date(data.courriel_interac_cooldown_jusqua).toLocaleString('fr-CA') + ' (délai de sécurité de 72h ; vos paiements passent par la carte de garantie en attendant).';
+    zone.style.color = 'var(--jaune,#B87A0C)';
+  } else {
+    zone.textContent = 'En attente de vérification (' + data.courriel_interac + ') — entrez le code reçu par courriel ci-dessous.';
+    zone.style.color = 'var(--jaune,#B87A0C)';
+    $('courriel_interac').value = data.courriel_interac;
+    $('interac-code-zone').style.display = '';
+  }
+}
+
+if($('btn-interac-envoyer')) $('btn-interac-envoyer').addEventListener('click', async () => {
+  const email = $('courriel_interac').value.trim();
+  if(!email){ msg('msg-interac','Entrez un courriel.', false); return; }
+  const btn = $('btn-interac-envoyer'); btn.disabled = true;
+  try{
+    const { error: e1 } = await sb.rpc('demarrer_verification_courriel_interac', { p_email: email });
+    if(e1) throw new Error(e1.message);
+    const s = await cdSession();
+    const r = await fetch(URL_SMS + '/pharmacien/envoyer-code-interac', {
+      method:'POST', headers:{ 'Authorization':'Bearer '+(s && s.access_token || '') },
+    });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok || d.ok === false) throw new Error(d.erreur || d.skip || 'Échec de l\'envoi');
+    $('interac-code-zone').style.display = '';
+    msg('msg-interac','Code envoyé — vérifiez ' + email, true);
+  }catch(e){ msg('msg-interac','Erreur : '+e.message, false); }
+  btn.disabled = false;
+});
+
+if($('btn-interac-confirmer')) $('btn-interac-confirmer').addEventListener('click', async () => {
+  const code = $('interac_code').value.trim();
+  if(!code){ msg('msg-interac','Entrez le code reçu.', false); return; }
+  const btn = $('btn-interac-confirmer'); btn.disabled = true;
+  try{
+    const { data: estChangement, error: e1 } = await sb.rpc('confirmer_courriel_interac', { p_code: code });
+    if(e1) throw new Error(e1.message);
+    if(estChangement){
+      const s = await cdSession();
+      fetch(URL_SMS + '/pharmacien/alerter-changement-interac', {
+        method:'POST', headers:{ 'Authorization':'Bearer '+(s && s.access_token || '') },
+      }).catch(()=>{});
+      msg('msg-interac','Vérifié ✓ — actif dans 72h par sécurité (délai de changement).', true);
+    } else {
+      msg('msg-interac','Vérifié et actif ✓', true);
+    }
+    $('interac-code-zone').style.display = 'none';
+    $('interac_code').value = '';
+    chargerStatutInterac();
+  }catch(e){ msg('msg-interac','Erreur : '+e.message, false); }
+  btn.disabled = false;
+});
+
 async function chargerStatutPaiement(){
   if(profil.role === 'pharmacien' && $('paiement-pharmacien-statut')){
     const { data } = await sb.from('stripe_comptes').select('stripe_account_id').eq('profil_id', profil.id).maybeSingle();
@@ -534,6 +618,7 @@ function rendrePlateaux(){
   $('bloc-pharmacien').style.display = profil.role==='pharmacien' ? '' : 'none';
   $('bloc-pharmacie').style.display  = profil.role==='pharmacie'  ? '' : 'none';
   if(profil.role==='pharmacien' || profil.role==='pharmacie') chargerStatutPaiement();
+  if(profil.role==='pharmacien') chargerStatutInterac();
 
   /* remplissage */
   $('prenom').value=profil.prenom||''; $('nom').value=profil.nom||'';

@@ -28,6 +28,10 @@ export default {
         return await routeFacture(request, env);
       if (request.method === 'POST' && url.pathname === '/admin/purger-inscription')
         return await routePurgerInscription(request, env);
+      if (request.method === 'POST' && url.pathname === '/pharmacien/envoyer-code-interac')
+        return await routeEnvoyerCodeInterac(request, env);
+      if (request.method === 'POST' && url.pathname === '/pharmacien/alerter-changement-interac')
+        return await routeAlerterChangementInterac(request, env);
       if (request.method === 'GET' && url.pathname === '/diag')
         return json({
           version: 'confirmer-pdf-2026-07-21b',
@@ -166,6 +170,67 @@ async function envoyerEtLogger(env, { vers, corps, type, profile_id = null, cont
     erreur: res.ok ? null : res.erreur,
   });
   return res;
+}
+
+/* =====================================================================
+   COURRIEL INTERAC VÉRIFIÉ (sql/47, skill § Fraud controls) — le code
+   et le délai de 72h vivent en DB (RPC, transactionnel) ; ce Worker ne
+   fait QUE la livraison (Resend / Twilio), jamais la logique d'état.
+===================================================================== */
+
+/* Appelé juste après demarrer_verification_courriel_interac() côté
+   site : relit le code fraîchement généré (service_role) et l'envoie
+   par courriel à la NOUVELLE adresse (jamais à l'ancienne — c'est
+   justement l'adresse qu'on est en train de prouver). */
+async function routeEnvoyerCodeInterac(request, env) {
+  const token = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+  if (!token) return json({ erreur: 'Non connecté' }, 401);
+  const ru = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+    headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${token}` },
+  });
+  if (!ru.ok) return json({ erreur: 'Jeton invalide' }, 401);
+  const user = await ru.json();
+
+  const [p] = await sbSelect(env, `profiles?id=eq.${user.id}&select=courriel_interac,courriel_interac_code,courriel_interac_code_expire,prenom`);
+  if (!p?.courriel_interac || !p?.courriel_interac_code) return json({ erreur: 'Aucune vérification en cours' }, 409);
+  if (new Date(p.courriel_interac_code_expire) < new Date()) return json({ erreur: 'Code déjà expiré' }, 409);
+
+  const sujet = 'Votre code de vérification C-Direct';
+  const html =
+    `<div style="font-family:Arial,Helvetica,sans-serif;color:#1b2622;font-size:15px;line-height:1.6;max-width:480px">` +
+    `<p>Bonjour ${p.prenom || ''},</p>` +
+    `<p>Voici votre code pour confirmer cette adresse comme destination de vos virements Interac C-Direct :</p>` +
+    `<p style="font-size:28px;font-weight:700;letter-spacing:.1em;color:#0B6E4F">${p.courriel_interac_code}</p>` +
+    `<p style="color:#8a9a92;font-size:12px">Valide 15 minutes. Si vous n'avez rien demandé, ignorez ce courriel — votre adresse Interac ne change pas.</p>` +
+    `</div>`;
+  const res = await envoyerEmailResend(env, {
+    to: p.courriel_interac, subject: sujet, html,
+    text: `Votre code de vérification C-Direct : ${p.courriel_interac_code} (valide 15 min).`,
+  });
+  return json(res);
+}
+
+/* Appelé juste après confirmer_courriel_interac() QUAND elle retourne
+   true (= c'était un changement, pas un premier réglage) : alerte le
+   NUMÉRO SUR DOSSIER (jamais la nouvelle adresse courriel — c'est le
+   canal séparé qui permet au vrai titulaire de repérer une fraude même
+   si sa boîte courriel est compromise). */
+async function routeAlerterChangementInterac(request, env) {
+  const token = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+  if (!token) return json({ erreur: 'Non connecté' }, 401);
+  const ru = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+    headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${token}` },
+  });
+  if (!ru.ok) return json({ erreur: 'Jeton invalide' }, 401);
+  const user = await ru.json();
+
+  const [p] = await sbSelect(env, `profiles?id=eq.${user.id}&select=telephone,courriel_interac,id`);
+  if (!p?.telephone) return json({ ok: false, skip: 'Pas de téléphone au dossier' });
+
+  const corps = `C-Direct: votre courriel Interac a ete modifie (nouvelle adresse en vigueur dans 72h). ` +
+    `Si ce n'etait pas vous, contactez-nous immediatement.`;
+  const res = await envoyerEtLogger(env, { vers: p.telephone, corps, type: 'alerte_changement_interac', profile_id: p.id });
+  return json(res);
 }
 
 /* =====================================================================

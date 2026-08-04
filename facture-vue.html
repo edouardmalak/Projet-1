@@ -79,6 +79,14 @@ table.m-tbl tr:last-child td{border-bottom:none}
 .payer-box{margin-top:24px;background:var(--menthe);border:1px solid var(--ligne);border-radius:6px;padding:14px 18px;font-size:13px;line-height:1.7;font-family:'IBM Plex Mono',monospace}
 .payer-box .lab{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--vert);font-weight:600;margin-bottom:4px}
 .payer-box b{color:var(--vert-fonce)}
+.payer-box .identite{font-family:'Instrument Sans',sans-serif;font-size:15px;color:var(--encre);margin-bottom:8px}
+.payer-box .identite b{font-size:16px}
+.payer-box .champ-copiable{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--ligne);border-radius:5px;padding:8px 10px;margin:6px 0}
+.payer-box .champ-copiable .val{font-weight:600;color:var(--vert-fonce);word-break:break-all}
+.payer-box .champ-copiable button{flex-shrink:0;font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:600;background:var(--vert);color:#fff;border:none;border-radius:4px;padding:6px 12px;cursor:pointer;print-color-adjust:exact}
+.payer-box .champ-copiable button.copie{background:var(--vert-fonce)}
+.payer-box .avert{background:#fdf6e8;border:1px solid var(--jaune);color:#7a5308;border-radius:5px;padding:10px 12px;margin-top:4px;font-size:12.5px;line-height:1.6}
+@media print{ .payer-box button{display:none} }
 .m-pied{margin-top:22px;display:flex;justify-content:space-between;font-size:11.5px;color:#666}
 .m-pied .cd{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;color:var(--vert-fonce)}
 .tampon{display:none;margin:14px 0 0;padding:8px 12px;border:2px solid var(--vert);color:var(--vert);font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;letter-spacing:.14em;text-transform:uppercase;width:max-content;transform:rotate(-2deg)}
@@ -207,10 +215,9 @@ table.m-tbl tr:last-child td{border-bottom:none}
       <div class="m-net"><span class="lab">NET À PAYER :</span><span class="val" id="f-net">—</span></div>
       <div class="tampon" id="tampon"></div>
 
-      <div class="payer-box">
-        <div class="lab">Paiement — Virement Interac (l'argent ne transite jamais par C-Direct)</div>
-        Envoyez votre virement Interac directement au pharmacien&nbsp;: <b id="f-interac">—</b><br>
-        Dépôt automatique activé — aucune question de sécurité requise.
+      <div class="payer-box" id="payer-box">
+        <div class="lab">Paiement</div>
+        <div id="payer-box-contenu">Chargement…</div>
       </div>
 
       <div class="m-pied">
@@ -278,17 +285,63 @@ function msg(texte, type){
     $('f-commentaires').textContent = 'Pénalité d\'annulation — contrat ' + f.numero_reference + ' (règles du réseau)';
 
   /* ---- MANDAT : pharmacien ---- */
-  $('f-ph-nom').textContent = ((f.pharmacien_prenom||'')+' '+(f.pharmacien_nom||'')).trim() || '—';
+  const nomPharmacien = ((f.pharmacien_prenom||'')+' '+(f.pharmacien_nom||'')).trim() || '—';
+  $('f-ph-nom').textContent = nomPharmacien;
   $('f-ph-opq').textContent = f.pharmacien_opq || '—';
   if(fiche){
     $('f-ph-statut').textContent = 'Incorporé';
     $('f-ph-corp').textContent = fiche.corp || '—';
     $('f-ph-tps').textContent = fiche.tps || '—';
     $('f-ph-tvq').textContent = fiche.tvq || '—';
-    $('f-interac').textContent = f.pharmacien_courriel || '—';
-  } else {
-    $('f-interac').textContent = f.pharmacien_courriel || '—';
   }
+
+  /* ---- Paiement : identité d'abord, puis Interac VÉRIFIÉ seulement
+     (skill § Fraud controls). Si le courriel n'est pas vérifié ou est
+     en délai de sécurité (72h après un changement), on bascule sur un
+     message carte de garantie — jamais une adresse pas encore sûre. */
+  (function construirePayerBox(){
+    const zone = $('payer-box-contenu');
+    const enCooldown = f.pharmacien_courriel_interac_cooldown && new Date(f.pharmacien_courriel_interac_cooldown) > new Date();
+    const interacPret = f.pharmacien_courriel_interac_verifie && f.pharmacien_courriel_interac && !enCooldown;
+
+    const identite = '<div class="identite">Ce mandat concerne <b>'+ (nomPharmacien.replace(/</g,'&lt;')) +
+      '</b>, pharmacien(ne) — N° OPQ ' + (f.pharmacien_opq || '—') + '.</div>';
+
+    if(!interacPret){
+      zone.innerHTML = identite +
+        '<div class="avert">' +
+        (enCooldown
+          ? 'Ce pharmacien a changé son adresse Interac récemment — par sécurité, elle n\'est active qu\'à partir du ' +
+            new Date(f.pharmacien_courriel_interac_cooldown).toLocaleString('fr-CA') + '.'
+          : 'Ce pharmacien n\'a pas encore vérifié d\'adresse Interac.') +
+        ' Aucune action n\'est requise de votre part : le mandat est protégé par une <b>garantie de paiement par carte</b> — ' +
+        'si rien n\'est réglé autrement, elle couvre automatiquement le pharmacien.' +
+        '</div>';
+      return;
+    }
+
+    const champ = (label, valeur) =>
+      '<div class="champ-copiable"><span><span style="color:var(--gris);font-size:11px;text-transform:uppercase;letter-spacing:.08em;display:block">'+label+'</span>' +
+      '<span class="val">'+valeur.replace(/</g,'&lt;')+'</span></span>' +
+      '<button type="button" class="btn-copier" data-val="'+valeur.replace(/"/g,'&quot;')+'">Copier</button></div>';
+
+    zone.innerHTML = identite +
+      'Envoyez votre virement Interac directement au pharmacien — l\'argent ne transite jamais par C-Direct :' +
+      champ('Courriel Interac (vérifié)', f.pharmacien_courriel_interac) +
+      champ('Montant', fmt(f.total)) +
+      champ('Référence à inscrire', f.numero_reference) +
+      '<div style="font-size:11.5px;color:var(--gris);margin-top:4px">Dépôt automatique activé — aucune question de sécurité requise.</div>';
+
+    zone.querySelectorAll('.btn-copier').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        navigator.clipboard.writeText(btn.dataset.val).then(()=>{
+          const avant = btn.textContent;
+          btn.textContent = 'Copié ✓'; btn.classList.add('copie');
+          setTimeout(()=>{ btn.textContent = avant; btn.classList.remove('copie'); }, 1800);
+        });
+      });
+    });
+  })();
 
   /* ---- reçu ---- */
   $('f-numero').textContent = 'F-' + String(f.numero_facture).padStart(6,'0');
