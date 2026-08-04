@@ -150,6 +150,9 @@ pour forcer `Content-Type: application/json` sur les 4 chemins (racine +
 type d'un fichier sans extension — + `Cache-Control: no-cache`. Vérifié que
 `functions/_middleware.js` ne bloque rien de tout ça (seuls `/sql/`,
 `/workers/`, `/.git/` et les extensions .md/.sql/.toml/.lock sont filtrés).
+**Revérifié en direct après le correctif (navigation + inspection réseau
+dans Chrome) : les deux chemins `/.well-known/apple-app-site-association`
+et `/.well-known/assetlinks.json` répondent 200 avec le vrai JSON.**
 
 **IMPORTANT — contenu actuellement PLACEHOLDER, pas fonctionnel :**
 - `appIDs` dans apple-app-site-association = `"REMPLACER_PAR_TEAM_ID.ca.cdirect.app"`
