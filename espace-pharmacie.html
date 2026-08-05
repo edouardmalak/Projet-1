@@ -102,6 +102,9 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 .attente{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--jaune);letter-spacing:.06em;text-transform:uppercase;margin-left:auto}
 .aucun{padding:10px 0;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px}
 .vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:20px 0}
+#ep-onglets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+#ep-onglets button{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;border-radius:99px;border:1px solid var(--ligne2);background:var(--panneau);color:var(--sourd);cursor:pointer}
+#ep-onglets button.actif{background:var(--vert);border-color:var(--vert);color:#fff}
 @media(max-width:560px){.deux,.trois,.coches{grid-template-columns:1fr}}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -123,6 +126,13 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
   <h1>Espace pharmacie</h1>
   <p class="sous" id="sous">—</p>
 
+  <div id="ep-onglets" role="tablist">
+    <button type="button" data-onglet="accueil">Tableau de bord</button>
+    <button type="button" data-onglet="nouvelle-demande">Publier un contrat</button>
+    <button type="button" data-onglet="mes-contrats">Mes contrats</button>
+    <button type="button" data-onglet="factures-recues">Factures reçues</button>
+  </div>
+
   <!-- TABLEAU DE BORD (Phase 6.2) -->
   <style>
   .pb-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
@@ -132,6 +142,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
   .pb-kpi b{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:700}
   .pb-kpi.vert b{color:var(--vert-vif)}
   </style>
+  <div data-onglet="accueil">
   <div class="carte" id="carte-pb" style="display:none">
     <div class="sec">Tableau de bord</div>
     <div class="pb-kpis">
@@ -141,9 +152,11 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
       <div class="pb-kpi"><small>1<sup>re</sup> candidature (médiane)</small><b id="pb-med">—</b></div>
     </div>
   </div>
+  <div class="vide" id="pb-vide">Aucune donnée pour l'instant — publiez votre premier contrat dans l'onglet « Publier un contrat ».</div>
+  </div>
 
   <!-- PUBLIER -->
-  <div class="carte" id="nouvelle-demande">
+  <div class="carte" id="nouvelle-demande" data-onglet="nouvelle-demande">
     <div class="sec">Publier un contrat</div>
     <p style="color:var(--sourd);font-size:13px;line-height:1.6;margin:-4px 0 18px;font-family:'IBM Plex Mono',monospace">Moins d'une minute. Les pharmaciens compatibles sont notifiés automatiquement (SMS + courriel), et leurs candidatures apparaissent dans « Mes contrats » ci-dessous — vous acceptez en un clic.</p>
     <form id="f">
@@ -173,14 +186,14 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
   </div>
 
   <!-- MES CONTRATS -->
-  <div class="carte" id="mes-contrats">
+  <div class="carte" id="mes-contrats" data-onglet="mes-contrats">
     <div class="sec">Mes contrats</div>
     <p style="color:var(--sourd);font-size:13px;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace">Vos contrats publiés et leurs candidatures. Touchez un contrat pour voir les pharmaciens, accepter, ou faire une contre-offre.</p>
     <div id="liste"><div class="vide">Chargement…</div></div>
   </div>
 
   <!-- FACTURES À PAYER (Phase 3) -->
-  <div class="carte" id="factures-recues">
+  <div class="carte" id="factures-recues" data-onglet="factures-recues">
     <div class="sec">Factures reçues</div>
     <p style="color:var(--sourd);font-size:13px;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace">Les mandats de vos remplacements complétés. Payez le pharmacien par Interac, puis marquez « Payée ».</p>
     <div id="liste-factures"><div class="vide">Chargement…</div></div>
@@ -211,10 +224,42 @@ function msg(id, texte, ok){
   if(ok) el._cacherTimer = setTimeout(()=>{ el.style.display='none'; el._cacherTimer=null; }, 4000);
 }
 
+/* ---- onglets de l'espace pharmacie : Tableau de bord / Publier un contrat /
+   Mes contrats / Factures reçues — remplace le défilement + ancre unique
+   par des sections qu'on ouvre une à la fois. Les liens du menu du haut
+   (#nouvelle-demande, #mes-contrats, #factures-recues) continuent de
+   fonctionner : on lit le hash au chargement et au changement. ---- */
+const EP_ONGLETS = ['accueil','nouvelle-demande','mes-contrats','factures-recues'];
+function afficherOngletEP(nom){
+  if(!EP_ONGLETS.includes(nom)) nom = 'accueil';
+  document.querySelectorAll('[data-onglet]').forEach(p=>{
+    p.style.display = (p.dataset.onglet === nom) ? '' : 'none';
+  });
+  document.querySelectorAll('#ep-onglets button').forEach(b=>{
+    b.classList.toggle('actif', b.dataset.onglet === nom);
+  });
+}
+function _syncPbVide(){
+  if($('pb-vide') && $('carte-pb')) $('pb-vide').style.display = ($('carte-pb').style.display === 'none') ? '' : 'none';
+}
+function initOngletsEP(){
+  document.querySelectorAll('#ep-onglets button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      afficherOngletEP(b.dataset.onglet);
+      try{ history.replaceState(null,'','#'+b.dataset.onglet); }catch(e){}
+    });
+  });
+  window.addEventListener('hashchange', ()=> afficherOngletEP((location.hash||'').slice(1)));
+  if($('carte-pb')) new MutationObserver(_syncPbVide).observe($('carte-pb'), { attributes:true, attributeFilter:['style'] });
+  _syncPbVide();
+  afficherOngletEP((location.hash||'').slice(1));
+}
+
 (async function(){
   profil = await cdExigerConnexion(['pharmacie']);
   cdEnteteConnecte();
   $('sous').textContent = (profil.nom_pharmacie || 'Pharmacie') + (profil.ville ? ' · ' + profil.ville : '');
+  initOngletsEP();
   chargerTableauBordPharmacie();
   ['date_contrat','tarif_horaire'].forEach(id=> $(id) && $(id).addEventListener('change', majCompatibles));
   ['heure_debut','heure_fin','tarif_horaire'].forEach(id=> $(id) && $(id).addEventListener('input', majPrixDual));
