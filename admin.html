@@ -52,6 +52,9 @@ tbody tr:last-child td{border-bottom:none}
 .msg.ok{background:rgba(18,169,110,.1);color:var(--vert-vif);border:1px solid var(--ligne2);border-left:3px solid var(--vert)}
 .msg.ko{background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge)}
 .vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:16px 0}
+#admin-onglets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+#admin-onglets button{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;border-radius:99px;border:1px solid var(--ligne2);background:var(--panneau);color:var(--sourd);cursor:pointer}
+#admin-onglets button.actif{background:var(--jaune);border-color:var(--jaune);color:#1A1405}
 @media(max-width:720px){.grille-regles{grid-template-columns:1fr 1fr}}
 @media(max-width:480px){.grille-regles{grid-template-columns:1fr}}
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
@@ -83,6 +86,14 @@ tbody tr:last-child td{border-bottom:none}
   <h1>Console <b>·</b> Administration</h1>
   <p class="sous" id="sous">Accès restreint — rôle administrateur vérifié en base (RLS)</p>
 
+  <div id="admin-onglets" role="tablist">
+    <button type="button" data-onglet="vue" class="actif">Vue d'ensemble</button>
+    <button type="button" data-onglet="utilisateurs">Utilisateurs &amp; blocages</button>
+    <button type="button" data-onglet="argent">Argent</button>
+    <button type="button" data-onglet="communications">Communications</button>
+  </div>
+
+  <div data-onglet="vue">
   <!-- TABLEAU DE BORD (Phase 6.2) -->
   <div class="carte">
     <div class="sec">Tableau de bord<small>indicateurs du réseau</small></div>
@@ -141,7 +152,9 @@ tbody tr:last-child td{border-bottom:none}
       <div class="msg" id="msg-regles"></div>
     </form>
   </div>
+  </div>
 
+  <div data-onglet="utilisateurs">
   <!-- UTILISATEURS -->
   <div class="carte">
     <div class="sec">Utilisateurs<small id="n-users"></small></div>
@@ -171,7 +184,9 @@ tbody tr:last-child td{border-bottom:none}
       </table>
     </div>
   </div>
+  </div>
 
+  <div data-onglet="vue">
   <!-- CONTRATS -->
   <div class="carte">
     <div class="sec">Contrats<small id="n-contrats"></small> · <a href="/admin-shifts.html" style="color:var(--vert-vif);text-decoration:underline;text-underline-offset:2px;text-transform:none;letter-spacing:0;font-weight:600">Gestion complète (annuler, litige, notes, contacts) →</a></div>
@@ -182,7 +197,9 @@ tbody tr:last-child td{border-bottom:none}
       </table>
     </div>
   </div>
+  </div>
 
+  <div data-onglet="argent">
   <!-- ARGENT (Phase 3) -->
   <div class="carte">
     <div class="sec">Argent — toutes les factures<small id="n-factures"></small></div>
@@ -207,7 +224,9 @@ tbody tr:last-child td{border-bottom:none}
       </table>
     </div>
   </div>
+  </div>
 
+  <div data-onglet="communications">
   <!-- SMS (Phase 4) -->
   <div class="carte">
     <div class="sec">SMS<small>pipeline Twilio via Worker c-direct-sms</small></div>
@@ -276,6 +295,7 @@ tbody tr:last-child td{border-bottom:none}
       </table>
     </div>
   </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -292,6 +312,30 @@ function msg(id, texte, ok){
   const el=$(id); el.textContent=texte;
   el.className='msg '+(ok?'ok':'ko'); el.style.display='block';
   if(ok) setTimeout(()=>{ el.style.display='none'; }, 3500);
+}
+
+/* ---- onglets de la console admin : Vue d'ensemble / Utilisateurs &
+   blocages / Argent / Communications — remplace les ~10 sections
+   empilées par des groupes qu'on ouvre un à la fois. ---- */
+const ADMIN_ONGLETS = ['vue','utilisateurs','argent','communications'];
+function afficherOngletAdmin(nom){
+  if(!ADMIN_ONGLETS.includes(nom)) nom = 'vue';
+  document.querySelectorAll('[data-onglet]').forEach(p=>{
+    p.style.display = (p.dataset.onglet === nom) ? '' : 'none';
+  });
+  document.querySelectorAll('#admin-onglets button').forEach(b=>{
+    b.classList.toggle('actif', b.dataset.onglet === nom);
+  });
+}
+function initOngletsAdmin(){
+  document.querySelectorAll('#admin-onglets button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      afficherOngletAdmin(b.dataset.onglet);
+      try{ history.replaceState(null,'','#'+b.dataset.onglet); }catch(e){}
+    });
+  });
+  window.addEventListener('hashchange', ()=> afficherOngletAdmin((location.hash||'').slice(1)));
+  afficherOngletAdmin((location.hash||'').slice(1));
 }
 
 /* toast flottant : retour visible partout (jamais de no-op silencieux) */
@@ -317,6 +361,7 @@ function cdToast(texte, ok){
   const profil = await cdExigerConnexion(['admin']);
   if(profil.role !== 'admin'){ location.replace(cdAccueilPourRole(profil.role)); return; }
   cdEnteteConnecte();
+  initOngletsAdmin();
   chargerKPIs();
   chargerContratsARisque();
   chargerRegions();
