@@ -170,36 +170,47 @@ window.cdDeconnexion = async function(){
 };
 
 /* ---- menu de navigation selon le rôle ----
-   Remplace les flèches « ← Retour » par un menu horizontal persistant
-   (comme un vrai bandeau de navigation). Injecté juste sous la topbar sur
-   toutes les pages connectées. Bilingue (suit cdLang), surligne la page
-   courante, masque les anciens liens « retour » devenus redondants.       */
+   Remplace les flèches « ← Retour » par un menu horizontal persistant,
+   regroupé en menus déroulants pour ne pas aligner 9-10 liens à plat.
+   Injecté juste sous la topbar sur toutes les pages connectées. Bilingue
+   (suit cdLang), surligne la page courante (un groupe s'allume si l'une
+   de ses entrées est active), masque les anciens liens « retour ».
+   Format d'une entrée : soit un lien plat ['/href.html','FR','EN'],
+   soit un groupe déroulant { g:'FR', ge:'EN', items:[[...],[...]] }.      */
 const CD_MENUS = {
   pharmacien: [
-    ['/contrats.html',           'Trouver un contrat', 'Contracts'],
-    ['/carte.html',              'Carte',            'Map'],
-    ['/mes-mandats.html',        'Mandats confirmés', 'My mandates'],
+    { g:'Contrats', ge:'Contracts', items: [
+      ['/contrats.html',           'Trouver un contrat', 'Contracts'],
+      ['/carte.html',              'Carte',            'Map'],
+      ['/mes-mandats.html',        'Mandats confirmés', 'My mandates']
+    ]},
     ['/disponibilites.html',     'Calendrier',        'Calendar'],
     ['/messages.html',           'Clavardage',       'Messages'],
-    ['/evaluations.html',        'Évaluations',      'Reviews'],
-    ['/dispensaire.html',        'Dispensaire',       'Dispensary'],
-    ['/profil.html',             'Profil',           'Profile'],
-    ['/faq.html',                'FAQ',              'FAQ']
+    { g:'Compte', ge:'Account', items: [
+      ['/evaluations.html',        'Évaluations',      'Reviews'],
+      ['/dispensaire.html',        'Dispensaire',       'Dispensary'],
+      ['/profil.html',             'Profil',           'Profile'],
+      ['/faq.html',                'FAQ',              'FAQ']
+    ]}
   ],
   pharmacie: [
-    ['/espace-pharmacie.html',   'Accueil',          'Home'],
-    /* Le vrai formulaire de publication vit dans espace-pharmacie.html.
-       (L'ancien /demande.html est une page héritée : aucune connexion,
-        aucune écriture en base — elle ne créait pas de contrat.) */
-    ['/espace-pharmacie.html#nouvelle-demande', 'Nouvelle demande', 'New request'],
-    ['/espace-pharmacie.html#mes-contrats', 'Mes contrats', 'My contracts'],
-    ['/espace-pharmacie.html#factures-recues', 'Factures reçues', 'Invoices received'],
+    { g:'Contrats', ge:'Contracts', items: [
+      ['/espace-pharmacie.html',   'Accueil',          'Home'],
+      /* Le vrai formulaire de publication vit dans espace-pharmacie.html.
+         (L'ancien /demande.html est une page héritée : aucune connexion,
+          aucune écriture en base — elle ne créait pas de contrat.) */
+      ['/espace-pharmacie.html#nouvelle-demande', 'Nouvelle demande', 'New request'],
+      ['/espace-pharmacie.html#mes-contrats', 'Mes contrats', 'My contracts'],
+      ['/espace-pharmacie.html#factures-recues', 'Factures reçues', 'Invoices received']
+    ]},
     ['/calendrier-pharmacie.html','Calendrier',      'Calendar'],
     ['/messages.html',           'Clavardage',       'Messages'],
-    ['/evaluations.html',        'Évaluations',      'Reviews'],
-    ['/dispensaire.html',        'Dispensaire',       'Dispensary'],
-    ['/profil.html',             'Profil',           'Profile'],
-    ['/faq.html',                'FAQ',              'FAQ']
+    { g:'Compte', ge:'Account', items: [
+      ['/evaluations.html',        'Évaluations',      'Reviews'],
+      ['/dispensaire.html',        'Dispensaire',       'Dispensary'],
+      ['/profil.html',             'Profil',           'Profile'],
+      ['/faq.html',                'FAQ',              'FAQ']
+    ]}
   ],
   admin: [
     ['/admin.html',              'Console',          'Console'],
@@ -207,9 +218,11 @@ const CD_MENUS = {
     ['/admin-shifts.html',       'Contrats',         'Contracts'],
     ['/admin-articles.html',     'Dispensaire',       'Dispensary'],
     ['/messages.html',           'Clavardage',       'Messages'],
-    ['/evaluations.html',        'Évaluations',      'Reviews'],
-    ['/profil.html',             'Profil',           'Profile'],
-    ['/faq.html',                'FAQ',              'FAQ']
+    { g:'Compte', ge:'Account', items: [
+      ['/evaluations.html',        'Évaluations',      'Reviews'],
+      ['/profil.html',             'Profil',           'Profile'],
+      ['/faq.html',                'FAQ',              'FAQ']
+    ]}
   ]
 };
 window.cdMenuRole = function(role){
@@ -219,37 +232,93 @@ window.cdMenuRole = function(role){
   const ici = (location.pathname || '/').replace(/\.html$/,'').replace(/\/+$/,'') || '/';
 
   // Un seul bandeau : le menu vit DANS la topbar (même ligne que le logo et
-  // le bloc session), pas dans une deuxième rangée en dessous. Défile
-  // horizontalement au besoin plutôt que de retomber à la ligne.
+  // le bloc session), pas dans une deuxième rangée en dessous. Overflow
+  // visible (pas de scroll) pour laisser les menus déroulants s'afficher.
   const strip = document.createElement('span');
   strip.id = 'cd-menu';
   strip.setAttribute('role', 'navigation');
   strip.setAttribute('aria-label', en ? 'Main menu' : 'Menu principal');
-  strip.style.cssText = "display:flex;align-items:center;gap:1px;flex:1 1 auto;min-width:0;"+
-    "overflow-x:auto;-webkit-overflow-scrolling:touch;font-family:'IBM Plex Mono',monospace;scrollbar-width:none";
+  strip.style.cssText = "display:flex;align-items:center;gap:2px;flex:1 1 auto;min-width:0;"+
+    "font-family:'IBM Plex Mono',monospace";
 
-  items.forEach(([href, fr, an])=>{
+  // clé de comparaison pour « page active » — ignore l'ancre et .html
+  const clePour = href => href.replace(/#.*$/,'').replace(/\.html$/,'');
+
+  function creerLien(href, fr, an){
     /* Une entrée qui pointe vers une ancre (#…) désigne une SECTION d'une
        page déjà présente au menu : on ne la surligne jamais, sinon deux
        entrées s'allumeraient en même temps (ex. Accueil + Nouvelle demande,
        qui vivent toutes deux dans espace-pharmacie.html). */
     const ancre = href.indexOf('#') !== -1;
-    const cle = href.replace(/#.*$/,'').replace(/\.html$/,'');
-    const actif = !ancre && ici === cle;
+    const actif = !ancre && ici === clePour(href);
     const a = document.createElement('a');
     a.href = href;
     a.textContent = en ? an : fr;
     a.setAttribute('aria-current', actif ? 'page' : 'false');
     const couleur = actif ? 'var(--vert-vif,#0f8a5f)' : 'var(--sourd,#6b7772)';
     a.style.cssText = 'white-space:nowrap;text-decoration:none;font-size:11px;letter-spacing:.04em;'+
-      'text-transform:uppercase;padding:6px 8px;border-radius:6px;color:'+couleur+';flex:none;'+
+      'text-transform:uppercase;padding:6px 8px;border-radius:6px;color:'+couleur+';flex:none;display:block;'+
       (actif ? 'background:rgba(16,138,95,.10);font-weight:700' : 'font-weight:500');
     if(!actif){
       a.addEventListener('mouseenter', ()=> a.style.color='var(--vert-vif,#0f8a5f)');
       a.addEventListener('mouseleave', ()=> a.style.color='var(--sourd,#6b7772)');
     }
-    strip.appendChild(a);
+    return a;
+  }
+
+  const fermetures = [];
+  function toutFermer(){ fermetures.forEach(f=>f()); }
+
+  items.forEach(entree=>{
+    if(Array.isArray(entree)){
+      strip.appendChild(creerLien(entree[0], entree[1], entree[2]));
+      return;
+    }
+    // groupe déroulant
+    const actifEnfant = entree.items.some(([href])=> href.indexOf('#')===-1 && ici === clePour(href));
+    const enveloppe = document.createElement('span');
+    enveloppe.style.cssText = 'position:relative;flex:none';
+
+    const bouton = document.createElement('button');
+    bouton.type = 'button';
+    bouton.textContent = (en ? entree.ge : entree.g) + ' ▾';
+    bouton.setAttribute('aria-haspopup', 'true');
+    bouton.setAttribute('aria-expanded', 'false');
+    const couleurBtn = actifEnfant ? 'var(--vert-vif,#0f8a5f)' : 'var(--sourd,#6b7772)';
+    bouton.style.cssText = 'white-space:nowrap;background:none;border:none;cursor:pointer;font:inherit;'+
+      'font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:6px 8px;border-radius:6px;'+
+      'color:'+couleurBtn+';'+(actifEnfant ? 'background:rgba(16,138,95,.10);font-weight:700' : 'font-weight:500');
+    if(!actifEnfant){
+      bouton.addEventListener('mouseenter', ()=> bouton.style.color='var(--vert-vif,#0f8a5f)');
+      bouton.addEventListener('mouseleave', ()=> bouton.style.color='var(--sourd,#6b7772)');
+    }
+
+    const panneau = document.createElement('span');
+    panneau.style.cssText = 'position:absolute;top:100%;left:0;margin-top:4px;background:var(--panneau,#fff);'+
+      'border:1px solid var(--ligne,#E6E8E4);border-radius:10px;box-shadow:0 8px 24px -8px rgba(20,24,20,.18);'+
+      'padding:6px;display:none;flex-direction:column;min-width:190px;z-index:60';
+    entree.items.forEach(([href, fr, an])=>{
+      const lien = creerLien(href, fr, an);
+      lien.style.padding = '9px 10px';
+      lien.style.fontSize = '12px';
+      panneau.appendChild(lien);
+    });
+
+    function fermer(){ panneau.style.display='none'; bouton.setAttribute('aria-expanded','false'); }
+    fermetures.push(fermer);
+    bouton.addEventListener('click', e=>{
+      e.stopPropagation();
+      const estOuvert = panneau.style.display === 'flex';
+      toutFermer();
+      if(!estOuvert){ panneau.style.display='flex'; bouton.setAttribute('aria-expanded','true'); }
+    });
+
+    enveloppe.append(bouton, panneau);
+    strip.appendChild(enveloppe);
   });
+
+  document.addEventListener('click', toutFermer);
+  document.addEventListener('keydown', e=>{ if(e.key === 'Escape') toutFermer(); });
 
   const conteneur = document.querySelector('.topbar .droite') || document.querySelector('.topbar .in');
   if(conteneur){
