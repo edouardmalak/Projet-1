@@ -12,44 +12,119 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;min-height:100vh;background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
 .topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
-.topbar .in{max-width:1400px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.topbar .in{max-width:1600px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
 .croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
 .topbar .droite{display:flex;align-items:center;gap:10px;min-width:0}
 .topbar a.nav{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
 .topbar a.nav:hover{color:var(--vert-vif)}
-.wrap{max-width:1000px;margin:0 auto;padding:36px 18px 70px}
+.wrap{max-width:1560px;margin:0 auto;padding:30px 20px 60px}
 h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
-.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:18px}
+
+.entete-outils{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.vues{display:flex;border:1px solid var(--ligne2);border-radius:7px;overflow:hidden}
+.vues button{background:var(--panneau);border:none;color:var(--sourd);padding:8px 16px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.vues button.actif{background:var(--vert);color:#fff}
+.vues button:not(.actif):hover{background:var(--panneau2)}
+.imprimer{margin-left:auto;display:flex;gap:8px}
+.bimp{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:7px;padding:8px 14px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.bimp:hover{border-color:var(--vert);color:var(--vert-vif)}
+
+.grille-principale{display:grid;grid-template-columns:1.35fr 1fr;gap:20px;align-items:start}
+@media(max-width:980px){.grille-principale{grid-template-columns:1fr}}
+
 .carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:22px;position:relative}
 .carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vert),transparent)}
-.cal-tete{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px}
-.cal-mois{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;letter-spacing:.06em;text-transform:capitalize}
+.carte + .carte{margin-top:20px}
+
+/* --- calendrier : vue mois --- */
 .nav-mois{display:flex;gap:8px;align-items:center}
 .bnav{background:var(--panneau2);border:1px solid var(--ligne2);color:var(--texte);border-radius:5px;width:34px;height:34px;font-size:16px;cursor:pointer;font-family:'IBM Plex Mono',monospace}
 .bnav:hover{border-color:var(--vert)}
 .bauj{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:5px;padding:0 12px;height:34px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
 .bauj:hover{border-color:var(--vert);color:var(--vert-vif)}
-.grille-jours{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.jour-tete{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);text-align:center;padding:6px 0}
-.jour{aspect-ratio:1/1;border:1px solid var(--ligne);border-radius:6px;background:var(--panneau2);display:flex;flex-direction:column;align-items:flex-start;padding:7px 8px;position:relative;min-height:56px;overflow:hidden}
+.cal-mois{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;letter-spacing:.06em;text-transform:capitalize}
+.grille-jours{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.jour-tete{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);text-align:center;padding:6px 0}
+.jour{aspect-ratio:1/1;min-height:92px;border:1px solid var(--ligne);border-radius:7px;background:var(--panneau2);display:flex;flex-direction:column;align-items:flex-start;padding:8px 9px;position:relative;overflow:hidden}
 .jour.vide{background:transparent;border-color:transparent}
 .jour.auj{box-shadow:inset 0 0 0 1px var(--jaune)}
 .jour.a-contrat{border-color:var(--vert)}
 .jour.a-ouvert{border-color:var(--ligne2);border-style:dashed}
-.jour .n{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
-.pastille{margin-top:4px;display:block;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.03em;padding:2px 5px;border-radius:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;cursor:pointer}
+.jour.a-annule{border-color:rgba(192,57,43,.4);border-style:dashed}
+.jour .n{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600}
+.pastille{margin-top:4px;display:block;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.02em;padding:2px 5px;border-radius:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;cursor:pointer}
+.pastille.ouvert{background:rgba(126,148,138,.12);color:var(--sourd);border:1px dashed var(--ligne2)}
 .pastille.attribue{background:rgba(232,184,73,.16);color:var(--jaune);border:1px solid rgba(232,184,73,.4)}
 .pastille.complete{background:rgba(18,169,110,.16);color:var(--vert-vif);border:1px solid rgba(23,201,128,.4)}
-.pastille.ouvert{background:rgba(126,148,138,.12);color:var(--sourd);border:1px dashed var(--ligne2)}
-.pastille:hover{filter:brightness(1.25)}
-.legende{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd)}
+.pastille.annule{background:rgba(192,57,43,.12);color:var(--rouge);border:1px solid rgba(192,57,43,.35);text-decoration:line-through}
+.pastille:hover{filter:brightness(1.2)}
+.plus{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--sourd);margin-top:2px}
+.legende{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd)}
 .legende span{display:inline-flex;align-items:center;gap:7px}
-.pnt{width:12px;height:12px;border-radius:3px;display:inline-block}
+.pnt{width:11px;height:11px;border-radius:3px;display:inline-block}
+.pnt.ouvert{background:rgba(126,148,138,.12);border:1px dashed var(--ligne2)}
 .pnt.attribue{background:rgba(232,184,73,.16);border:1px solid rgba(232,184,73,.4)}
 .pnt.complete{background:rgba(18,169,110,.16);border:1px solid rgba(23,201,128,.4)}
-.pnt.ouvert{background:rgba(126,148,138,.12);border:1px dashed var(--ligne2)}
+.pnt.annule{background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.35)}
+
+/* --- calendrier : vue année --- */
+.annee-lbl{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;letter-spacing:.06em;min-width:52px;text-align:center}
+.grille-annee{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:760px){.grille-annee{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.grille-annee{grid-template-columns:1fr}}
+.mini-mois{border:1px solid var(--ligne);border-radius:7px;padding:10px;break-inside:avoid}
+.mini-titre{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;text-transform:capitalize;text-align:center;margin-bottom:7px;letter-spacing:.06em}
+.mini-grille{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.mini-jt{font-family:'IBM Plex Mono',monospace;font-size:7.5px;color:var(--sourd);text-align:center;letter-spacing:.03em;padding-bottom:2px}
+.mini-j{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9.5px;position:relative;border-radius:3px;cursor:pointer}
+.mini-j.vide{cursor:default}
+.mini-j.auj{box-shadow:inset 0 0 0 1px var(--jaune)}
+.mini-j:hover:not(.vide){background:var(--panneau2)}
+.mini-j .pt{position:absolute;bottom:1px;width:4px;height:4px;border-radius:50%}
+.mini-j .pt.attribue{background:var(--jaune)}
+.mini-j .pt.complete{background:var(--vert-vif)}
+.mini-j .pt.ouvert{background:var(--sourd)}
+.mini-j .pt.annule{background:var(--rouge)}
+
+/* --- panneau contrats --- */
+.sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sec small{color:var(--sourd);text-transform:none;letter-spacing:.04em;font-size:11px}
+.onglets{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.onglet{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:99px;padding:7px 13px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+.onglet:hover{border-color:var(--vert)}
+.onglet.actif{background:var(--vert);border-color:var(--vert);color:#fff}
+.liste-scroll{max-height:640px;overflow-y:auto;padding-right:4px}
+.ligne-contrat{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--panneau2);text-decoration:none;color:inherit}
+.ligne-contrat:last-child{border-bottom:none}
+.ligne-contrat:hover{background:var(--panneau2)}
+.lc-date{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;min-width:60px}
+.lc-mid{flex:1;min-width:0}
+.lc-ref{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--vert-vif);font-weight:700;display:block}
+.lc-meta{font-size:11.5px;color:var(--sourd);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd);flex:none}
+.chip.ouvert{color:var(--sourd)}
+.chip.attribue{color:var(--jaune);border-color:rgba(232,184,73,.4);background:rgba(232,184,73,.08)}
+.chip.complete{color:var(--vert-vif);border-color:rgba(23,201,128,.4);background:rgba(18,169,110,.08)}
+.chip.annule{color:var(--rouge);border-color:rgba(229,72,77,.35);background:rgba(229,72,77,.07)}
+.vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:30px 0}
+
 .chargement{padding:40px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+
+@media print{
+  .topbar,.no-print{display:none!important}
+  body{background:#fff}
+  .wrap{max-width:none;padding:0}
+  .grille-principale{display:block}
+  .carte{border:none;padding:0;box-shadow:none}
+  .carte::before{display:none}
+  .carte + .carte{margin-top:14px}
+  body.print-cal .col-contrats{display:none!important}
+  body.print-liste .col-calendrier{display:none!important}
+  .liste-scroll{max-height:none!important;overflow:visible!important}
+  .mini-mois{border-color:#ccc}
+}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/design.css">
@@ -63,28 +138,72 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 </div>
 <div class="wrap">
   <h1>Calendrier</h1>
-  <p class="sous">Vos contrats par journée — publiés en attente et confirmés. Touchez un contrat pour l'ouvrir.</p>
-  <div class="carte">
-    <div class="chargement" id="chargement">Chargement du calendrier…</div>
-    <div id="cal" style="display:none">
-      <div class="cal-tete">
-        <div class="cal-mois" id="mois-lbl">—</div>
-        <div class="nav-mois">
-          <button class="bauj" id="b-auj">Aujourd'hui</button>
-          <button class="bnav" id="b-prev">‹</button>
-          <button class="bnav" id="b-next">›</button>
+  <p class="sous">Vos contrats par journée — demandes publiées, confirmés, complétés et annulés.</p>
+
+  <div class="chargement" id="chargement">Chargement du calendrier…</div>
+
+  <div id="corps" style="display:none">
+    <div class="entete-outils no-print">
+      <div class="vues">
+        <button id="v-mois" class="actif" type="button">Mois</button>
+        <button id="v-annee" type="button">Année</button>
+      </div>
+      <div class="nav-mois" id="nav-mois">
+        <button class="bauj" id="b-auj" type="button">Aujourd'hui</button>
+        <button class="bnav" id="b-prev" type="button">‹</button>
+        <div class="cal-mois" id="mois-lbl" style="min-width:150px;text-align:center">—</div>
+        <button class="bnav" id="b-next" type="button">›</button>
+      </div>
+      <div class="nav-mois" id="nav-annee" style="display:none">
+        <button class="bnav" id="ba-prev" type="button">‹</button>
+        <div class="annee-lbl" id="annee-lbl">—</div>
+        <button class="bnav" id="ba-next" type="button">›</button>
+      </div>
+      <div class="imprimer">
+        <button class="bimp" id="b-imp-cal" type="button">Imprimer le calendrier</button>
+        <button class="bimp" id="b-imp-liste" type="button">Imprimer la liste</button>
+      </div>
+    </div>
+
+    <div class="grille-principale">
+      <div class="col-calendrier">
+        <div class="carte" id="vue-mois">
+          <div class="grille-jours" id="jours-tete"></div>
+          <div class="grille-jours" id="grille" style="margin-top:7px"></div>
+          <div class="legende">
+            <span><i class="pnt ouvert"></i> Demande (publié)</span>
+            <span><i class="pnt attribue"></i> Confirmé</span>
+            <span><i class="pnt complete"></i> Complété</span>
+            <span><i class="pnt annule"></i> Annulé</span>
+          </div>
+        </div>
+        <div class="carte" id="vue-annee" style="display:none">
+          <div class="grille-annee" id="grille-annee"></div>
+          <div class="legende" style="margin-top:18px">
+            <span><i class="pnt ouvert"></i> Demande</span>
+            <span><i class="pnt attribue"></i> Confirmé</span>
+            <span><i class="pnt complete"></i> Complété</span>
+            <span><i class="pnt annule"></i> Annulé</span>
+          </div>
         </div>
       </div>
-      <div class="grille-jours" id="jours-tete"></div>
-      <div class="grille-jours" id="grille" style="margin-top:6px"></div>
-      <div class="legende">
-        <span><i class="pnt ouvert"></i> Publié (en attente)</span>
-        <span><i class="pnt attribue"></i> Confirmé</span>
-        <span><i class="pnt complete"></i> Complété</span>
+
+      <div class="col-contrats">
+        <div class="carte">
+          <div class="sec">Contrats<small id="n-contrats"></small></div>
+          <div class="onglets no-print" id="onglets">
+            <button class="onglet actif" data-onglet="attribue" type="button">Confirmé</button>
+            <button class="onglet" data-onglet="ouvert" type="button">Demande</button>
+            <button class="onglet" data-onglet="complete" type="button">Complété</button>
+            <button class="onglet" data-onglet="annule" type="button">Annulé</button>
+          </div>
+          <div class="liste-scroll" id="liste"></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
 <script src="/auth.js?v=20260805a"></script>
@@ -92,52 +211,168 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 const JOURS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const JOURS_MINI = ['L','M','M','J','V','S','D'];
 const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-let profil = null, curseur = new Date();
-const parJour = new Map();
+const NOM_TAB = {attribue:'Confirmé', ouvert:'Demande', complete:'Complété', annule:'Annulé'};
+
+let profil = null;
+let vue = 'mois';                              // 'mois' | 'annee'
+let curseur = new Date();                      // mois affiché (vue mois)
+let anneeCourante = new Date().getFullYear();  // année affichée (vue année)
+let ongletActif = 'attribue';
+const parJour = new Map();                     // 'YYYY-MM-DD' -> [contrats]
+let contrats = [];
+
 function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function d10(v){ return String(v).slice(0,10); }
+function dateCourte(v){
+  const d = new Date(d10(v)+'T12:00:00');
+  return String(d.getDate()).padStart(2,'0')+' '+MOIS[d.getMonth()].slice(0,3);
+}
 
 (async function(){
   profil = await cdExigerConnexion(['pharmacie']);
   cdEnteteConnecte();
   try{
-    const { data } = await sb.from('contrats').select('numero_reference,date_contrat,statut')
-      .eq('pharmacie_id', profil.id).in('statut',['ouvert','attribue','complete']);
-    (data||[]).forEach(k=>{ const j=String(k.date_contrat).slice(0,10); if(!parJour.has(j)) parJour.set(j,[]); parJour.get(j).push(k); });
+    const { data } = await sb.from('contrats')
+      .select('numero_reference,date_contrat,heure_debut,heure_fin,tarif_horaire,statut')
+      .eq('pharmacie_id', profil.id)
+      .in('statut',['ouvert','attribue','complete','annule']);
+    contrats = data || [];
+    contrats.forEach(k=>{
+      const j = d10(k.date_contrat);
+      if(!parJour.has(j)) parJour.set(j, []);
+      parJour.get(j).push(k);
+    });
   }catch(e){}
-  $('chargement').style.display='none'; $('cal').style.display='';
-  const jt=$('jours-tete'); JOURS.forEach(j=>{ const d=document.createElement('div'); d.className='jour-tete'; d.textContent=j; jt.appendChild(d); });
-  $('b-prev').onclick=()=>{ curseur.setMonth(curseur.getMonth()-1); dessiner(); };
-  $('b-next').onclick=()=>{ curseur.setMonth(curseur.getMonth()+1); dessiner(); };
-  $('b-auj').onclick=()=>{ curseur=new Date(); dessiner(); };
-  dessiner();
+
+  $('chargement').style.display = 'none';
+  $('corps').style.display = '';
+
+  const jt = $('jours-tete');
+  JOURS.forEach(j=>{ const d=document.createElement('div'); d.className='jour-tete'; d.textContent=j; jt.appendChild(d); });
+
+  $('b-prev').onclick = ()=>{ curseur.setMonth(curseur.getMonth()-1); dessinerMois(); };
+  $('b-next').onclick = ()=>{ curseur.setMonth(curseur.getMonth()+1); dessinerMois(); };
+  $('b-auj').onclick  = ()=>{ curseur = new Date(); dessinerMois(); };
+  $('ba-prev').onclick = ()=>{ anneeCourante--; dessinerAnnee(); };
+  $('ba-next').onclick = ()=>{ anneeCourante++; dessinerAnnee(); };
+
+  $('v-mois').onclick  = ()=> basculerVue('mois');
+  $('v-annee').onclick = ()=> basculerVue('annee');
+
+  document.querySelectorAll('#onglets button.onglet').forEach(b=>{
+    b.onclick = ()=>{
+      ongletActif = b.dataset.onglet;
+      document.querySelectorAll('#onglets button.onglet').forEach(x=>x.classList.toggle('actif', x===b));
+      dessinerListe();
+    };
+  });
+
+  $('b-imp-cal').onclick   = ()=>{ document.body.classList.add('print-cal');   window.print(); };
+  $('b-imp-liste').onclick = ()=>{ document.body.classList.add('print-liste'); window.print(); };
+  window.addEventListener('afterprint', ()=> document.body.classList.remove('print-cal','print-liste'));
+
+  dessinerMois();
+  dessinerAnnee();
+  dessinerListe();
 })();
 
-function dessiner(){
+function basculerVue(v){
+  vue = v;
+  $('v-mois').classList.toggle('actif', v==='mois');
+  $('v-annee').classList.toggle('actif', v==='annee');
+  $('nav-mois').style.display  = v==='mois'  ? '' : 'none';
+  $('nav-annee').style.display = v==='annee' ? '' : 'none';
+  $('vue-mois').style.display  = v==='mois'  ? '' : 'none';
+  $('vue-annee').style.display = v==='annee' ? '' : 'none';
+}
+
+function statutPrioritaire(liste){
+  if(liste.some(x=>x.statut==='attribue'||x.statut==='complete')) return 'contrat';
+  if(liste.some(x=>x.statut==='ouvert')) return 'ouvert';
+  if(liste.some(x=>x.statut==='annule')) return 'annule';
+  return null;
+}
+
+function dessinerMois(){
   $('mois-lbl').textContent = MOIS[curseur.getMonth()] + ' ' + curseur.getFullYear();
-  const grille=$('grille'); grille.innerHTML='';
-  const an=curseur.getFullYear(), mo=curseur.getMonth();
-  let decal=(new Date(an,mo,1).getDay()+6)%7;
-  const nbJours=new Date(an,mo+1,0).getDate();
-  const ajd=iso(new Date());
+  const grille = $('grille'); grille.innerHTML='';
+  const an = curseur.getFullYear(), mo = curseur.getMonth();
+  const decal = (new Date(an,mo,1).getDay()+6)%7;
+  const nbJours = new Date(an,mo+1,0).getDate();
+  const ajd = iso(new Date());
   for(let i=0;i<decal;i++){ const c=document.createElement('div'); c.className='jour vide'; grille.appendChild(c); }
   for(let d=1; d<=nbJours; d++){
-    const date=iso(new Date(an,mo,d));
-    const cell=document.createElement('div'); cell.className='jour';
+    const date = iso(new Date(an,mo,d));
+    const cell = document.createElement('div'); cell.className='jour';
     if(date===ajd) cell.classList.add('auj');
-    const liste = parJour.get(date) || [];
-    liste.sort((a,b)=> (a.statut==='ouvert'?1:0) - (b.statut==='ouvert'?1:0));
-    if(liste.some(x=>x.statut==='attribue'||x.statut==='complete')) cell.classList.add('a-contrat');
-    else if(liste.length) cell.classList.add('a-ouvert');
+    const liste = (parJour.get(date)||[]).slice().sort((a,b)=> (a.statut==='ouvert'?1:0)-(b.statut==='ouvert'?1:0));
+    const prio = statutPrioritaire(liste);
+    if(prio==='contrat') cell.classList.add('a-contrat');
+    else if(prio==='ouvert') cell.classList.add('a-ouvert');
+    else if(prio==='annule') cell.classList.add('a-annule');
     const n=document.createElement('div'); n.className='n'; n.textContent=d; cell.appendChild(n);
     liste.slice(0,2).forEach(k=>{
       const a=document.createElement('a'); a.className='pastille '+k.statut; a.textContent=k.numero_reference;
       a.href='/c/'+encodeURIComponent(k.numero_reference); a.title='Voir '+k.numero_reference;
       cell.appendChild(a);
     });
-    if(liste.length>2){ const p=document.createElement('div'); p.style.cssText='font-family:"IBM Plex Mono",monospace;font-size:8px;color:var(--sourd);margin-top:2px'; p.textContent='+'+(liste.length-2); cell.appendChild(p); }
+    if(liste.length>2){ const p=document.createElement('div'); p.className='plus'; p.textContent='+'+(liste.length-2); cell.appendChild(p); }
     grille.appendChild(cell);
   }
+}
+
+function dessinerAnnee(){
+  $('annee-lbl').textContent = anneeCourante;
+  const zone = $('grille-annee'); zone.innerHTML='';
+  const ajd = iso(new Date());
+  for(let m=0; m<12; m++) zone.appendChild(miniMois(anneeCourante, m, ajd));
+}
+
+function miniMois(an, mo, ajd){
+  const carte = document.createElement('div'); carte.className='mini-mois';
+  const titre = document.createElement('div'); titre.className='mini-titre'; titre.textContent = MOIS[mo]; carte.appendChild(titre);
+  const grille = document.createElement('div'); grille.className='mini-grille';
+  JOURS_MINI.forEach(j=>{ const el=document.createElement('div'); el.className='mini-jt'; el.textContent=j; grille.appendChild(el); });
+  const decal = (new Date(an,mo,1).getDay()+6)%7;
+  const nbJours = new Date(an,mo+1,0).getDate();
+  for(let i=0;i<decal;i++){ const c=document.createElement('div'); c.className='mini-j vide'; grille.appendChild(c); }
+  for(let d=1; d<=nbJours; d++){
+    const date = iso(new Date(an,mo,d));
+    const cell = document.createElement('div'); cell.className='mini-j'; cell.textContent = d;
+    if(date===ajd) cell.classList.add('auj');
+    const liste = parJour.get(date);
+    if(liste && liste.length){
+      const p = liste.some(x=>x.statut==='attribue') ? 'attribue'
+              : liste.some(x=>x.statut==='complete') ? 'complete'
+              : liste.some(x=>x.statut==='ouvert')   ? 'ouvert'  : 'annule';
+      const pt=document.createElement('span'); pt.className='pt '+p; cell.appendChild(pt);
+    }
+    cell.onclick = ()=>{ curseur = new Date(an,mo,d); basculerVue('mois'); dessinerMois(); };
+    grille.appendChild(cell);
+  }
+  carte.appendChild(grille);
+  return carte;
+}
+
+function dessinerListe(){
+  const liste = contrats.filter(k=>k.statut===ongletActif);
+  const ascendant = (ongletActif==='ouvert' || ongletActif==='attribue');
+  liste.sort((a,b)=>{ const x=d10(a.date_contrat), y=d10(b.date_contrat); return ascendant ? x.localeCompare(y) : y.localeCompare(x); });
+  $('n-contrats').textContent = liste.length ? '('+liste.length+')' : '';
+  const zone = $('liste');
+  if(!liste.length){ zone.innerHTML = '<div class="vide">Aucun contrat — '+NOM_TAB[ongletActif].toLowerCase()+'.</div>'; return; }
+  zone.innerHTML = liste.map(k=>{
+    const heures = k.heure_debut ? (String(k.heure_debut).slice(0,5)+'–'+String(k.heure_fin||'').slice(0,5)) : '';
+    const tarif  = k.tarif_horaire!=null ? Number(k.tarif_horaire).toFixed(2)+' $/h' : '';
+    const meta   = [heures, tarif].filter(Boolean).join(' · ');
+    return '<a class="ligne-contrat" href="/c/'+encodeURIComponent(k.numero_reference)+'">'
+      +'<span class="lc-date">'+dateCourte(k.date_contrat)+'</span>'
+      +'<span class="lc-mid"><span class="lc-ref">'+k.numero_reference+'</span><span class="lc-meta">'+meta+'</span></span>'
+      +'<span class="chip '+k.statut+'">'+NOM_TAB[k.statut]+'</span>'
+      +'</a>';
+  }).join('');
 }
 </script>
 </body>
