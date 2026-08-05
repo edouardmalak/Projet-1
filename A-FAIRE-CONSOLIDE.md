@@ -41,7 +41,7 @@ Tell me when you want to do #2 and I'll walk through it with you or make any cod
   2. Credentials → Create OAuth client ID → type **Web application**. Authorized JavaScript origins: `https://c-direct.ca` and `https://projet-1-1yi.pages.dev`. No redirect URI needed.
   3. Copy the Client ID, tell me, and I'll drop it into `supabase-config.js` and push.
   4. While the consent screen is in "Testing" status, add pharmaciens as Test users, or publish it to open it to everyone.
-- 🧑 **Apple Sign-In** (new today) — the button exists on the login page and is fully wired, but Apple isn't enabled in Supabase yet, so clicking it currently shows a raw error page. Supabase → Authentication → Providers → Apple → toggle on, paste your Apple Developer Services ID / Team ID / Key. Same shape of setup as Google was.
+- 🧑 **Apple Sign-In** (new today) — the button exists on the login page and is fully wired, gated behind `window.CD_APPLE_ENABLED` in `supabase-config.js` (currently `false`) so clicking it shows a friendly local message instead of a raw Supabase error page. Two steps once you're ready: (1) Supabase → Authentication → Providers → Apple → toggle on, paste your Apple Developer Services ID / Team ID / Key (same shape of setup as Google was); (2) tell me it's done and I'll flip `CD_APPLE_ENABLED` to `true` and push.
 - 🧑 **Taxes for pharmacists other than you** — right now only `edouardmalak@gmail.com` has GST/QST numbers wired into the invoice Worker. Run `sql/17-facturation-pharmacien.sql` in Supabase to add TPS/TVQ/société fields to every pharmacist's profile (they'd fill them in themselves).
 
 ---
