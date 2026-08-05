@@ -23,7 +23,7 @@ body{background:var(--fond);color:var(--texte);font-family:Inter,-apple-system,'
 .nav:hover{color:var(--vert)}
 
 /* --- corps : occupe tout le reste, jamais de scroll --- */
-.page{flex:1 1 auto;min-height:0;max-width:1500px;width:100%;margin:0 auto;padding:12px 20px 14px;display:flex;flex-direction:column;gap:10px}
+.page{flex:1 1 auto;min-height:0;max-width:1760px;width:100%;margin:0 auto;padding:12px 20px 14px;display:flex;flex-direction:column;gap:10px}
 
 .entete{display:flex;align-items:center;gap:14px;flex-wrap:wrap;flex:0 0 auto}
 h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:clamp(15px,1.7vh,20px);letter-spacing:.1em;text-transform:uppercase}
@@ -103,7 +103,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:clamp(15px,1.
     </div>
     <div class="cmd">
       <span class="pastille-etat" id="etat-gcal">Google Agenda : non connecté</span>
-      <button class="bg" id="b-gcal" title="Synchroniser avec Google Agenda">
+      <button class="bg" id="b-gcal" title="Envoyer vos disponibilités vers Google Agenda">
         <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.2c0-.7-.06-1.36-.18-2H12v3.79h5.38a4.6 4.6 0 0 1-2 3.02v2.5h3.24c1.9-1.74 2.98-4.3 2.98-7.31Z"/><path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.43l-3.24-2.5c-.9.6-2.05.96-3.38.96-2.6 0-4.8-1.76-5.59-4.12H3.06v2.58A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.41 13.91a6 6 0 0 1 0-3.82V7.51H3.06a10 10 0 0 0 0 8.98l3.35-2.58Z"/><path fill="#EA4335" d="M12 5.98c1.47 0 2.79.5 3.83 1.5l2.87-2.87C16.95 2.99 14.7 2 12 2a10 10 0 0 0-8.94 5.51l3.35 2.58C7.2 7.73 9.4 5.98 12 5.98Z"/></svg>
         <span id="b-gcal-txt">Connecter</span>
       </button>
@@ -301,10 +301,14 @@ async function appliquer(dates, activer){
 }
 
 /* =====================================================================
-   GOOGLE AGENDA — synchronisation deux sens
-   Nécessite window.CD_GOOGLE_CLIENT_ID (voir supabase-config.js).
-   Les événements créés portent la marque privée cdirect=dispo : on ne
-   touche donc JAMAIS aux autres rendez-vous de l'usager.
+   GOOGLE AGENDA — synchronisation à SENS UNIQUE : C-Direct → Google.
+   On pousse les disponibilités vers Google ; on ne modifie JAMAIS les
+   disponibilités C-Direct à partir de ce qui se trouve dans Google
+   (lireGoogle() sert uniquement à éviter les doublons et à afficher le
+   pastille "Dans Google Agenda"). Nécessite window.CD_GOOGLE_CLIENT_ID
+   (voir supabase-config.js). Les événements créés portent la marque
+   privée cdirect=dispo : on ne touche donc JAMAIS aux autres
+   rendez-vous de l'usager.
 ===================================================================== */
 const GSCOPE='https://www.googleapis.com/auth/calendar.events';
 const MARQUE='cdirect';
@@ -331,7 +335,7 @@ function initGoogle(){
           jeton = rep.access_token;
           localStorage.setItem('cd_gcal_actif','1');
           etatGcal('connecté', true);
-          $('b-gcal-txt').textContent='Synchroniser';
+          $('b-gcal-txt').textContent='Envoyer';
           await synchroniser();
         } else { msg('Connexion Google refusée.', false); }
       }
@@ -403,31 +407,22 @@ async function pousserVersGoogle(dates, activer){
   }catch(e){ msg(e.message, false); }
 }
 
-/* synchronisation complète : union non destructive dans les deux sens */
+/* sens unique : pousse les disponibilités C-Direct vers Google — jamais l'inverse */
 async function synchroniser(){
-  const b=$('b-gcal'); b.disabled=true; const t=$('b-gcal-txt'); const avant=t.textContent; t.textContent='Sync…';
+  const b=$('b-gcal'); b.disabled=true; const t=$('b-gcal-txt'); const avant=t.textContent; t.textContent='Envoi…';
   try{
-    await lireGoogle();
+    await lireGoogle();   /* lu seulement pour éviter les doublons — jamais écrit vers C-Direct */
 
     const ajd = iso(new Date());
     const versGoogle = [...dispo].filter(d => d>=ajd && !gcalDates.has(d));
-    const versCD     = [...gcalDates.keys()].filter(d => d>=ajd && !dispo.has(d));
 
     if(versGoogle.length) await pousserVersGoogle(versGoogle, true);
 
-    if(versCD.length){
-      const { error } = await sb.from('disponibilites')
-        .upsert(versCD.map(d=>({ pharmacien_id: profil.id, date_dispo: d })), { onConflict:'pharmacien_id,date_dispo' });
-      if(error) throw new Error(error.message);
-      versCD.forEach(d=>dispo.add(d));
-    }
-
     dessiner();
-    const n = versGoogle.length + versCD.length;
-    msg(n===0 ? 'Déjà synchronisé — rien à changer.'
-              : 'Synchronisé : '+versGoogle.length+' vers Google, '+versCD.length+' vers C-Direct.', true);
+    msg(versGoogle.length===0 ? 'Déjà à jour — rien à envoyer vers Google.'
+              : versGoogle.length+' journée(s) envoyée(s) vers Google Agenda.', true);
   }catch(e){ msg(e.message, false); }
-  finally{ b.disabled=false; t.textContent = jeton ? 'Synchroniser' : avant; }
+  finally{ b.disabled=false; t.textContent = jeton ? 'Envoyer' : avant; }
 }
 </script>
 </body>
