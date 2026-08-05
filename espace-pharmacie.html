@@ -232,7 +232,7 @@ function msg(id, texte, ok){
 const EP_ONGLETS = ['accueil','nouvelle-demande','mes-contrats','factures-recues'];
 function afficherOngletEP(nom){
   if(!EP_ONGLETS.includes(nom)) nom = 'accueil';
-  document.querySelectorAll('[data-onglet]').forEach(p=>{
+  document.querySelectorAll('div[data-onglet]').forEach(p=>{
     p.style.display = (p.dataset.onglet === nom) ? '' : 'none';
   });
   document.querySelectorAll('#ep-onglets button').forEach(b=>{

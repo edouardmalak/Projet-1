@@ -386,7 +386,7 @@ function msg(id, texte, ok){
    Tarification / Notifications / Réputation — remplace le long défilement
    unique par des sections qu'on ouvre une à la fois. ---- */
 function afficherOnglet(nom){
-  document.querySelectorAll('[data-onglet]').forEach(p=>{
+  document.querySelectorAll('div[data-onglet]').forEach(p=>{
     p.style.display = (p.dataset.onglet === nom) ? '' : 'none';
   });
   document.querySelectorAll('#profil-onglets button').forEach(b=>{

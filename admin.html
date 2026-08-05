@@ -320,7 +320,7 @@ function msg(id, texte, ok){
 const ADMIN_ONGLETS = ['vue','utilisateurs','argent','communications'];
 function afficherOngletAdmin(nom){
   if(!ADMIN_ONGLETS.includes(nom)) nom = 'vue';
-  document.querySelectorAll('[data-onglet]').forEach(p=>{
+  document.querySelectorAll('div[data-onglet]').forEach(p=>{
     p.style.display = (p.dataset.onglet === nom) ? '' : 'none';
   });
   document.querySelectorAll('#admin-onglets button').forEach(b=>{
