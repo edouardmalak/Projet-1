@@ -416,8 +416,20 @@ $('btn-google').onclick = async ()=>{
   location.href = data.url;   /* redirection vers Google */
 };
 
-/* ---------- Apple OAuth (même schéma que Google ci-dessus) ---------- */
+/* ---------- Apple OAuth (même schéma que Google ci-dessus) ----------
+   Garde en plus, AVANT tout appel réseau : Supabase construit toujours
+   une URL d'autorisation valide côté client, même si le fournisseur Apple
+   n'est pas activé côté serveur — le check error/data.url ci-dessous ne
+   se déclenche donc jamais pour ce cas précis, et l'usager qui cliquerait
+   quand même finirait sur une page JSON brute renvoyée par Supabase.
+   window.CD_APPLE_ENABLED (supabase-config.js) coupe court avant ça. */
 $('btn-apple').onclick = async ()=>{
+  if(!window.CD_APPLE_ENABLED){
+    erreur('err-entree', cdT(
+      "La connexion Apple n'est pas encore activée. Utilisez le courriel + mot de passe, ou réessayez plus tard.",
+      "Apple sign-in isn't enabled yet. Please use email + password, or try again later."));
+    return;
+  }
   const b = $('btn-apple'); b.disabled = true;
   const { data, error } = await sb.auth.signInWithOAuth({
     provider:'apple',

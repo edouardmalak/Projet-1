@@ -19,3 +19,11 @@ window.CD_CHAT_URL = "https://c-direct-chat.edouardmalak.workers.dev";
 // disponibilités). Vide = bouton inactif, le calendrier fonctionne
 // normalement sans. À créer dans Google Cloud Console — voir PRELANCEMENT.md.
 window.CD_GOOGLE_CLIENT_ID = "";
+
+// Connexion "Sign in with Apple". false = bouton "Continuer avec Apple"
+// affiche un message local au lieu d'appeler Supabase (le fournisseur
+// Apple n'y est pas encore activé — appeler quand même enverrait l'usager
+// vers une page d'erreur Supabase brute). Passer à true seulement APRÈS
+// avoir activé Apple dans Supabase → Authentication → Providers → Apple
+// (Services ID / Team ID / Key du compte Apple Developer).
+window.CD_APPLE_ENABLED = false;
