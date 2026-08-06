@@ -643,7 +643,7 @@ function rendrePlateaux(){
 (async function(){
   profil = await cdExigerConnexion();
   cdEnteteConnecte();
-  $('sous').textContent = (profil.role==='pharmacie' ? 'PHARMACIE' : profil.role==='admin' ? 'ADMINISTRATEUR' : 'PHARMACIEN(NE) REMPLAÇANT(E)') + ' · ' + (profil.courriel||'');
+  $('sous').textContent = (profil.role==='pharmacie' ? 'PHARMACIE' : profil.role==='admin' ? 'ADMINISTRATEUR' : profil.profession==='atp' ? 'ATP REMPLAÇANT(E)' : 'PHARMACIEN(NE) REMPLAÇANT(E)') + ' · ' + (profil.courriel||'');
 
   if(profil.role !== 'admin') rendreMaNote();
 

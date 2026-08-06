@@ -1278,7 +1278,7 @@ async function ciblesFiltrees(env, k) {
   const moisFin = finMois.toISOString().slice(0, 10);
 
   const [pharmaciens, pharmacies, reglesL] = await Promise.all([
-    sbSelect(env, `profiles?select=id,telephone,code_postal,rayon_deplacement_km,tarif_horaire_min,logiciels,sms_silence&role=eq.pharmacien&sms_optin=eq.true&approuve=eq.true&telephone=not.is.null`),
+    sbSelect(env, `profiles?select=id,telephone,code_postal,rayon_deplacement_km,tarif_horaire_min,logiciels,sms_silence&role=eq.pharmacien&profession=eq.${k.profession_recherchee || 'pharmacien'}&sms_optin=eq.true&approuve=eq.true&telephone=not.is.null`),
     sbSelect(env, `profiles?select=id,telephone,courriel,langue,ville,nom_pharmacie,code_postal,logiciel,sms_silence&id=eq.${k.pharmacie_id}`),
     sbSelect(env, `regles_reseau?select=taux_km&id=eq.1`),
   ]);
@@ -1357,7 +1357,7 @@ async function ciblesFiltrees(env, k) {
 ===================================================================== */
 async function ciblesPush(env, k, pharmacie) {
   const pharmaciens = await sbSelect(env,
-    `profiles?select=id,code_postal,rayon_deplacement_km,tarif_horaire_min,logiciels,notif_seulement_logiciel_connu,notif_distance_max_km&role=eq.pharmacien&approuve=eq.true&notif_push_actif=eq.true`);
+    `profiles?select=id,code_postal,rayon_deplacement_km,tarif_horaire_min,logiciels,notif_seulement_logiciel_connu,notif_distance_max_km&role=eq.pharmacien&profession=eq.${k.profession_recherchee || 'pharmacien'}&approuve=eq.true&notif_push_actif=eq.true`);
   const retenus = [];
   for (const p of pharmaciens) {
     const km = distanceKm(p.code_postal, pharmacie.code_postal);

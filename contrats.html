@@ -40,7 +40,9 @@ tbody tr:last-child td{border-bottom:none}
 .match.moyen{color:var(--jaune);border-color:rgba(232,184,73,.4);background:rgba(232,184,73,.08)}
 .match.faible{color:var(--sourd);border-color:var(--ligne2)}
 .coeur{background:none;border:none;cursor:pointer;color:var(--ligne2);font-size:16px;margin-left:10px;vertical-align:middle;line-height:1}
+.coeur svg{display:block}
 .coeur:hover{color:var(--sourd)}
+.coeur.on svg{fill:currentColor}
 .coeur.on{color:var(--rouge)}
 .filtre-fav{background:transparent;border:1px solid var(--ligne2);border-radius:4px;padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--sourd);cursor:pointer}
 .filtre-fav:hover{border-color:var(--vert)}
@@ -303,6 +305,10 @@ const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 let profil = null, contrats = [], regles = null;
 
+/* icône « marque-page » (sauvegarder), remplace l'ancien cœur — plus clair : sauvegarder ≠ aimer */
+const CD_ICONE_SAUV = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10a1 1 0 0 1 1 1v16l-6-4-6 4V4a1 1 0 0 1 1-1z"/></svg>';
+function cdTitreSauv(actif){ return actif ? 'Retirer des sauvegardés' : 'Sauvegarder'; }
+
 /* ================= vue Calendrier — état + utilitaires ================= */
 let vuePrincipale = 'liste';        // 'liste' | 'calendrier'
 let vueCal = 'mois';                // 'mois' | 'annee'
@@ -314,14 +320,21 @@ const JOURS_MINI_C = ['L','M','M','J','V','S','D'];
 function isoC(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function dateCourteC(v){ const d=new Date(String(v).slice(0,10)+'T12:00:00'); return String(d.getDate()).padStart(2,'0')+' '+MOIS_C[d.getMonth()].slice(0,3); }
 
+/* distance domicile → contrat — calculée à part de l'estimation $ (regles_reseau
+   peut échouer à charger sans jamais devoir cacher le km, qui doit rester toujours visible) */
+function calcDistance(k){
+  try{
+    const maCP = profil && profil.code_postal;
+    return (maCP && k.code_postal && typeof cdDistanceKm === 'function')
+      ? cdDistanceKm(maCP, k.code_postal) : null;
+  }catch(e){ return null; }
+}
+
 /* estimation défensive par contrat (jamais bloquante) */
 function calcEstim(k){
   try{
     if(typeof cdEstimation !== 'function' || !regles) return null;
-    const maCP = profil && profil.code_postal;
-    const d = (maCP && k.code_postal && typeof cdDistanceKm === 'function')
-      ? cdDistanceKm(maCP, k.code_postal) : null;
-    return cdEstimation(k.tarif_horaire, k.heure_debut, k.heure_fin, d, regles);
+    return cdEstimation(k.tarif_horaire, k.heure_debut, k.heure_fin, k._distanceKm, regles);
   }catch(e){ return null; }
 }
 
@@ -334,7 +347,7 @@ function calcMatch(k){
     if(logs.includes(k.logiciel)){ score += 25; raisons.push('logiciel connu'); }
     else { score -= 15; raisons.push('logiciel non maîtrisé'); }
   }
-  const dist = k._est && k._est.distanceKm;
+  const dist = k._distanceKm;
   const rayon = profil.rayon_deplacement_km;
   if(dist != null){
     if(rayon){ if(dist <= rayon){ score += 15; raisons.push(dist+' km · dans votre rayon'); } else { score -= 25; raisons.push(dist+' km · hors rayon'); } }
@@ -397,7 +410,7 @@ function listeFiltree(){
     if(vv && k.ville !== vv) return false;
     if(tarifSel && String(k.tarif_horaire) !== tarifSel) return false;
     if(lg && k.logiciel !== lg) return false;
-    if(!isNaN(dmax)){ const km = k._est && k._est.distanceKm; if(km==null || km>dmax) return false; }
+    if(!isNaN(dmax)){ const km = k._distanceKm; if(km==null || km>dmax) return false; }
     return true;
   });
   list.sort((a,b)=>{
@@ -405,8 +418,8 @@ function listeFiltree(){
     if(tri==='tarif') return parseFloat(b.tarif_horaire)-parseFloat(a.tarif_horaire);
     if(tri==='date_contrat') return (a.date_contrat>b.date_contrat?1:(a.date_contrat<b.date_contrat?-1:0));
     if(tri==='distance'){
-      const da=(a._est&&a._est.distanceKm!=null)?a._est.distanceKm:Infinity;
-      const db=(b._est&&b._est.distanceKm!=null)?b._est.distanceKm:Infinity; return da-db;
+      const da=(a._distanceKm!=null)?a._distanceKm:Infinity;
+      const db=(b._distanceKm!=null)?b._distanceKm:Infinity; return da-db;
     }
     return 0; /* 'date' : ordre reçu (plus récents d'abord via la RPC) */
   });
@@ -436,11 +449,13 @@ function dessinerTableau(list){
     const txt = (t, cls)=>{ const td=document.createElement('td'); if(cls) td.className=cls; td.textContent=t; return td; };
     const tarifTd = document.createElement('td'); tarifTd.className='tarif';
     tarifTd.textContent = cdArgent(k.tarif_horaire) + '/h';
-    if(k._est){
+    if(k._est || k._distanceKm!=null){
       const s = document.createElement('div');
       s.style.cssText = 'font-weight:400;color:var(--sourd);font-size:11px;margin-top:2px';
-      s.textContent = '≈ ' + cdArgent(k._est.total).replace(',00','') +
-        (k._est.distanceKm!=null ? ' · ' + k._est.distanceKm + ' km' : '');
+      const morceaux = [];
+      if(k._est) morceaux.push('≈ ' + cdArgent(k._est.total).replace(',00',''));
+      if(k._distanceKm!=null) morceaux.push(k._distanceKm + ' km');
+      s.textContent = morceaux.join(' · ');
       tarifTd.appendChild(s);
     }
     /* cellule référence + puce de compatibilité */
@@ -458,9 +473,10 @@ function dessinerTableau(list){
       ? '<span class="badge postule">Quart demandé</span>'
       : '<span class="badge ouvert">Disponible</span>';
     const coeur = document.createElement('button');
-    coeur.type = 'button'; coeur.className = 'coeur' + (estFavori(k.numero_reference) ? ' on' : '');
-    coeur.innerHTML = '♥'; coeur.title = 'Favori';
-    coeur.onclick = (e)=>{ e.stopPropagation(); toggleFavori(k.numero_reference); coeur.classList.toggle('on'); majCompteurSauv(); if(favOnly) dessiner(); };
+    const dejaSauv = estFavori(k.numero_reference);
+    coeur.type = 'button'; coeur.className = 'coeur' + (dejaSauv ? ' on' : '');
+    coeur.innerHTML = CD_ICONE_SAUV; coeur.title = cdTitreSauv(dejaSauv);
+    coeur.onclick = (e)=>{ e.stopPropagation(); toggleFavori(k.numero_reference); coeur.classList.toggle('on'); coeur.title = cdTitreSauv(coeur.classList.contains('on')); majCompteurSauv(); if(favOnly) dessiner(); };
     statutTd.appendChild(coeur);
     /* cellule date + drapeau si le pharmacien s'est marqué indisponible ce jour-là */
     const dateTd = document.createElement('td');
@@ -589,15 +605,17 @@ function dessinerListeCal(list){
   zone.innerHTML = list.map(k=>{
     const heures = k.heure_debut ? (String(k.heure_debut).slice(0,5)+'–'+String(k.heure_fin||'').slice(0,5)) : '';
     const tarif  = k.tarif_horaire!=null ? cdArgent(k.tarif_horaire)+'/h' : '';
-    const meta   = [heures, k.ville, tarif].filter(Boolean).join(' · ');
+    const dist   = k._distanceKm!=null ? k._distanceKm+' km' : '';
+    const meta   = [heures, k.ville, tarif, dist].filter(Boolean).join(' · ');
     const statut = k.deja_postule ? 'postule' : 'ouvert';
     const libelle= k.deja_postule ? 'Quart demandé' : 'Disponible';
     const indispo = estIndisponible(k.date_contrat);
+    const dejaSauv = estFavori(k.numero_reference);
     return '<div class="ligne-contrat" data-ref="'+k.numero_reference+'">'
       +'<span class="lc-date'+(indispo?' indispo':'')+'"'+(indispo?' title="Vous êtes indisponible ce jour"':'')+'>'+dateCourteC(k.date_contrat)+'</span>'
       +'<span class="lc-mid"><span class="lc-ref">'+k.numero_reference+'</span><span class="lc-meta">'+meta+'</span></span>'
       +'<span class="chip '+statut+'">'+libelle+'</span>'
-      +'<button type="button" class="coeur'+(estFavori(k.numero_reference)?' on':'')+'" title="Favori">♥</button>'
+      +'<button type="button" class="coeur'+(dejaSauv?' on':'')+'" title="'+cdTitreSauv(dejaSauv)+'">'+CD_ICONE_SAUV+'</button>'
       +'</div>';
   }).join('');
 }
@@ -633,7 +651,7 @@ function dessinerListeCal(list){
     const coeur = e.target.closest('.coeur');
     const row = e.target.closest('[data-ref]');
     if(!row) return;
-    if(coeur){ toggleFavori(row.dataset.ref); coeur.classList.toggle('on'); majCompteurSauv(); if(favOnly) dessiner(); return; }
+    if(coeur){ toggleFavori(row.dataset.ref); coeur.classList.toggle('on'); coeur.title = cdTitreSauv(coeur.classList.contains('on')); majCompteurSauv(); if(favOnly) dessiner(); return; }
     location.href = '/c/' + encodeURIComponent(row.dataset.ref);
   });
   try{ const { data: rg } = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle(); regles = rg; }catch(e){}
@@ -648,7 +666,7 @@ function dessinerListeCal(list){
   if(error){ $('err').textContent = 'Erreur : ' + error.message; $('err').style.display='block'; return; }
 
   contrats = data || [];
-  contrats.forEach(k=>{ k._est = calcEstim(k); k._match = calcMatch(k); });
+  contrats.forEach(k=>{ k._distanceKm = calcDistance(k); k._est = calcEstim(k); k._match = calcMatch(k); });
   remplirFiltresDynamiques();
 
   /* Le bandeau de filtres (dont ♥ Favoris) et ses écouteurs doivent rester

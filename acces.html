@@ -167,6 +167,21 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
         <button class="retour-carte" id="retour-entree">← Retour</button>
       </div>
 
+      <!-- Étape 1b : profession (uniquement pour le rôle pharmacien) -->
+      <div class="zone" id="z-profession" style="margin-top:22px">
+        <button class="role-btn" id="pr-pharmacien">
+          <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#0B6E4F" stroke-width="2"/><path d="M4 20c0-3.3 3.6-5 8-5s8 1.7 8 5" stroke="#0B6E4F" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span><b>Pharmacien(ne)</b><small>TITULAIRE D'UN PERMIS DE L'OPQ</small></span>
+          <span class="fleche">&gt;</span>
+        </button>
+        <button class="role-btn" id="pr-atp">
+          <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#0B6E4F" stroke-width="2"/><path d="M4 20c0-3.3 3.6-5 8-5s8 1.7 8 5" stroke="#0B6E4F" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span><b>Assistant(e) technique en pharmacie (ATP)</b><small>DEP / ASP RECONNU</small></span>
+          <span class="fleche">&gt;</span>
+        </button>
+        <button class="retour-carte" id="retour-role">← Retour</button>
+      </div>
+
       <!-- Rappel du rôle choisi -->
       <div class="role-actuel" id="role-actuel" style="display:none">
         <span>PROFIL&nbsp;:</span>&nbsp;<b id="role-nom"></b>
@@ -276,16 +291,23 @@ const params = new URLSearchParams(location.search);
 
 let mode = params.get('mode') || 'insc';   /* insc | conn | oubli | reset | completer | suite */
 let role = ['pharmacien','pharmacie'].includes(params.get('role')) ? params.get('role') : null;
+let profession = ['pharmacien','atp'].includes(params.get('profession')) ? params.get('profession') : null;
 let etape = 'entree';
 /* mode==='conn' démarre aussi sur l'écran d'entrée (bouton Google inclus) :
    la connexion Google doit être proposée aux comptes déjà inscrits, pas
    seulement à l'inscription. */
 
 const NOM_ROLE = { pharmacien:'PHARMACIEN(NE) REMPLAÇANT(E)', pharmacie:'PHARMACIE' };
+/* étiquette affichée pour un rôle pharmacien : distingue Pharmacien(ne)/ATP
+   (sql/50 — profession est une sous-dimension du rôle, pas un rôle séparé) */
+function libelleRole(r, p){
+  if(r === 'pharmacien') return p === 'atp' ? 'ATP REMPLAÇANT(E)' : NOM_ROLE.pharmacien;
+  return NOM_ROLE[r] || r;
+}
 
 /* ---------- rendu ---------- */
 function cacherTout(){
-  ['z-entree','z-role','z-connexion','z-inscription','z-oubli','z-reset','z-completer'].forEach(z=>$(z).classList.remove('on'));
+  ['z-entree','z-role','z-connexion','z-inscription','z-oubli','z-reset','z-completer','z-profession'].forEach(z=>$(z).classList.remove('on'));
   $('z-succes').style.display='none';
   $('role-actuel').style.display='none';
   document.querySelectorAll('.erreur').forEach(e=>e.style.display='none');
@@ -308,11 +330,14 @@ function render(){
     if(!role){
       $('sous-titre').textContent='Identifiez votre profil :';
       montrer('z-role');
+    }else if(role==='pharmacien' && !profession){
+      $('sous-titre').textContent='Précisez votre profession :';
+      montrer('z-profession');
     }else{
       $('sous-titre').textContent='Une dernière étape.';
       montrer('z-completer');
       $('role-actuel').style.display='flex';
-      $('role-nom').textContent=NOM_ROLE[role];
+      $('role-nom').textContent=libelleRole(role, profession);
     }
     return;
   }
@@ -339,11 +364,14 @@ function render(){
   }else if(etape==='role' || !role){
     $('sous-titre').textContent='Identifiez votre profil :';
     montrer('z-role');
+  }else if(role==='pharmacien' && !profession){
+    $('sous-titre').textContent='Précisez votre profession :';
+    montrer('z-profession');
   }else{
     $('sous-titre').textContent='Vos renseignements de base.';
     montrer('z-inscription');
     $('role-actuel').style.display='flex';
-    $('role-nom').textContent=NOM_ROLE[role];
+    $('role-nom').textContent=libelleRole(role, profession);
   }
 }
 
@@ -370,9 +398,12 @@ function messageErreur(e){
 /* ---------- navigation ---------- */
 $('btn-courriel').onclick = ()=>{ etape = (mode==='conn') ? 'form' : (role ? 'form' : 'role'); render(); };
 $('retour-entree').onclick= ()=>{ if(mode==='completer'){return;} etape='entree'; render(); };
-$('r-pharmacien').onclick = ()=>{ role='pharmacien'; etape='form'; render(); };
+$('r-pharmacien').onclick = ()=>{ role='pharmacien'; profession=null; etape='form'; render(); };
 $('r-pharmacie').onclick  = ()=>{ role='pharmacie';  etape='form'; render(); };
-$('chg-role').onclick     = ()=>{ role=null; etape='role'; render(); };
+$('chg-role').onclick     = ()=>{ role=null; profession=null; etape='role'; render(); };
+$('pr-pharmacien').onclick = ()=>{ profession='pharmacien'; etape='form'; render(); };
+$('pr-atp').onclick        = ()=>{ profession='atp'; etape='form'; render(); };
+$('retour-role').onclick   = ()=>{ etape='role'; render(); };
 document.querySelectorAll('.vers-insc').forEach(b=> b.onclick = ()=>{ mode='insc'; etape='entree'; render(); });
 document.querySelectorAll('.vers-conn').forEach(b=> b.onclick = ()=>{ mode='conn'; etape='entree'; render(); });
 $('lien-oubli').onclick = ()=>{ mode='oubli'; $('o-courriel').value=$('c-courriel').value; render(); };
@@ -505,6 +536,7 @@ $('btn-renvoi').onclick = ()=> renvoyerConfirmation($('c-courriel').value, $('bt
 $('f-inscription').addEventListener('submit', async e=>{
   e.preventDefault();
   if(!role){ etape='role'; render(); return; }
+  if(role==='pharmacien' && !profession){ etape='profession'; render(); return; }
   const tel = cdE164($('i-tel').value);
   if(!tel){ erreur('err-insc','Téléphone invalide — 10 chiffres requis.'); return; }
   if(!$('i-consent').checked){ erreur('err-insc','Le consentement est requis.'); return; }
@@ -515,7 +547,7 @@ $('f-inscription').addEventListener('submit', async e=>{
     options:{
       emailRedirectTo: location.origin + location.pathname + '?mode=conn',
       data:{
-        role, nom:$('i-nom').value.trim(), prenom:$('i-prenom').value.trim(),
+        role, profession, nom:$('i-nom').value.trim(), prenom:$('i-prenom').value.trim(),
         telephone: tel, consentement:'true', consentement_date:new Date().toISOString()
       }
     }
@@ -587,6 +619,7 @@ $('f-completer').addEventListener('submit', async e=>{
   if(!tel){ erreur('err-completer','Téléphone invalide — 10 chiffres requis.'); return; }
   if(!$('g-consent').checked){ erreur('err-completer','Le consentement est requis.'); return; }
   if(!role){ etape='role'; render(); return; }
+  if(role==='pharmacien' && !profession){ etape='profession'; render(); return; }
   const s = await cdSession();
   if(!s){ mode='conn'; etape='form'; render(); return; }
   const b=$('btn-completer'); b.disabled=true;
@@ -596,11 +629,12 @@ $('f-completer').addEventListener('submit', async e=>{
   };
   const actuel = await cdProfil(true);
   if(!actuel || !actuel.role) maj.role = role;
+  if(!actuel || !actuel.profession) maj.profession = profession;
   let error;
   if(actuel){
     ({ error } = await sb.from('profiles').update(maj).eq('id', s.user.id));
   }else{
-    maj.id = s.user.id; maj.role = role;
+    maj.id = s.user.id; maj.role = role; maj.profession = profession;
     ({ error } = await sb.from('profiles').insert(maj));
   }
   b.disabled=false;
@@ -648,7 +682,7 @@ async function apresConnexion(){
       if(p && p.role && p.consentement_date){
         const stylBtn = "background:none;border:none;color:var(--vert-vif);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-size:13px";
         succes('DÉJÀ CONNECTÉ.',
-          "Cette fenêtre est connectée en tant que <b>" + ((p.prenom||p.courriel||'').replace(/</g,'&lt;')) + "</b> (" + (NOM_ROLE[p.role]||p.role) + ").<br><br>" +
+          "Cette fenêtre est connectée en tant que <b>" + ((p.prenom||p.courriel||'').replace(/</g,'&lt;')) + "</b> (" + (libelleRole(p.role, p.profession)||p.role) + ").<br><br>" +
           "<button style='"+stylBtn+"' onclick='cdAllerEspace()'>Continuer vers mon espace</button>" +
           " &nbsp;·&nbsp; " +
           "<button style='"+stylBtn+"' onclick='cdChangerCompte()'>Changer de compte (déconnexion)</button>" +

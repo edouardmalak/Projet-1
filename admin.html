@@ -385,7 +385,7 @@ function cdToast(texte, ok){
 
   /* ---- utilisateurs (lecture seule) ---- */
   const { data: users, error: eu } = await sb.from('profiles')
-    .select('id,role,nom,prenom,courriel,telephone,ville,ville_base,nom_pharmacie,sms_optin,created_at,approuve,statut_verification')
+    .select('id,role,profession,nom,prenom,courriel,telephone,ville,ville_base,nom_pharmacie,sms_optin,created_at,approuve,statut_verification')
     .order('created_at',{ascending:false});
   const tu = $('t-users');
   if(eu){ tu.innerHTML = '<tr><td colspan="8" class="vide">Erreur : '+eu.message+'</td></tr>'; }
@@ -399,7 +399,8 @@ function cdToast(texte, ok){
       const tr = document.createElement('tr');
       const td = (t)=>{ const c=document.createElement('td'); c.textContent=t; return c; };
       const role = document.createElement('td');
-      role.innerHTML = '<span class="role '+(u.role||'')+'">'+(u.role||'—')+'</span>';
+      const roleTxt = (u.role||'—') + (u.role==='pharmacien' && u.profession==='atp' ? ' (ATP)' : '');
+      role.innerHTML = '<span class="role '+(u.role||'')+'">'+roleTxt+'</span>';
 
       /* colonne validation : Valider / Révoquer (trigger DB : admin seulement) */
       const val = document.createElement('td');

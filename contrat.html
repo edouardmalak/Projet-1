@@ -25,7 +25,9 @@ background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),line
 .entete{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
 .entete .droite-entete{display:flex;align-items:center;gap:6px}
 .coeur{background:none;border:none;cursor:pointer;color:var(--ligne2);font-size:18px;vertical-align:middle;line-height:1;padding:2px}
+.coeur svg{display:block}
 .coeur:hover{color:var(--sourd)}
+.coeur.on svg{fill:currentColor}
 .coeur.on{color:var(--rouge)}
 h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-spacing:.1em;color:var(--vert-vif)}
 .badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:3px;border:1px solid var(--ligne2);white-space:nowrap}
@@ -123,7 +125,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
       <h1 id="ref">CD-______</h1>
       <div class="droite-entete">
         <span class="badge" id="badge">—</span>
-        <button type="button" class="coeur" id="btn-coeur" title="Sauvegarder" style="display:none">♥</button>
+        <button type="button" class="coeur" id="btn-coeur" title="Sauvegarder" style="display:none"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10a1 1 0 0 1 1 1v16l-6-4-6 4V4a1 1 0 0 1 1-1z"/></svg></button>
       </div>
     </div>
     <p class="sous" id="sous">—</p>
@@ -135,6 +137,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
       <div class="cellule"><small>Date</small><b id="date">—</b></div>
       <div class="cellule"><small>Heures</small><b id="heures">—</b></div>
       <div class="cellule"><small>Tarif horaire</small><b class="vert" id="tarif">—</b></div>
+      <div class="cellule"><small>Distance</small><b id="distance">—</b></div>
       <div class="cellule"><small>Logiciel</small><b id="logiciel">—</b></div>
       <div class="cellule"><small>Rx / jour (semaine)</small><b id="rx_sem">—</b></div>
       <div class="cellule"><small>Rx / jour (weekend)</small><b id="rx_we">—</b></div>
@@ -281,8 +284,10 @@ function msg(texte, type){
   if(profil.role === 'pharmacien'){
     const coeur = $('btn-coeur');
     coeur.style.display = '';
+    const majTitreCoeur = ()=>{ coeur.title = estFavori(k.numero_reference) ? 'Retirer des sauvegardés' : 'Sauvegarder'; };
     coeur.classList.toggle('on', estFavori(k.numero_reference));
-    coeur.onclick = ()=>{ toggleFavori(k.numero_reference); coeur.classList.toggle('on', estFavori(k.numero_reference)); };
+    majTitreCoeur();
+    coeur.onclick = ()=>{ toggleFavori(k.numero_reference); coeur.classList.toggle('on', estFavori(k.numero_reference)); majTitreCoeur(); };
   }
 
   $('sous').textContent = (k.ville || 'Ville non précisée') + ' · publié le ' +
@@ -329,6 +334,7 @@ function msg(texte, type){
       const maCP = profil.code_postal || null;
       distApply = (maCP && k.code_postal) ? cdDistanceKm(maCP, k.code_postal) : null;
     }
+    $('distance').textContent = distApply!=null ? distApply+' km' : '—';
     const { data: rg } = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle();
     reglesReseau = rg || null;
     if(rg && typeof cdEstimation === 'function'){

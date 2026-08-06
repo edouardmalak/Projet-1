@@ -160,6 +160,13 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
     <div class="sec">Publier un contrat</div>
     <p style="color:var(--sourd);font-size:13px;line-height:1.6;margin:-4px 0 18px;font-family:'IBM Plex Mono',monospace">Moins d'une minute. Les pharmaciens compatibles sont notifiés automatiquement (SMS + courriel), et leurs candidatures apparaissent dans « Mes contrats » ci-dessous — vous acceptez en un clic.</p>
     <form id="f">
+      <div class="champ">
+        <label>Profession recherchée</label>
+        <select id="profession_recherchee">
+          <option value="pharmacien">Pharmacien(ne)</option>
+          <option value="atp">Assistant(e) technique en pharmacie (ATP)</option>
+        </select>
+      </div>
       <div class="trois">
         <div class="champ"><label>Date</label><input id="date_contrat" type="date" required></div>
         <div class="champ"><label>Début</label><input id="heure_debut" type="time" required value="09:00"></div>
@@ -261,7 +268,7 @@ function initOngletsEP(){
   $('sous').textContent = (profil.nom_pharmacie || 'Pharmacie') + (profil.ville ? ' · ' + profil.ville : '');
   initOngletsEP();
   chargerTableauBordPharmacie();
-  ['date_contrat','tarif_horaire'].forEach(id=> $(id) && $(id).addEventListener('change', majCompatibles));
+  ['date_contrat','tarif_horaire','profession_recherchee'].forEach(id=> $(id) && $(id).addEventListener('change', majCompatibles));
   ['heure_debut','heure_fin','tarif_horaire'].forEach(id=> $(id) && $(id).addEventListener('input', majPrixDual));
   majPrixDual();
 
@@ -295,6 +302,7 @@ function initOngletsEP(){
     $('btn-pub').disabled = true;
     const { data, error } = await sb.from('contrats').insert({
       pharmacie_id: profil.id,
+      profession_recherchee: $('profession_recherchee') ? $('profession_recherchee').value : 'pharmacien',
       date_contrat: $('date_contrat').value,
       heure_debut: $('heure_debut').value,
       heure_fin: $('heure_fin').value,
@@ -479,7 +487,7 @@ async function chargerContrats(){
     div.innerHTML =
       '<div class="tete">'+
         '<a class="ref" href="/c/'+encodeURIComponent(k.numero_reference)+'" onclick="event.stopPropagation()">'+k.numero_reference+'</a>'+
-        '<span class="meta">'+cdDate(k.date_contrat)+' · '+cdHeure(k.heure_debut)+'–'+cdHeure(k.heure_fin)+' · '+cdArgent(k.tarif_horaire)+'/h</span>'+
+        '<span class="meta">'+(k.profession_recherchee==='atp'?'ATP':'Pharmacien(ne)')+' · '+cdDate(k.date_contrat)+' · '+cdHeure(k.heure_debut)+'–'+cdHeure(k.heure_fin)+' · '+cdArgent(k.tarif_horaire)+'/h</span>'+
         '<span class="compteur"><b>'+n+'</b> candidature'+(n>1?'s':'')+'</span>'+
         '<span class="badge '+b[0]+'">'+b[1]+'</span>'+
       '</div>'+
@@ -797,11 +805,12 @@ function majPrixDual(){
 async function majCompatibles(){
   const el = $('compatibles'); if(!el) return;
   const d = $('date_contrat').value, t = parseFloat($('tarif_horaire').value);
+  const prof = $('profession_recherchee') ? $('profession_recherchee').value : 'pharmacien';
   if(!d || !t){ el.style.display='none'; return; }
   try{
-    const { data, error } = await sb.rpc('compter_compatibles', { p_date:d, p_tarif:t });
+    const { data, error } = await sb.rpc('compter_compatibles', { p_date:d, p_tarif:t, p_profession:prof });
     if(error || data == null){ el.style.display='none'; return; }
-    el.textContent = data + ' pharmacien' + (data>1?'s':'') + ' compatible' + (data>1?'s':'') +
+    el.textContent = data + (prof==='atp' ? ' ATP' : ' pharmacien'+(data>1?'s':'')) + ' compatible' + (data>1?'s':'') +
       ' dans le réseau le ' + cdDate(d);
     el.style.display='';
   }catch(e){ el.style.display='none'; }
