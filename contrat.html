@@ -138,6 +138,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
       <div class="cellule"><small>Heures</small><b id="heures">—</b></div>
       <div class="cellule"><small>Tarif horaire</small><b class="vert" id="tarif">—</b></div>
       <div class="cellule"><small>Distance</small><b id="distance">—</b></div>
+      <div class="cellule"><small>Hébergement</small><b id="hebergement">—</b></div>
       <div class="cellule"><small>Logiciel</small><b id="logiciel">—</b></div>
       <div class="cellule"><small>Rx / jour (semaine)</small><b id="rx_sem">—</b></div>
       <div class="cellule"><small>Rx / jour (weekend)</small><b id="rx_we">—</b></div>
@@ -207,6 +208,11 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
           <div class="champ"><label>Début proposé</label><input id="o-debut" type="time"></div>
           <div class="champ"><label>Fin proposée</label><input id="o-fin" type="time"></div>
         </div>
+
+        <label class="off-toggle" id="off-heb-toggle" style="display:none">
+          <input type="checkbox" id="o-demande-hebergement">
+          Demander l'indemnité d'hébergement standard (250&nbsp;$/jour)
+        </label>
 
         <div class="champ"><label>Tarif proposé ($/h)</label><input id="o-tarif" type="number" step="0.01" min="0" required></div>
 
@@ -303,6 +309,9 @@ function msg(texte, type){
       const fav = k.pharmacien_favoris_nombre ? ' · ♥ ' + k.pharmacien_favoris_nombre + ' pharmacie' + (k.pharmacien_favoris_nombre>1?'s':'') + ' favori' : '';
       lignes.push('<div><b style="color:var(--texte)">' + k.pharmacien_nom + '</b> · ' + etoile(k.pharmacien_note_moyenne, k.pharmacien_note_nombre) + fav + '</div>');
     }
+    if(k.hebergement_adresse){
+      lignes.push('<div>🏠 Hébergement offert : <b style="color:var(--texte)">' + k.hebergement_adresse + '</b></div>');
+    }
     $('bloc-parties').innerHTML = lignes.join('');
     $('bloc-parties').style.display = '';
   }
@@ -315,6 +324,7 @@ function msg(texte, type){
   $('rx_we').textContent = k.rx_jour_weekend ?? '—';
   $('seul').textContent = k.seul_pharmacien ? 'Oui' : 'Non';
   $('atp').textContent = k.atp_presente ? 'Oui' : 'Non';
+  $('hebergement').textContent = k.hebergement_offerte ? 'Offert par la pharmacie' : 'Non offert';
 
   if(k.services && k.services.length){
     $('bloc-services').style.display = '';
@@ -358,10 +368,27 @@ function msg(texte, type){
     else rows.push(row('Déplacement', 'Ajoutez votre code postal au profil', true));
     if(est.perDiem) rows.push(row('Per diem (repas)', cdArgent(est.montantPerDiem)));
     else rows.push(row('Per diem (repas)', 'Non admissible — aller simple < '+seuilP+' km', true));
-    if(est.hebergement) rows.push(row('Hébergement', cdArgent(est.montantHebergement)));
-    else rows.push(row('Hébergement', 'Non admissible — aller simple < '+seuilH+' km', true));
+
+    /* Hébergement : trois cas mutuellement exclusifs — fourni en nature par
+       la pharmacie (jamais de cash), demandé explicitement à l'offre (cash,
+       peu importe la distance), ou le comportement existant (cash si distance
+       ≥ seuil). Doit rester cohérent avec appliquer_indemnites() côté serveur. */
+    let montantHeb = est.hebergement ? est.montantHebergement : 0;
+    if(k.hebergement_offerte){
+      rows.push(row('Hébergement', 'Fourni par la pharmacie (logement)', true));
+      montantHeb = 0;
+    } else if($('o-demande-hebergement').checked){
+      montantHeb = est.montantHebergement || parseFloat(reglesReseau.hebergement_jour) || 0;
+      rows.push(row('Hébergement (demandée)', cdArgent(montantHeb)));
+    } else if(est.hebergement){
+      rows.push(row('Hébergement', cdArgent(est.montantHebergement)));
+    } else {
+      rows.push(row('Hébergement', 'Non admissible — aller simple < '+seuilH+' km', true));
+    }
+
+    const total = est.base + (est.montantKm||0) + (est.perDiem?est.montantPerDiem:0) + montantHeb;
     $('remu-lignes').innerHTML = rows.join('');
-    $('remu-total-val').textContent = cdArgent(est.total);
+    $('remu-total-val').textContent = cdArgent(total);
     bloc.style.display = '';
     if($('bloc-estim')) $('bloc-estim').style.display = 'none'; /* le panneau riche remplace la ligne terse */
   }
@@ -485,6 +512,7 @@ function msg(texte, type){
       $('zone-postuler').style.display = '';
       $('o-tarif').value = k.tarif_horaire;
       $('off-original-txt').textContent = cdDate(k.date_contrat) + ' · ' + cdHeure(k.heure_debut) + ' – ' + cdHeure(k.heure_fin);
+      if(!k.hebergement_offerte){ $('off-heb-toggle').style.display = ''; }
 
       function heuresProposees(){
         const actif = $('o-modifier-horaire').checked;
@@ -509,6 +537,7 @@ function msg(texte, type){
         majResume();
       });
       ['o-tarif','o-debut','o-fin'].forEach(id=> $(id).addEventListener('input', majResume));
+      $('o-demande-hebergement').addEventListener('change', majResume);
 
       async function postuler(payload, apres, sujetAlerte, messageAlerte, extra){
         ['btn-instant','btn-offrir','btn-envoyer'].forEach(b=>{ $(b).disabled = true; });
@@ -555,6 +584,7 @@ function msg(texte, type){
           statut: 'propose', type_candidature: 'negociee',
           tarif_propose: tarif, distance_km: distApply,
           heure_debut_proposee: hd, heure_fin_proposee: hf,
+          demande_hebergement: k.hebergement_offerte ? false : $('o-demande-hebergement').checked,
           message: cdJalonAjouter(null, {etape:'candidature', par:'pharmacien',
             type:'negociee', tarif:tarif, hd:hd||k.heure_debut, hf:hf||k.heure_fin, message:texte})
         }, cdT('Offre envoyée (' + cdArgent(tarif) + '/h' + (hd?', horaire proposé '+cdHeure(hd)+' – '+cdHeure(hf):'') + '). La pharmacie vous répondra.',

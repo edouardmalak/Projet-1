@@ -216,6 +216,8 @@ a.lien{color:var(--vert-vif)}
         </div>
         <div class="champ"><label>Plafond hébergement ($/nuit)</label><input id="plafond_hebergement" type="number" min="0" step="0.01"></div>
         <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px">Informatif pour l'instant — n'affecte pas encore le calcul des factures.</p>
+        <div class="champ"><label>Adresse d'hébergement standard</label><input id="hebergement_adresse" placeholder="123 rue Principale, app. 4"></div>
+        <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px">Si vous offrez un logement plutôt que l'indemnité de 250&nbsp;$/jour, indiquez l'adresse ici — vous pourrez l'activer contrat par contrat en publiant. Elle n'est révélée au pharmacien qu'une fois le contrat confirmé.</p>
         <div class="champ"><label>Notes d'accès (stationnement, entrée…)</label><textarea id="notes_acces" rows="2"></textarea></div>
       </div>
 
@@ -732,6 +734,7 @@ function rendrePlateaux(){
     $('plafond_deplacement').value = profil.plafond_deplacement ?? '';
     $('plafond_per_diem').value = profil.plafond_per_diem ?? '';
     $('plafond_hebergement').value = profil.plafond_hebergement ?? '';
+    $('hebergement_adresse').value = profil.hebergement_adresse ?? '';
 
     /* majoration auto */
     $('bump_actif').checked = !!profil.bump_actif;
@@ -819,6 +822,7 @@ function rendrePlateaux(){
       maj.plafond_deplacement=$('plafond_deplacement').value||null;
       maj.plafond_per_diem=$('plafond_per_diem').value||null;
       maj.plafond_hebergement=$('plafond_hebergement').value||null;
+      maj.hebergement_adresse=$('hebergement_adresse').value.trim()||null;
 
       /* --- majoration automatique (validée avant envoi) --- */
       const bOn  = $('bump_actif').checked;

@@ -334,7 +334,14 @@ function calcDistance(k){
 function calcEstim(k){
   try{
     if(typeof cdEstimation !== 'function' || !regles) return null;
-    return cdEstimation(k.tarif_horaire, k.heure_debut, k.heure_fin, k._distanceKm, regles);
+    const est = cdEstimation(k.tarif_horaire, k.heure_debut, k.heure_fin, k._distanceKm, regles);
+    /* hébergement en nature : la pharmacie fournit un logement au lieu de
+       verser l'indemnité cash — ne pas l'inclure dans le total affiché. */
+    if(est && k.hebergement_offerte && est.hebergement){
+      est.total -= est.montantHebergement;
+      est.hebergement = false; est.montantHebergement = 0;
+    }
+    return est;
   }catch(e){ return null; }
 }
 
@@ -449,12 +456,13 @@ function dessinerTableau(list){
     const txt = (t, cls)=>{ const td=document.createElement('td'); if(cls) td.className=cls; td.textContent=t; return td; };
     const tarifTd = document.createElement('td'); tarifTd.className='tarif';
     tarifTd.textContent = cdArgent(k.tarif_horaire) + '/h';
-    if(k._est || k._distanceKm!=null){
+    if(k._est || k._distanceKm!=null || k.hebergement_offerte){
       const s = document.createElement('div');
       s.style.cssText = 'font-weight:400;color:var(--sourd);font-size:11px;margin-top:2px';
       const morceaux = [];
       if(k._est) morceaux.push('≈ ' + cdArgent(k._est.total).replace(',00',''));
       if(k._distanceKm!=null) morceaux.push(k._distanceKm + ' km');
+      if(k.hebergement_offerte) morceaux.push('🏠 Hébergement offert');
       s.textContent = morceaux.join(' · ');
       tarifTd.appendChild(s);
     }
@@ -606,7 +614,8 @@ function dessinerListeCal(list){
     const heures = k.heure_debut ? (String(k.heure_debut).slice(0,5)+'–'+String(k.heure_fin||'').slice(0,5)) : '';
     const tarif  = k.tarif_horaire!=null ? cdArgent(k.tarif_horaire)+'/h' : '';
     const dist   = k._distanceKm!=null ? k._distanceKm+' km' : '';
-    const meta   = [heures, k.ville, tarif, dist].filter(Boolean).join(' · ');
+    const heb    = k.hebergement_offerte ? '🏠 Hébergement offert' : '';
+    const meta   = [heures, k.ville, tarif, dist, heb].filter(Boolean).join(' · ');
     const statut = k.deja_postule ? 'postule' : 'ouvert';
     const libelle= k.deja_postule ? 'Quart demandé' : 'Disponible';
     const indispo = estIndisponible(k.date_contrat);

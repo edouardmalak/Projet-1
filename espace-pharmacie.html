@@ -185,6 +185,12 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
         <div style="margin-top:6px;color:var(--sourd);font-size:10.5px">Le pharmacien reçoit le même montant net sur les deux rails — la différence est le frais de carte Stripe (2,9&nbsp;% + 0,30&nbsp;$), absorbé par C-Direct sur Interac. Indemnités de déplacement non incluses ici (dépendent du pharmacien retenu).</div>
       </div>
       <div class="indice" style="margin:-6px 0 4px">Rx/jour, conditions et services requis viennent de votre <a href="/profil.html" style="color:var(--vert-vif)">profil</a> — modifiables là-bas, une seule fois.</div>
+      <div class="champ">
+        <div class="coches">
+          <label><input type="checkbox" id="hebergement_offerte"> Offrir l'hébergement pour ce contrat</label>
+        </div>
+        <div class="indice" id="hebergement-indice" style="margin-top:6px"></div>
+      </div>
       <div class="champ"><label>Notes (accès, consignes…)</label><textarea id="notes" rows="2"></textarea></div>
       <button class="btn" type="submit" id="btn-pub">Publier le contrat</button>
       <div class="indice" style="margin-top:8px">En publiant, vous acceptez les <a href="/regles.html" target="_blank" rel="noopener" style="color:var(--vert-vif)">règles du réseau</a> — dont la protection d'annulation (50&nbsp;% à moins de 7&nbsp;jours, 100&nbsp;% à moins de 48&nbsp;h).</div>
@@ -266,6 +272,15 @@ function initOngletsEP(){
   profil = await cdExigerConnexion(['pharmacie']);
   cdEnteteConnecte();
   $('sous').textContent = (profil.nom_pharmacie || 'Pharmacie') + (profil.ville ? ' · ' + profil.ville : '');
+  /* Hébergement en nature : la case n'est utilisable que si une adresse
+     standard est configurée au profil (Mes informations). */
+  const adresseHeb = (profil.hebergement_adresse || '').trim();
+  if(adresseHeb){
+    $('hebergement-indice').textContent = 'Adresse qui sera offerte : ' + adresseHeb + ' (révélée au pharmacien une fois le contrat confirmé).';
+  } else {
+    $('hebergement_offerte').disabled = true;
+    $('hebergement-indice').innerHTML = 'Configurez d\'abord une adresse dans votre <a href="/profil.html" style="color:var(--vert-vif)">profil</a> pour pouvoir l\'offrir.';
+  }
   initOngletsEP();
   chargerTableauBordPharmacie();
   ['date_contrat','tarif_horaire','profession_recherchee'].forEach(id=> $(id) && $(id).addEventListener('change', majCompatibles));
@@ -312,7 +327,8 @@ function initOngletsEP(){
       seul_pharmacien: profil.seul_pharmacien !== false,
       atp_presente: profil.atp_presente !== false,
       services: profil.services_offerts || [],
-      notes: $('notes').value.trim() || null
+      notes: $('notes').value.trim() || null,
+      hebergement_offerte: $('hebergement_offerte').checked && !!(profil.hebergement_adresse && profil.hebergement_adresse.trim())
     }).select('numero_reference').single();
     $('btn-pub').disabled = false;
     if(error){ msg('msg-pub', error.message, false); return; }
