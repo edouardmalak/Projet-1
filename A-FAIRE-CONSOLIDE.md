@@ -1,4 +1,4 @@
-# C-Direct — Everything left to do (consolidated, 2026-08-05)
+# C-Direct — Everything left to do (consolidated, updated 2026-08-06)
 
 This replaces scattered notes across `PRELANCEMENT.md`, `A-FAIRE-ROBERT.md`, `A-FAIRE-PLUS-TARD.md`, `LAUNCH.md`, and `PLAN-APP-MOBILE.md` with one current list. Those files still exist for history, but **this is the one to check going forward.** I verified the items marked "confirmed live" below by actually checking (admin console, cookies) rather than trusting the old docs, since several of them had gone stale.
 
@@ -43,6 +43,11 @@ Tell me when you want to do #2 and I'll walk through it with you or make any cod
   4. While the consent screen is in "Testing" status, add pharmaciens as Test users, or publish it to open it to everyone.
 - 🧑 **Apple Sign-In** (new today) — the button exists on the login page and is fully wired, gated behind `window.CD_APPLE_ENABLED` in `supabase-config.js` (currently `false`) so clicking it shows a friendly local message instead of a raw Supabase error page. Two steps once you're ready: (1) Supabase → Authentication → Providers → Apple → toggle on, paste your Apple Developer Services ID / Team ID / Key (same shape of setup as Google was); (2) tell me it's done and I'll flip `CD_APPLE_ENABLED` to `true` and push.
 - 🧑 **Taxes for pharmacists other than you** — right now only `edouardmalak@gmail.com` has GST/QST numbers wired into the invoice Worker. Run `sql/17-facturation-pharmacien.sql` in Supabase to add TPS/TVQ/société fields to every pharmacist's profile (they'd fill them in themselves).
+- 🧑 **Push notifications** (new today) — Paramètres → Notifications is fully built (code-complete, live), but needs your VAPID keys before it can actually send anything; until then it shows a friendly "coming soon" message instead of a real notification. Steps, all in `workers/c-direct-sms/README.md` § 5:
+  1. From your terminal: `cd workers/c-direct-sms && node generer-vapid.js` — prints two values. The first (public key) isn't secret; tell it to me and I'll drop it into `supabase-config.js` and push. The second (private key) is secret — don't share it with me, paste it straight into the next step.
+  2. `npx wrangler secret put VAPID_PUBLIC_KEY` (paste the public value again) and `npx wrangler secret put VAPID_PRIVATE_KEY` (paste the private value) — no redeploy needed after, this Worker auto-deploys from git push and the code is already live waiting on these two secrets.
+  3. Once both are set: activate notifications on your own phone/computer from Paramètres, then test with the `curl` command in the README § 5 (needs your `profil_id` from the `profiles` table and the `WEBHOOK_SECRET`). A real notification should arrive within seconds.
+  I wrote the encryption code by hand following the Web Push standard (RFC 8291/8292) since I never handle the private key myself — it's never been tested against a real device, so step 3 is the one real verification this needs before you count on it.
 
 ---
 
