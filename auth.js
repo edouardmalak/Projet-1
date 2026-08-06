@@ -181,7 +181,7 @@ const CD_MENUS = {
   pharmacien: [
     { g:'Contrats', ge:'Contracts', items: [
       ['/contrats.html',           'Trouver un contrat', 'Contracts'],
-      ['/carte.html',              'Carte',            'Map'],
+      ['/carte.html',              'Maps',             'Maps'],
       ['/mes-mandats.html',        'Mandats confirmés', 'My mandates']
     ]},
     ['/disponibilites.html',     'Calendrier',        'Calendar'],
