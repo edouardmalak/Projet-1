@@ -64,7 +64,7 @@ tbody tr:last-child td{border-bottom:none}
 .btn-lot:hover{background:var(--vert-vif)}
 .btn-lot:disabled{opacity:.55;cursor:default}
 .vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:16px 0}
-.grille-mandats{display:grid;grid-template-columns:420px 1fr;gap:20px;align-items:start;margin-bottom:20px}
+.grille-mandats{display:grid;grid-template-columns:540px 1fr;gap:20px;align-items:start;margin-bottom:20px}
 .col-calendrier{position:sticky;top:16px}
 .col-calendrier .carte, .col-remplacements .carte{margin-bottom:0}
 @media(max-width:860px){
@@ -82,11 +82,11 @@ tbody tr:last-child td{border-bottom:none}
 .bnav:hover{border-color:var(--vert)}
 .bauj{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:5px;padding:0 11px;height:30px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;cursor:pointer}
 .bauj:hover{border-color:var(--vert);color:var(--vert-vif)}
-.cal-noms{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);text-align:center;padding:6px 0}
-.cal-grille{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.cal-jour{aspect-ratio:1;min-height:52px;border:1px solid var(--ligne);border-radius:7px;padding:7px 8px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--texte);position:relative;background:var(--panneau2)}
+.cal-noms{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:7px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);text-align:center;padding:6px 0}
+.cal-grille{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.cal-jour{aspect-ratio:1/1;min-height:92px;border:1px solid var(--ligne);border-radius:7px;padding:8px 9px;font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:var(--texte);position:relative;background:var(--panneau2)}
 .cal-jour.vide{border-color:transparent;background:transparent}
-.cal-jour.dot::after{content:"";position:absolute;bottom:6px;left:7px;width:9px;height:9px;border-radius:50%}
+.cal-jour.dot::after{content:"";position:absolute;bottom:8px;left:9px;width:10px;height:10px;border-radius:50%}
 .cal-jour.paye{border-color:var(--ligne2);background:var(--panneau)} .cal-jour.paye::after{background:var(--vert-vif)}
 .cal-jour.attente::after{background:var(--jaune)}
 .cal-jour.retard::after{background:var(--rouge)}
