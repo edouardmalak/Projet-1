@@ -368,6 +368,16 @@ function msg(texte, type){
     }
   }
 
+  /* ---- dates où le pharmacien s'est marqué INDISPONIBLE (Mes disponibilités) —
+     sert à bloquer sa propre candidature si ce contrat tombe ce jour-là. ---- */
+  let mesIndisponibles = new Set();
+  if(profil.role === 'pharmacien'){
+    try{
+      const { data: di } = await sb.rpc('mes_dates_indisponibles');
+      (di||[]).forEach(d=> mesIndisponibles.add(String(d).slice(0,10)));
+    }catch(e){ /* défensif : ne doit jamais bloquer la fiche */ }
+  }
+
   /* ---- Candidature deux vitesses (pharmacien · contrat ouvert) ---- */
   if(profil.role === 'pharmacien'){
     if(k.ma_candidature_statut){
@@ -421,6 +431,11 @@ function msg(texte, type){
         }
       }
     } else if(k.statut === 'ouvert'){
+      if(mesIndisponibles.has(String(k.date_contrat).slice(0,10))){
+        msg(cdT('Vous vous êtes marqué INDISPONIBLE pour le ' + cdDate(k.date_contrat) + ' dans Mes disponibilités — vous ne pouvez pas postuler à ce contrat tant que cette date reste marquée indisponible.',
+                 'You marked yourself UNAVAILABLE for ' + cdDate(k.date_contrat) + ' in My availability — you cannot apply to this contract while that date stays marked unavailable.'), 'ko');
+        return;
+      }
       $('zone-postuler').style.display = '';
       $('o-tarif').value = k.tarif_horaire;
       rendreRemuneration(k.tarif_horaire, k.heure_debut, k.heure_fin);

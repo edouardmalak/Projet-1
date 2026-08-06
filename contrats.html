@@ -45,6 +45,11 @@ tbody tr:last-child td{border-bottom:none}
 .filtre-fav{background:transparent;border:1px solid var(--ligne2);border-radius:4px;padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--sourd);cursor:pointer}
 .filtre-fav:hover{border-color:var(--vert)}
 .filtre-fav.on{color:var(--rouge);border-color:rgba(229,72,77,.5);background:rgba(229,72,77,.08)}
+.cpt-sauv{font-size:9px;opacity:.85;margin-left:3px}
+.flag-indispo{display:inline-block;margin-top:4px;font-family:'IBM Plex Mono',monospace;font-weight:400;font-size:10px;letter-spacing:.04em;padding:1px 7px;border-radius:99px;border:1px solid rgba(192,57,43,.4);background:rgba(192,57,43,.1);color:var(--rouge)}
+tr.indispo-ligne{background:rgba(192,57,43,.045)}
+tr.indispo-ligne:hover{background:rgba(192,57,43,.08)}
+tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
 .vide{padding:48px 20px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:13px}
 .vide b{color:var(--texte);display:block;margin-bottom:6px;letter-spacing:.08em}
 .chargement{padding:48px;text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
@@ -96,6 +101,7 @@ tbody tr:last-child td{border-bottom:none}
 .jour.auj{box-shadow:inset 0 0 0 1px var(--jaune)}
 .jour.a-ouvert{border-color:var(--vert)}
 .jour.a-postule{border-color:rgba(232,184,73,.5);border-style:dashed}
+.jour.mon-indispo::before{content:'';position:absolute;top:5px;left:5px;width:7px;height:7px;border-radius:50%;background:var(--rouge)}
 .jour .n{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600}
 .pastille{margin-top:4px;display:block;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.02em;padding:2px 5px;border-radius:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;cursor:pointer}
 .pastille.ouvert{background:rgba(18,169,110,.16);color:var(--vert-vif);border:1px solid rgba(23,201,128,.4)}
@@ -122,6 +128,7 @@ tbody tr:last-child td{border-bottom:none}
 .mini-j .pt{position:absolute;bottom:1px;width:4px;height:4px;border-radius:50%}
 .mini-j .pt.ouvert{background:var(--vert-vif)}
 .mini-j .pt.postule{background:var(--jaune)}
+.mini-j .pt-indispo{position:absolute;top:1px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--rouge)}
 .sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .sec small{color:var(--sourd);text-transform:none;letter-spacing:.04em;font-size:11px}
 .liste-scroll{max-height:640px;overflow-y:auto;padding-right:4px}
@@ -129,7 +136,10 @@ tbody tr:last-child td{border-bottom:none}
 .ligne-contrat:last-child{border-bottom:none}
 .ligne-contrat:hover{background:var(--panneau2)}
 .lc-date{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;min-width:60px}
+.lc-date.indispo{color:var(--rouge)}
 .lc-mid{flex:1;min-width:0}
+.ligne-contrat{cursor:pointer}
+.ligne-contrat .coeur{margin-left:0;flex:none}
 .lc-ref{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--vert-vif);font-weight:700;display:block}
 .lc-meta{font-size:11.5px;color:var(--sourd);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 .chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd);flex:none}
@@ -183,6 +193,10 @@ tbody tr:last-child td{border-bottom:none}
     <button id="v-liste" class="actif" type="button">Liste</button>
     <button id="v-calendrier" type="button">Calendrier</button>
   </div>
+  <div class="vues no-print" id="vues-fav" style="margin-left:10px">
+    <button id="v-tous" class="actif" type="button">Tous</button>
+    <button id="v-sauvegardes" type="button">Sauvegardés<span class="cpt-sauv" id="n-sauv"></span></button>
+  </div>
 
   <div class="filtres no-print" id="filtres">
     <select class="filtre-champ" id="f-ville" style="flex:1 1 130px"><option value="">Ville</option></select>
@@ -196,7 +210,6 @@ tbody tr:last-child td{border-bottom:none}
       <option value="tarif">Tarif ↓</option>
       <option value="distance">Distance ↑</option>
     </select>
-    <button class="filtre-fav" id="f-fav" type="button">♥ Favoris</button>
     <button class="filtre-reset" id="f-reset" type="button">Réinitialiser</button>
   </div>
 
@@ -336,7 +349,13 @@ function favSet(){ try{ return new Set(JSON.parse(localStorage.getItem('cd-favor
 function favSave(s){ try{ localStorage.setItem('cd-favoris', JSON.stringify([...s])); }catch(e){} }
 function estFavori(ref){ return favSet().has(ref); }
 function toggleFavori(ref){ const s=favSet(); s.has(ref)?s.delete(ref):s.add(ref); favSave(s); }
+function majCompteurSauv(){ const n = favSet().size; $('n-sauv').textContent = n ? ' ('+n+')' : ''; }
 let favOnly = false;
+
+/* dates où le pharmacien s'est marqué indisponible (voir disponibilites.html) —
+   sert uniquement à AVERTIR (drapeau rouge) ; ne bloque jamais l'affichage. */
+let indisponibles = new Set();
+function estIndisponible(dateStr){ return indisponibles.has(String(dateStr).slice(0,10)); }
 
 /* remplit Ville/Tarif/Logiciel avec seulement les valeurs présentes parmi
    les contrats actuellement ouverts (pas une liste figée) — se met à jour
@@ -441,11 +460,20 @@ function dessinerTableau(list){
     const coeur = document.createElement('button');
     coeur.type = 'button'; coeur.className = 'coeur' + (estFavori(k.numero_reference) ? ' on' : '');
     coeur.innerHTML = '♥'; coeur.title = 'Favori';
-    coeur.onclick = (e)=>{ e.stopPropagation(); toggleFavori(k.numero_reference); coeur.classList.toggle('on'); if(favOnly) dessiner(); };
+    coeur.onclick = (e)=>{ e.stopPropagation(); toggleFavori(k.numero_reference); coeur.classList.toggle('on'); majCompteurSauv(); if(favOnly) dessiner(); };
     statutTd.appendChild(coeur);
+    /* cellule date + drapeau si le pharmacien s'est marqué indisponible ce jour-là */
+    const dateTd = document.createElement('td');
+    dateTd.textContent = cdDate(k.date_contrat);
+    if(estIndisponible(k.date_contrat)){
+      tr.classList.add('indispo-ligne');
+      const flag = document.createElement('div'); flag.className = 'flag-indispo'; flag.textContent = 'Indisponible';
+      flag.title = 'Vous vous êtes marqué indisponible ce jour dans Mes disponibilités';
+      dateTd.appendChild(flag);
+    }
     tr.append(
       refTd,
-      txt(cdDate(k.date_contrat)),
+      dateTd,
       txt(cdHeure(k.heure_debut) + ' – ' + cdHeure(k.heure_fin)),
       txt(k.ville || '—', 'cache-mobile'),
       txt(k.logiciel || '—', 'cache-mobile'),
@@ -505,6 +533,7 @@ function dessinerMoisCal(parJour){
     const date=isoC(new Date(an,mo,d));
     const cell=document.createElement('div'); cell.className='jour';
     if(date===ajd) cell.classList.add('auj');
+    if(estIndisponible(date)) cell.classList.add('mon-indispo');
     const liste=(parJour.get(date)||[]);
     if(liste.length){
       const tousPostules = liste.every(k=>k.deja_postule);
@@ -540,6 +569,7 @@ function miniMoisCal(an, mo, ajd, parJour){
     const date=isoC(new Date(an,mo,d));
     const cell=document.createElement('div'); cell.className='mini-j'; cell.textContent=d;
     if(date===ajd) cell.classList.add('auj');
+    if(estIndisponible(date)){ const pti=document.createElement('span'); pti.className='pt-indispo'; cell.appendChild(pti); }
     const liste=parJour.get(date);
     if(liste && liste.length){
       const tousPostules = liste.every(k=>k.deja_postule);
@@ -562,11 +592,13 @@ function dessinerListeCal(list){
     const meta   = [heures, k.ville, tarif].filter(Boolean).join(' · ');
     const statut = k.deja_postule ? 'postule' : 'ouvert';
     const libelle= k.deja_postule ? 'Postulé' : 'Ouvert';
-    return '<a class="ligne-contrat" href="/c/'+encodeURIComponent(k.numero_reference)+'">'
-      +'<span class="lc-date">'+dateCourteC(k.date_contrat)+'</span>'
+    const indispo = estIndisponible(k.date_contrat);
+    return '<div class="ligne-contrat" data-ref="'+k.numero_reference+'">'
+      +'<span class="lc-date'+(indispo?' indispo':'')+'"'+(indispo?' title="Vous êtes indisponible ce jour"':'')+'>'+dateCourteC(k.date_contrat)+'</span>'
       +'<span class="lc-mid"><span class="lc-ref">'+k.numero_reference+'</span><span class="lc-meta">'+meta+'</span></span>'
       +'<span class="chip '+statut+'">'+libelle+'</span>'
-      +'</a>';
+      +'<button type="button" class="coeur'+(estFavori(k.numero_reference)?' on':'')+'" title="Favori">♥</button>'
+      +'</div>';
   }).join('');
 }
 
@@ -595,7 +627,21 @@ function dessinerListeCal(list){
   $('b-imp-cal').onclick     = ()=>{ document.body.classList.add('print-cal');      window.print(); };
   $('b-imp-liste-c').onclick = ()=>{ document.body.classList.add('print-liste-cal'); window.print(); };
   window.addEventListener('afterprint', ()=> document.body.classList.remove('print-cal','print-liste-cal'));
+  $('v-tous').onclick = ()=>{ favOnly=false; $('v-tous').classList.add('actif'); $('v-sauvegardes').classList.remove('actif'); dessiner(); };
+  $('v-sauvegardes').onclick = ()=>{ favOnly=true; $('v-sauvegardes').classList.add('actif'); $('v-tous').classList.remove('actif'); dessiner(); };
+  $('liste-c').addEventListener('click', e=>{
+    const coeur = e.target.closest('.coeur');
+    const row = e.target.closest('[data-ref]');
+    if(!row) return;
+    if(coeur){ toggleFavori(row.dataset.ref); coeur.classList.toggle('on'); majCompteurSauv(); if(favOnly) dessiner(); return; }
+    location.href = '/c/' + encodeURIComponent(row.dataset.ref);
+  });
   try{ const { data: rg } = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle(); regles = rg; }catch(e){}
+  try{
+    const { data: di } = await sb.rpc('mes_dates_indisponibles');
+    (di||[]).forEach(d=> indisponibles.add(String(d).slice(0,10)));
+  }catch(e){}
+  majCompteurSauv();
 
   const { data, error } = await sb.rpc('get_contrats_ouverts');
   $('chargement').style.display = 'none';
@@ -616,10 +662,9 @@ function dessinerListeCal(list){
   ['f-ville','f-tarif','f-logiciel'].forEach(id=> $(id).addEventListener('change', dessiner));
   $('f-dist').addEventListener('input', dessiner);
   $('f-tri').addEventListener('change', dessiner);
-  $('f-fav').onclick = ()=>{ favOnly = !favOnly; $('f-fav').classList.toggle('on', favOnly); dessiner(); };
   $('f-reset').onclick = ()=>{
     ['f-ville','f-tarif','f-logiciel','f-dist'].forEach(id=> $(id).value='');
-    favOnly = false; $('f-fav').classList.remove('on');
+    favOnly = false; $('v-tous').classList.add('actif'); $('v-sauvegardes').classList.remove('actif');
     $('f-tri').value='compat'; dessiner();
   };
   dessiner();
