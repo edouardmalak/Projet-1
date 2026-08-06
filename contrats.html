@@ -69,6 +69,84 @@ tbody tr:last-child td{border-bottom:none}
 .filtre-champ:focus{outline:none;border-color:var(--vert)}
 .filtre-reset{background:transparent;border:1px solid var(--ligne2);border-radius:4px;padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--sourd);cursor:pointer}
 .filtre-reset:hover{border-color:var(--vert);color:var(--vert-vif)}
+
+/* ================= vue Calendrier (même layout que calendrier-pharmacie.html) ================= */
+.vues{display:inline-flex;border:1px solid var(--ligne2);border-radius:7px;overflow:hidden;margin-bottom:16px}
+.vues button{background:var(--panneau);border:none;color:var(--sourd);padding:8px 16px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.vues button.actif{background:var(--vert);color:#fff}
+.vues button:not(.actif):hover{background:var(--panneau2)}
+.entete-outils{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.imprimer{margin-left:auto;display:flex;gap:8px}
+.bimp{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:7px;padding:8px 14px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.bimp:hover{border-color:var(--vert);color:var(--vert-vif)}
+.grille-principale{display:grid;grid-template-columns:1.35fr 1fr;gap:20px;align-items:start}
+@media(max-width:980px){.grille-principale{grid-template-columns:1fr}}
+.cal-carte{padding:22px}
+.col-calendrier .carte+.carte{margin-top:20px}
+.nav-mois{display:flex;gap:8px;align-items:center}
+.bnav{background:var(--panneau2);border:1px solid var(--ligne2);color:var(--texte);border-radius:5px;width:34px;height:34px;font-size:16px;cursor:pointer;font-family:'IBM Plex Mono',monospace}
+.bnav:hover{border-color:var(--vert)}
+.bauj{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:5px;padding:0 12px;height:34px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.bauj:hover{border-color:var(--vert);color:var(--vert-vif)}
+.cal-mois{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;letter-spacing:.06em;text-transform:capitalize}
+.grille-jours{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.jour-tete{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);text-align:center;padding:6px 0}
+.jour{aspect-ratio:1/1;min-height:92px;border:1px solid var(--ligne);border-radius:7px;background:var(--panneau2);display:flex;flex-direction:column;align-items:flex-start;padding:8px 9px;position:relative;overflow:hidden}
+.jour.vide{background:transparent;border-color:transparent}
+.jour.auj{box-shadow:inset 0 0 0 1px var(--jaune)}
+.jour.a-ouvert{border-color:var(--vert)}
+.jour.a-postule{border-color:rgba(232,184,73,.5);border-style:dashed}
+.jour .n{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600}
+.pastille{margin-top:4px;display:block;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.02em;padding:2px 5px;border-radius:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;cursor:pointer}
+.pastille.ouvert{background:rgba(18,169,110,.16);color:var(--vert-vif);border:1px solid rgba(23,201,128,.4)}
+.pastille.postule{background:rgba(232,184,73,.16);color:var(--jaune);border:1px solid rgba(232,184,73,.4)}
+.pastille:hover{filter:brightness(1.15)}
+.plus{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--sourd);margin-top:2px}
+.legende{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd)}
+.legende span{display:inline-flex;align-items:center;gap:7px}
+.pnt{width:11px;height:11px;border-radius:3px;display:inline-block}
+.pnt.ouvert{background:rgba(18,169,110,.16);border:1px solid rgba(23,201,128,.4)}
+.pnt.postule{background:rgba(232,184,73,.16);border:1px solid rgba(232,184,73,.4)}
+.annee-lbl{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;letter-spacing:.06em;min-width:52px;text-align:center}
+.grille-annee{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:760px){.grille-annee{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.grille-annee{grid-template-columns:1fr}}
+.mini-mois{border:1px solid var(--ligne);border-radius:7px;padding:10px;break-inside:avoid}
+.mini-titre{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;text-transform:capitalize;text-align:center;margin-bottom:7px;letter-spacing:.06em}
+.mini-grille{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.mini-jt{font-family:'IBM Plex Mono',monospace;font-size:7.5px;color:var(--sourd);text-align:center;letter-spacing:.03em;padding-bottom:2px}
+.mini-j{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9.5px;position:relative;border-radius:3px;cursor:pointer}
+.mini-j.vide{cursor:default}
+.mini-j.auj{box-shadow:inset 0 0 0 1px var(--jaune)}
+.mini-j:hover:not(.vide){background:var(--panneau2)}
+.mini-j .pt{position:absolute;bottom:1px;width:4px;height:4px;border-radius:50%}
+.mini-j .pt.ouvert{background:var(--vert-vif)}
+.mini-j .pt.postule{background:var(--jaune)}
+.sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sec small{color:var(--sourd);text-transform:none;letter-spacing:.04em;font-size:11px}
+.liste-scroll{max-height:640px;overflow-y:auto;padding-right:4px}
+.ligne-contrat{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--panneau2);text-decoration:none;color:inherit}
+.ligne-contrat:last-child{border-bottom:none}
+.ligne-contrat:hover{background:var(--panneau2)}
+.lc-date{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;min-width:60px}
+.lc-mid{flex:1;min-width:0}
+.lc-ref{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--vert-vif);font-weight:700;display:block}
+.lc-meta{font-size:11.5px;color:var(--sourd);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd);flex:none}
+.chip.ouvert{color:var(--vert-vif);border-color:rgba(23,201,128,.4);background:rgba(18,169,110,.08)}
+.chip.postule{color:var(--jaune);border-color:rgba(232,184,73,.4);background:rgba(232,184,73,.08)}
+@media print{
+  .topbar,.no-print{display:none!important}
+  body{background:#fff}
+  .wrap{max-width:none;padding:0}
+  .grille-principale{display:block}
+  .cal-carte{border:none;padding:0;box-shadow:none}
+  .carte::before{display:none}
+  body.print-cal .col-contrats{display:none!important}
+  body.print-liste-cal .col-calendrier{display:none!important}
+  .liste-scroll{max-height:none!important;overflow:visible!important}
+  .mini-mois{border-color:#ccc}
+}
 @media(max-width:720px){
   .cache-mobile{display:none}
   td,th{padding:11px 10px}
@@ -101,7 +179,12 @@ tbody tr:last-child td{border-bottom:none}
     <div id="ob-liste"></div>
   </div>
 
-  <div class="filtres" id="filtres">
+  <div class="vues no-print">
+    <button id="v-liste" class="actif" type="button">Liste</button>
+    <button id="v-calendrier" type="button">Calendrier</button>
+  </div>
+
+  <div class="filtres no-print" id="filtres">
     <select class="filtre-champ" id="f-ville" style="flex:1 1 130px"><option value="">Ville</option></select>
     <select class="filtre-champ" id="f-tarif" style="flex:1 1 120px"><option value="">Tarif</option></select>
     <select class="filtre-champ" id="f-logiciel" style="flex:1 1 120px"><option value="">Logiciel</option></select>
@@ -117,28 +200,83 @@ tbody tr:last-child td{border-bottom:none}
     <button class="filtre-reset" id="f-reset" type="button">Réinitialiser</button>
   </div>
 
-  <div class="carte">
-    <div class="chargement" id="chargement"><i></i>Interrogation du réseau…</div>
-    <table id="tableau" style="display:none">
-      <thead>
-        <tr>
-          <th>Référence</th>
-          <th>Date</th>
-          <th>Heures</th>
-          <th class="cache-mobile">Ville</th>
-          <th class="cache-mobile">Logiciel</th>
-          <th>Tarif</th>
-          <th>Statut</th>
-        </tr>
-      </thead>
-      <tbody id="lignes"></tbody>
-    </table>
-    <div class="vide" id="vide" style="display:none">
-      <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ligne2)" stroke-width="1.6" style="margin-bottom:12px"><circle cx="12" cy="12" r="9"/><path d="M8.5 15c1-1 5-1 7 0" stroke-linecap="round"/><circle cx="9" cy="10" r="1" fill="var(--ligne2)" stroke="none"/><circle cx="15" cy="10" r="1" fill="var(--ligne2)" stroke="none"/></svg>
-      <b>AUCUN CONTRAT OUVERT</b>
-      Les nouveaux contrats apparaissent ici dès leur publication. Activez les alertes SMS dans votre profil pour être prévenu·e.
+  <!-- VUE LISTE (tableau — comportement inchangé) -->
+  <div id="vue-liste">
+    <div class="carte">
+      <div class="chargement" id="chargement"><i></i>Interrogation du réseau…</div>
+      <table id="tableau" style="display:none">
+        <thead>
+          <tr>
+            <th>Référence</th>
+            <th>Date</th>
+            <th>Heures</th>
+            <th class="cache-mobile">Ville</th>
+            <th class="cache-mobile">Logiciel</th>
+            <th>Tarif</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody id="lignes"></tbody>
+      </table>
+      <div class="vide" id="vide" style="display:none">
+        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ligne2)" stroke-width="1.6" style="margin-bottom:12px"><circle cx="12" cy="12" r="9"/><path d="M8.5 15c1-1 5-1 7 0" stroke-linecap="round"/><circle cx="9" cy="10" r="1" fill="var(--ligne2)" stroke="none"/><circle cx="15" cy="10" r="1" fill="var(--ligne2)" stroke="none"/></svg>
+        <b>AUCUN CONTRAT OUVERT</b>
+        Les nouveaux contrats apparaissent ici dès leur publication. Activez les alertes SMS dans votre profil pour être prévenu·e.
+      </div>
     </div>
   </div>
+
+  <!-- VUE CALENDRIER — même layout que calendrier-pharmacie.html (calendrier + liste côte à côte) -->
+  <div id="vue-calendrier" style="display:none">
+    <div class="entete-outils no-print">
+      <div class="vues" style="margin:0">
+        <button id="vc-mois" class="actif" type="button">Mois</button>
+        <button id="vc-annee" type="button">Année</button>
+      </div>
+      <div class="nav-mois" id="nav-mois-c">
+        <button class="bauj" id="bc-auj" type="button">Aujourd'hui</button>
+        <button class="bnav" id="bc-prev" type="button">‹</button>
+        <div class="cal-mois" id="mois-lbl-c" style="min-width:150px;text-align:center">—</div>
+        <button class="bnav" id="bc-next" type="button">›</button>
+      </div>
+      <div class="nav-mois" id="nav-annee-c" style="display:none">
+        <button class="bnav" id="bac-prev" type="button">‹</button>
+        <div class="annee-lbl" id="annee-lbl-c">—</div>
+        <button class="bnav" id="bac-next" type="button">›</button>
+      </div>
+      <div class="imprimer">
+        <button class="bimp" id="b-imp-cal" type="button">Imprimer le calendrier</button>
+        <button class="bimp" id="b-imp-liste-c" type="button">Imprimer la liste</button>
+      </div>
+    </div>
+
+    <div class="grille-principale">
+      <div class="col-calendrier">
+        <div class="carte cal-carte" id="cvue-mois">
+          <div class="grille-jours" id="jours-tete-c"></div>
+          <div class="grille-jours" id="grille-c" style="margin-top:7px"></div>
+          <div class="legende">
+            <span><i class="pnt ouvert"></i> Ouvert</span>
+            <span><i class="pnt postule"></i> Déjà postulé</span>
+          </div>
+        </div>
+        <div class="carte cal-carte" id="cvue-annee" style="display:none">
+          <div class="grille-annee" id="grille-annee-c"></div>
+          <div class="legende" style="margin-top:18px">
+            <span><i class="pnt ouvert"></i> Ouvert</span>
+            <span><i class="pnt postule"></i> Déjà postulé</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-contrats">
+        <div class="carte cal-carte">
+          <div class="sec">Contrats<small id="n-contrats-c"></small></div>
+          <div class="liste-scroll" id="liste-c"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="erreur" id="err"></div>
 </div>
 
@@ -151,6 +289,17 @@ tbody tr:last-child td{border-bottom:none}
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 let profil = null, contrats = [], regles = null;
+
+/* ================= vue Calendrier — état + utilitaires ================= */
+let vuePrincipale = 'liste';        // 'liste' | 'calendrier'
+let vueCal = 'mois';                // 'mois' | 'annee'
+let curseurCal = new Date();        // mois affiché (vue mois du calendrier)
+let anneeCalCourante = new Date().getFullYear();
+const MOIS_C = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const JOURS_C = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const JOURS_MINI_C = ['L','M','M','J','V','S','D'];
+function isoC(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function dateCourteC(v){ const d=new Date(String(v).slice(0,10)+'T12:00:00'); return String(d.getDate()).padStart(2,'0')+' '+MOIS_C[d.getMonth()].slice(0,3); }
 
 /* estimation défensive par contrat (jamais bloquante) */
 function calcEstim(k){
@@ -217,7 +366,8 @@ function remplirFiltresDynamiques(){
   remplir('f-logiciel', 'Logiciel', logiciels);
 }
 
-function dessiner(){
+/* filtrage + tri partagés par les deux vues (Liste et Calendrier) */
+function listeFiltree(){
   const vv = $('f-ville').value;
   const tarifSel = $('f-tarif').value;
   const lg = $('f-logiciel').value;
@@ -241,6 +391,17 @@ function dessiner(){
     }
     return 0; /* 'date' : ordre reçu (plus récents d'abord via la RPC) */
   });
+  return list;
+}
+
+/* dispatcher : recalcule la liste filtrée UNE fois, alimente les deux vues */
+function dessiner(){
+  const list = listeFiltree();
+  dessinerTableau(list);
+  dessinerCalendrier(list);
+}
+
+function dessinerTableau(list){
   const tb = $('lignes'); tb.innerHTML='';
   if(!list.length){
     $('tableau').style.display='none'; $('vide').style.display='block';
@@ -297,6 +458,118 @@ function dessiner(){
     (list.length!==contrats.length ? ' / ' + contrats.length : '') + ' · 0 % commission';
 }
 
+/* ================= vue Calendrier ================= */
+function indexerParJour(list){
+  const parJour = new Map();
+  list.forEach(k=>{
+    const j = String(k.date_contrat).slice(0,10);
+    if(!parJour.has(j)) parJour.set(j, []);
+    parJour.get(j).push(k);
+  });
+  return parJour;
+}
+
+function dessinerCalendrier(list){
+  const parJour = indexerParJour(list);
+  dessinerMoisCal(parJour);
+  dessinerAnneeCal(parJour);
+  dessinerListeCal(list);
+}
+
+function basculerVuePrincipale(v){
+  vuePrincipale = v;
+  $('v-liste').classList.toggle('actif', v==='liste');
+  $('v-calendrier').classList.toggle('actif', v==='calendrier');
+  $('vue-liste').style.display = v==='liste' ? '' : 'none';
+  $('vue-calendrier').style.display = v==='calendrier' ? '' : 'none';
+}
+function basculerVueCal(v){
+  vueCal = v;
+  $('vc-mois').classList.toggle('actif', v==='mois');
+  $('vc-annee').classList.toggle('actif', v==='annee');
+  $('nav-mois-c').style.display = v==='mois' ? '' : 'none';
+  $('nav-annee-c').style.display = v==='annee' ? '' : 'none';
+  $('cvue-mois').style.display = v==='mois' ? '' : 'none';
+  $('cvue-annee').style.display = v==='annee' ? '' : 'none';
+}
+
+function dessinerMoisCal(parJour){
+  $('mois-lbl-c').textContent = MOIS_C[curseurCal.getMonth()] + ' ' + curseurCal.getFullYear();
+  const grille = $('grille-c'); grille.innerHTML='';
+  const an=curseurCal.getFullYear(), mo=curseurCal.getMonth();
+  const decal=(new Date(an,mo,1).getDay()+6)%7;
+  const nbJours=new Date(an,mo+1,0).getDate();
+  const ajd=isoC(new Date());
+  for(let i=0;i<decal;i++){ const c=document.createElement('div'); c.className='jour vide'; grille.appendChild(c); }
+  for(let d=1; d<=nbJours; d++){
+    const date=isoC(new Date(an,mo,d));
+    const cell=document.createElement('div'); cell.className='jour';
+    if(date===ajd) cell.classList.add('auj');
+    const liste=(parJour.get(date)||[]);
+    if(liste.length){
+      const tousPostules = liste.every(k=>k.deja_postule);
+      cell.classList.add(tousPostules ? 'a-postule' : 'a-ouvert');
+    }
+    const n=document.createElement('div'); n.className='n'; n.textContent=d; cell.appendChild(n);
+    liste.slice(0,2).forEach(k=>{
+      const a=document.createElement('a'); a.className='pastille '+(k.deja_postule?'postule':'ouvert'); a.textContent=k.numero_reference;
+      a.href='/c/'+encodeURIComponent(k.numero_reference); a.title='Voir '+k.numero_reference;
+      cell.appendChild(a);
+    });
+    if(liste.length>2){ const p=document.createElement('div'); p.className='plus'; p.textContent='+'+(liste.length-2); cell.appendChild(p); }
+    grille.appendChild(cell);
+  }
+}
+
+function dessinerAnneeCal(parJour){
+  $('annee-lbl-c').textContent = anneeCalCourante;
+  const zone = $('grille-annee-c'); zone.innerHTML='';
+  const ajd = isoC(new Date());
+  for(let m=0;m<12;m++) zone.appendChild(miniMoisCal(anneeCalCourante, m, ajd, parJour));
+}
+
+function miniMoisCal(an, mo, ajd, parJour){
+  const carte=document.createElement('div'); carte.className='mini-mois';
+  const titre=document.createElement('div'); titre.className='mini-titre'; titre.textContent=MOIS_C[mo]; carte.appendChild(titre);
+  const grille=document.createElement('div'); grille.className='mini-grille';
+  JOURS_MINI_C.forEach(j=>{ const el=document.createElement('div'); el.className='mini-jt'; el.textContent=j; grille.appendChild(el); });
+  const decal=(new Date(an,mo,1).getDay()+6)%7;
+  const nbJours=new Date(an,mo+1,0).getDate();
+  for(let i=0;i<decal;i++){ const c=document.createElement('div'); c.className='mini-j vide'; grille.appendChild(c); }
+  for(let d=1; d<=nbJours; d++){
+    const date=isoC(new Date(an,mo,d));
+    const cell=document.createElement('div'); cell.className='mini-j'; cell.textContent=d;
+    if(date===ajd) cell.classList.add('auj');
+    const liste=parJour.get(date);
+    if(liste && liste.length){
+      const tousPostules = liste.every(k=>k.deja_postule);
+      const pt=document.createElement('span'); pt.className='pt '+(tousPostules?'postule':'ouvert'); cell.appendChild(pt);
+    }
+    cell.onclick=()=>{ curseurCal=new Date(an,mo,d); basculerVueCal('mois'); dessinerMoisCal(indexerParJour(listeFiltree())); };
+    grille.appendChild(cell);
+  }
+  carte.appendChild(grille);
+  return carte;
+}
+
+function dessinerListeCal(list){
+  $('n-contrats-c').textContent = list.length ? '('+list.length+')' : '';
+  const zone = $('liste-c');
+  if(!list.length){ zone.innerHTML = '<div class="vide" style="padding:20px 4px">Aucun contrat ouvert pour l\'instant.</div>'; return; }
+  zone.innerHTML = list.map(k=>{
+    const heures = k.heure_debut ? (String(k.heure_debut).slice(0,5)+'–'+String(k.heure_fin||'').slice(0,5)) : '';
+    const tarif  = k.tarif_horaire!=null ? cdArgent(k.tarif_horaire)+'/h' : '';
+    const meta   = [heures, k.ville, tarif].filter(Boolean).join(' · ');
+    const statut = k.deja_postule ? 'postule' : 'ouvert';
+    const libelle= k.deja_postule ? 'Postulé' : 'Ouvert';
+    return '<a class="ligne-contrat" href="/c/'+encodeURIComponent(k.numero_reference)+'">'
+      +'<span class="lc-date">'+dateCourteC(k.date_contrat)+'</span>'
+      +'<span class="lc-mid"><span class="lc-ref">'+k.numero_reference+'</span><span class="lc-meta">'+meta+'</span></span>'
+      +'<span class="chip '+statut+'">'+libelle+'</span>'
+      +'</a>';
+  }).join('');
+}
+
 (async function(){
   profil = await cdExigerConnexion(['pharmacien']);
   cdEnteteConnecte();
@@ -305,6 +578,23 @@ function dessiner(){
       '<a class="nav" href="/admin.html">Console</a>');
   }
   evaluerOnboarding();
+
+  /* vue Calendrier — bascules et navigation (indépendantes du chargement,
+     actives dès le départ ; les fonctions de dessin gèrent une liste vide) */
+  const jtC = $('jours-tete-c');
+  JOURS_C.forEach(j=>{ const d=document.createElement('div'); d.className='jour-tete'; d.textContent=j; jtC.appendChild(d); });
+  $('v-liste').onclick      = ()=> basculerVuePrincipale('liste');
+  $('v-calendrier').onclick = ()=> basculerVuePrincipale('calendrier');
+  $('vc-mois').onclick  = ()=> basculerVueCal('mois');
+  $('vc-annee').onclick = ()=> basculerVueCal('annee');
+  $('bc-prev').onclick = ()=>{ curseurCal.setMonth(curseurCal.getMonth()-1); dessinerMoisCal(indexerParJour(listeFiltree())); };
+  $('bc-next').onclick = ()=>{ curseurCal.setMonth(curseurCal.getMonth()+1); dessinerMoisCal(indexerParJour(listeFiltree())); };
+  $('bc-auj').onclick  = ()=>{ curseurCal=new Date(); dessinerMoisCal(indexerParJour(listeFiltree())); };
+  $('bac-prev').onclick = ()=>{ anneeCalCourante--; dessinerAnneeCal(indexerParJour(listeFiltree())); };
+  $('bac-next').onclick = ()=>{ anneeCalCourante++; dessinerAnneeCal(indexerParJour(listeFiltree())); };
+  $('b-imp-cal').onclick     = ()=>{ document.body.classList.add('print-cal');      window.print(); };
+  $('b-imp-liste-c').onclick = ()=>{ document.body.classList.add('print-liste-cal'); window.print(); };
+  window.addEventListener('afterprint', ()=> document.body.classList.remove('print-cal','print-liste-cal'));
   try{ const { data: rg } = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle(); regles = rg; }catch(e){}
 
   const { data, error } = await sb.rpc('get_contrats_ouverts');
