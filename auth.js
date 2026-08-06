@@ -332,7 +332,12 @@ window.cdMenuRole = function(role){
   document.querySelectorAll('.retour, a.retour, #lien-retour').forEach(el=>{ el.style.display = 'none'; });
 };
 
-/* ---- en-tête connecté : injecte « PRÉNOM · DÉCONNEXION » dans la topbar ---- */
+/* ---- en-tête connecté : injecte « NOM · ★ note · DÉCONNEXION » dans la topbar ----
+   Le nom est celui du pharmacien(ne) OU de la pharmacie selon le rôle
+   (nom_pharmacie, pas prénom, côté pharmacie). La réputation (étoiles +
+   nombre d'avis, sql/19 get_note_profil) s'affiche à côté dès qu'elle
+   existe — jamais pour l'admin, qui n'est pas noté. Les deux sont un lien
+   vers /evaluations.html. */
 window.cdEnteteConnecte = async function(){
   const p = await cdProfil();
   if(!p) return null;
@@ -351,19 +356,45 @@ window.cdEnteteConnecte = async function(){
       (p.role === 'admin'
         ? 'color:#E8B849;border-color:rgba(232,184,73,.55);background:rgba(232,184,73,.1)'
         : 'color:#17C980;border-color:rgba(23,201,128,.45);background:rgba(18,169,110,.1)');
-    const nom = document.createElement('b');
-    nom.textContent = p.prenom || p.courriel || '';
+    /* nom affiché — pharmacie : nom commercial ; pharmacien/admin : prénom */
+    const nomAffiche = p.role === 'pharmacie'
+      ? (p.nom_pharmacie || p.ville || p.courriel || '')
+      : (p.prenom || p.courriel || '');
+    const nom = document.createElement(p.role === 'admin' ? 'b' : 'a');
+    nom.textContent = nomAffiche;
+    nom.style.cssText = 'color:inherit;text-decoration:none;font-weight:700';
+    if(p.role !== 'admin'){
+      nom.href = '/evaluations.html';
+      nom.addEventListener('mouseenter', ()=> nom.style.textDecoration='underline');
+      nom.addEventListener('mouseleave', ()=> nom.style.textDecoration='none');
+    }
+    /* réputation — étoiles + nombre d'avis, cachée tant qu'aucune note
+       n'existe (compte neuf) et jamais chargée pour l'admin */
+    const etoiles = document.createElement('a');
+    etoiles.href = '/evaluations.html';
+    etoiles.style.cssText = 'display:none;color:var(--jaune,#C97B12);text-decoration:none;font-weight:600;letter-spacing:.02em';
     const sep = document.createElement('span'); sep.textContent = '·'; sep.style.opacity = '.5';
     const btn = document.createElement('button');
     btn.textContent = cdT('Déconnexion', 'Log out');
     btn.style.cssText = "background:none;border:none;cursor:pointer;color:inherit;font:inherit;text-decoration:underline;text-underline-offset:3px;opacity:.8";
     btn.onclick = cdDeconnexion;
-    el.append(roleBadge, nom, sep, btn);
+    el.append(roleBadge, nom, etoiles, sep, btn);
     conteneur.appendChild(el);
     // masquer les liens Connexion/Inscription éventuels
     document.querySelectorAll('a[href^="acces.html"],a[href^="/acces.html"]').forEach(a=>{
       if(/mode=(conn|insc)/.test(a.getAttribute('href'))) a.style.display = 'none';
     });
+    /* réputation chargée en différé — n'attend pas ce résultat pour
+       afficher le reste de l'en-tête */
+    if(p.role === 'pharmacien' || p.role === 'pharmacie'){
+      sb.rpc('get_note_profil', { p_profil: p.id }).then(({ data })=>{
+        const n = data && data[0];
+        if(n && n.nombre > 0){
+          etoiles.textContent = '★ ' + Number(n.moyenne).toFixed(1) + ' (' + n.nombre + ')';
+          etoiles.style.display = '';
+        }
+      }).catch(()=>{});
+    }
   }
   if(p && p.role) cdMenuRole(p.role);
   return p;
