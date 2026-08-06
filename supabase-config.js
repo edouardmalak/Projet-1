@@ -27,3 +27,11 @@ window.CD_GOOGLE_CLIENT_ID = "";
 // avoir activé Apple dans Supabase → Authentication → Providers → Apple
 // (Services ID / Team ID / Key du compte Apple Developer).
 window.CD_APPLE_ENABLED = false;
+
+// Clé publique VAPID (notifications Web Push — parametres.html). Vide =
+// le bouton "Activer les notifications" affiche un message local au lieu
+// d'appeler PushManager.subscribe(). À remplir après génération de la
+// paire de clés VAPID (voir workers/c-direct-sms/README.md) — la clé
+// PRIVÉE va en secret Worker (wrangler secret put VAPID_PRIVATE_KEY),
+// jamais ici.
+window.CD_VAPID_PUBLIC_KEY = "";

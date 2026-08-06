@@ -233,7 +233,7 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
       </table>
       <div class="vide" id="vide" style="display:none">
         <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ligne2)" stroke-width="1.6" style="margin-bottom:12px"><circle cx="12" cy="12" r="9"/><path d="M8.5 15c1-1 5-1 7 0" stroke-linecap="round"/><circle cx="9" cy="10" r="1" fill="var(--ligne2)" stroke="none"/><circle cx="15" cy="10" r="1" fill="var(--ligne2)" stroke="none"/></svg>
-        <b>AUCUN CONTRAT OUVERT</b>
+        <b>AUCUN CONTRAT DISPONIBLE</b>
         Les nouveaux contrats apparaissent ici dès leur publication. Activez les alertes SMS dans votre profil pour être prévenu·e.
       </div>
     </div>
@@ -269,15 +269,15 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
           <div class="grille-jours" id="jours-tete-c"></div>
           <div class="grille-jours" id="grille-c" style="margin-top:7px"></div>
           <div class="legende">
-            <span><i class="pnt ouvert"></i> Ouvert</span>
-            <span><i class="pnt postule"></i> Déjà postulé</span>
+            <span><i class="pnt ouvert"></i> Disponible</span>
+            <span><i class="pnt postule"></i> Quart demandé</span>
           </div>
         </div>
         <div class="carte cal-carte" id="cvue-annee" style="display:none">
           <div class="grille-annee" id="grille-annee-c"></div>
           <div class="legende" style="margin-top:18px">
-            <span><i class="pnt ouvert"></i> Ouvert</span>
-            <span><i class="pnt postule"></i> Déjà postulé</span>
+            <span><i class="pnt ouvert"></i> Disponible</span>
+            <span><i class="pnt postule"></i> Quart demandé</span>
           </div>
         </div>
       </div>
@@ -295,7 +295,7 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260805b"></script>
+<script src="/auth.js?v=20260806a"></script>
 <script src="/assistant.js?v=20260723b" defer></script>
 <script src="/fsa-qc.js"></script>
 <script>
@@ -424,7 +424,7 @@ function dessinerTableau(list){
   const tb = $('lignes'); tb.innerHTML='';
   if(!list.length){
     $('tableau').style.display='none'; $('vide').style.display='block';
-    $('vide').querySelector('b').textContent = contrats.length ? 'AUCUN RÉSULTAT' : 'AUCUN CONTRAT OUVERT';
+    $('vide').querySelector('b').textContent = contrats.length ? 'AUCUN RÉSULTAT' : 'AUCUN CONTRAT DISPONIBLE';
     $('sous').textContent = '0 contrat · 0 % commission';
     return;
   }
@@ -455,8 +455,8 @@ function dessinerTableau(list){
     /* cellule statut + coeur favori */
     const statutTd = document.createElement('td');
     statutTd.innerHTML = k.deja_postule
-      ? '<span class="badge postule">Postulé</span>'
-      : '<span class="badge ouvert">Ouvert</span>';
+      ? '<span class="badge postule">Quart demandé</span>'
+      : '<span class="badge ouvert">Disponible</span>';
     const coeur = document.createElement('button');
     coeur.type = 'button'; coeur.className = 'coeur' + (estFavori(k.numero_reference) ? ' on' : '');
     coeur.innerHTML = '♥'; coeur.title = 'Favori';
@@ -591,7 +591,7 @@ function dessinerListeCal(list){
     const tarif  = k.tarif_horaire!=null ? cdArgent(k.tarif_horaire)+'/h' : '';
     const meta   = [heures, k.ville, tarif].filter(Boolean).join(' · ');
     const statut = k.deja_postule ? 'postule' : 'ouvert';
-    const libelle= k.deja_postule ? 'Postulé' : 'Ouvert';
+    const libelle= k.deja_postule ? 'Quart demandé' : 'Disponible';
     const indispo = estIndisponible(k.date_contrat);
     return '<div class="ligne-contrat" data-ref="'+k.numero_reference+'">'
       +'<span class="lc-date'+(indispo?' indispo':'')+'"'+(indispo?' title="Vous êtes indisponible ce jour"':'')+'>'+dateCourteC(k.date_contrat)+'</span>'

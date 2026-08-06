@@ -23,6 +23,10 @@ background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),line
 .carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:26px;position:relative;margin-bottom:18px}
 .carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vert),transparent)}
 .entete{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
+.entete .droite-entete{display:flex;align-items:center;gap:6px}
+.coeur{background:none;border:none;cursor:pointer;color:var(--ligne2);font-size:18px;vertical-align:middle;line-height:1;padding:2px}
+.coeur:hover{color:var(--sourd)}
+.coeur.on{color:var(--rouge)}
 h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-spacing:.1em;color:var(--vert-vif)}
 .badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:3px;border:1px solid var(--ligne2);white-space:nowrap}
 .badge.ouvert{color:var(--vert-vif);border-color:rgba(23,201,128,.4);background:rgba(18,169,110,.08)}
@@ -51,6 +55,13 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
 .f-offre.on{display:block;animation:glisse .18s ease}
 @keyframes glisse{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .f-offre .titre{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:12px}
+.off-original{background:var(--panneau);border:1px solid var(--ligne2);border-radius:6px;padding:10px 12px;margin-bottom:12px}
+.off-original small{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--sourd);margin-bottom:3px}
+.off-original b{font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:var(--texte)}
+.off-toggle{display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--texte);margin-bottom:2px;cursor:pointer;user-select:none}
+.off-toggle input{width:15px;height:15px;accent-color:var(--vert);flex:none}
+.off-horaire-champs{margin-top:10px}
+.off-resume{background:rgba(18,169,110,.08);border:1px solid rgba(23,201,128,.4);border-radius:6px;padding:9px 12px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--vert-vif);margin:14px 0}
 .champ{margin-bottom:11px}
 .champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--sourd);margin-bottom:4px}
 .champ input,.champ textarea{width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:10px 11px;font-size:14px;font-family:'IBM Plex Mono',monospace;background:#F4F8F5;color:var(--texte)}
@@ -110,7 +121,10 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
   <div class="carte" id="fiche" style="display:none">
     <div class="entete">
       <h1 id="ref">CD-______</h1>
-      <span class="badge" id="badge">—</span>
+      <div class="droite-entete">
+        <span class="badge" id="badge">—</span>
+        <button type="button" class="coeur" id="btn-coeur" title="Sauvegarder" style="display:none">♥</button>
+      </div>
     </div>
     <p class="sous" id="sous">—</p>
     <div id="bloc-parties" style="display:none;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--sourd);line-height:1.8"></div>
@@ -169,20 +183,34 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
         <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:10px">Votre rémunération estimée</div>
         <div id="remu-lignes"></div>
         <div style="display:flex;justify-content:space-between;border-top:1px solid var(--ligne);margin-top:8px;padding-top:8px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px"><span>Total estimé</span><span id="remu-total-val" style="color:var(--vert-vif)">—</span></div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--sourd);margin-top:8px;line-height:1.5">Indemnités calculées automatiquement par le réseau selon la distance (aller simple) — jamais négociées avec la pharmacie.</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--sourd);margin-top:8px;line-height:1.5">Indemnités calculées automatiquement par le réseau selon la distance (aller simple) — jamais négociées avec la pharmacie. Hébergement : la pharmacie peut l'offrir si possible, ou verser l'indemnité de 250 $/jour indiquée ci-dessus.</div>
       </div>
-      <button class="btn" id="btn-instant">Postuler au tarif affiché</button>
+      <button class="btn" id="btn-instant">Postulez</button>
       <div class="indice-btn">Acceptation en un geste par la pharmacie — le plus rapide l'emporte</div>
-      <button class="btn-sec" id="btn-offrir">Faire une offre</button>
+      <button class="btn-sec" id="btn-offrir">Postuler avec modification</button>
       <form class="f-offre" id="f-offre">
-        <div class="titre">Mon offre</div>
-        <div class="champ"><label>Tarif proposé ($/h)</label><input id="o-tarif" type="number" step="0.01" min="0" required></div>
-        <div class="deux-p">
-          <div class="champ"><label>Début proposé (optionnel)</label><input id="o-debut" type="time"></div>
-          <div class="champ"><label>Fin proposée (optionnel)</label><input id="o-fin" type="time"></div>
+        <div class="titre">Postuler avec modification</div>
+
+        <div class="off-original">
+          <small>Horaire original</small>
+          <b id="off-original-txt">—</b>
         </div>
+
+        <label class="off-toggle">
+          <input type="checkbox" id="o-modifier-horaire">
+          Proposer un autre horaire
+        </label>
+        <div class="deux-p off-horaire-champs" id="off-horaire-champs" style="display:none">
+          <div class="champ"><label>Début proposé</label><input id="o-debut" type="time"></div>
+          <div class="champ"><label>Fin proposée</label><input id="o-fin" type="time"></div>
+        </div>
+
+        <div class="champ"><label>Tarif proposé ($/h)</label><input id="o-tarif" type="number" step="0.01" min="0" required></div>
+
+        <div class="off-resume" id="off-resume">—</div>
+
         <div class="champ"><label>Message (optionnel)</label><textarea id="o-message" rows="2" placeholder="Ex. : disponible dès 10 h, expérience Kroll 5 ans…"></textarea></div>
-        <button class="btn" type="submit" id="btn-envoyer" style="margin-top:6px">Envoyer mon offre</button>
+        <button class="btn" type="submit" id="btn-envoyer" style="margin-top:6px">Envoyer ma candidature</button>
       </form>
     </div>
     <div class="msg" id="msg"></div>
@@ -191,7 +219,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260805b"></script>
+<script src="/auth.js?v=20260806a"></script>
 <script src="/outils.js"></script>
 <script src="/fsa-qc.js"></script>
 <script>
@@ -240,10 +268,22 @@ function msg(texte, type){
   $('ref').textContent = k.numero_reference;
   document.title = 'C-Direct — ' + k.numero_reference;
 
-  const badges = {ouvert:['ouvert','OUVERT'], attribue:['attribue','CONFIRMÉ'],
+  const badges = {ouvert:['ouvert','DISPONIBLE'], attribue:['attribue','CONFIRMÉ'],
                   complete:['autre','COMPLÉTÉ'], annule:['autre','ANNULÉ']};
   const b = badges[k.statut] || ['autre', k.statut];
   $('badge').className = 'badge ' + b[0]; $('badge').textContent = b[1];
+
+  /* ---- Sauvegarder (♥) — même mécanisme localStorage que contrats.html ---- */
+  function favSet(){ try{ return new Set(JSON.parse(localStorage.getItem('cd-favoris')||'[]')); }catch(e){ return new Set(); } }
+  function favSave(s){ try{ localStorage.setItem('cd-favoris', JSON.stringify([...s])); }catch(e){} }
+  function estFavori(ref){ return favSet().has(ref); }
+  function toggleFavori(ref){ const s=favSet(); s.has(ref)?s.delete(ref):s.add(ref); favSave(s); }
+  if(profil.role === 'pharmacien'){
+    const coeur = $('btn-coeur');
+    coeur.style.display = '';
+    coeur.classList.toggle('on', estFavori(k.numero_reference));
+    coeur.onclick = ()=>{ toggleFavori(k.numero_reference); coeur.classList.toggle('on', estFavori(k.numero_reference)); };
+  }
 
   $('sous').textContent = (k.ville || 'Ville non précisée') + ' · publié le ' +
     new Date(k.created_at).toLocaleDateString('fr-CA');
@@ -438,15 +478,31 @@ function msg(texte, type){
       }
       $('zone-postuler').style.display = '';
       $('o-tarif').value = k.tarif_horaire;
-      rendreRemuneration(k.tarif_horaire, k.heure_debut, k.heure_fin);
-      ['o-tarif','o-debut','o-fin'].forEach(id=>{
-        const el = $(id); if(!el) return;
-        el.addEventListener('input', ()=>{
-          const t = parseFloat($('o-tarif').value) || k.tarif_horaire;
-          const hd = $('o-debut').value || k.heure_debut, hf = $('o-fin').value || k.heure_fin;
-          rendreRemuneration(t, hd, hf);
-        });
+      $('off-original-txt').textContent = cdDate(k.date_contrat) + ' · ' + cdHeure(k.heure_debut) + ' – ' + cdHeure(k.heure_fin);
+
+      function heuresProposees(){
+        const actif = $('o-modifier-horaire').checked;
+        return {
+          hd: (actif && $('o-debut').value) ? $('o-debut').value : k.heure_debut,
+          hf: (actif && $('o-fin').value) ? $('o-fin').value : k.heure_fin
+        };
+      }
+      function majResume(){
+        const t = parseFloat($('o-tarif').value) || k.tarif_horaire;
+        const { hd, hf } = heuresProposees();
+        $('off-resume').textContent = cdT(
+          'Postuler avec l\'horaire du ' + cdDate(k.date_contrat) + ', ' + cdHeure(hd) + ' – ' + cdHeure(hf) + ', à ' + cdArgent(t) + '/h',
+          'Apply with the ' + cdDate(k.date_contrat) + ' schedule, ' + cdHeure(hd) + ' – ' + cdHeure(hf) + ', at ' + cdArgent(t) + '/h'
+        );
+        rendreRemuneration(t, hd, hf);
+      }
+      majResume();
+      $('o-modifier-horaire').addEventListener('change', ()=>{
+        $('off-horaire-champs').style.display = $('o-modifier-horaire').checked ? '' : 'none';
+        if(!$('o-modifier-horaire').checked){ $('o-debut').value = ''; $('o-fin').value = ''; }
+        majResume();
       });
+      ['o-tarif','o-debut','o-fin'].forEach(id=> $(id).addEventListener('input', majResume));
 
       async function postuler(payload, apres, sujetAlerte, messageAlerte, extra){
         ['btn-instant','btn-offrir','btn-envoyer'].forEach(b=>{ $(b).disabled = true; });
@@ -482,7 +538,9 @@ function msg(texte, type){
       $('f-offre').addEventListener('submit', e=>{
         e.preventDefault();
         const tarif = parseFloat($('o-tarif').value);
-        const hd = $('o-debut').value || null, hf = $('o-fin').value || null;
+        const modifHoraire = $('o-modifier-horaire').checked;
+        const hd = modifHoraire ? ($('o-debut').value || null) : null;
+        const hf = modifHoraire ? ($('o-fin').value || null) : null;
         if((hd && !hf) || (!hd && hf)){ msg('Précisez le début ET la fin de l’horaire proposé.', 'ko'); return; }
         if(hd && hf && hf <= hd){ msg('La fin proposée doit suivre le début.', 'ko'); return; }
         const texte = $('o-message').value.trim() || null;

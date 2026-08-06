@@ -267,7 +267,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js?v=20260723b"></script>
-<script src="auth.js?v=20260805b"></script>
+<script src="auth.js?v=20260806a"></script>
 <script src="outils.js"></script>
 <script>
 const sb = window.sbClient;
@@ -454,6 +454,16 @@ $('btn-apple').onclick = async ()=>{
     setTimeout(()=>{ try{ erreur('err-conn', decodeURIComponent(err.replace(/\+/g,' '))); }catch(e){} }, 300);
   }
 })();
+
+/* Renvoyé ici par auth.js (cdExigerConnexion) après désactivation volontaire
+   du compte (parametres.html → desactiver_mon_compte()) : message explicite
+   au lieu d'un simple retour silencieux à l'écran de connexion. */
+if(params.get('desactive') === '1'){
+  setTimeout(()=>{ try{ erreur('err-entree', cdT(
+    'Ce compte a été désactivé. Contactez le soutien C-Direct pour le réactiver.',
+    'This account has been deactivated. Contact C-Direct support to reactivate it.'
+  )); }catch(e){} }, 300);
+}
 
 /* ---------- connexion ---------- */
 $('btn-connexion').onclick = async ()=>{

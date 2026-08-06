@@ -55,6 +55,15 @@ window.cdExigerConnexion = async function(roles){
     location.replace('/acces.html?mode=completer');
     return new Promise(()=>{});
   }
+  if(p.compte_desactive === true){
+    // désactivation volontaire (parametres.html) : la session reste valide
+    // côté Supabase tant qu'on ne la ferme pas nous-mêmes — on le fait ici,
+    // au point d'entrée commun à toutes les pages protégées.
+    try{ localStorage.removeItem('cd-suite'); }catch(e){}
+    await sb.auth.signOut();
+    location.replace('/acces.html?mode=conn&desactive=1');
+    return new Promise(()=>{});
+  }
   if(roles && roles.length && !roles.includes(p.role) && p.role !== 'admin'){
     location.replace(cdAccueilPourRole(p.role));
     return new Promise(()=>{});
@@ -190,7 +199,8 @@ const CD_MENUS = {
       ['/evaluations.html',        'Évaluations',      'Reviews'],
       ['/dispensaire.html',        'Dispensaire',       'Dispensary'],
       ['/profil.html',             'Profil',           'Profile'],
-      ['/faq.html',                'FAQ',              'FAQ']
+      ['/faq.html',                'FAQ',              'FAQ'],
+      ['/parametres.html',         'Paramètres',       'Settings']
     ]}
   ],
   pharmacie: [
@@ -209,7 +219,8 @@ const CD_MENUS = {
       ['/evaluations.html',        'Évaluations',      'Reviews'],
       ['/dispensaire.html',        'Dispensaire',       'Dispensary'],
       ['/profil.html',             'Profil',           'Profile'],
-      ['/faq.html',                'FAQ',              'FAQ']
+      ['/faq.html',                'FAQ',              'FAQ'],
+      ['/parametres.html',         'Paramètres',       'Settings']
     ]}
   ],
   admin: [
@@ -221,7 +232,8 @@ const CD_MENUS = {
     { g:'Compte', ge:'Account', items: [
       ['/evaluations.html',        'Évaluations',      'Reviews'],
       ['/profil.html',             'Profil',           'Profile'],
-      ['/faq.html',                'FAQ',              'FAQ']
+      ['/faq.html',                'FAQ',              'FAQ'],
+      ['/parametres.html',         'Paramètres',       'Settings']
     ]}
   ]
 };

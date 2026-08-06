@@ -82,6 +82,7 @@ et journalise tout message entrant dans `sms_log`.
 | `POST /twilio-inbound` | (appelé par Twilio) | ARRET/STOP/UNSUBSCRIBE/DESABONNER → opt-out ; tout le reste journalisé |
 | `POST /test` | header `X-Webhook-Secret` | `{ "to": "+1XXXXXXXXXX" }` → SMS test (bouton console admin) |
 | `POST /admin/purger-inscription` | `Authorization: Bearer <jeton session admin>` | `{ "courriel": "..." }` → supprime un compte Supabase Auth **jamais confirmé** (doublon d'inscription bloqué, bouton console admin « Inscription bloquée »). Revérifie `email_confirmed_at` côté serveur avant de supprimer — refuse tout compte déjà confirmé une seule fois. Journalisé dans `admin_audit_log`. |
+| `POST /test-push` | header `X-Webhook-Secret` | `{ "profil_id": "..." }` → envoie une notification push de test à tous les abonnements de ce profil (voir § 6) |
 
 Test rapide en ligne de commande :
 
@@ -92,7 +93,52 @@ curl -X POST "https://c-direct-sms.<sous-domaine>.workers.dev/test" \
   -d '{"to":"+1514XXXXXXX"}'
 ```
 
-## 5 · Garanties
+## 5 · Notifications push (Web Push — sql/49, parametres.html)
+
+Diffusée en parallèle du SMS à la publication d'un contrat (`diffuserPush`
+dans `diffusionNouveauContrat`), sur un canal **indépendant** : un
+pharmacien sans téléphone, ou ayant refusé le SMS, peut quand même
+recevoir le push s'il l'a activé dans Paramètres → Notifications.
+Chiffrement RFC 8291 + jeton RFC 8292, implémentés à la main avec l'API
+Web Crypto (aucune dépendance npm, comme le reste de ce Worker) — voir
+les commentaires au-dessus de `chiffrerPush`/`vapidAuthorization` dans
+`src/index.js`. **Non testée de bout en bout dans l'environnement de
+développement** (la clé privée n'y transite jamais) : valider avec
+`/test-push` (étape 3 ci-dessous) avant de compter dessus en production.
+
+**Étapes (terminal, une seule fois) :**
+
+```bash
+cd workers/c-direct-sms
+
+# 1) générer la paire de clés (rien n'est envoyé nulle part — local)
+node generer-vapid.js
+
+# 2) les deux valeurs affichées :
+npx wrangler secret put VAPID_PUBLIC_KEY    # collez la valeur 1/2
+npx wrangler secret put VAPID_PRIVATE_KEY   # collez la valeur 3 (SECRÈTE)
+npx wrangler deploy
+
+# 3) collez CD_VAPID_PUBLIC_KEY (valeur 1) dans supabase-config.js —
+#    Claude peut le faire si vous lui donnez cette valeur (pas secrète),
+#    puis commit/push (déploiement automatique du site).
+
+# 4) test réel : activez les notifications depuis Paramètres →
+#    Notifications sur votre téléphone/ordinateur, notez votre profil_id
+#    (Supabase → table profiles), puis :
+curl -X POST "https://c-direct-sms.<sous-domaine>.workers.dev/test-push" \
+  -H "Content-Type: application/json" \
+  -H "X-Webhook-Secret: <VOTRE_WEBHOOK_SECRET>" \
+  -d '{"profil_id":"<votre uuid profiles.id>"}'
+# → une notification doit apparaître sur l'appareil dans les secondes qui suivent
+```
+
+Sans `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`, la diffusion push est
+simplement ignorée (`push: {ok:false, skip:'VAPID non configuré'}` dans
+la réponse de `/diffuser` et `/webhook`) — le SMS et le reste ne sont
+jamais affectés.
+
+## 6 · Garanties
 
 - **Idempotence** : Supabase peut réessayer un webhook — déduplication sur
   (id du contrat + type d'évènement) dans une fenêtre de 10 minutes via

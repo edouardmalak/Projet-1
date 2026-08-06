@@ -32,14 +32,17 @@ export default {
         return await routeEnvoyerCodeInterac(request, env);
       if (request.method === 'POST' && url.pathname === '/pharmacien/alerter-changement-interac')
         return await routeAlerterChangementInterac(request, env);
+      if (request.method === 'POST' && url.pathname === '/test-push')
+        return await routeTestPush(request, env);
       if (request.method === 'GET' && url.pathname === '/diag')
         return json({
-          version: 'confirmer-pdf-2026-07-21b',
+          version: 'push-2026-08-06a',
           resend: !!env.RESEND_API_KEY,
           resend_from: env.RESEND_FROM || 'C-Direct <notifications@c-direct.ca> (défaut)',
           supabase: !!env.SUPABASE_URL,
           twilio: !!env.TWILIO_ACCOUNT_SID,
           webhook_secret_set: !!env.WEBHOOK_SECRET,
+          vapid: !!(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY),
         });
       if (request.method === 'POST' && url.pathname === '/twilio-inbound')
         return await routeTwilioInbound(request, env);
@@ -1237,6 +1240,12 @@ async function diffusionNouveauContrat(env, k) {
     }
   }
 
+  /* ---- 6 · notifications push (best-effort, canal indépendant du SMS —
+     voir ciblesPush : préconditions différentes, jamais bloquant) ---- */
+  let pushRes = null;
+  try { pushRes = await diffuserPush(env, k, pharmacie); }
+  catch (e) { pushRes = { ok: false, erreur: e.message }; }
+
   return json({
     ok: true,
     contrat: k.numero_reference,
@@ -1246,6 +1255,7 @@ async function diffusionNouveauContrat(env, k) {
     sms_envoyes: nEnvoyes,
     confirmation_pharmacie: confirmation ? confirmation.ok : 'aucun téléphone au profil',
     confirmation_email: confirmationEmail,
+    push: pushRes,
   });
 }
 
@@ -1332,6 +1342,177 @@ async function ciblesFiltrees(env, k) {
   }
 
   return { retenus, pharmacie, nEvalues: pharmaciens.length, nFiltres: exclusions.length };
+}
+
+/* =====================================================================
+   5.1b · WEB PUSH — sql/49 (parametres.html). Canal INDÉPENDANT du SMS
+   ci-dessus : un pharmacien sans téléphone, ou ayant refusé le SMS, peut
+   quand même vouloir le push — donc requête de ciblage séparée, pas de
+   réutilisation de `retenus`. Mêmes critères géographiques que le SMS
+   (distance / tarif plancher / logiciel, chacun ignoré si la donnée
+   manque), PLUS les préférences push-spécifiques, volontairement plus
+   strictes : « logiciel connu » exige une correspondance CONFIRMÉE (pas
+   seulement l'absence de mismatch), et la distance-plafond du push peut
+   différer du rayon d'emploi général du pharmacien.
+===================================================================== */
+async function ciblesPush(env, k, pharmacie) {
+  const pharmaciens = await sbSelect(env,
+    `profiles?select=id,code_postal,rayon_deplacement_km,tarif_horaire_min,logiciels,notif_seulement_logiciel_connu,notif_distance_max_km&role=eq.pharmacien&approuve=eq.true&notif_push_actif=eq.true`);
+  const retenus = [];
+  for (const p of pharmaciens) {
+    const km = distanceKm(p.code_postal, pharmacie.code_postal);
+    if (km != null && p.rayon_deplacement_km != null && km > p.rayon_deplacement_km) continue;
+    if (p.tarif_horaire_min != null && parseFloat(k.tarif_horaire) < parseFloat(p.tarif_horaire_min)) continue;
+    const logicielConfirme = !!(pharmacie.logiciel && Array.isArray(p.logiciels) && p.logiciels.includes(pharmacie.logiciel));
+    const logicielMismatch = pharmacie.logiciel && Array.isArray(p.logiciels) && p.logiciels.length && !p.logiciels.includes(pharmacie.logiciel);
+    if (logicielMismatch) continue;
+    if (p.notif_seulement_logiciel_connu && !logicielConfirme) continue;
+    if (p.notif_distance_max_km != null && (km == null || km > p.notif_distance_max_km)) continue;
+    retenus.push(p.id);
+  }
+  return retenus;
+}
+
+/* ---- RFC 8291 (chiffrement aes128gcm) + RFC 8292 (jeton VAPID) ----
+   Implémenté avec l'API Web Crypto native — ce Worker n'a AUCUNE
+   dépendance npm (voir Twilio/Resend plus haut, en fetch pur), et Web
+   Push ne fait pas exception. Suit les RFC au plus près ; n'a PAS pu
+   être vérifié de bout en bout dans cet environnement de développement
+   (la clé privée VAPID n'y transite jamais — voir README § Notifications
+   push). À valider avec POST /test-push après le premier déploiement. */
+function b64urlDecode(s) {
+  s = String(s || '').replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  const bin = atob(s);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+function b64urlEncode(bytes) {
+  const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  let bin = ''; for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function concatBytes(...parts) {
+  const len = parts.reduce((n, p) => n + p.length, 0);
+  const out = new Uint8Array(len);
+  let o = 0; for (const p of parts) { out.set(p, o); o += p.length; }
+  return out;
+}
+async function hmacSha256(keyBytes, msgBytes) {
+  const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC', key, msgBytes));
+}
+async function hkdf(salt, ikm, info, length) {
+  const prk = await hmacSha256(salt, ikm);
+  const t1 = await hmacSha256(prk, concatBytes(info, new Uint8Array([1])));
+  return t1.slice(0, length);
+}
+
+/* jeton VAPID (RFC 8292) — clé privée fournie en JWK (voir generer-vapid.js) */
+async function vapidAuthorization(env, endpointUrl) {
+  const audience = new URL(endpointUrl).origin;
+  const privJwk = JSON.parse(env.VAPID_PRIVATE_KEY);
+  const key = await crypto.subtle.importKey('jwk', privJwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  const header = { typ: 'JWT', alg: 'ES256' };
+  const claims = { aud: audience, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: 'mailto:notifications@c-direct.ca' };
+  const te = new TextEncoder();
+  const unsigned = b64urlEncode(te.encode(JSON.stringify(header))) + '.' + b64urlEncode(te.encode(JSON.stringify(claims)));
+  const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, te.encode(unsigned));
+  const jwt = unsigned + '.' + b64urlEncode(sig);
+  return `vapid t=${jwt}, k=${env.VAPID_PUBLIC_KEY}`;
+}
+
+/* chiffrement du message (RFC 8291) pour UN abonnement (p256dh/auth) */
+async function chiffrerPush(sub, payloadObj) {
+  const uaPublic = b64urlDecode(sub.p256dh);   // 65 octets (point EC non compressé)
+  const authSecret = b64urlDecode(sub.auth);   // 16 octets
+
+  const asKeyPair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+  const asPublicRaw = new Uint8Array(await crypto.subtle.exportKey('raw', asKeyPair.publicKey));
+
+  const uaKey = await crypto.subtle.importKey('raw', uaPublic, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+  const ecdhSecret = new Uint8Array(await crypto.subtle.deriveBits({ name: 'ECDH', public: uaKey }, asKeyPair.privateKey, 256));
+
+  const te = new TextEncoder();
+  const keyInfo = concatBytes(te.encode('WebPush: info\0'), uaPublic, asPublicRaw);
+  const ikm = await hkdf(authSecret, ecdhSecret, keyInfo, 32);
+
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const cek = await hkdf(salt, ikm, te.encode('Content-Encoding: aes128gcm\0'), 16);
+  const nonce = await hkdf(salt, ikm, te.encode('Content-Encoding: nonce\0'), 12);
+
+  /* 0x02 = délimiteur RFC 8188 « dernier (et unique) enregistrement » — pas de padding additionnel */
+  const plaintext = concatBytes(te.encode(JSON.stringify(payloadObj)), new Uint8Array([2]));
+  const gcmKey = await crypto.subtle.importKey('raw', cek, { name: 'AES-GCM' }, false, ['encrypt']);
+  const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, gcmKey, plaintext));
+
+  const recordSize = new Uint8Array(4);
+  new DataView(recordSize.buffer).setUint32(0, 4096, false);
+  const header = concatBytes(salt, recordSize, new Uint8Array([asPublicRaw.length]), asPublicRaw);
+  return concatBytes(header, ciphertext);
+}
+
+/* envoi à UN abonnement — 404/410 = abonnement expiré côté navigateur (à purger) */
+async function envoyerPush(env, sub, payloadObj) {
+  try {
+    const corps = await chiffrerPush(sub, payloadObj);
+    const auth = await vapidAuthorization(env, sub.endpoint);
+    const r = await fetch(sub.endpoint, {
+      method: 'POST',
+      headers: { Authorization: auth, 'Content-Encoding': 'aes128gcm', 'Content-Type': 'application/octet-stream', TTL: '86400' },
+      body: corps,
+    });
+    if (r.ok) return { ok: true };
+    if (r.status === 404 || r.status === 410) return { ok: false, expiree: true };
+    return { ok: false, erreur: `${r.status} ${(await r.text().catch(() => ''))}`.slice(0, 200) };
+  } catch (e) {
+    return { ok: false, erreur: e.message };
+  }
+}
+
+/* diffusion push pour un contrat — appelée par diffusionNouveauContrat() */
+async function diffuserPush(env, k, pharmacie) {
+  if (!env.VAPID_PRIVATE_KEY || !env.VAPID_PUBLIC_KEY) return { ok: false, skip: 'VAPID non configuré' };
+  const ids = await ciblesPush(env, k, pharmacie);
+  if (!ids.length) return { ok: true, envoyes: 0, cibles: 0 };
+  const subs = await sbSelect(env, `push_subscriptions?select=*&profil_id=in.(${ids.join(',')})`);
+  if (!subs.length) return { ok: true, envoyes: 0, cibles: ids.length };
+
+  const payload = {
+    title: 'C-Direct — nouveau contrat',
+    body: `${Math.round(k.tarif_horaire)}$/h · ${dateCourte(k.date_contrat)} · ${String(pharmacie.ville || 'Quebec').slice(0, 20)}`,
+    url: `/c/${k.numero_reference}`,
+  };
+  let envoyes = 0; const expirees = [];
+  await enParallele(subs.map(s => async () => {
+    const res = await envoyerPush(env, s, payload);
+    if (res.ok) envoyes++; else if (res.expiree) expirees.push(s.id);
+  }), 5);
+  if (expirees.length) {
+    await fetch(`${env.SUPABASE_URL}/rest/v1/push_subscriptions?id=in.(${expirees.join(',')})`,
+      { method: 'DELETE', headers: sbHeaders(env) }).catch(() => {});
+  }
+  return { ok: true, envoyes, cibles: ids.length, expirees: expirees.length };
+}
+
+/* POST /test-push — vérifie l'envoi de bout en bout pour UN profil (secret
+   partagé, même schéma que /test pour le SMS). À utiliser une fois après
+   configuration de VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY et un premier
+   abonnement créé depuis parametres.html, pour confirmer que la
+   notification arrive réellement sur l'appareil avant de compter dessus. */
+async function routeTestPush(request, env) {
+  if (!secretValide(request, env)) return json({ erreur: 'Non autorisé' }, 401);
+  if (!env.VAPID_PRIVATE_KEY || !env.VAPID_PUBLIC_KEY) return json({ erreur: 'VAPID non configuré' }, 409);
+  const body = await request.json().catch(() => ({}));
+  const profilId = String(body.profil_id || '');
+  if (!profilId) return json({ erreur: 'profil_id manquant' }, 400);
+  const subs = await sbSelect(env, `push_subscriptions?select=*&profil_id=eq.${profilId}`);
+  if (!subs.length) return json({ erreur: 'Aucun abonnement pour ce profil — activez les notifications depuis parametres.html sur un appareil d’abord' }, 404);
+  const payload = { title: 'C-Direct — test', body: 'Ceci est une notification de test.', url: '/' };
+  const resultats = [];
+  for (const s of subs) resultats.push(await envoyerPush(env, s, payload));
+  return json({ ok: true, resultats });
 }
 
 /* =====================================================================

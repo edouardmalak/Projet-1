@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Paramètres</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3.5" fill="%230B6E4F"/><g fill="none" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.2v8.4M5.4 12.4h5.2M3.6 4.8h8.8"/><path d="M3.6 4.8 2.3 7.6a1.45 1.45 0 0 0 2.7 0Z"/><path d="M12.4 4.8l-1.35 2.8a1.45 1.45 0 0 0 2.7 0Z"/></g></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#FAFBF9;--panneau:#FFFFFF;--panneau2:#F1F6F2;--ligne:#D5E3DB;--ligne2:#C3D6CB;--vert:#0B6E4F;--vert-vif:#0E8A62;--texte:#1B2622;--sourd:#5A6B63;--jaune:#C97B12;--rouge:#C0392B}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1400px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:10px;color:var(--sourd);min-width:0;flex-wrap:nowrap}
+.wrap{max-width:640px;margin:0 auto;padding:36px 18px 70px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+
+#param-onglets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+#param-onglets button{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;border-radius:99px;border:1px solid var(--ligne2);background:var(--panneau);color:var(--sourd);cursor:pointer}
+#param-onglets button.actif{background:var(--vert);border-color:var(--vert);color:#fff}
+
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:24px;position:relative;margin-bottom:18px}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vert),transparent)}
+.sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:12px}
+.explic{color:var(--sourd);font-size:13px;line-height:1.6;margin-bottom:14px}
+.champ{margin-bottom:11px}
+.champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--sourd);margin-bottom:4px}
+.champ input,.champ select{width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:10px 11px;font-size:14px;font-family:'IBM Plex Mono',monospace;background:#F4F8F5;color:var(--texte)}
+.champ input:focus,.champ select:focus{outline:none;border-color:var(--vert);box-shadow:0 0 0 2px rgba(18,169,110,.18)}
+.consent{display:flex;align-items:flex-start;gap:10px;background:var(--panneau2);border:1px solid var(--ligne2);border-radius:4px;padding:11px 12px;margin:0 0 10px;cursor:pointer;font-size:12.5px;line-height:1.5;color:var(--texte)}
+.consent input{width:16px;height:16px;margin-top:1px;accent-color:var(--vert);flex:none;cursor:pointer}
+.btn{width:100%;background:var(--vert);color:#FFFFFF;border:none;border-radius:5px;padding:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:background .1s ease}
+.btn:hover{background:var(--vert-vif)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn-sec{width:100%;background:transparent;color:var(--vert-vif);border:1px solid var(--ligne2);border-radius:5px;padding:12px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:border-color .1s ease}
+.btn-sec:hover{border-color:var(--vert)}
+.btn-sec:disabled{opacity:.55;cursor:default}
+.btn-danger{width:100%;background:transparent;border:1px solid rgba(192,57,43,.5);color:var(--rouge);border-radius:5px;padding:12px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.btn-danger:hover{background:rgba(192,57,43,.08)}
+.btn-danger:disabled{opacity:.55;cursor:default}
+.msg{display:none;border-radius:4px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:12px}
+.msg.ok{background:rgba(18,169,110,.1);color:var(--vert-vif);border:1px solid var(--ligne2);border-left:3px solid var(--vert)}
+.msg.ko{background:rgba(192,57,43,.08);color:var(--rouge);border:1px solid rgba(192,57,43,.35);border-left:3px solid var(--rouge)}
+.lien-liste{display:flex;justify-content:space-between;align-items:center;padding:14px 2px;border-bottom:1px solid var(--ligne);color:var(--texte);text-decoration:none;font-size:14px}
+.lien-liste:last-child{border-bottom:none}
+.lien-liste:hover{color:var(--vert-vif)}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/design.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html">
+      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.6v9.6M4.9 13.4h6.2M3 4.4h10"/><path d="M3 4.4 1.5 7.7a1.7 1.7 0 0 0 3.1 0Z"/><path d="M13 4.4l-1.55 3.3a1.7 1.7 0 0 0 3.1 0Z"/></svg></span>
+      C-DIRECT
+    </a>
+    <div class="droite"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1 data-fr="Paramètres" data-en="Settings">Paramètres</h1>
+  <p class="sous" data-fr="Compte, notifications et informations générales" data-en="Account, notifications and general information">Compte, notifications et informations générales</p>
+
+  <div id="param-onglets" role="tablist">
+    <button type="button" data-onglet="compte" class="actif" data-fr="Compte" data-en="Account">Compte</button>
+    <button type="button" data-onglet="notifications" data-fr="Notifications" data-en="Notifications">Notifications</button>
+    <button type="button" data-onglet="apropos" data-fr="À propos" data-en="About">À propos</button>
+  </div>
+
+  <!-- ================= COMPTE ================= -->
+  <div data-onglet="compte">
+    <div class="carte">
+      <div class="sec" data-fr="Langue des communications" data-en="Communication language">Langue des communications</div>
+      <div class="champ">
+        <select id="langue">
+          <option value="fr">Français</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <button class="btn" id="btn-save-langue" type="button" data-fr="Enregistrer" data-en="Save">Enregistrer</button>
+      <div class="msg" id="msg-langue"></div>
+    </div>
+
+    <div class="carte">
+      <div class="sec" data-fr="Mot de passe" data-en="Password">Mot de passe</div>
+      <div class="champ"><label data-fr="Nouveau mot de passe" data-en="New password">Nouveau mot de passe</label><input id="mdp1" type="password" autocomplete="new-password"></div>
+      <div class="champ"><label data-fr="Confirmer le nouveau mot de passe" data-en="Confirm new password">Confirmer le nouveau mot de passe</label><input id="mdp2" type="password" autocomplete="new-password"></div>
+      <button class="btn" id="btn-save-mdp" type="button" data-fr="Mettre à jour le mot de passe" data-en="Update password">Mettre à jour le mot de passe</button>
+      <div class="msg" id="msg-mdp"></div>
+    </div>
+
+    <div class="carte">
+      <div class="sec" data-fr="Désactiver mon compte" data-en="Deactivate my account">Désactiver mon compte</div>
+      <p class="explic" data-fr="Votre compte sera désactivé : vous ne pourrez plus vous connecter ni être proposé(e) pour de nouveaux contrats. Vos données et votre historique (contrats, factures) sont conservés — contactez le soutien C-Direct pour réactiver votre compte."
+                        data-en="Your account will be deactivated: you will no longer be able to sign in or be matched with new contracts. Your data and history (contracts, invoices) are kept — contact C-Direct support to reactivate your account.">
+        Votre compte sera désactivé : vous ne pourrez plus vous connecter ni être proposé(e) pour de nouveaux contrats. Vos données et votre historique (contrats, factures) sont conservés — contactez le soutien C-Direct pour réactiver votre compte.
+      </p>
+      <button class="btn-danger" id="btn-desactiver" type="button" data-fr="Désactiver mon compte" data-en="Deactivate my account">Désactiver mon compte</button>
+      <div class="msg" id="msg-desactiver"></div>
+    </div>
+  </div>
+
+  <!-- ================= NOTIFICATIONS ================= -->
+  <div data-onglet="notifications" style="display:none">
+    <div class="carte">
+      <div class="sec" data-fr="Notifications push" data-en="Push notifications">Notifications push</div>
+      <p class="explic" id="push-etat" data-fr="Vérification de la compatibilité de cet appareil…" data-en="Checking this device's compatibility…">Vérification de la compatibilité de cet appareil…</p>
+      <button class="btn-sec" id="btn-push-on" type="button" style="display:none" data-fr="Activer les notifications sur cet appareil" data-en="Enable notifications on this device">Activer les notifications sur cet appareil</button>
+      <button class="btn-sec" id="btn-push-off" type="button" style="display:none" data-fr="Désactiver sur cet appareil" data-en="Disable on this device">Désactiver sur cet appareil</button>
+      <div class="msg" id="msg-push"></div>
+
+      <div style="margin-top:18px">
+        <label class="consent"><input type="checkbox" id="notif_push_actif"><span data-fr="M'avertir quand un nouveau contrat est publié" data-en="Notify me when a new contract is published">M'avertir quand un nouveau contrat est publié</span></label>
+        <label class="consent" id="ligne-logiciel-connu" style="display:none"><input type="checkbox" id="notif_seulement_logiciel_connu"><span data-fr="Seulement pour les contrats dont je connais le logiciel" data-en="Only for contracts whose software I know">Seulement pour les contrats dont je connais le logiciel</span></label>
+        <div id="bloc-distance" style="display:none">
+          <label class="consent"><input type="checkbox" id="notif_sans_limite"><span data-fr="Aucune limite de distance" data-en="No distance limit">Aucune limite de distance</span></label>
+          <div class="champ" id="champ-distance" style="max-width:220px">
+            <label data-fr="Distance maximale (km)" data-en="Maximum distance (km)">Distance maximale (km)</label>
+            <input id="notif_distance_max_km" type="number" min="0" step="1">
+          </div>
+        </div>
+        <label class="consent"><input type="checkbox" id="notif_evaluations"><span data-fr="M'avertir pour les évaluations de contrat" data-en="Notify me about contract reviews">M'avertir pour les évaluations de contrat</span></label>
+      </div>
+
+      <button class="btn" id="btn-save-notif" type="button" style="margin-top:6px" data-fr="Enregistrer mes préférences" data-en="Save my preferences">Enregistrer mes préférences</button>
+      <div class="msg" id="msg-notif"></div>
+    </div>
+  </div>
+
+  <!-- ================= À PROPOS ================= -->
+  <div data-onglet="apropos" style="display:none">
+    <div class="carte">
+      <div class="sec" data-fr="À propos de C-Direct" data-en="About C-Direct">À propos de C-Direct</div>
+      <p class="explic" style="margin-bottom:0"
+         data-fr="C-Direct est le lien direct entre pharmacies et pharmaciens remplaçants au Québec — sans agence, sans commission. Le pharmacien garde 100 % de son taux ; la pharmacie publie un contrat et reçoit des candidatures en quelques minutes. Paiement Interac direct entre les deux parties : aucun montant ne transite par C-Direct."
+         data-en="C-Direct is the direct link between pharmacies and relief pharmacists in Quebec — no agency, no commission. Pharmacists keep 100% of their rate; pharmacies post a contract and receive applications within minutes. Payment is a direct Interac transfer between both parties — no funds pass through C-Direct.">
+        C-Direct est le lien direct entre pharmacies et pharmaciens remplaçants au Québec — sans agence, sans commission. Le pharmacien garde 100 % de son taux ; la pharmacie publie un contrat et reçoit des candidatures en quelques minutes. Paiement Interac direct entre les deux parties : aucun montant ne transite par C-Direct.
+      </p>
+    </div>
+    <div class="carte">
+      <a class="lien-liste" href="/confidentialite.html"><span data-fr="Politique de confidentialité" data-en="Privacy Policy">Politique de confidentialité</span><span>→</span></a>
+      <a class="lien-liste" href="/conditions.html"><span data-fr="Conditions d'utilisation" data-en="Terms &amp; Conditions">Conditions d'utilisation</span><span>→</span></a>
+      <a class="lien-liste" href="/faq.html"><span data-fr="Aide et soutien" data-en="Help &amp; Support">Aide et soutien</span><span>→</span></a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js?v=20260806a"></script>
+<script src="/auth.js?v=20260806a"></script>
+<script>
+const $ = id => document.getElementById(id);
+const sb = window.sbClient;
+let profil = null;
+
+function msg(id, texte, ok){
+  const el = $(id); el.textContent = texte;
+  el.className = 'msg ' + (ok ? 'ok' : 'ko'); el.style.display = 'block';
+  if(ok) setTimeout(()=>{ el.style.display = 'none'; }, 3500);
+}
+
+/* ---- onglets ---- */
+function afficherOnglet(nom){
+  document.querySelectorAll('div[data-onglet]').forEach(p=>{
+    p.style.display = (p.dataset.onglet === nom) ? '' : 'none';
+  });
+  document.querySelectorAll('#param-onglets button').forEach(b=>{
+    b.classList.toggle('actif', b.dataset.onglet === nom);
+  });
+}
+function initOnglets(){
+  document.querySelectorAll('#param-onglets button').forEach(b=>{
+    b.addEventListener('click', ()=> afficherOnglet(b.dataset.onglet));
+  });
+  afficherOnglet('compte');
+}
+
+/* ================= COMPTE ================= */
+$('btn-save-langue').onclick = async ()=>{
+  $('btn-save-langue').disabled = true;
+  const { error } = await sb.from('profiles').update({ langue: $('langue').value || 'fr' }).eq('id', profil.id);
+  $('btn-save-langue').disabled = false;
+  if(error){ msg('msg-langue', cdT('Erreur : ','Error: ') + error.message, false); return; }
+  profil.langue = $('langue').value;
+  msg('msg-langue', cdT('Langue enregistrée.','Language saved.'), true);
+};
+
+$('btn-save-mdp').onclick = async ()=>{
+  const m1 = $('mdp1').value, m2 = $('mdp2').value;
+  if(!m1 || m1.length < 8){ msg('msg-mdp', cdT('Le mot de passe doit contenir au moins 8 caractères.','Password must be at least 8 characters.'), false); return; }
+  if(m1 !== m2){ msg('msg-mdp', cdT('Les deux mots de passe ne correspondent pas.','The two passwords do not match.'), false); return; }
+  $('btn-save-mdp').disabled = true;
+  const { error } = await sb.auth.updateUser({ password: m1 });
+  $('btn-save-mdp').disabled = false;
+  if(error){ msg('msg-mdp', cdT('Erreur : ','Error: ') + error.message, false); return; }
+  $('mdp1').value = ''; $('mdp2').value = '';
+  msg('msg-mdp', cdT('Mot de passe mis à jour.','Password updated.'), true);
+};
+
+$('btn-desactiver').onclick = async ()=>{
+  if(!confirm(cdT('Confirmer la désactivation de votre compte ? Vous serez déconnecté(e) immédiatement.',
+                   'Confirm deactivation of your account? You will be signed out immediately.'))) return;
+  $('btn-desactiver').disabled = true;
+  const { error } = await sb.rpc('desactiver_mon_compte');
+  if(error){ $('btn-desactiver').disabled = false; msg('msg-desactiver', cdT('Erreur : ','Error: ') + error.message, false); return; }
+  await sb.auth.signOut();
+  location.href = '/acces.html';
+};
+
+/* ================= NOTIFICATIONS ================= */
+$('notif_sans_limite').addEventListener('change', ()=>{
+  $('champ-distance').style.display = $('notif_sans_limite').checked ? 'none' : '';
+});
+
+$('btn-save-notif').onclick = async ()=>{
+  $('btn-save-notif').disabled = true;
+  const patch = {
+    notif_push_actif: $('notif_push_actif').checked,
+    notif_evaluations: $('notif_evaluations').checked
+  };
+  if(profil.role === 'pharmacien'){
+    patch.notif_seulement_logiciel_connu = $('notif_seulement_logiciel_connu').checked;
+    patch.notif_distance_max_km = $('notif_sans_limite').checked ? null : (parseInt($('notif_distance_max_km').value, 10) || null);
+  }
+  const { error } = await sb.from('profiles').update(patch).eq('id', profil.id);
+  $('btn-save-notif').disabled = false;
+  if(error){ msg('msg-notif', cdT('Erreur : ','Error: ') + error.message, false); return; }
+  Object.assign(profil, patch);
+  msg('msg-notif', cdT('Préférences enregistrées.','Preferences saved.'), true);
+};
+
+/* ---- Web Push : abonnement par appareil (sw.js) ---- */
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+function majEtatPush(actif){
+  $('btn-push-on').style.display = actif ? 'none' : '';
+  $('btn-push-off').style.display = actif ? '' : 'none';
+  $('push-etat').textContent = actif
+    ? cdT('Notifications activées sur cet appareil.', 'Notifications are enabled on this device.')
+    : cdT('Notifications non activées sur cet appareil.', 'Notifications are not enabled on this device.');
+}
+async function initEtatPush(){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)){
+    $('push-etat').textContent = cdT('Les notifications push ne sont pas prises en charge par ce navigateur.', 'Push notifications are not supported by this browser.');
+    return;
+  }
+  try{
+    const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+    const sub = reg && await reg.pushManager.getSubscription();
+    majEtatPush(!!sub);
+  }catch(e){ majEtatPush(false); }
+}
+$('btn-push-on').onclick = async ()=>{
+  if(!window.CD_VAPID_PUBLIC_KEY){
+    msg('msg-push', cdT('Les notifications push sont en cours d\'activation par C-Direct — revenez bientôt.',
+                         'Push notifications are being rolled out by C-Direct — check back soon.'), false);
+    return;
+  }
+  $('btn-push-on').disabled = true;
+  try{
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    const permission = await Notification.requestPermission();
+    if(permission !== 'granted'){
+      msg('msg-push', cdT('Autorisation refusée — activez les notifications pour ce site dans les réglages de votre navigateur.',
+                           'Permission denied — enable notifications for this site in your browser settings.'), false);
+      $('btn-push-on').disabled = false;
+      return;
+    }
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(window.CD_VAPID_PUBLIC_KEY)
+    });
+    const j = sub.toJSON();
+    const { error } = await sb.from('push_subscriptions').upsert({
+      profil_id: profil.id, endpoint: j.endpoint,
+      p256dh: j.keys.p256dh, auth: j.keys.auth,
+      user_agent: navigator.userAgent
+    }, { onConflict: 'profil_id,endpoint' });
+    $('btn-push-on').disabled = false;
+    if(error){ msg('msg-push', cdT('Erreur : ','Error: ') + error.message, false); return; }
+    majEtatPush(true);
+    msg('msg-push', cdT('Notifications activées sur cet appareil.', 'Notifications enabled on this device.'), true);
+  }catch(e){
+    $('btn-push-on').disabled = false;
+    msg('msg-push', cdT('Erreur : ','Error: ') + e.message, false);
+  }
+};
+$('btn-push-off').onclick = async ()=>{
+  $('btn-push-off').disabled = true;
+  try{
+    const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+    const sub = reg && await reg.pushManager.getSubscription();
+    if(sub){
+      await sb.from('push_subscriptions').delete().eq('profil_id', profil.id).eq('endpoint', sub.endpoint);
+      await sub.unsubscribe();
+    }
+    majEtatPush(false);
+    msg('msg-push', cdT('Notifications désactivées sur cet appareil.', 'Notifications disabled on this device.'), true);
+  }catch(e){
+    msg('msg-push', cdT('Erreur : ','Error: ') + e.message, false);
+  }
+  $('btn-push-off').disabled = false;
+};
+
+/* ================= INIT ================= */
+(async function(){
+  profil = await cdExigerConnexion();
+  cdEnteteConnecte();
+
+  $('langue').value = profil.langue || 'fr';
+
+  if(profil.role === 'pharmacien'){
+    $('ligne-logiciel-connu').style.display = '';
+    $('bloc-distance').style.display = '';
+  }
+  $('notif_push_actif').checked = profil.notif_push_actif !== false;
+  $('notif_seulement_logiciel_connu').checked = !!profil.notif_seulement_logiciel_connu;
+  $('notif_evaluations').checked = profil.notif_evaluations !== false;
+  const sansLimite = profil.notif_distance_max_km == null;
+  $('notif_sans_limite').checked = sansLimite;
+  $('notif_distance_max_km').value = profil.notif_distance_max_km != null ? profil.notif_distance_max_km : '';
+  $('champ-distance').style.display = sansLimite ? 'none' : '';
+
+  initOnglets();
+  initEtatPush();
+})();
+</script>
+</body>
+</html>
