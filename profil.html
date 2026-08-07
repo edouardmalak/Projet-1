@@ -135,6 +135,20 @@ a.lien{color:var(--vert-vif)}
         <div class="champ"><label>Langues parlées</label>
           <div class="coches" id="coches-langues"></div>
         </div>
+        <div class="champ"><label>Universités fréquentées (maximum 3)</label>
+          <div class="coches" id="coches-universites"></div>
+        </div>
+        <div class="trois">
+          <div class="champ"><label>Année de graduation</label>
+            <select id="diplome_annee"><option value="">—</option></select>
+          </div>
+          <div class="champ"><label>Mois de graduation</label>
+            <select id="diplome_mois"><option value="">—</option></select>
+          </div>
+          <div class="champ"><label>Expérience</label>
+            <div id="experience-calculee" style="font-family:'IBM Plex Mono',monospace;font-size:14px;padding-top:10px;color:var(--texte)">—</div>
+          </div>
+        </div>
       </div>
 
       <div data-onglet="paiements">
@@ -341,6 +355,28 @@ const $ = id => document.getElementById(id);
 const LOGICIELS = ['Kroll','AssystRx','Mentor','PrioRx','RxPro','Ubik','ReflexRx (XDRx)',"L'Ordonnance (Logipharm)",'Pharmaclik'];
 const COMPETENCES = ['Loi 41','Loi 31','Vaccination','INR / ACO','MAPA','Méthadone','Suboxone','Magistrales non stériles','Magistrales stériles','Dispills / piluliers','Clé DSQ','Soins pharmaceutiques avancés'];
 const LANGUES = ['Français','Anglais','Espagnol','Arabe','Créole','Mandarin','Autre'];
+const UNIVERSITES = ['Université de Montréal','Université Laval','University of Toronto','University of Waterloo',
+                  'Dalhousie University','Memorial University','University of Manitoba','University of Saskatchewan',
+                  'University of Alberta','University of British Columbia','Autre'];
+const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+/* maximum 3 universités cochées : désactive les cases restantes une fois 3 atteintes */
+function appliquerMax3Universites(){
+  const boite = $('coches-universites'); if(!boite) return;
+  const coches = [...boite.querySelectorAll('input:checked')];
+  [...boite.querySelectorAll('input')].forEach(i=>{ i.disabled = !i.checked && coches.length>=3; });
+}
+/* expérience calculée en direct depuis l'année/mois de graduation */
+function calculerExperience(){
+  const cible = $('experience-calculee'); if(!cible) return;
+  const a = parseInt($('diplome_annee').value, 10);
+  const m = parseInt($('diplome_mois').value, 10);
+  if(!a || !m){ cible.textContent = '—'; return; }
+  const maintenant = new Date();
+  let mois = (maintenant.getFullYear()-a)*12 + (maintenant.getMonth()-(m-1));
+  if(mois < 0) mois = 0;
+  const ans = Math.floor(mois/12), moisRestants = mois%12;
+  cible.textContent = ans+' an'+(ans!==1?'s':'')+(moisRestants ? ' '+moisRestants+' mois' : '');
+}
 const SERVICES_PHARMACIE = ['Bill 31','Bill 41','Dispills','INR','Préparations non stériles',
                   'Suboxone','Méthadone','Vaccination','Santé voyage','Administration de médicaments'];
 const JOURS_SEMAINE = [['lun','Lundi'],['mar','Mardi'],['mer','Mercredi'],['jeu','Jeudi'],['ven','Vendredi'],['sam','Samedi'],['dim','Dimanche']];
@@ -547,15 +583,23 @@ async function initialiserFormulaireCarte(){
 
 /* ---- ma réputation (évaluations reçues, révélées) ---- */
 function etoilesTxt(n){ return '★★★★★'.slice(0,n) + '☆☆☆☆☆'.slice(0,5-n); }
+function chipKpi(libelle, valeur){
+  return '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--sourd)">'+libelle+'<b style="display:block;color:var(--texte);font-size:15px">'+valeur+'</b></div>';
+}
 async function rendreMaNote(){
   const box = $('ma-note'); if(!box) return;
   let n = null, avis = [], stats = null;
   try{ const r = await sb.rpc('get_note_profil', { p_profil: profil.id }); n = (r.data && r.data[0]) || null; }catch(e){}
   try{ const r = await sb.rpc('get_evaluations_recues'); avis = r.data || []; }catch(e){}
   if(profil.role==='pharmacien'){ try{ const r = await sb.rpc('get_stats_pharmacien', { p_profil: profil.id }); stats = (r.data && r.data[0]) || null; }catch(e){} }
-  const statsKpi = (stats && stats.completes > 0)
-    ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--sourd)">Mandats complétés<b style="display:block;color:var(--texte);font-size:15px">'+stats.completes+'</b></div>'
-    : '';
+  let statsKpi = '';
+  if(stats){
+    if(stats.completes > 0) statsKpi += chipKpi('Mandats complétés', stats.completes);
+    if(stats.confirmees_pharmacien > 0){
+      statsKpi += chipKpi('Taux d\'annulation', stats.taux_annulation_pharmacien + ' %');
+      statsKpi += chipKpi('Taux de retard', stats.taux_retard_pharmacien + ' %');
+    }
+  }
   if(!n || !n.nombre){
     box.style.display = 'block';
     box.innerHTML = '<div class="carte" style="margin-bottom:16px"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--sourd);margin-bottom:6px">Ma réputation</div>'+
@@ -657,6 +701,16 @@ function rendrePlateaux(){
     '<label><input type="checkbox" value="'+l.replace(/"/g,'&quot;')+'"> '+l+'</label>').join('');
   $('coches-langues').innerHTML = LANGUES.map(l=>
     '<label><input type="checkbox" value="'+l.replace(/"/g,'&quot;')+'"> '+l+'</label>').join('');
+  $('coches-universites').innerHTML = UNIVERSITES.map(l=>
+    '<label><input type="checkbox" value="'+l.replace(/"/g,'&quot;')+'"> '+l+'</label>').join('');
+  $('coches-universites').addEventListener('change', appliquerMax3Universites);
+  { const anneeActuelle = new Date().getFullYear();
+    const selAnnee = $('diplome_annee');
+    for(let a=anneeActuelle; a>=anneeActuelle-60; a--){ const o=document.createElement('option'); o.value=a; o.textContent=a; selAnnee.appendChild(o); }
+    MOIS_FR.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i+1; o.textContent=m; $('diplome_mois').appendChild(o); });
+    $('diplome_annee').addEventListener('change', calculerExperience);
+    $('diplome_mois').addEventListener('change', calculerExperience);
+  }
   $('coches-services-pharmacie').innerHTML = SERVICES_PHARMACIE.map(l=>
     '<label><input type="checkbox" value="'+l.replace(/"/g,'&quot;')+'"> '+l+'</label>').join('');
   LOGICIELS.forEach(l=>{ const o=document.createElement('option'); o.textContent=l; $('logiciel').appendChild(o); });
@@ -710,6 +764,14 @@ function rendrePlateaux(){
       const c=[...document.querySelectorAll('#coches-langues input')].find(i=>i.value===l);
       if(c) c.checked=true;
     });
+    (profil.universites||[]).forEach(l=>{
+      const c=[...document.querySelectorAll('#coches-universites input')].find(i=>i.value===l);
+      if(c) c.checked=true;
+    });
+    appliquerMax3Universites();
+    if(profil.diplome_annee) $('diplome_annee').value = profil.diplome_annee;
+    if(profil.diplome_mois) $('diplome_mois').value = profil.diplome_mois;
+    calculerExperience();
   }
   if(profil.role==='pharmacie'){
     ['nom_pharmacie','banniere','adresse','ville','neq','contact_proprietaire','notes_acces'].forEach(k=>{ $(k).value=profil[k]||''; });
@@ -885,6 +947,16 @@ function rendrePlateaux(){
       const langues=[...document.querySelectorAll('#coches-langues input:checked')].map(i=>i.value);
       const { error: eLp } = await sb.from('profiles').update({ langues_parlees: langues }).eq('id', profil.id);
       if(eLp) console.warn('langues_parlees non enregistrées (exécuter sql/20) :', eLp.message);
+    }
+    /* universités, diplôme : colonnes ajoutées par sql/53 — enregistrement tolérant. */
+    if(profil.role==='pharmacien'){
+      const universites=[...document.querySelectorAll('#coches-universites input:checked')].map(i=>i.value);
+      const { error: eUni } = await sb.from('profiles').update({
+        universites: universites,
+        diplome_annee: $('diplome_annee').value||null,
+        diplome_mois: $('diplome_mois').value||null
+      }).eq('id', profil.id);
+      if(eUni) console.warn('universités/diplôme non enregistrés (exécuter sql/53) :', eUni.message);
     }
     if(profil.role==='pharmacien' && $('tps')){
       const { error: eFac } = await sb.from('profiles').update({

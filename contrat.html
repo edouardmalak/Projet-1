@@ -165,6 +165,14 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
       <div class="entente"><small>Entente finale</small><b id="entente-termes">—</b></div>
     </div>
 
+    <div id="bloc-retard" style="display:none">
+      <div class="champ"><label>Nouvelle heure de début estimée</label><input type="time" id="retard-nouvelle-heure"></div>
+      <div class="champ"><label>Motif (optionnel)</label><input type="text" id="retard-motif" maxlength="200"></div>
+      <button class="btn" id="btn-signaler-retard">Signaler un retard</button>
+      <div class="indice-btn">Le quart a commencé — si votre heure de début réelle est plus tardive que prévu, signalez-le ici. La pharmacie sera avertie automatiquement.</div>
+    </div>
+    <div id="bloc-retard-deja-signale" style="display:none;color:var(--sourd);font-size:13px;margin-top:10px">Retard déjà signalé pour ce contrat.</div>
+
     <div id="bloc-fil" style="display:none">
       <div class="sec">Fil de la négociation</div>
       <div id="fil-conteneur"></div>
@@ -471,6 +479,35 @@ function msg(texte, type){
         if(ma.statut === 'accepte'){
           $('bloc-entente').style.display = '';
           $('entente-termes').textContent = cdEntenteTexte(ma, k);
+
+          /* ---- signaler un retard : seulement le jour même, une fois l'heure
+             de début dépassée ; une seule déclaration par contrat (sql/53). ---- */
+          if(k.statut === 'attribue'){
+            const maintenant = new Date();
+            const estAujourdhui = String(k.date_contrat).slice(0,10) === maintenant.toISOString().slice(0,10);
+            const quartCommence = estAujourdhui && maintenant.toTimeString().slice(0,5) > String(k.heure_debut).slice(0,5);
+            if(quartCommence){
+              const { data: dejaSignale } = await sb.from('demandes_retard').select('id')
+                .eq('contrat_id', k.id).eq('pharmacien_id', profil.id).maybeSingle();
+              if(dejaSignale){
+                $('bloc-retard-deja-signale').style.display = '';
+              } else {
+                $('bloc-retard').style.display = '';
+                $('btn-signaler-retard').onclick = async ()=>{
+                  const nh = $('retard-nouvelle-heure').value;
+                  if(!nh){ msg('Entrez la nouvelle heure de début estimée.', 'ko'); return; }
+                  $('btn-signaler-retard').disabled = true;
+                  const { error: eR } = await sb.rpc('declarer_retard', {
+                    p_contrat: k.id, p_nouvelle_heure_debut: nh, p_motif: $('retard-motif').value.trim()||null
+                  });
+                  if(eR){ $('btn-signaler-retard').disabled = false; msg('Erreur : ' + eR.message, 'ko'); return; }
+                  $('bloc-retard').style.display = 'none';
+                  $('bloc-retard-deja-signale').style.display = '';
+                  msg('Retard signalé — la pharmacie a été avertie.', 'ok');
+                };
+              }
+            }
+          }
         }
 
         if(ma.statut === 'contre_offre' && k.statut === 'ouvert'){
