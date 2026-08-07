@@ -359,7 +359,7 @@ window.cdEnteteConnecte = async function(){
   if(conteneur){
     const el = document.createElement('span');
     el.id = 'cd-entete-session';
-    el.style.cssText = "display:inline-flex;align-items:center;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;flex:none;margin-left:10px";
+    el.style.cssText = "display:inline-flex;align-items:center;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;flex:none";
     /* badge de rôle — on sait TOUJOURS avec quel compte on est connecté */
     const roleBadge = document.createElement('span');
     const libelles = { admin:'ADMIN', pharmacie:'PHARMACIE', pharmacien:'PHARMACIEN(NE)' };
@@ -390,8 +390,20 @@ window.cdEnteteConnecte = async function(){
     btn.textContent = cdT('Déconnexion', 'Log out');
     btn.style.cssText = "background:none;border:none;cursor:pointer;color:inherit;font:inherit;text-decoration:underline;text-underline-offset:3px;opacity:.8";
     btn.onclick = cdDeconnexion;
-    el.append(roleBadge, nom, etoiles, sep, btn);
-    conteneur.appendChild(el);
+    /* pas de badge « PHARMACIEN(NE) » à côté du nom du pharmacien —
+       admin et pharmacie gardent le leur */
+    if(p.role === 'pharmacien') el.append(nom, etoiles, sep, btn);
+    else el.append(roleBadge, nom, etoiles, sep, btn);
+    /* affiché juste à côté du logo C-Direct plutôt qu'à droite */
+    const brand = document.querySelector('.topbar .brand');
+    if(brand && brand.parentElement){
+      const groupe = document.createElement('span');
+      groupe.style.cssText = 'display:flex;align-items:center;gap:10px;min-width:0';
+      brand.parentElement.insertBefore(groupe, brand);
+      groupe.append(brand, el);
+    } else {
+      conteneur.appendChild(el);
+    }
     // masquer les liens Connexion/Inscription éventuels
     document.querySelectorAll('a[href^="acces.html"],a[href^="/acces.html"]').forEach(a=>{
       if(/mode=(conn|insc)/.test(a.getAttribute('href'))) a.style.display = 'none';
