@@ -151,6 +151,16 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
       <a class="lien-liste" href="/faq.html"><span data-fr="Aide et soutien" data-en="Help &amp; Support">Aide et soutien</span><span>→</span></a>
     </div>
   </div>
+
+  <!-- ================= ZONE SENSIBLE — hors onglets, toujours visible (sauf admin) ================= -->
+  <div class="carte" id="carte-zone-sensible">
+    <div class="sec" data-fr="Zone sensible" data-en="Danger zone">Zone sensible</div>
+    <p class="explic" data-fr="La suppression est définitive : compte, profil, candidatures et données associées sont effacés, conformément à notre politique de confidentialité." data-en="Deletion is permanent: your account, profile, applications and related data are erased, in accordance with our privacy policy.">
+      La suppression est définitive : compte, profil, candidatures et données associées sont effacés, conformément à notre <a class="lien" href="/confidentialite.html" data-fr="politique de confidentialité" data-en="privacy policy">politique de confidentialité</a>.
+    </p>
+    <button class="btn-danger" id="btn-suppr" type="button" data-fr="Supprimer mon compte" data-en="Delete my account">Supprimer mon compte</button>
+    <div class="msg" id="msg-suppr"></div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -213,6 +223,22 @@ $('btn-desactiver').onclick = async ()=>{
   if(error){ $('btn-desactiver').disabled = false; msg('msg-desactiver', cdT('Erreur : ','Error: ') + error.message, false); return; }
   await sb.auth.signOut();
   location.href = '/acces.html';
+};
+
+/* déplacé depuis profil.html (même comportement : double confirmation,
+   RPC supprimer_mon_compte, déconnexion) — juste relocalisé ici, en
+   dehors des onglets, et masqué pour l'admin (voir après cdExigerConnexion
+   plus bas). */
+$('btn-suppr').onclick = async ()=>{
+  if(!confirm(cdT('Supprimer définitivement votre compte C-Direct et toutes vos données ? Cette action est irréversible.',
+                   'Permanently delete your C-Direct account and all your data? This action is irreversible.'))) return;
+  if(!confirm(cdT('Dernière confirmation : votre compte sera effacé immédiatement.',
+                   'Final confirmation: your account will be erased immediately.'))) return;
+  $('btn-suppr').disabled = true;
+  const { error } = await sb.rpc('supprimer_mon_compte');
+  if(error){ $('btn-suppr').disabled = false; msg('msg-suppr', error.message, false); return; }
+  await sb.auth.signOut();
+  location.href = 'index.html';
 };
 
 /* ================= NOTIFICATIONS ================= */
@@ -318,6 +344,7 @@ $('btn-push-off').onclick = async ()=>{
 (async function(){
   profil = await cdExigerConnexion();
   cdEnteteConnecte();
+  if(profil.role === 'admin') $('carte-zone-sensible').style.display = 'none';
 
   $('langue').value = profil.langue || 'fr';
 
