@@ -385,6 +385,11 @@ window.cdEnteteConnecte = async function(){
     const etoiles = document.createElement('a');
     etoiles.href = '/evaluations.html';
     etoiles.style.cssText = 'display:none;color:var(--jaune,#C97B12);text-decoration:none;font-weight:600;letter-spacing:.02em';
+    /* favoris reçus (pharmacies qui ont mis ce/cette pharmacien(ne) en
+       favori) — n'a de sens que côté pharmacien, chargé en différé plus
+       bas comme la réputation */
+    const favoris = document.createElement('span');
+    favoris.style.cssText = 'display:none;color:var(--rouge,#C0392B);font-weight:600;letter-spacing:.02em';
     const sep = document.createElement('span'); sep.textContent = '·'; sep.style.opacity = '.5';
     const btn = document.createElement('button');
     btn.textContent = cdT('Déconnexion', 'Log out');
@@ -392,7 +397,7 @@ window.cdEnteteConnecte = async function(){
     btn.onclick = cdDeconnexion;
     /* pas de badge « PHARMACIEN(NE) » à côté du nom du pharmacien —
        admin et pharmacie gardent le leur */
-    if(p.role === 'pharmacien') el.append(nom, etoiles, sep, btn);
+    if(p.role === 'pharmacien') el.append(nom, etoiles, favoris, sep, btn);
     else el.append(roleBadge, nom, etoiles, sep, btn);
     /* affiché juste à côté du logo C-Direct plutôt qu'à droite */
     const brand = document.querySelector('.topbar .brand');
@@ -418,6 +423,12 @@ window.cdEnteteConnecte = async function(){
           etoiles.style.display = '';
         }
       }).catch(()=>{});
+    }
+    if(p.role === 'pharmacien'){
+      sb.from('favoris_pharmaciens').select('*', { count:'exact', head:true }).eq('pharmacien_id', p.id)
+        .then(({ count })=>{
+          if(count > 0){ favoris.textContent = '♥ ' + count; favoris.style.display = ''; }
+        }).catch(()=>{});
     }
   }
   if(p && p.role) cdMenuRole(p.role);
@@ -472,6 +483,33 @@ window.cdT = function(fr, en){
     document.querySelectorAll('[data-fr]').forEach(el=>{
       if(el.dataset[l] != null) el.innerHTML = el.dataset[l];
     });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', poser);
+  else poser();
+})();
+
+/* sous-titre « Québec » sous le mot-symbole C-DIRECT (façon RE/MAX Québec :
+   logo au-dessus, ville en dessous, plus petite et plus pâle) — posé sur
+   TOUTES les pages qui chargent auth.js, visiteur anonyme ou connecté,
+   donc placé ici plutôt que dans cdEnteteConnecte (qui exige une session).
+   S'exécute avant cdEnteteConnecte (appelée plus tard par chaque page),
+   qui peut ensuite envelopper .brand sans se soucier de ce détail. */
+(function appliquerSousTitreMarque(){
+  function poser(){
+    const marque = document.querySelector('.topbar .brand');
+    if(!marque || marque.querySelector('.brand-sous')) return;
+    const noeudTexte = [...marque.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+    if(!noeudTexte) return;
+    const pile = document.createElement('span');
+    pile.style.cssText = 'display:flex;flex-direction:column;line-height:1.05';
+    const ligneNom = document.createElement('span');
+    ligneNom.textContent = noeudTexte.textContent.trim();
+    const ligneVille = document.createElement('span');
+    ligneVille.className = 'brand-sous';
+    ligneVille.textContent = 'Québec';
+    ligneVille.style.cssText = "font-family:'Instrument Sans',sans-serif;font-size:9px;font-weight:500;letter-spacing:.06em;color:var(--sourd,#5A6B63);margin-top:1px";
+    pile.append(ligneNom, ligneVille);
+    noeudTexte.replaceWith(pile);
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', poser);
   else poser();
