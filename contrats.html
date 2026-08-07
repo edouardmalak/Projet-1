@@ -103,8 +103,11 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
 .jour.auj{box-shadow:inset 0 0 0 1px var(--jaune)}
 .jour.a-ouvert{border-color:var(--vert)}
 .jour.a-postule{border-color:rgba(232,184,73,.5);border-style:dashed}
-.jour.mon-indispo::before{content:'';position:absolute;top:5px;left:5px;width:7px;height:7px;border-radius:50%;background:var(--rouge)}
+.jour.mon-indispo{background:rgba(192,57,43,.08)}
 .jour .n{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600}
+.jour .gros{flex:1;width:100%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700}
+.jour .gros.compte{font-size:26px;color:var(--vert-vif)}
+.jour .gros.indispo{font-size:32px;color:var(--rouge)}
 .pastille{margin-top:4px;display:block;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.02em;padding:2px 5px;border-radius:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;cursor:pointer}
 .pastille.ouvert{background:rgba(18,169,110,.16);color:var(--vert-vif);border:1px solid rgba(23,201,128,.4)}
 .pastille.postule{background:rgba(232,184,73,.16);color:var(--jaune);border:1px solid rgba(232,184,73,.4)}
@@ -223,6 +226,7 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
         <thead>
           <tr>
             <th>Référence</th>
+            <th class="cache-mobile">Sauvegarder</th>
             <th>Date</th>
             <th>Heures</th>
             <th class="cache-mobile">Ville</th>
@@ -297,7 +301,7 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260806c"></script>
+<script src="/auth.js?v=20260806d"></script>
 <script src="/assistant.js?v=20260723b" defer></script>
 <script src="/fsa-qc.js"></script>
 <script>
@@ -475,17 +479,22 @@ function dessinerTableau(list){
       if(k._match.raison) c.title = k._match.raison;
       refTd.appendChild(c);
     }
-    /* cellule statut + coeur favori */
+    /* cellule statut (sans coeur — déplacé dans sa propre colonne, voir sauvTd) */
     const statutTd = document.createElement('td');
     statutTd.innerHTML = k.deja_postule
       ? '<span class="badge postule">Quart demandé</span>'
       : '<span class="badge ouvert">Disponible</span>';
-    const coeur = document.createElement('button');
-    const dejaSauv = estFavori(k.numero_reference);
-    coeur.type = 'button'; coeur.className = 'coeur' + (dejaSauv ? ' on' : '');
-    coeur.innerHTML = CD_ICONE_SAUV; coeur.title = cdTitreSauv(dejaSauv);
-    coeur.onclick = (e)=>{ e.stopPropagation(); toggleFavori(k.numero_reference); coeur.classList.toggle('on'); coeur.title = cdTitreSauv(coeur.classList.contains('on')); majCompteurSauv(); if(favOnly) dessiner(); };
-    statutTd.appendChild(coeur);
+    /* cellule Sauvegarder — colonne dédiée, juste après la référence.
+       Cachée entièrement pour un quart déjà demandé (rien à sauvegarder). */
+    const sauvTd = document.createElement('td'); sauvTd.className = 'cache-mobile';
+    if(!k.deja_postule){
+      const coeur = document.createElement('button');
+      const dejaSauv = estFavori(k.numero_reference);
+      coeur.type = 'button'; coeur.className = 'coeur' + (dejaSauv ? ' on' : '');
+      coeur.innerHTML = CD_ICONE_SAUV; coeur.title = cdTitreSauv(dejaSauv);
+      coeur.onclick = (e)=>{ e.stopPropagation(); toggleFavori(k.numero_reference); coeur.classList.toggle('on'); coeur.title = cdTitreSauv(coeur.classList.contains('on')); majCompteurSauv(); if(favOnly) dessiner(); };
+      sauvTd.appendChild(coeur);
+    }
     /* cellule date + drapeau si le pharmacien s'est marqué indisponible ce jour-là */
     const dateTd = document.createElement('td');
     dateTd.textContent = cdDate(k.date_contrat);
@@ -497,6 +506,7 @@ function dessinerTableau(list){
     }
     tr.append(
       refTd,
+      sauvTd,
       dateTd,
       txt(cdHeure(k.heure_debut) + ' – ' + cdHeure(k.heure_fin)),
       txt(k.ville || '—', 'cache-mobile'),
@@ -557,19 +567,26 @@ function dessinerMoisCal(parJour){
     const date=isoC(new Date(an,mo,d));
     const cell=document.createElement('div'); cell.className='jour';
     if(date===ajd) cell.classList.add('auj');
-    if(estIndisponible(date)) cell.classList.add('mon-indispo');
+    const indispo = estIndisponible(date);
+    if(indispo) cell.classList.add('mon-indispo');
     const liste=(parJour.get(date)||[]);
     if(liste.length){
       const tousPostules = liste.every(k=>k.deja_postule);
       cell.classList.add(tousPostules ? 'a-postule' : 'a-ouvert');
     }
     const n=document.createElement('div'); n.className='n'; n.textContent=d; cell.appendChild(n);
-    liste.slice(0,2).forEach(k=>{
-      const a=document.createElement('a'); a.className='pastille '+(k.deja_postule?'postule':'ouvert'); a.textContent=k.numero_reference;
-      a.href='/c/'+encodeURIComponent(k.numero_reference); a.title='Voir '+k.numero_reference;
-      cell.appendChild(a);
-    });
-    if(liste.length>2){ const p=document.createElement('div'); p.className='plus'; p.textContent='+'+(liste.length-2); cell.appendChild(p); }
+    /* un seul gros indicateur par jour : indisponible (✕ rouge) prime sur le
+       nombre de contrats ouverts — voir Robert 2026-08-06, sql/53 round.
+       Pas de ✓/$ pour l'instant (demanderait les mandats confirmés/complétés,
+       données que cette vue n'a pas). */
+    if(indispo){
+      const x=document.createElement('div'); x.className='gros indispo'; x.textContent='✕'; x.title='Indisponible';
+      cell.appendChild(x);
+    } else if(liste.length){
+      const c=document.createElement('div'); c.className='gros compte'; c.textContent=liste.length;
+      c.title=liste.length+' contrat'+(liste.length>1?'s':'')+' ouvert'+(liste.length>1?'s':'');
+      cell.appendChild(c);
+    }
     grille.appendChild(cell);
   }
 }
@@ -624,7 +641,7 @@ function dessinerListeCal(list){
       +'<span class="lc-date'+(indispo?' indispo':'')+'"'+(indispo?' title="Vous êtes indisponible ce jour"':'')+'>'+dateCourteC(k.date_contrat)+'</span>'
       +'<span class="lc-mid"><span class="lc-ref">'+k.numero_reference+'</span><span class="lc-meta">'+meta+'</span></span>'
       +'<span class="chip '+statut+'">'+libelle+'</span>'
-      +'<button type="button" class="coeur'+(dejaSauv?' on':'')+'" title="'+cdTitreSauv(dejaSauv)+'">'+CD_ICONE_SAUV+'</button>'
+      +(k.deja_postule ? '' : '<button type="button" class="coeur'+(dejaSauv?' on':'')+'" title="'+cdTitreSauv(dejaSauv)+'">'+CD_ICONE_SAUV+'</button>')
       +'</div>';
   }).join('');
 }

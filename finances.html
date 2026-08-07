@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Finances</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3.5" fill="%230B6E4F"/><g fill="none" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.2v8.4M5.4 12.4h5.2M3.6 4.8h8.8"/><path d="M3.6 4.8 2.3 7.6a1.45 1.45 0 0 0 2.7 0Z"/><path d="M12.4 4.8l-1.35 2.8a1.45 1.45 0 0 0 2.7 0Z"/></g></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#FAFBF9;--panneau:#FFFFFF;--panneau2:#F1F6F2;--ligne:#D5E3DB;--ligne2:#C3D6CB;--vert:#0B6E4F;--vert-vif:#0E8A62;--texte:#1B2622;--sourd:#5A6B63;--jaune:#C97B12;--rouge:#C0392B;--bleu:#2D6CDF}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1500px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:10px;color:var(--sourd);min-width:0;flex-wrap:nowrap}
+.wrap{max-width:1500px;margin:0 auto;padding:36px 18px 70px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:24px;position:relative;margin-bottom:20px}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vert),transparent)}
+.sec{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sec small{color:var(--sourd);text-transform:none;letter-spacing:.04em}
+.table-scroll{overflow-x:auto}
+.table-scroll.defile{max-height:480px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+th{padding:9px 11px;text-align:left;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--sourd);border-bottom:1px solid var(--ligne);white-space:nowrap}
+.defile thead th{position:sticky;top:0;background:var(--panneau);z-index:1}
+td{padding:10px 11px;border-bottom:1px solid var(--ligne);white-space:nowrap;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+.ref{color:var(--vert-vif);font-weight:700}
+.ref a{color:inherit;text-decoration:none}
+.ref a:hover{text-decoration:underline}
+.chip{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:3px;border:1px solid var(--ligne2);color:var(--sourd)}
+.chip.brouillon{color:var(--sourd)}
+.chip.envoyee{color:var(--jaune);border-color:rgba(232,184,73,.4);background:rgba(232,184,73,.07)}
+.chip.payee{color:var(--vert-vif);border-color:rgba(23,201,128,.4);background:rgba(18,169,110,.08)}
+.chip.en_retard{color:var(--rouge);border-color:rgba(229,72,77,.35);background:rgba(229,72,77,.07)}
+.btn-mini{background:var(--vert);color:#FFFFFF;border:none;border-radius:4px;padding:6px 12px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.btn-mini:hover{background:var(--vert-vif)}
+.btn-mini.ghost{background:transparent;color:var(--vert-vif);border:1px solid var(--ligne2)}
+.btn-mini.ghost:hover{border-color:var(--vert)}
+.btn-lot{background:var(--vert);color:#FFFFFF;border:none;border-radius:5px;padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.btn-lot:hover{background:var(--vert-vif)}
+.vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:16px 0}
+.onglets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.onglet{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:99px;padding:7px 14px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.onglet:hover{border-color:var(--vert)}
+.onglet.actif{background:var(--vert);border-color:var(--vert);color:#FFFFFF}
+.ligne-mois{display:flex;align-items:center;gap:16px;padding:14px 4px;border-bottom:1px solid var(--panneau2);flex-wrap:wrap}
+.ligne-mois:last-child{border-bottom:none}
+.lm-mois{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;min-width:120px;text-transform:capitalize}
+.lm-revenu{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--vert-vif);font-weight:700}
+.lm-stat{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd)}
+.lm-stat.annule{color:var(--rouge)}
+.lm-note{font-size:13px;color:var(--sourd);margin-bottom:16px;max-width:640px}
+.champ-annee{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+select{background:var(--panneau);border:1px solid var(--ligne2);border-radius:4px;padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--texte)}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/design.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html">
+      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.6v9.6M4.9 13.4h6.2M3 4.4h10"/><path d="M3 4.4 1.5 7.7a1.7 1.7 0 0 0 3.1 0Z"/><path d="M13 4.4l-1.55 3.3a1.7 1.7 0 0 0 3.1 0Z"/></svg></span>
+      C-DIRECT
+    </a>
+    <div class="droite"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>Finances</h1>
+  <p class="sous">Votre historique de revenus, vos paiements et un sommaire pour vos impôts</p>
+
+  <div class="onglets" id="onglets-finances">
+    <button class="onglet actif" data-onglet="revenu" type="button">Revenu</button>
+    <button class="onglet" data-onglet="paiements" type="button">Paiements</button>
+    <button class="onglet" data-onglet="t2125" type="button">T2125</button>
+  </div>
+
+  <div class="carte" data-onglet="revenu">
+    <div class="sec">Historique mensuel<small id="n-mois"></small></div>
+    <div id="liste-mois"></div>
+  </div>
+
+  <div class="carte" data-onglet="paiements" style="display:none">
+    <div class="sec">Paiements<small id="n-paiements"></small></div>
+    <div class="table-scroll defile">
+      <table>
+        <thead><tr><th>Facture</th><th>Date</th><th>Référence</th><th>Montant</th><th>Statut</th></tr></thead>
+        <tbody id="t-paiements"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="carte" data-onglet="t2125" style="display:none">
+    <div class="sec">Sommaire pour vos impôts</div>
+    <p class="lm-note">Ceci est un sommaire pour vous aider à remplir votre propre déclaration de travailleur autonome (T2125) — ce n'est pas un feuillet fiscal émis par C-Direct. C-Direct transmet les factures entre vous et les pharmacies ; l'argent ne transite jamais par une caisse C-Direct.</p>
+    <div class="champ-annee">
+      <label style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd);text-transform:uppercase;letter-spacing:.06em">Année</label>
+      <select id="annee-t2125"></select>
+    </div>
+    <button type="button" class="btn-lot" id="btn-export-t2125">Télécharger le sommaire (CSV)</button>
+  </div>
+</div>
+
+<script src="/auth.js?v=20260806d"></script>
+<script src="/assistant.js?v=20260723b" defer></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+let profil = null, toutesFactures = [], toutesMandats = [];
+const NOMS_MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const CHIPS_F = {brouillon:'Brouillon', envoyee:'Envoyée', payee:'Payée', en_retard:'En retard'};
+
+function cleMois(dateStr){ return String(dateStr).slice(0,7); }
+function libelleMois(cle){ const [a,m] = cle.split('-'); return NOMS_MOIS[parseInt(m,10)-1] + ' ' + a; }
+
+function csvDepuisFactures(factures, nomFichier){
+  const esc = v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
+  const dec = n => (parseFloat(n)||0).toFixed(2).replace('.', ',');
+  const cols = ['Date contrat','N° facture','Référence','Pharmacie','Ville','Tarif horaire','Total','Statut'];
+  const rows = factures.map(f=>[
+    f.date_contrat||'', 'F-'+String(f.numero_facture).padStart(6,'0'), f.numero_reference||'',
+    f.nom_pharmacie||'', f.pharmacie_ville||'', dec(f.tarif_horaire), dec(f.total), f.statut||''
+  ]);
+  const csv = [cols.map(esc).join(';'), ...rows.map(r=>r.map(esc).join(';'))].join('\r\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = nomFichier;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+function rendreRevenuMensuel(){
+  const parMois = new Map();
+  const bucket = cle => { if(!parMois.has(cle)) parMois.set(cle, { revenu:0, completes:0, annules:0, factures:[] }); return parMois.get(cle); };
+  toutesFactures.forEach(f=>{
+    if(!f.date_contrat) return;
+    const b = bucket(cleMois(f.date_contrat));
+    b.revenu += parseFloat(f.total)||0;
+    b.factures.push(f);
+  });
+  toutesMandats.forEach(m=>{
+    if(!m.date_contrat || (m.statut!=='complete' && m.statut!=='annule')) return;
+    const b = bucket(cleMois(m.date_contrat));
+    if(m.statut==='complete') b.completes++; else b.annules++;
+  });
+  const cles = [...parMois.keys()].sort().reverse();
+  $('n-mois').textContent = cles.length ? cles.length+' mois' : '';
+  if(!cles.length){ $('liste-mois').innerHTML = '<div class="vide">Aucun revenu enregistré pour l\'instant.</div>'; return; }
+  $('liste-mois').innerHTML = cles.map(cle=>{
+    const d = parMois.get(cle);
+    return '<div class="ligne-mois">'+
+      '<span class="lm-mois">'+libelleMois(cle)+'</span>'+
+      '<span class="lm-revenu">'+cdArgent(d.revenu)+' Revenu</span>'+
+      '<span class="lm-stat">'+d.completes+' Contrat(s) complété(s)</span>'+
+      '<span class="lm-stat annule">'+d.annules+' Contrat(s) annulé(s)</span>'+
+      '<button type="button" class="btn-mini ghost" data-mois="'+cle+'" style="margin-left:auto">Télécharger</button>'+
+    '</div>';
+  }).join('');
+  $('liste-mois').querySelectorAll('button[data-mois]').forEach(b=>{
+    b.onclick = ()=> csvDepuisFactures(parMois.get(b.dataset.mois).factures, 'c-direct-revenu-'+b.dataset.mois+'.csv');
+  });
+}
+
+function rendrePaiements(){
+  const tb = $('t-paiements');
+  $('n-paiements').textContent = toutesFactures.length ? toutesFactures.length+' facture'+(toutesFactures.length>1?'s':'') : '';
+  if(!toutesFactures.length){ tb.innerHTML = '<tr><td colspan="5" class="vide">Aucune facture pour l\'instant.</td></tr>'; return; }
+  const triees = toutesFactures.slice().sort((a,b)=> String(b.date_contrat).localeCompare(String(a.date_contrat)));
+  tb.innerHTML = triees.map(f=>
+    '<tr><td class="ref"><a href="/facture-vue.html?id='+f.facture_id+'">F-'+String(f.numero_facture).padStart(6,'0')+'</a></td>'+
+    '<td>'+cdDate(f.date_contrat)+'</td>'+
+    '<td>'+(f.numero_reference||'—')+'</td>'+
+    '<td>'+cdArgent(f.total)+'</td>'+
+    '<td><span class="chip '+f.statut+'">'+(CHIPS_F[f.statut]||f.statut)+'</span></td></tr>'
+  ).join('');
+}
+
+function initT2125(){
+  const annees = new Set(toutesFactures.map(f=> String(f.date_contrat||'').slice(0,4)).filter(Boolean));
+  if(!annees.size) annees.add(String(new Date().getFullYear()));
+  const sel = $('annee-t2125');
+  [...annees].sort().reverse().forEach(a=>{ const o=document.createElement('option'); o.value=a; o.textContent=a; sel.appendChild(o); });
+  $('btn-export-t2125').onclick = ()=>{
+    const an = sel.value;
+    const factures = toutesFactures.filter(f=> String(f.date_contrat||'').slice(0,4) === an);
+    csvDepuisFactures(factures, 'c-direct-sommaire-t2125-'+an+'.csv');
+  };
+}
+
+(async function(){
+  profil = await cdExigerConnexion(['pharmacien']);
+  cdEnteteConnecte();
+
+  document.querySelectorAll('#onglets-finances .onglet').forEach(b=>{
+    b.onclick = ()=>{
+      document.querySelectorAll('#onglets-finances .onglet').forEach(x=>x.classList.toggle('actif', x===b));
+      document.querySelectorAll('.carte[data-onglet]').forEach(p=>{ p.style.display = (p.dataset.onglet===b.dataset.onglet) ? '' : 'none'; });
+    };
+  });
+
+  const [{ data: factures, error: eF }, { data: mandats, error: eM }] = await Promise.all([
+    sb.rpc('get_factures'), sb.rpc('get_mes_mandats')
+  ]);
+  if(eF){ $('liste-mois').innerHTML = '<div class="vide">Erreur : '+eF.message+'</div>'; return; }
+  toutesFactures = (factures||[]).filter(f=> f.pharmacien_id === profil.id);
+  toutesMandats = eM ? [] : (mandats || []);
+
+  rendreRevenuMensuel();
+  rendrePaiements();
+  initT2125();
+})();
+</script>
+</body>
+</html>

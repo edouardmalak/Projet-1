@@ -187,21 +187,21 @@ window.cdDeconnexion = async function(){
    Format d'une entrée : soit un lien plat ['/href.html','FR','EN'],
    soit un groupe déroulant { g:'FR', ge:'EN', items:[[...],[...]] }.      */
 const CD_MENUS = {
+  /* pharmacien : menu à plat (2026-08-06) — Profil + Évaluations vivent
+     désormais dans le menu déclenché par le NOM (cdEnteteConnecte), plus
+     dans ce strip. Groupes « Contrats »/« Compte » retirés : une fois Maps,
+     Mes contrats, Profil et Évaluations sortis, il ne restait qu'une seule
+     entrée dans chacun — un menu déroulant à un seul item n'a pas de sens. */
   pharmacien: [
-    { g:'Contrats', ge:'Contracts', items: [
-      ['/contrats.html',           'Trouver un contrat', 'Contracts'],
-      ['/carte.html',              'Maps',             'Maps'],
-      ['/mes-mandats.html',        'Mandats confirmés', 'My mandates']
-    ]},
-    ['/disponibilites.html',     'Calendrier',        'Calendar'],
-    ['/messages.html',           'Clavardage',       'Messages'],
-    { g:'Compte', ge:'Account', items: [
-      ['/evaluations.html',        'Évaluations',      'Reviews'],
-      ['/dispensaire.html',        'Dispensaire',       'Dispensary'],
-      ['/profil.html',             'Profil',           'Profile'],
-      ['/faq.html',                'FAQ',              'FAQ'],
-      ['/parametres.html',         'Paramètres',       'Settings']
-    ]}
+    ['/contrats.html',           'Trouver un contrat', 'Contracts'],
+    ['/carte.html',              'Maps',              'Maps'],
+    ['/mes-mandats.html',        'Mes contrats',       'My contracts'],
+    ['/finances.html',           'Finances',           'Finances'],
+    ['/disponibilites.html',     'Agenda',             'Calendar'],
+    ['/messages.html',           'Clavardage',        'Messages'],
+    ['/dispensaire.html',        'Mes formations et nouvelles', 'My training and news'],
+    ['/faq.html',                'FAQ',               'FAQ'],
+    ['/parametres.html',         'Paramètres',        'Settings']
   ],
   pharmacie: [
     { g:'Contrats', ge:'Contracts', items: [
@@ -372,13 +372,49 @@ window.cdEnteteConnecte = async function(){
     const nomAffiche = p.role === 'pharmacie'
       ? (p.nom_pharmacie || p.ville || p.courriel || '')
       : (p.prenom || p.courriel || '');
-    const nom = document.createElement(p.role === 'admin' ? 'b' : 'a');
-    nom.textContent = nomAffiche;
-    nom.style.cssText = 'color:inherit;text-decoration:none;font-weight:700';
-    if(p.role !== 'admin'){
-      nom.href = '/evaluations.html';
-      nom.addEventListener('mouseenter', ()=> nom.style.textDecoration='underline');
-      nom.addEventListener('mouseleave', ()=> nom.style.textDecoration='none');
+    let nom;
+    if(p.role === 'pharmacien'){
+      /* le nom devient un petit menu déroulant (Profil, Évaluations) au lieu
+         d'un lien direct vers /evaluations.html — 2026-08-06, item 4 : ces
+         deux pages sont sorties du strip de navigation principal. */
+      nom = document.createElement('span');
+      nom.style.cssText = 'position:relative;display:inline-flex';
+      const boutonNom = document.createElement('button');
+      boutonNom.type = 'button';
+      boutonNom.textContent = nomAffiche + ' ▾';
+      boutonNom.setAttribute('aria-haspopup', 'true');
+      boutonNom.setAttribute('aria-expanded', 'false');
+      boutonNom.style.cssText = 'background:none;border:none;cursor:pointer;font:inherit;color:inherit;font-weight:700;padding:0';
+      const panneauNom = document.createElement('span');
+      panneauNom.style.cssText = 'position:absolute;top:100%;left:0;margin-top:6px;background:var(--panneau,#fff);'+
+        'border:1px solid var(--ligne,#E6E8E4);border-radius:10px;box-shadow:0 8px 24px -8px rgba(20,24,20,.18);'+
+        'padding:6px;display:none;flex-direction:column;min-width:150px;z-index:60;text-transform:none;letter-spacing:normal';
+      [['/profil.html', cdT('Profil','Profile')], ['/evaluations.html', cdT('Évaluations','Reviews')]].forEach(([href, libelle])=>{
+        const lien = document.createElement('a');
+        lien.href = href; lien.textContent = libelle;
+        lien.style.cssText = 'display:block;padding:9px 10px;font-size:12px;text-decoration:none;color:var(--sourd,#6b7772);border-radius:6px;font-weight:500';
+        lien.addEventListener('mouseenter', ()=> lien.style.color='var(--vert-vif,#0f8a5f)');
+        lien.addEventListener('mouseleave', ()=> lien.style.color='var(--sourd,#6b7772)');
+        panneauNom.appendChild(lien);
+      });
+      boutonNom.addEventListener('click', e=>{
+        e.stopPropagation();
+        const ouvert = panneauNom.style.display === 'flex';
+        panneauNom.style.display = ouvert ? 'none' : 'flex';
+        boutonNom.setAttribute('aria-expanded', ouvert ? 'false' : 'true');
+      });
+      document.addEventListener('click', ()=>{ panneauNom.style.display='none'; boutonNom.setAttribute('aria-expanded','false'); });
+      document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ panneauNom.style.display='none'; boutonNom.setAttribute('aria-expanded','false'); } });
+      nom.append(boutonNom, panneauNom);
+    } else {
+      nom = document.createElement(p.role === 'admin' ? 'b' : 'a');
+      nom.textContent = nomAffiche;
+      nom.style.cssText = 'color:inherit;text-decoration:none;font-weight:700';
+      if(p.role !== 'admin'){
+        nom.href = '/evaluations.html';
+        nom.addEventListener('mouseenter', ()=> nom.style.textDecoration='underline');
+        nom.addEventListener('mouseleave', ()=> nom.style.textDecoration='none');
+      }
     }
     /* réputation — étoiles + nombre d'avis, cachée tant qu'aucune note
        n'existe (compte neuf) et jamais chargée pour l'admin */
