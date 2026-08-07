@@ -152,11 +152,17 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
         <div class="erreur" id="err-entree"></div>
       </div>
 
-      <!-- Étape 1 : choix du rôle (inscription / complétion Google) -->
+      <!-- Étape 1 : choix du profil (inscription / complétion Google) — les 3 choix
+           (Pharmacien(ne) / ATP / Une pharmacie) sont proposés en une seule étape. -->
       <div class="zone" id="z-role" style="margin-top:22px">
         <button class="role-btn" id="r-pharmacien">
           <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#0B6E4F" stroke-width="2"/><path d="M4 20c0-3.3 3.6-5 8-5s8 1.7 8 5" stroke="#0B6E4F" stroke-width="2" stroke-linecap="round"/></svg></span>
-          <span><b>Pharmacien(ne) remplaçant(e)</b><small>RECHERCHE DE REMPLACEMENTS</small></span>
+          <span><b>Pharmacien(ne)</b><small>RECHERCHE DE REMPLACEMENTS</small></span>
+          <span class="fleche">&gt;</span>
+        </button>
+        <button class="role-btn" id="r-atp">
+          <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#0B6E4F" stroke-width="2"/><path d="M4 20c0-3.3 3.6-5 8-5s8 1.7 8 5" stroke="#0B6E4F" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span><b>ATP — assistant(e) technique</b><small>RECHERCHE DE REMPLACEMENTS</small></span>
           <span class="fleche">&gt;</span>
         </button>
         <button class="role-btn" id="r-pharmacie">
@@ -165,21 +171,6 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
           <span class="fleche">&gt;</span>
         </button>
         <button class="retour-carte" id="retour-entree">← Retour</button>
-      </div>
-
-      <!-- Étape 1b : profession (uniquement pour le rôle pharmacien) -->
-      <div class="zone" id="z-profession" style="margin-top:22px">
-        <button class="role-btn" id="pr-pharmacien">
-          <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#0B6E4F" stroke-width="2"/><path d="M4 20c0-3.3 3.6-5 8-5s8 1.7 8 5" stroke="#0B6E4F" stroke-width="2" stroke-linecap="round"/></svg></span>
-          <span><b>Pharmacien(ne)</b><small>TITULAIRE D'UN PERMIS DE L'OPQ</small></span>
-          <span class="fleche">&gt;</span>
-        </button>
-        <button class="role-btn" id="pr-atp">
-          <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#0B6E4F" stroke-width="2"/><path d="M4 20c0-3.3 3.6-5 8-5s8 1.7 8 5" stroke="#0B6E4F" stroke-width="2" stroke-linecap="round"/></svg></span>
-          <span><b>Assistant(e) technique en pharmacie (ATP)</b><small>DEP / ASP RECONNU</small></span>
-          <span class="fleche">&gt;</span>
-        </button>
-        <button class="retour-carte" id="retour-role">← Retour</button>
       </div>
 
       <!-- Rappel du rôle choisi -->
@@ -282,7 +273,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js?v=20260723b"></script>
-<script src="auth.js?v=20260806a"></script>
+<script src="auth.js?v=20260806b"></script>
 <script src="outils.js"></script>
 <script>
 const sb = window.sbClient;
@@ -296,6 +287,10 @@ let etape = 'entree';
 /* mode==='conn' démarre aussi sur l'écran d'entrée (bouton Google inclus) :
    la connexion Google doit être proposée aux comptes déjà inscrits, pas
    seulement à l'inscription. */
+/* profil « complet » = rôle connu, et pour un(e) pharmacien(ne) la
+   profession (Pharmacien(ne) vs ATP) connue aussi — les 3 choix sont
+   proposés en une seule étape (z-role) plutôt qu'en 2 étapes séparées. */
+function profilComplet(){ return role === 'pharmacie' || (role === 'pharmacien' && !!profession); }
 
 const NOM_ROLE = { pharmacien:'PHARMACIEN(NE) REMPLAÇANT(E)', pharmacie:'PHARMACIE' };
 /* étiquette affichée pour un rôle pharmacien : distingue Pharmacien(ne)/ATP
@@ -307,7 +302,7 @@ function libelleRole(r, p){
 
 /* ---------- rendu ---------- */
 function cacherTout(){
-  ['z-entree','z-role','z-connexion','z-inscription','z-oubli','z-reset','z-completer','z-profession'].forEach(z=>$(z).classList.remove('on'));
+  ['z-entree','z-role','z-connexion','z-inscription','z-oubli','z-reset','z-completer'].forEach(z=>$(z).classList.remove('on'));
   $('z-succes').style.display='none';
   $('role-actuel').style.display='none';
   document.querySelectorAll('.erreur').forEach(e=>e.style.display='none');
@@ -327,12 +322,9 @@ function render(){
   }
   if(mode==='completer'){
     $('titre').textContent='Compléter votre profil';
-    if(!role){
+    if(!profilComplet()){
       $('sous-titre').textContent='Identifiez votre profil :';
       montrer('z-role');
-    }else if(role==='pharmacien' && !profession){
-      $('sous-titre').textContent='Précisez votre profession :';
-      montrer('z-profession');
     }else{
       $('sous-titre').textContent='Une dernière étape.';
       montrer('z-completer');
@@ -361,12 +353,9 @@ function render(){
     $('btn-courriel').textContent="S'inscrire par courriel";
     $('bascule-insc').style.display=''; $('bascule-conn').style.display='none';
     montrer('z-entree');
-  }else if(etape==='role' || !role){
+  }else if(etape==='role' || !profilComplet()){
     $('sous-titre').textContent='Identifiez votre profil :';
     montrer('z-role');
-  }else if(role==='pharmacien' && !profession){
-    $('sous-titre').textContent='Précisez votre profession :';
-    montrer('z-profession');
   }else{
     $('sous-titre').textContent='Vos renseignements de base.';
     montrer('z-inscription');
@@ -396,14 +385,12 @@ function messageErreur(e){
 }
 
 /* ---------- navigation ---------- */
-$('btn-courriel').onclick = ()=>{ etape = (mode==='conn') ? 'form' : (role ? 'form' : 'role'); render(); };
+$('btn-courriel').onclick = ()=>{ etape = (mode==='conn') ? 'form' : (profilComplet() ? 'form' : 'role'); render(); };
 $('retour-entree').onclick= ()=>{ if(mode==='completer'){return;} etape='entree'; render(); };
-$('r-pharmacien').onclick = ()=>{ role='pharmacien'; profession=null; etape='form'; render(); };
-$('r-pharmacie').onclick  = ()=>{ role='pharmacie';  etape='form'; render(); };
+$('r-pharmacien').onclick = ()=>{ role='pharmacien'; profession='pharmacien'; etape='form'; render(); };
+$('r-atp').onclick        = ()=>{ role='pharmacien'; profession='atp'; etape='form'; render(); };
+$('r-pharmacie').onclick  = ()=>{ role='pharmacie'; profession=null; etape='form'; render(); };
 $('chg-role').onclick     = ()=>{ role=null; profession=null; etape='role'; render(); };
-$('pr-pharmacien').onclick = ()=>{ profession='pharmacien'; etape='form'; render(); };
-$('pr-atp').onclick        = ()=>{ profession='atp'; etape='form'; render(); };
-$('retour-role').onclick   = ()=>{ etape='role'; render(); };
 document.querySelectorAll('.vers-insc').forEach(b=> b.onclick = ()=>{ mode='insc'; etape='entree'; render(); });
 document.querySelectorAll('.vers-conn').forEach(b=> b.onclick = ()=>{ mode='conn'; etape='entree'; render(); });
 $('lien-oubli').onclick = ()=>{ mode='oubli'; $('o-courriel').value=$('c-courriel').value; render(); };
@@ -535,8 +522,7 @@ $('btn-renvoi').onclick = ()=> renvoyerConfirmation($('c-courriel').value, $('bt
 /* ---------- inscription ---------- */
 $('f-inscription').addEventListener('submit', async e=>{
   e.preventDefault();
-  if(!role){ etape='role'; render(); return; }
-  if(role==='pharmacien' && !profession){ etape='profession'; render(); return; }
+  if(!profilComplet()){ etape='role'; render(); return; }
   const tel = cdE164($('i-tel').value);
   if(!tel){ erreur('err-insc','Téléphone invalide — 10 chiffres requis.'); return; }
   if(!$('i-consent').checked){ erreur('err-insc','Le consentement est requis.'); return; }
@@ -618,8 +604,7 @@ $('f-completer').addEventListener('submit', async e=>{
   const tel = cdE164($('g-tel').value);
   if(!tel){ erreur('err-completer','Téléphone invalide — 10 chiffres requis.'); return; }
   if(!$('g-consent').checked){ erreur('err-completer','Le consentement est requis.'); return; }
-  if(!role){ etape='role'; render(); return; }
-  if(role==='pharmacien' && !profession){ etape='profession'; render(); return; }
+  if(!profilComplet()){ etape='role'; render(); return; }
   const s = await cdSession();
   if(!s){ mode='conn'; etape='form'; render(); return; }
   const b=$('btn-completer'); b.disabled=true;
