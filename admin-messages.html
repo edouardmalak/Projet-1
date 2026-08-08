@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Messagerie admin</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3.5" fill="%230B6E4F"/><g fill="none" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.2v8.4M5.4 12.4h5.2M3.6 4.8h8.8"/><path d="M3.6 4.8 2.3 7.6a1.45 1.45 0 0 0 2.7 0Z"/><path d="M12.4 4.8l-1.35 2.8a1.45 1.45 0 0 0 2.7 0Z"/></g></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#FAFBF9;--panneau:#FFFFFF;--panneau2:#F1F6F2;--ligne:#D5E3DB;--ligne2:#C3D6CB;--vert:#0B6E4F;--vert-vif:#0E8A62;--texte:#1B2622;--sourd:#5A6B63;--jaune:#C97B12;--rouge:#C0392B}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;min-height:100vh}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1400px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:10px;min-width:0}
+.topbar a.nav{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
+.topbar a.nav:hover{color:var(--vert-vif)}
+.wrap{max-width:820px;margin:0 auto;padding:28px 18px 40px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:20px}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:18px}
+.conv{display:block;text-decoration:none;color:var(--texte);border:1px solid var(--ligne);border-radius:8px;padding:14px 16px;margin-bottom:10px;background:var(--panneau);transition:border-color .1s}
+.conv:hover{border-color:var(--vert)}
+.conv .r{font-family:'IBM Plex Mono',monospace;color:var(--vert-vif);font-weight:700;letter-spacing:.05em}
+.conv .role{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);border:1px solid var(--ligne2);border-radius:99px;padding:1px 8px;margin-left:8px}
+.conv .m{color:var(--sourd);font-size:13px;font-family:'IBM Plex Mono',monospace;margin-top:3px}
+.vide{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-align:center;padding:30px 0}
+.fil{display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;padding:6px 2px 12px}
+.bulle{max-width:78%;padding:9px 13px;border-radius:12px;font-size:14px;line-height:1.45;word-wrap:break-word}
+.bulle .qui{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;opacity:.7;margin-bottom:3px}
+.bulle .h{font-family:'IBM Plex Mono',monospace;font-size:10px;opacity:.5;margin-top:4px;text-align:right}
+.moi{align-self:flex-end;background:rgba(18,169,110,.16);border:1px solid rgba(23,201,128,.4)}
+.autre{align-self:flex-start;background:var(--panneau2);border:1px solid var(--ligne2)}
+.saisie{display:flex;gap:10px;margin-top:14px}
+.saisie textarea{flex:1;background:#F4F8F5;border:1px solid var(--ligne2);border-radius:8px;padding:11px 13px;color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:14px;resize:vertical;min-height:46px}
+.saisie textarea:focus{outline:none;border-color:var(--vert)}
+.saisie button{background:var(--vert);color:#FFFFFF;border:none;border-radius:8px;padding:0 20px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.saisie button:hover{background:var(--vert-vif)}
+.saisie button:disabled{opacity:.5;cursor:default}
+.retour{display:inline-block;color:var(--vert-vif);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-bottom:14px}
+.champ-recherche{width:100%;border:1px solid var(--ligne2);border-radius:8px;padding:11px 13px;font-family:'Instrument Sans',sans-serif;font-size:14px;background:#F4F8F5;color:var(--texte);margin-bottom:14px}
+.champ-recherche:focus{outline:none;border-color:var(--vert)}
+.picker{max-height:280px;overflow-y:auto}
+.picker .item{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--ligne);cursor:pointer}
+.picker .item:hover{background:var(--panneau2)}
+.picker .item:last-child{border-bottom:none}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/design.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html"><span class="croix"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.6v9.6M4.9 13.4h6.2M3 4.4h10"/><path d="M3 4.4 1.5 7.7a1.7 1.7 0 0 0 3.1 0Z"/><path d="M13 4.4l-1.55 3.3a1.7 1.7 0 0 0 3.1 0Z"/></svg></span>C-DIRECT</a>
+    <div class="droite" id="nav"></div>
+  </div>
+</div>
+<div class="wrap" id="wrap"><div class="vide">Chargement…</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js?v=20260723b"></script>
+<script src="/auth.js?v=20260806d"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+let profil = null, cibleId = null, timer = null, dernierN = 0;
+const ROLE_LABEL = { pharmacien:'Pharmacien(ne)', pharmacie:'Pharmacie' };
+
+(async function(){
+  profil = await cdExigerConnexion(['admin']);
+  cdEnteteConnecte();
+  $('nav').innerHTML = '<a class="nav" href="/admin.html">Console</a>';
+  const u = new URLSearchParams(location.search).get('u');
+  if(u) ouvrirConversation(u); else listerConversations();
+})();
+
+/* ---------------- LISTE + « nouveau message » ---------------- */
+async function listerConversations(){
+  const wrap = $('wrap');
+  wrap.innerHTML = '<h1>Messagerie admin</h1>'
+    + '<p class="sous">Canal direct admin ↔ utilisateur — distinct des conversations pharmacie↔pharmacien.</p>'
+    + '<input class="champ-recherche" id="recherche" placeholder="Chercher un pharmacien ou une pharmacie pour lui écrire…">'
+    + '<div id="picker" class="carte picker" style="display:none;margin-bottom:16px"></div>'
+    + '<div id="liste"><div class="vide">Chargement…</div></div>';
+
+  let tousLesUtilisateurs = null;
+  const rech = $('recherche'), picker = $('picker');
+  rech.addEventListener('input', async ()=>{
+    const q = rech.value.trim().toLowerCase();
+    if(!q){ picker.style.display = 'none'; return; }
+    if(!tousLesUtilisateurs){
+      const { data } = await sb.from('profiles').select('id,prenom,nom,nom_pharmacie,role,courriel')
+        .in('role', ['pharmacien','pharmacie']).order('created_at', { ascending:false }).limit(500);
+      tousLesUtilisateurs = data || [];
+    }
+    const match = tousLesUtilisateurs.filter(u=>{
+      const nom = (u.role==='pharmacie' ? u.nom_pharmacie : (u.prenom+' '+u.nom)) || '';
+      return nom.toLowerCase().includes(q) || (u.courriel||'').toLowerCase().includes(q);
+    }).slice(0, 20);
+    if(!match.length){ picker.style.display=''; picker.innerHTML = '<div class="vide">Aucun résultat</div>'; return; }
+    picker.style.display = '';
+    picker.innerHTML = '';
+    match.forEach(u=>{
+      const nom = (u.role==='pharmacie' ? u.nom_pharmacie : ((u.prenom||'')+' '+(u.nom||''))) || u.courriel;
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = '<span style="font-weight:600">'+esc(nom)+'</span>'
+        + '<span class="role" style="margin-left:auto">'+(ROLE_LABEL[u.role]||u.role)+'</span>';
+      div.onclick = ()=>{ location.href = '/admin-messages.html?u='+encodeURIComponent(u.id); };
+      picker.appendChild(div);
+    });
+  });
+
+  const { data, error } = await sb.rpc('admin_lister_conversations');
+  const l = $('liste');
+  if(error){ l.innerHTML = '<div class="vide">Erreur : '+esc(error.message)+'</div>'; return; }
+  const convs = data || [];
+  if(!convs.length){
+    l.innerHTML = '<div class="vide">Aucune conversation pour l’instant — cherchez un pharmacien ou une pharmacie ci-dessus pour lui écrire.</div>';
+    return;
+  }
+  l.innerHTML = convs.map(c=>{
+    const quand = c.dernier_le
+      ? new Date(c.dernier_le).toLocaleString('fr-CA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+      : '';
+    const apercu = c.dernier_message
+      ? esc(String(c.dernier_message).slice(0,90)) + (String(c.dernier_message).length>90?'…':'')
+      : 'Aucun message';
+    const point = c.non_lu
+      ? '<span style="display:inline-block;width:8px;height:8px;border-radius:99px;background:var(--rouge);margin-left:8px;vertical-align:middle"></span>' : '';
+    return '<a class="conv" href="/admin-messages.html?u='+encodeURIComponent(c.utilisateur_id)+'">'
+      + '<span class="r">'+esc(c.nom||'—')+'</span>'
+      + '<span class="role">'+(ROLE_LABEL[c.role]||c.role)+'</span>'+point
+      + '<div class="m">'+apercu+(quand?' · '+quand:'')+'</div></a>';
+  }).join('');
+}
+
+/* ---------------- UNE CONVERSATION ---------------- */
+async function ouvrirConversation(u){
+  cibleId = u;
+  const { data: p, error } = await sb.from('profiles').select('id,prenom,nom,nom_pharmacie,role,courriel')
+    .eq('id', u).maybeSingle();
+  if(error || !p){
+    $('wrap').innerHTML = '<a class="retour" href="/admin-messages.html">← Messagerie admin</a><div class="vide">Utilisateur introuvable.</div>';
+    return;
+  }
+  const nom = (p.role==='pharmacie' ? p.nom_pharmacie : ((p.prenom||'')+' '+(p.nom||''))) || p.courriel;
+  $('wrap').innerHTML =
+    '<a class="retour" href="/admin-messages.html">← Toutes les conversations</a>'+
+    '<h1>'+esc(nom)+'</h1><p class="sous">'+(ROLE_LABEL[p.role]||p.role)+' · '+esc(p.courriel||'')+'</p>'+
+    '<div class="carte"><div class="fil" id="fil"><div class="vide">Chargement…</div></div>'+
+    '<div class="saisie" id="saisie"><textarea id="txt" placeholder="Votre message…" rows="1"></textarea>'+
+    '<button id="env">Envoyer</button></div></div>';
+
+  $('env').onclick = envoyer;
+  $('txt').addEventListener('keydown', e=>{ if(e.key==='Enter' && (e.metaKey||e.ctrlKey)){ e.preventDefault(); envoyer(); } });
+  await charger();
+  sb.rpc('marquer_admin_vu', { p_utilisateur: cibleId }).catch(()=>{});
+  timer = setInterval(async ()=>{
+    await charger();
+    sb.rpc('marquer_admin_vu', { p_utilisateur: cibleId }).catch(()=>{});
+  }, 5000);
+}
+
+async function charger(){
+  const { data, error } = await sb.from('messages_admin').select('id,corps,expediteur_id,created_at')
+    .eq('utilisateur_id', cibleId).order('created_at',{ascending:true});
+  if(error) return;
+  const fil = $('fil'); if(!fil) return;
+  if(!data.length){ fil.innerHTML = '<div class="vide">Aucun message. Écrivez le premier.</div>'; return; }
+  fil.innerHTML = data.map(m=>{
+    const moi = m.expediteur_id !== cibleId;  // pas envoyé par l'utilisateur == envoyé par un admin
+    const h = new Date(m.created_at).toLocaleString('fr-CA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    return '<div class="bulle '+(moi?'moi':'autre')+'"><div class="qui">'
+      + (moi?'Équipe C-Direct':'Utilisateur')+'</div>'
+      + esc(m.corps).replace(/\n/g,'<br>')+'<div class="h">'+h+'</div></div>';
+  }).join('');
+  if(data.length !== dernierN){ fil.scrollTop = fil.scrollHeight; dernierN = data.length; }
+}
+
+async function envoyer(){
+  const txt = $('txt'); const corps = txt.value.trim(); if(!corps) return;
+  $('env').disabled = true;
+  const { error } = await sb.from('messages_admin').insert({ utilisateur_id: cibleId, expediteur_id: profil.id, corps });
+  $('env').disabled = false;
+  if(error){ alert('Erreur : '+error.message); return; }
+  txt.value = '';
+  await charger();
+}
+window.addEventListener('beforeunload', ()=>{ if(timer) clearInterval(timer); });
+</script>
+</body>
+</html>

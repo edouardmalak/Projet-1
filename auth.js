@@ -228,7 +228,7 @@ const CD_MENUS = {
     ['/admin-verification.html', 'Vérification',     'Verification'],
     ['/admin-shifts.html',       'Contrats',         'Contracts'],
     ['/admin-articles.html',     'Dispensaire',       'Dispensary'],
-    ['/messages.html',           'Clavardage',       'Messages'],
+    ['/admin-messages.html',     'Clavardage',       'Messages'],
     { g:'Compte', ge:'Account', items: [
       ['/evaluations.html',        'Évaluations',      'Reviews'],
       ['/profil.html',             'Profil',           'Profile'],
@@ -468,7 +468,63 @@ window.cdEnteteConnecte = async function(){
     }
   }
   if(p && p.role) cdMenuRole(p.role);
+  if(p && p.role) cdBadgeMessagesNonLus(p.role);
   return p;
+};
+
+/* ---- pastille "nouveaux messages" sur le lien Clavardage du menu ----
+   sql/60. Un seul compteur (compter_messages_non_lus) couvre les fils
+   pharmacie<->pharmacien ET le nouveau canal admin<->utilisateur — peu
+   importe le rôle, un seul appel. Best-effort : jamais bloquant, jamais
+   de pastille si l'appel échoue (fonctionnalité secondaire). */
+async function cdBadgeMessagesNonLus(role){
+  const href = role === 'admin' ? '/admin-messages.html' : '/messages.html';
+  const lien = document.querySelector('#cd-menu a[href="'+href+'"]');
+  if(!lien) return;
+
+  async function rafraichir(){
+    let data;
+    try{
+      const r = await sb.rpc('compter_messages_non_lus');
+      if(r.error) return;
+      data = r.data;
+    }catch(e){ return; }
+    let pastille = lien.querySelector('.cd-pastille-non-lus');
+    if(!data || data <= 0){
+      if(pastille) pastille.remove();
+      return;
+    }
+    if(!pastille){
+      pastille = document.createElement('span');
+      pastille.className = 'cd-pastille-non-lus';
+      pastille.style.cssText = 'display:inline-block;min-width:15px;height:15px;padding:0 3px;margin-left:5px;'+
+        'border-radius:99px;background:var(--rouge,#C0392B);color:#fff;font-size:9.5px;line-height:15px;'+
+        'text-align:center;font-weight:700;vertical-align:middle';
+      lien.appendChild(pastille);
+    }
+    pastille.textContent = data > 99 ? '99+' : String(data);
+  }
+
+  await rafraichir();
+  setInterval(rafraichir, 45000);
+}
+
+/* Bannière "N nouveaux messages" pour l'écran principal de chaque rôle —
+   même compteur que la pastille de nav (compter_messages_non_lus, sql/60),
+   juste plus visible avec un lien direct. Le conteneur doit déjà exister
+   dans le HTML de la page ; reste vide si 0 message (jamais bloquant). */
+window.cdBanniereMessagesNonLus = async function(idConteneur, lienInbox){
+  const zone = document.getElementById(idConteneur);
+  if(!zone) return;
+  try{
+    const { data, error } = await sb.rpc('compter_messages_non_lus');
+    if(error || !data || data <= 0){ zone.innerHTML = ''; return; }
+    zone.innerHTML = '<a href="'+lienInbox+'" style="display:flex;align-items:center;gap:10px;'+
+      'background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.3);border-radius:8px;'+
+      'padding:12px 14px;margin-bottom:16px;text-decoration:none;color:var(--rouge,#C0392B);'+
+      'font-family:\'IBM Plex Mono\',monospace;font-size:13px;font-weight:700">'+
+      '💬 '+data+' nouveau'+(data>1?'x':'')+' message'+(data>1?'s':'')+' — voir la messagerie →</a>';
+  }catch(e){ /* fonctionnalité secondaire, jamais bloquant */ }
 };
 
 /* ---- téléphone : normalisation E.164 (+1XXXXXXXXXX) ---- */

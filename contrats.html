@@ -185,6 +185,7 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
 <div class="wrap">
   <h1>Contrats disponibles</h1>
   <p class="sous" id="sous">Réseau C-Direct · 0 % commission</p>
+  <div id="banniere-messages"></div>
 
   <div class="onboard" id="onboard">
     <div class="ob-tete">
@@ -832,6 +833,7 @@ function dessinerListeCal(list){
   };
   dessiner();
   chargerTrajet();
+  cdBanniereMessagesNonLus('banniere-messages', '/messages.html');
 })();
 
 /* ================= ONBOARDING (Phase 6.3) — défensif, jamais bloquant ========= */

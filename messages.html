@@ -75,8 +75,69 @@ function nonActive(e){ return /does not exist|schema cache/i.test((e && e.messag
     : '<a class="nav" href="/contrats.html">Contrats</a>');
   const ref = refDepuisUrl();
   const fil = new URLSearchParams(location.search).get('fil');
-  if(ref || fil) ouvrirConversation(ref); else listerConversations();
+  const admin = new URLSearchParams(location.search).get('admin');
+  if(admin) ouvrirConversationAdmin();
+  else if(ref || fil) ouvrirConversation(ref);
+  else listerConversations();
 })();
+
+/* ---------------- CANAL ADMIN (sql/60) ----------------
+   Une seule conversation, toujours ouverte, entre l'utilisateur et
+   « l'équipe C-Direct » — distincte des fils pharmacie<->pharmacien,
+   jamais de clôture. */
+async function chargerApercuAdmin(){
+  const [{ data: msgs }, { data: etat }] = await Promise.all([
+    sb.from('messages_admin').select('corps,expediteur_id,created_at')
+      .eq('utilisateur_id', profil.id).order('created_at',{ascending:false}).limit(1),
+    sb.from('messages_admin_etat').select('utilisateur_vu_le').eq('utilisateur_id', profil.id).maybeSingle()
+  ]);
+  const dernier = (msgs && msgs[0]) || null;
+  const vu = etat && etat.utilisateur_vu_le ? new Date(etat.utilisateur_vu_le) : null;
+  const non_lu = !!(dernier && dernier.expediteur_id !== profil.id && (!vu || new Date(dernier.created_at) > vu));
+  return { dernier_message: dernier ? dernier.corps : null, dernier_le: dernier ? dernier.created_at : null, non_lu };
+}
+
+async function ouvrirConversationAdmin(){
+  const wrap = $('wrap');
+  wrap.innerHTML =
+    '<a class="retour" href="/messages.html">← Toutes les conversations</a>'+
+    '<h1>Équipe C-Direct</h1><p class="sous">Une question, un problème — écrivez-nous directement.</p>'+
+    '<div class="carte"><div class="fil" id="fil"><div class="vide">Chargement…</div></div>'+
+    '<div class="saisie" id="saisie"><textarea id="txt" placeholder="Votre message…" rows="1"></textarea>'+
+    '<button id="env">Envoyer</button></div></div>';
+
+  $('env').onclick = envoyerAdmin;
+  $('txt').addEventListener('keydown', e=>{ if(e.key==='Enter' && (e.metaKey||e.ctrlKey)){ e.preventDefault(); envoyerAdmin(); } });
+  await chargerAdmin();
+  sb.rpc('marquer_admin_vu').catch(()=>{});
+  timer = setInterval(async ()=>{ await chargerAdmin(); sb.rpc('marquer_admin_vu').catch(()=>{}); }, 5000);
+}
+
+async function chargerAdmin(){
+  const { data, error } = await sb.from('messages_admin').select('id,corps,expediteur_id,created_at')
+    .eq('utilisateur_id', profil.id).order('created_at',{ascending:true});
+  if(error) return;
+  const fil = $('fil'); if(!fil) return;
+  if(!data.length){ fil.innerHTML = '<div class="vide">Aucun message pour l’instant. Posez votre question, l’équipe C-Direct répond directement ici.</div>'; return; }
+  fil.innerHTML = data.map(m=>{
+    const moi = m.expediteur_id === profil.id;
+    const h = new Date(m.created_at).toLocaleString('fr-CA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    return '<div class="bulle '+(moi?'moi':'autre')+'"><div class="qui">'
+      + (moi?'Vous':'Équipe C-Direct')+'</div>'
+      + esc(m.corps).replace(/\n/g,'<br>')+'<div class="h">'+h+'</div></div>';
+  }).join('');
+  if(data.length !== dernierN){ fil.scrollTop = fil.scrollHeight; dernierN = data.length; }
+}
+
+async function envoyerAdmin(){
+  const txt = $('txt'); const corps = txt.value.trim(); if(!corps) return;
+  $('env').disabled = true;
+  const { error } = await sb.from('messages_admin').insert({ utilisateur_id: profil.id, expediteur_id: profil.id, corps });
+  $('env').disabled = false;
+  if(error){ alert('Erreur : '+error.message); return; }
+  txt.value = '';
+  await chargerAdmin();
+}
 
 /* ---------------- LISTE DES FILS ----------------
    Un seul fil par contrepartie (et non plus un par contrat) : les
@@ -85,7 +146,21 @@ async function listerConversations(){
   const wrap = $('wrap');
   wrap.innerHTML = '<h1>Messagerie</h1>'
     + '<p class="sous">Une seule conversation par contrepartie — tout l’historique au même endroit.</p>'
+    + '<div id="carte-admin" style="margin-bottom:14px"></div>'
     + '<div id="liste"><div class="vide">Chargement…</div></div>';
+
+  const apercuAdmin = await chargerApercuAdmin();
+  const quandA = apercuAdmin.dernier_le
+    ? new Date(apercuAdmin.dernier_le).toLocaleString('fr-CA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+    : '';
+  const apercuA = apercuAdmin.dernier_message
+    ? esc(String(apercuAdmin.dernier_message).slice(0,90)) + (String(apercuAdmin.dernier_message).length>90?'…':'')
+    : 'Écrivez-nous si vous avez une question.';
+  const pointA = apercuAdmin.non_lu
+    ? '<span style="display:inline-block;width:8px;height:8px;border-radius:99px;background:var(--rouge);margin-left:8px;vertical-align:middle"></span>' : '';
+  $('carte-admin').innerHTML = '<a class="conv" href="/messages.html?admin=1" style="border-color:var(--vert);background:rgba(18,169,110,.05)">'
+    + '<span class="r">Équipe C-Direct</span>'+pointA
+    + '<div class="m">'+apercuA+(quandA?' · '+quandA:'')+'</div></a>';
 
   const { data, error } = await sb.rpc('mes_fils');
   const l = $('liste');
@@ -116,9 +191,11 @@ async function listerConversations(){
     if(ferme) badge = '<span style="font-size:11px;color:var(--sourd);border:1px solid var(--ligne);border-radius:99px;padding:1px 8px;margin-left:8px">Fermée</span>';
     else if(autreFerme && !moiFerme) badge = '<span style="font-size:11px;color:#8a5a00;background:#FFF3D6;border-radius:99px;padding:1px 8px;margin-left:8px">Clôture demandée</span>';
     else if(moiFerme && !autreFerme) badge = '<span style="font-size:11px;color:var(--sourd);border:1px solid var(--ligne);border-radius:99px;padding:1px 8px;margin-left:8px">En attente de l’autre</span>';
+    const point = (f.non_lu && !ferme)
+      ? '<span style="display:inline-block;width:8px;height:8px;border-radius:99px;background:var(--rouge);margin-left:8px;vertical-align:middle"></span>' : '';
     return '<a class="conv" href="/messages.html?fil='+encodeURIComponent(f.fil_id)+'"'
       + (ferme?' style="opacity:.62"':'') + '>'
-      + '<span class="r">'+esc(f.contrepartie_nom || 'Contrepartie')+'</span>'+badge
+      + '<span class="r">'+esc(f.contrepartie_nom || 'Contrepartie')+'</span>'+badge+point
       + '<div class="m">'+apercu+(quand?' · '+quand:'')+'</div></a>';
   }).join('');
 }
@@ -162,7 +239,11 @@ async function ouvrirConversation(ref){
   $('txt').addEventListener('keydown', e=>{ if(e.key==='Enter' && (e.metaKey||e.ctrlKey)){ e.preventDefault(); envoyer(); } });
   await rafraichirEtat();
   await charger();
-  timer = setInterval(async ()=>{ await charger(); await rafraichirEtat(); }, 5000);
+  sb.rpc('marquer_fil_vu', { p_fil: filId }).catch(()=>{});
+  timer = setInterval(async ()=>{
+    await charger(); await rafraichirEtat();
+    sb.rpc('marquer_fil_vu', { p_fil: filId }).catch(()=>{});
+  }, 5000);
 }
 
 /* état du fil (titre, bandeau, bouton de clôture) */

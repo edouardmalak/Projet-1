@@ -143,6 +143,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
   .pb-kpi.vert b{color:var(--vert-vif)}
   </style>
   <div data-onglet="accueil">
+  <div id="banniere-messages"></div>
   <div class="carte" id="carte-pb" style="display:none">
     <div class="sec">Tableau de bord</div>
     <div class="pb-kpis">
@@ -297,6 +298,7 @@ function initOngletsEP(){
   }
   initOngletsEP();
   chargerTableauBordPharmacie();
+  cdBanniereMessagesNonLus('banniere-messages', '/messages.html');
   ['date_contrat','tarif_horaire','profession_recherchee'].forEach(id=> $(id) && $(id).addEventListener('change', majCompatibles));
   ['heure_debut','heure_fin','tarif_horaire'].forEach(id=> $(id) && $(id).addEventListener('input', majPrixDual));
   majPrixDual();

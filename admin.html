@@ -95,6 +95,7 @@ tbody tr:last-child td{border-bottom:none}
 
   <div data-onglet="vue">
   <!-- TABLEAU DE BORD (Phase 6.2) -->
+  <div id="banniere-messages"></div>
   <div class="carte">
     <div class="sec">Tableau de bord<small>indicateurs du réseau</small></div>
     <div class="kpis" id="kpis">
@@ -362,6 +363,7 @@ function cdToast(texte, ok){
   if(profil.role !== 'admin'){ location.replace(cdAccueilPourRole(profil.role)); return; }
   cdEnteteConnecte();
   initOngletsAdmin();
+  cdBanniereMessagesNonLus('banniere-messages', '/admin-messages.html');
   chargerKPIs();
   chargerContratsARisque();
   chargerRegions();
