@@ -179,49 +179,40 @@ window.cdDeconnexion = async function(){
 };
 
 /* ---- menu de navigation selon le rôle ----
-   Remplace les flèches « ← Retour » par un menu horizontal persistant,
-   regroupé en menus déroulants pour ne pas aligner 9-10 liens à plat.
+   Remplace les flèches « ← Retour » par un menu horizontal persistant.
    Injecté juste sous la topbar sur toutes les pages connectées. Bilingue
-   (suit cdLang), surligne la page courante (un groupe s'allume si l'une
-   de ses entrées est active), masque les anciens liens « retour ».
-   Format d'une entrée : soit un lien plat ['/href.html','FR','EN'],
-   soit un groupe déroulant { g:'FR', ge:'EN', items:[[...],[...]] }.      */
+   (suit cdLang), surligne la page courante, masque les anciens liens
+   « retour ». Format d'une entrée : soit un lien plat ['/href.html','FR','EN'],
+   soit un groupe déroulant { g:'FR', ge:'EN', items:[[...],[...]] }.
+
+   2026-08-08 — restructure « Apple-épuré » (dossier de refonte) : pharmacien
+   ET pharmacie passent à 5 destinations À PLAT (plus aucun groupe déroulant
+   dans la barre principale — un menu à un seul item n'a pas de sens).
+   FAQ, Paramètres, Déconnexion, la note ★, et pour la pharmacie le badge de
+   rôle, vivent maintenant dans le menu de compte (cdEnteteConnecte, plus
+   bas) — pas ici. Maps devient un bouton de bascule DANS contrats.html (et
+   son pendant DANS carte.html), pas une entrée de menu. L'accueil pharmacie
+   (« Tableau de bord ») devient le clic sur le logo plutôt qu'une entrée —
+   voir cdEnteteConnecte, qui rend .topbar .brand « sensible au rôle ».
+   Chaque destination garde sa route existante — restructuration, pas
+   reconstruction. Admin inchangé (hors périmètre du dossier de refonte). */
 const CD_MENUS = {
-  /* pharmacien : menu à plat (2026-08-06) — Profil + Évaluations vivent
-     désormais dans le menu déclenché par le NOM (cdEnteteConnecte), plus
-     dans ce strip. Groupes « Contrats »/« Compte » retirés : une fois Maps,
-     Mes contrats, Profil et Évaluations sortis, il ne restait qu'une seule
-     entrée dans chacun — un menu déroulant à un seul item n'a pas de sens. */
   pharmacien: [
-    ['/contrats.html',           'Trouver un contrat', 'Contracts'],
-    ['/carte.html',              'Maps',              'Maps'],
-    ['/mes-mandats.html',        'Mes contrats',       'My contracts'],
-    ['/finances.html',           'Finances',           'Finances'],
-    ['/disponibilites.html',     'Agenda',             'Calendar'],
-    ['/messages.html',           'Clavardage',        'Messages'],
-    ['/dispensaire.html',        'Mes formations et nouvelles', 'My training and news'],
-    ['/faq.html',                'FAQ',               'FAQ'],
-    ['/parametres.html',         'Paramètres',        'Settings']
+    ['/contrats.html',       'Trouver un contrat', 'Find a contract'],
+    ['/mes-mandats.html',    'Mes contrats',       'My contracts'],
+    ['/disponibilites.html', 'Agenda',             'Calendar'],
+    ['/finances.html',       'Finances',           'Finances'],
+    ['/messages.html',       'Messages',           'Messages']
   ],
   pharmacie: [
-    { g:'Contrats', ge:'Contracts', items: [
-      ['/espace-pharmacie.html',   'Accueil',          'Home'],
-      /* Le vrai formulaire de publication vit dans espace-pharmacie.html.
-         (L'ancien /demande.html est une page héritée : aucune connexion,
-          aucune écriture en base — elle ne créait pas de contrat.) */
-      ['/espace-pharmacie.html#nouvelle-demande', 'Nouvelle demande', 'New request'],
-      ['/espace-pharmacie.html#mes-contrats', 'Mes contrats', 'My contracts'],
-      ['/espace-pharmacie.html#factures-recues', 'Factures reçues', 'Invoices received']
-    ]},
-    ['/calendrier-pharmacie.html','Calendrier',      'Calendar'],
-    ['/messages.html',           'Clavardage',       'Messages'],
-    { g:'Compte', ge:'Account', items: [
-      ['/evaluations.html',        'Évaluations',      'Reviews'],
-      ['/dispensaire.html',        'Dispensaire',       'Dispensary'],
-      ['/profil.html',             'Profil',           'Profile'],
-      ['/faq.html',                'FAQ',              'FAQ'],
-      ['/parametres.html',         'Paramètres',       'Settings']
-    ]}
+    /* Le vrai formulaire de publication vit dans espace-pharmacie.html.
+       (L'ancien /demande.html est une page héritée : aucune connexion,
+        aucune écriture en base — elle ne créait pas de contrat.) */
+    ['/espace-pharmacie.html#nouvelle-demande', 'Publier un contrat', 'Post a contract'],
+    ['/espace-pharmacie.html#mes-contrats',     'Mes contrats',       'My contracts'],
+    ['/calendrier-pharmacie.html',              'Calendrier',         'Calendar'],
+    ['/espace-pharmacie.html#factures-recues',  'Factures',           'Invoices'],
+    ['/messages.html',                          'Messages',           'Messages']
   ],
   admin: [
     ['/admin.html',              'Console',          'Console'],
@@ -361,7 +352,14 @@ function cdRacines(){
   const deMenu = Object.values(CD_MENUS).flat().flatMap(entree=>
     Array.isArray(entree) ? [entree[0]] : entree.items.map(i=>i[0])
   );
-  const deCompte = ['/profil.html', '/evaluations.html'];
+  /* destinations toujours atteignables via le cœur, la cloche ou le menu de
+     compte (cdEnteteConnecte) — mêmes racines qu'un lien du menu principal,
+     même si elles ne sont plus dans CD_MENUS depuis la restructure du
+     2026-08-08 */
+  const deCompte = [
+    '/profil.html', '/evaluations.html', '/parametres.html', '/faq.html',
+    '/dispensaire.html', '/pharmacies-preferees.html', '/locums-confiance.html'
+  ];
   return [...deMenu, ...deCompte].map(h=> h.replace(/#.*$/,'').replace(/\.html$/,''));
 }
 function cdEstRacine(chemin){
@@ -392,98 +390,266 @@ window.cdBoutonRetour = function(role){
   if(marque && marque.parentElement) marque.parentElement.insertBefore(bouton, marque);
 };
 
-/* ---- en-tête connecté : injecte « NOM · ★ note · DÉCONNEXION » dans la topbar ----
-   Le nom est celui du pharmacien(ne) OU de la pharmacie selon le rôle
-   (nom_pharmacie, pas prénom, côté pharmacie). La réputation (étoiles +
-   nombre d'avis, sql/19 get_note_profil) s'affiche à côté dès qu'elle
-   existe — jamais pour l'admin, qui n'est pas noté. Les deux sont un lien
-   vers /evaluations.html. */
+/* ---- cœur (relations) + cloche (alertes) + FR/EN + menu de compte ----
+   Petites briques du cluster de droite « Apple-épuré » (2026-08-08, dossier
+   de refonte) — utilisées uniquement par cdEnteteConnecte ci-dessous. */
+const SVG_COEUR = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>';
+const SVG_CLOCHE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
+
+function cdIconeLien(href, svg, libelleFr, libelleEn){
+  const a = document.createElement('a');
+  a.href = href;
+  a.setAttribute('aria-label', cdT(libelleFr, libelleEn));
+  a.title = cdT(libelleFr, libelleEn);
+  a.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;'+
+    'border-radius:8px;color:var(--sourd,#5A6B63);text-decoration:none;flex:none;position:relative';
+  a.innerHTML = svg;
+  a.addEventListener('mouseenter', ()=> a.style.color = 'var(--vert-vif,#0f8a5f)');
+  a.addEventListener('mouseleave', ()=> a.style.color = 'var(--sourd,#5A6B63)');
+  return a;
+}
+function cdPastilleSur(a){
+  const p = document.createElement('span');
+  p.style.cssText = 'display:none;position:absolute;top:1px;right:1px;min-width:14px;height:14px;padding:0 3px;'+
+    "border-radius:99px;background:var(--rouge,#C0392B);color:#fff;font-size:9px;line-height:14px;text-align:center;"+
+    "font-weight:700;font-family:'IBM Plex Mono',monospace";
+  a.appendChild(p);
+  return p;
+}
+function cdBoutonLangue(){
+  const en = cdLang() === 'en';
+  const enveloppe = document.createElement('span');
+  enveloppe.style.cssText = 'display:inline-flex;border:1px solid var(--ligne,#E6E8E4);border-radius:99px;padding:2px;flex:none';
+  ['fr','en'].forEach(l=>{
+    const actif = l === (en ? 'en' : 'fr');
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = l.toUpperCase();
+    b.setAttribute('aria-pressed', actif ? 'true' : 'false');
+    b.style.cssText = 'border:none;cursor:pointer;font:inherit;font-size:10.5px;font-weight:700;letter-spacing:.04em;'+
+      'padding:4px 9px;border-radius:99px;background:'+(actif ? 'var(--vert-vif,#0f8a5f)' : 'transparent')+';'+
+      'color:'+(actif ? '#fff' : 'var(--sourd,#6b7772)');
+    /* recharge la page pour ré-appliquer la langue partout (menus, textes
+       data-fr/data-en) — un tap occasionnel, coût acceptable sur un site
+       multi-pages sans routeur SPA */
+    b.addEventListener('click', ()=>{
+      if(actif) return;
+      try{ localStorage.setItem('cd-lang', l); }catch(e){}
+      location.reload();
+    });
+    enveloppe.appendChild(b);
+  });
+  return enveloppe;
+}
+/* items : ['/href','FR','EN'] (lien), ['---'] (séparateur),
+   [null,'FR','EN', fonction, estDanger] (action), ou un nœud DOM déjà
+   construit (inséré tel quel — sert à la ligne « Mon profil » du
+   pharmacien, qui porte sa note ★ en plus du libellé). */
+function cdMenuCompte(p, items, entete){
+  const enveloppe = document.createElement('span');
+  enveloppe.style.cssText = 'position:relative;display:inline-flex;flex:none';
+
+  const bouton = document.createElement('button');
+  bouton.type = 'button';
+  bouton.setAttribute('aria-haspopup', 'true');
+  bouton.setAttribute('aria-expanded', 'false');
+  bouton.style.cssText = 'display:inline-flex;align-items:center;gap:7px;background:none;border:none;cursor:pointer;'+
+    'font:inherit;color:var(--texte,#1B2622);padding:3px 6px 3px 3px;border-radius:99px';
+  const nomPourInitiales = p.role === 'pharmacie' ? (p.nom_pharmacie||'') : ((p.prenom||'')+' '+(p.nom||''));
+  const morceaux = nomPourInitiales.trim().split(/\s+/);
+  const initiales = document.createElement('span');
+  initiales.textContent = cdInitiales(morceaux[0], morceaux[1]);
+  initiales.style.cssText = 'width:26px;height:26px;border-radius:50%;background:var(--vert,#0B6E4F);color:#fff;'+
+    "display:grid;place-items:center;font-family:'Inter',sans-serif;font-weight:700;font-size:11px;flex:none";
+  const nomTxt = document.createElement('span');
+  nomTxt.textContent = p.role === 'pharmacie' ? (p.nom_pharmacie || p.ville || '') : (p.prenom || '');
+  nomTxt.style.cssText = "font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;max-width:110px;"+
+    'overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+  const chevron = document.createElement('span');
+  chevron.textContent = '▾';
+  chevron.style.cssText = 'font-size:10px;opacity:.6';
+  bouton.append(initiales, nomTxt, chevron);
+
+  const panneau = document.createElement('span');
+  panneau.style.cssText = 'position:absolute;top:100%;right:0;margin-top:8px;background:var(--panneau,#fff);'+
+    'border:1px solid var(--ligne,#E6E8E4);border-radius:12px;box-shadow:0 8px 24px -8px rgba(20,24,20,.18);'+
+    'padding:8px;display:none;flex-direction:column;min-width:210px;z-index:70';
+
+  if(entete){
+    entete.style.cssText += ';padding:6px 10px 10px;margin-bottom:4px;border-bottom:1px solid var(--ligne,#E6E8E4)';
+    panneau.appendChild(entete);
+  }
+  items.forEach(item=>{
+    if(item instanceof Node){ panneau.appendChild(item); return; }
+    if(item[0] === '---'){
+      const sep = document.createElement('div');
+      sep.style.cssText = 'height:1px;background:var(--ligne,#E6E8E4);margin:6px 4px';
+      panneau.appendChild(sep);
+      return;
+    }
+    const [href, fr, en, action, danger] = item;
+    const lien = document.createElement(action ? 'button' : 'a');
+    if(action){ lien.type = 'button'; lien.addEventListener('click', action); }
+    else lien.href = href;
+    lien.textContent = cdT(fr, en);
+    lien.style.cssText = "display:block;width:100%;text-align:left;background:none;border:none;padding:9px 10px;"+
+      "font-family:'Inter',sans-serif;font-size:13px;text-decoration:none;border-radius:7px;cursor:pointer;"+
+      'color:'+(danger ? 'var(--rouge,#C0392B)' : 'var(--texte,#1B2622)');
+    lien.addEventListener('mouseenter', ()=> lien.style.background = 'var(--panneau2,#F1F6F2)');
+    lien.addEventListener('mouseleave', ()=> lien.style.background = 'none');
+    panneau.appendChild(lien);
+  });
+
+  function fermer(){ panneau.style.display = 'none'; bouton.setAttribute('aria-expanded','false'); }
+  bouton.addEventListener('click', e=>{
+    e.stopPropagation();
+    const ouvert = panneau.style.display === 'flex';
+    fermer();
+    if(!ouvert){ panneau.style.display = 'flex'; bouton.setAttribute('aria-expanded','true'); }
+  });
+  document.addEventListener('click', fermer);
+  document.addEventListener('keydown', e=>{ if(e.key === 'Escape') fermer(); });
+
+  enveloppe.append(bouton, panneau);
+  return enveloppe;
+}
+
+/* ---- en-tête connecté : injecte le cluster de session dans la topbar ----
+   Pharmacien/pharmacie : cœur + cloche + FR/EN + menu de compte, façon
+   « Apple-épuré » (2026-08-08, dossier de refonte). Admin : rendu inchangé
+   (NOM · ★ note · DÉCONNEXION à plat) — hors périmètre du dossier, aucune
+   raison de le retoucher. */
 window.cdEnteteConnecte = async function(){
   const p = await cdProfil();
   if(!p) return null;
   const conteneur = document.querySelector('.topbar .droite') ||
                     document.querySelector('.topbar .in') ||
                     document.querySelector('.topbar .wrap');
-  if(conteneur){
+  if(conteneur && (p.role === 'pharmacien' || p.role === 'pharmacie')){
+    const el = document.createElement('span');
+    el.id = 'cd-entete-session';
+    el.style.cssText = 'display:inline-flex;align-items:center;gap:6px;flex:none';
+
+    const coeur = cdIconeLien(
+      p.role === 'pharmacien' ? '/pharmacies-preferees.html' : '/locums-confiance.html',
+      SVG_COEUR,
+      p.role === 'pharmacien' ? 'Pharmacies préférées' : 'Locums de confiance',
+      p.role === 'pharmacien' ? 'Preferred pharmacies' : 'Trusted locums'
+    );
+    const cloche = cdIconeLien('/dispensaire.html', SVG_CLOCHE, 'Alertes et nouvelles', 'Alerts and news');
+    const pastilleCloche = cdPastilleSur(cloche);
+
+    /* réputation + favoris reçus — chargés en différé plus bas ; les
+       variables restent valides même une fois les nœuds déplacés dans le
+       panneau du menu de compte */
+    const etoiles = document.createElement('a');
+    etoiles.href = '/evaluations.html';
+    etoiles.style.cssText = "display:none;color:var(--jaune,#C97B12);text-decoration:none;font-weight:600;font-size:12.5px";
+    const favoris = document.createElement('span');
+    favoris.style.cssText = 'display:none;color:var(--rouge,#C0392B);font-weight:600;font-size:12.5px;margin-left:8px';
+
+    let entete = null, items;
+    if(p.role === 'pharmacien'){
+      /* « Mon profil » porte sa note ★ à même la ligne (dossier de refonte) —
+         pas d'en-tête séparé pour ce rôle */
+      const ligneProfil = document.createElement('a');
+      ligneProfil.href = '/profil.html';
+      ligneProfil.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;'+
+        "padding:9px 10px;font-family:'Inter',sans-serif;font-size:13px;text-decoration:none;border-radius:7px;color:var(--texte,#1B2622)";
+      ligneProfil.addEventListener('mouseenter', ()=> ligneProfil.style.background='var(--panneau2,#F1F6F2)');
+      ligneProfil.addEventListener('mouseleave', ()=> ligneProfil.style.background='none');
+      const libelleProfil = document.createElement('span');
+      libelleProfil.textContent = cdT('Mon profil','My profile');
+      ligneProfil.append(libelleProfil, etoiles, favoris);
+      items = [
+        ligneProfil,
+        ['/dispensaire.html', 'Formations', 'Training'],
+        ['/parametres.html',  'Paramètres', 'Settings'],
+        ['/faq.html',         'Aide & FAQ', 'Help & FAQ'],
+        ['---'],
+        [null, 'Déconnexion', 'Log out', cdDeconnexion, true]
+      ];
+    } else {
+      entete = document.createElement('div');
+      entete.append(etoiles, favoris); // favoris : caché côté pharmacie (n'a de sens que côté pharmacien)
+      const tag = document.createElement('span');
+      tag.textContent = cdT('Pharmacie','Pharmacy');
+      tag.style.cssText = 'display:inline-block;margin-top:4px;padding:2px 7px;border-radius:3px;'+
+        "font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.08em;"+
+        'color:#17C980;border:1px solid rgba(23,201,128,.45);background:rgba(18,169,110,.1)';
+      entete.appendChild(tag);
+      items = [
+        ['/profil.html',      'Profil',      'Profile'],
+        ['/dispensaire.html', 'Dispensaire', 'Dispensary'],
+        ['/evaluations.html', 'Évaluations', 'Reviews'],
+        ['/parametres.html',  'Paramètres',  'Settings'],
+        ['/faq.html',         'Aide & FAQ',  'Help & FAQ'],
+        ['---'],
+        [null, 'Déconnexion', 'Log out', cdDeconnexion, true]
+      ];
+    }
+    const compte = cdMenuCompte(p, items, entete);
+    el.append(coeur, cloche, cdBoutonLangue(), compte);
+    conteneur.appendChild(el);
+
+    /* logo = accueil du rôle plutôt que la page publique, pour les deux
+       rôles connectés (le dossier ne le demande explicitement que côté
+       pharmacie — « Logo click = Tableau de bord » — étendu au pharmacien
+       par cohérence : les deux barres sont censées se refléter) */
+    const brand = document.querySelector('.topbar .brand');
+    if(brand) brand.href = cdAccueilPourRole(p.role);
+
+    document.querySelectorAll('a[href^="acces.html"],a[href^="/acces.html"]').forEach(a=>{
+      if(/mode=(conn|insc)/.test(a.getAttribute('href'))) a.style.display = 'none';
+    });
+
+    sb.rpc('get_note_profil', { p_profil: p.id }).then(({ data })=>{
+      const n = data && data[0];
+      if(n && n.nombre > 0){
+        etoiles.textContent = '★ ' + Number(n.moyenne).toFixed(1) + ' (' + n.nombre + ')';
+        etoiles.style.display = '';
+      }
+    }).catch(()=>{});
+    if(p.role === 'pharmacien'){
+      /* état 'trusted' seulement — depuis sql/61, cette table porte aussi
+         les relations 'muted'/'blocked' ; les compter ici gonflerait « ♥ »
+         avec des pharmacies qui ont justement mis ce pharmacien de côté */
+      sb.from('favoris_pharmaciens').select('*', { count:'exact', head:true })
+        .eq('pharmacien_id', p.id).eq('state', 'trusted')
+        .then(({ count })=>{
+          if(count > 0){ favoris.textContent = '♥ ' + count; favoris.style.display = ''; }
+        }).catch(()=>{});
+    }
+    /* pastille de la cloche — réutilise le compteur de messages non lus
+       (sql/60), seule source d'« alertes personnelles » déjà en place
+       (candidatures/messages) ; il n'existe pas de table de nouvelles
+       distincte pour le volet « platform news » du dossier de refonte. */
+    sb.rpc('compter_messages_non_lus').then(({ data, error })=>{
+      if(error || !data || data <= 0) return;
+      pastilleCloche.textContent = data > 99 ? '99+' : String(data);
+      pastilleCloche.style.display = 'inline-block';
+    }).catch(()=>{});
+  } else if(conteneur){
+    /* ---- admin : rendu inchangé (hors périmètre du dossier de refonte) ---- */
     const el = document.createElement('span');
     el.id = 'cd-entete-session';
     el.style.cssText = "display:inline-flex;align-items:center;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;flex:none";
-    /* badge de rôle — on sait TOUJOURS avec quel compte on est connecté */
     const roleBadge = document.createElement('span');
-    const libelles = { admin:'ADMIN', pharmacie:'PHARMACIE', pharmacien:'PHARMACIEN(NE)' };
-    roleBadge.textContent = libelles[p.role] || p.role || '';
-    roleBadge.style.cssText = 'padding:2px 8px;border-radius:3px;border:1px solid;font-size:10px;font-weight:700;letter-spacing:.1em;' +
-      (p.role === 'admin'
-        ? 'color:#E8B849;border-color:rgba(232,184,73,.55);background:rgba(232,184,73,.1)'
-        : 'color:#17C980;border-color:rgba(23,201,128,.45);background:rgba(18,169,110,.1)');
-    /* nom affiché — pharmacie : nom commercial ; pharmacien/admin : prénom */
-    const nomAffiche = p.role === 'pharmacie'
-      ? (p.nom_pharmacie || p.ville || p.courriel || '')
-      : (p.prenom || p.courriel || '');
-    let nom;
-    if(p.role === 'pharmacien'){
-      /* le nom devient un petit menu déroulant (Profil, Évaluations) au lieu
-         d'un lien direct vers /evaluations.html — 2026-08-06, item 4 : ces
-         deux pages sont sorties du strip de navigation principal. */
-      nom = document.createElement('span');
-      nom.style.cssText = 'position:relative;display:inline-flex';
-      const boutonNom = document.createElement('button');
-      boutonNom.type = 'button';
-      boutonNom.textContent = nomAffiche + ' ▾';
-      boutonNom.setAttribute('aria-haspopup', 'true');
-      boutonNom.setAttribute('aria-expanded', 'false');
-      boutonNom.style.cssText = 'background:none;border:none;cursor:pointer;font:inherit;color:inherit;font-weight:700;padding:0';
-      const panneauNom = document.createElement('span');
-      panneauNom.style.cssText = 'position:absolute;top:100%;left:0;margin-top:6px;background:var(--panneau,#fff);'+
-        'border:1px solid var(--ligne,#E6E8E4);border-radius:10px;box-shadow:0 8px 24px -8px rgba(20,24,20,.18);'+
-        'padding:6px;display:none;flex-direction:column;min-width:150px;z-index:60;text-transform:none;letter-spacing:normal';
-      [['/profil.html', cdT('Profil','Profile')], ['/evaluations.html', cdT('Évaluations','Reviews')]].forEach(([href, libelle])=>{
-        const lien = document.createElement('a');
-        lien.href = href; lien.textContent = libelle;
-        lien.style.cssText = 'display:block;padding:9px 10px;font-size:12px;text-decoration:none;color:var(--sourd,#6b7772);border-radius:6px;font-weight:500';
-        lien.addEventListener('mouseenter', ()=> lien.style.color='var(--vert-vif,#0f8a5f)');
-        lien.addEventListener('mouseleave', ()=> lien.style.color='var(--sourd,#6b7772)');
-        panneauNom.appendChild(lien);
-      });
-      boutonNom.addEventListener('click', e=>{
-        e.stopPropagation();
-        const ouvert = panneauNom.style.display === 'flex';
-        panneauNom.style.display = ouvert ? 'none' : 'flex';
-        boutonNom.setAttribute('aria-expanded', ouvert ? 'false' : 'true');
-      });
-      document.addEventListener('click', ()=>{ panneauNom.style.display='none'; boutonNom.setAttribute('aria-expanded','false'); });
-      document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ panneauNom.style.display='none'; boutonNom.setAttribute('aria-expanded','false'); } });
-      nom.append(boutonNom, panneauNom);
-    } else {
-      nom = document.createElement(p.role === 'admin' ? 'b' : 'a');
-      nom.textContent = nomAffiche;
-      nom.style.cssText = 'color:inherit;text-decoration:none;font-weight:700';
-      if(p.role !== 'admin'){
-        nom.href = '/evaluations.html';
-        nom.addEventListener('mouseenter', ()=> nom.style.textDecoration='underline');
-        nom.addEventListener('mouseleave', ()=> nom.style.textDecoration='none');
-      }
-    }
-    /* réputation — étoiles + nombre d'avis, cachée tant qu'aucune note
-       n'existe (compte neuf) et jamais chargée pour l'admin */
+    roleBadge.textContent = 'ADMIN';
+    roleBadge.style.cssText = 'padding:2px 8px;border-radius:3px;border:1px solid;font-size:10px;font-weight:700;letter-spacing:.1em;'+
+      'color:#E8B849;border-color:rgba(232,184,73,.55);background:rgba(232,184,73,.1)';
+    const nom = document.createElement('b');
+    nom.textContent = p.prenom || p.courriel || '';
+    nom.style.cssText = 'color:inherit;text-decoration:none;font-weight:700';
     const etoiles = document.createElement('a');
     etoiles.href = '/evaluations.html';
     etoiles.style.cssText = 'display:none;color:var(--jaune,#C97B12);text-decoration:none;font-weight:600;letter-spacing:.02em';
-    /* favoris reçus (pharmacies qui ont mis ce/cette pharmacien(ne) en
-       favori) — n'a de sens que côté pharmacien, chargé en différé plus
-       bas comme la réputation */
-    const favoris = document.createElement('span');
-    favoris.style.cssText = 'display:none;color:var(--rouge,#C0392B);font-weight:600;letter-spacing:.02em';
     const sep = document.createElement('span'); sep.textContent = '·'; sep.style.opacity = '.5';
     const btn = document.createElement('button');
     btn.textContent = cdT('Déconnexion', 'Log out');
     btn.style.cssText = "background:none;border:none;cursor:pointer;color:inherit;font:inherit;text-decoration:underline;text-underline-offset:3px;opacity:.8";
     btn.onclick = cdDeconnexion;
-    /* pas de badge « PHARMACIEN(NE) » à côté du nom du pharmacien —
-       admin et pharmacie gardent le leur */
-    if(p.role === 'pharmacien') el.append(nom, etoiles, favoris, sep, btn);
-    else el.append(roleBadge, nom, etoiles, sep, btn);
-    /* affiché juste à côté du logo C-Direct plutôt qu'à droite */
+    el.append(roleBadge, nom, etoiles, sep, btn);
     const brand = document.querySelector('.topbar .brand');
     if(brand && brand.parentElement){
       const groupe = document.createElement('span');
@@ -493,27 +659,9 @@ window.cdEnteteConnecte = async function(){
     } else {
       conteneur.appendChild(el);
     }
-    // masquer les liens Connexion/Inscription éventuels
     document.querySelectorAll('a[href^="acces.html"],a[href^="/acces.html"]').forEach(a=>{
       if(/mode=(conn|insc)/.test(a.getAttribute('href'))) a.style.display = 'none';
     });
-    /* réputation chargée en différé — n'attend pas ce résultat pour
-       afficher le reste de l'en-tête */
-    if(p.role === 'pharmacien' || p.role === 'pharmacie'){
-      sb.rpc('get_note_profil', { p_profil: p.id }).then(({ data })=>{
-        const n = data && data[0];
-        if(n && n.nombre > 0){
-          etoiles.textContent = '★ ' + Number(n.moyenne).toFixed(1) + ' (' + n.nombre + ')';
-          etoiles.style.display = '';
-        }
-      }).catch(()=>{});
-    }
-    if(p.role === 'pharmacien'){
-      sb.from('favoris_pharmaciens').select('*', { count:'exact', head:true }).eq('pharmacien_id', p.id)
-        .then(({ count })=>{
-          if(count > 0){ favoris.textContent = '♥ ' + count; favoris.style.display = ''; }
-        }).catch(()=>{});
-    }
   }
   if(p && p.role) cdMenuRole(p.role);
   if(p && p.role) cdBoutonRetour(p.role);
