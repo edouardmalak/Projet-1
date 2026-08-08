@@ -1165,6 +1165,24 @@ async function routeDiffuser(request, env) {
 }
 
 /* =====================================================================
+   Accès prioritaire (Feature 3, sql/57) — un contrat publié avec
+   acces_prioritaire=true n'est diffusé, tant que la fenêtre n'est pas
+   expirée, qu'aux pharmaciens de la liste favoris_pharmaciens de CETTE
+   pharmacie (même table que l'Instant Booking — décision de Robert,
+   une seule liste sert les deux usages). Au-delà de la fenêtre, aucun
+   code ici ne change : diffusionNouveauContrat()/diffuserPush() ne sont
+   appelées qu'UNE fois, à l'INSERT — un contrat encore ouvert après
+   l'expiration ne reçoit PAS de 2e diffusion générale automatique
+   (limitation connue, assumée, voir sql/57 pour le détail). */
+function accesPrioritaireActif(k) {
+  return !!(k.acces_prioritaire && k.acces_prioritaire_jusqu_a && new Date(k.acces_prioritaire_jusqu_a) > new Date());
+}
+async function idsFavorisPharmacie(env, pharmacieId) {
+  const lignes = await sbSelect(env, `favoris_pharmaciens?select=pharmacien_id&pharmacie_id=eq.${pharmacieId}`);
+  return new Set(lignes.map(l => l.pharmacien_id));
+}
+
+/* =====================================================================
    contrats INSERT — diffusion filtrée (5.1) mise en file (5.2/5.4)
 ===================================================================== */
 async function diffusionNouveauContrat(env, k) {
@@ -1175,7 +1193,11 @@ async function diffusionNouveauContrat(env, k) {
 
   /* ---- 2 · candidats + contexte (pharmacie, règles, disponibilités) ---- */
   const cibles = await ciblesFiltrees(env, k);
-  const { retenus, pharmacie } = cibles;
+  let { retenus, pharmacie } = cibles;
+  if (accesPrioritaireActif(k)) {
+    const favoris = await idsFavorisPharmacie(env, k.pharmacie_id);
+    retenus = retenus.filter(r => favoris.has(r.p.id));
+  }
 
   /* ---- 3 · mise en FILE des diffusions pharmaciens (5.2 + 5.4) :
      tampon ~5 min pour le groupage, décalé à 07:00 si heures de
@@ -1474,7 +1496,11 @@ async function envoyerPush(env, sub, payloadObj) {
 /* diffusion push pour un contrat — appelée par diffusionNouveauContrat() */
 async function diffuserPush(env, k, pharmacie) {
   if (!env.VAPID_PRIVATE_KEY || !env.VAPID_PUBLIC_KEY) return { ok: false, skip: 'VAPID non configuré' };
-  const ids = await ciblesPush(env, k, pharmacie);
+  let ids = await ciblesPush(env, k, pharmacie);
+  if (accesPrioritaireActif(k)) {
+    const favoris = await idsFavorisPharmacie(env, k.pharmacie_id);
+    ids = ids.filter(id => favoris.has(id));
+  }
   if (!ids.length) return { ok: true, envoyes: 0, cibles: 0 };
   const subs = await sbSelect(env, `push_subscriptions?select=*&profil_id=in.(${ids.join(',')})`);
   if (!subs.length) return { ok: true, envoyes: 0, cibles: ids.length };

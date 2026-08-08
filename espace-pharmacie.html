@@ -192,6 +192,18 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
         </div>
         <div class="indice" id="hebergement-indice" style="margin-top:6px"></div>
       </div>
+      <div class="champ">
+        <div class="coches">
+          <label><input type="checkbox" id="acces_prioritaire"> Offrir d'abord à mes pharmaciens de confiance</label>
+        </div>
+        <select id="acces_prioritaire_duree" style="display:none;margin-top:8px">
+          <option value="2">Pendant 2 heures</option>
+          <option value="4" selected>Pendant 4 heures</option>
+          <option value="8">Pendant 8 heures</option>
+          <option value="24">Pendant 24 heures</option>
+        </select>
+        <div class="indice" id="acces-prioritaire-indice" style="margin-top:6px"></div>
+      </div>
       <div class="champ"><label>Notes (accès, consignes…)</label><textarea id="notes" rows="2"></textarea></div>
       <button class="btn" type="submit" id="btn-pub">Publier le contrat</button>
       <div class="indice" style="margin-top:8px">En publiant, vous acceptez les <a href="/regles.html" target="_blank" rel="noopener" style="color:var(--vert-vif)">règles du réseau</a> — dont la protection d'annulation (50&nbsp;% à moins de 7&nbsp;jours, 100&nbsp;% à moins de 48&nbsp;h).</div>
@@ -292,6 +304,20 @@ function initOngletsEP(){
   const { data: favs } = await sb.from('favoris_pharmaciens').select('pharmacien_id').eq('pharmacie_id', profil.id);
   (favs||[]).forEach(f=> favoris.add(f.pharmacien_id));
 
+  /* Accès prioritaire (même liste favoris que l'Instant Booking — pas de
+     2e liste, décision de Robert). Sans favori, la case n'aurait aucun
+     effet utile (personne à qui l'offrir en premier) : désactivée avec
+     une explication plutôt que silencieusement inopérante. */
+  if(favoris.size > 0){
+    $('acces-prioritaire-indice').textContent = favoris.size + ' pharmacien' + (favoris.size>1?'s':'') + ' de confiance verront ce contrat en premier ; les autres ne le verront qu\'à l\'expiration du délai choisi.';
+  } else {
+    $('acces_prioritaire').disabled = true;
+    $('acces-prioritaire-indice').innerHTML = 'Aucun pharmacien de confiance pour l\'instant — ajoutez-en (♥) depuis les candidatures d\'un contrat, dans « Mes contrats ».';
+  }
+  $('acces_prioritaire').addEventListener('change', ()=>{
+    $('acces_prioritaire_duree').style.display = $('acces_prioritaire').checked ? '' : 'none';
+  });
+
   /* règles réseau (plancher tarifaire lu de la base) */
   const r = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle();
   regles = r.data;
@@ -331,7 +357,11 @@ function initOngletsEP(){
       has_automation: profil.has_automation || false,
       lunch_coverage: $('lunch_coverage').checked,
       notes: $('notes').value.trim() || null,
-      hebergement_offerte: $('hebergement_offerte').checked && !!(profil.hebergement_adresse && profil.hebergement_adresse.trim())
+      hebergement_offerte: $('hebergement_offerte').checked && !!(profil.hebergement_adresse && profil.hebergement_adresse.trim()),
+      acces_prioritaire: $('acces_prioritaire').checked && !$('acces_prioritaire').disabled,
+      acces_prioritaire_jusqu_a: ($('acces_prioritaire').checked && !$('acces_prioritaire').disabled)
+        ? new Date(Date.now() + parseInt($('acces_prioritaire_duree').value,10)*3600*1000).toISOString()
+        : null
     }).select('numero_reference').single();
     $('btn-pub').disabled = false;
     if(error){ msg('msg-pub', error.message, false); return; }
@@ -511,6 +541,16 @@ async function chargerContrats(){
         '<span class="badge '+b[0]+'">'+b[1]+'</span>'+
       '</div>'+
       '<div class="candidats"></div>';
+    if(k.acces_prioritaire && k.acces_prioritaire_jusqu_a){
+      const fin = new Date(k.acces_prioritaire_jusqu_a);
+      const actif = fin > new Date();
+      const hint = document.createElement('div');
+      hint.style.cssText = 'font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--jaune);margin-top:4px';
+      hint.textContent = actif
+        ? '🔑 Accès prioritaire à vos pharmaciens de confiance jusqu\'à ' + fin.toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'})
+        : '🔑 Accès prioritaire terminé — visible par tous les pharmaciens compatibles';
+      div.appendChild(hint);
+    }
     /* annulation d'un contrat encore ouvert (aucune pénalité) */
     if(k.statut === 'ouvert'){
       const bX = document.createElement('button');

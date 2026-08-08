@@ -541,6 +541,12 @@ function dessinerTableau(list){
       fb.textContent = '📋 ' + Number(k.fiabilite_note).toFixed(1) + '/5 fiabilité';
       refTd.appendChild(fb);
     }
+    if(k.acces_prioritaire_actif){
+      const pa = document.createElement('div');
+      pa.style.cssText = 'margin-top:3px;color:var(--jaune);font-size:10.5px;font-family:\'IBM Plex Mono\',monospace;font-weight:600';
+      pa.textContent = '🔑 Accès prioritaire · pharmacie de confiance';
+      refTd.appendChild(pa);
+    }
     /* cellule statut (sans coeur — déplacé dans sa propre colonne, voir sauvTd) */
     const statutTd = document.createElement('td');
     statutTd.innerHTML = k.deja_postule
@@ -709,7 +715,8 @@ function dessinerListeCal(list){
     const tarif  = k.tarif_horaire!=null ? cdArgent(k.tarif_horaire)+'/h' : '';
     const dist   = k._distanceKm!=null ? k._distanceKm+' km' : '';
     const heb    = k.hebergement_offerte ? '🏠 Hébergement offert' : '';
-    const meta   = [heures, k.ville, tarif, dist, heb].filter(Boolean).join(' · ');
+    const prio   = k.acces_prioritaire_actif ? '🔑 Accès prioritaire' : '';
+    const meta   = [heures, k.ville, tarif, dist, heb, prio].filter(Boolean).join(' · ');
     const statut = k.deja_postule ? 'postule' : 'ouvert';
     const libelle= k.deja_postule ? 'Quart demandé' : 'Disponible';
     const indispo = estIndisponible(k.date_contrat);
