@@ -220,8 +220,16 @@ a.lien{color:var(--vert-vif)}
         </div>
         <label class="consent">
           <input type="checkbox" id="confirmation_auto_favoris">
-          <span>Confirmer automatiquement (Instant Booking) les candidatures au tarif affiché de mes pharmaciens favoris — désactivé par défaut. Gérez vos favoris depuis la liste des candidatures dans « Mes contrats ».</span>
+          <span>Confirmer automatiquement (Instant Booking) les candidatures au tarif affiché de mes pharmaciens favoris — désactivé par défaut. Gérez vos favoris depuis la liste des candidatures dans « Mes contrats », ou ci-dessous.</span>
         </label>
+        <label class="consent">
+          <input type="checkbox" id="acces_prioritaire_par_defaut">
+          <span>Offrir d'abord à mes pharmaciens de confiance par défaut sur mes nouveaux contrats — vous pourrez décocher au cas par cas en publiant.</span>
+        </label>
+        <div class="champ">
+          <label>Pharmaciens de confiance</label>
+          <div id="liste-confiance" style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--sourd)">Chargement…</div>
+        </div>
         <div class="champ"><label>Heures d'ouverture</label>
           <div id="horaires-ouverture"></div>
         </div>
@@ -233,6 +241,10 @@ a.lien{color:var(--vert-vif)}
         <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px">Informatif pour l'instant — n'affecte pas encore le calcul des factures.</p>
         <div class="champ"><label>Adresse d'hébergement standard</label><input id="hebergement_adresse" placeholder="123 rue Principale, app. 4"></div>
         <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px">Si vous offrez un logement plutôt que l'indemnité de 250&nbsp;$/jour, indiquez l'adresse ici — vous pourrez l'activer contrat par contrat en publiant. Elle n'est révélée au pharmacien qu'une fois le contrat confirmé.</p>
+        <label class="consent" id="ligne-hebergement-defaut">
+          <input type="checkbox" id="hebergement_offert_par_defaut">
+          <span id="hebergement-defaut-texte">Ajoutez d'abord une adresse ci-dessus pour pouvoir l'offrir par défaut.</span>
+        </label>
         <div class="champ"><label>Notes d'accès (stationnement, entrée…)</label><textarea id="notes_acces" rows="2"></textarea></div>
       </div>
 
@@ -682,6 +694,73 @@ function rendrePlateaux(){
   });
 }
 
+/* case "offrir l'hébergement par défaut" — n'a de sens que si une adresse
+   est renseignée ; même logique de désactivation-avec-explication que
+   espace-pharmacie.html, appliquée ici en direct (avant même l'enregistrement). */
+function majEtatHebergementDefaut(){
+  const a = $('hebergement_adresse').value.trim();
+  const cb = $('hebergement_offert_par_defaut');
+  cb.disabled = !a;
+  $('ligne-hebergement-defaut').style.opacity = a ? '1' : '.6';
+  $('hebergement-defaut-texte').textContent = a
+    ? "Offrir l'hébergement par défaut sur mes nouveaux contrats — vous pourrez décocher au cas par cas en publiant."
+    : "Ajoutez d'abord une adresse ci-dessus pour pouvoir l'offrir par défaut.";
+  if(!a) cb.checked = false;
+}
+
+/* « Pharmaciens de confiance » — se construit uniquement à partir de
+   candidatures déjà reçues (lister_pharmaciens_deja_postules, sql/59) :
+   pas de recherche ouverte par nom, la RLS ne le permettrait pas de toute
+   façon (voir sql/59). Cœur = ajoute/retire de favoris_pharmaciens. */
+async function chargerPharmaciensConfiance(){
+  const zone = $('liste-confiance'); if(!zone) return;
+  const { data, error } = await sb.rpc('lister_pharmaciens_deja_postules');
+  if(error){ zone.textContent = 'Erreur : ' + error.message; return; }
+  if(!data || !data.length){
+    zone.textContent = "Aucun pharmacien n'a encore postulé à l'un de vos contrats — cette liste se construit à partir des candidatures reçues.";
+    return;
+  }
+  zone.innerHTML = '';
+  data.forEach(p=>{
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--ligne)';
+    const nom = document.createElement('span');
+    nom.style.cssText = 'color:var(--texte);font-weight:600';
+    nom.textContent = (p.prenom||'') + ' ' + (p.nom||'');
+    row.appendChild(nom);
+    if(p.note_nombre > 0){
+      const nb = document.createElement('span');
+      nb.style.color = 'var(--jaune)';
+      nb.textContent = '★ ' + Number(p.note_moyenne).toFixed(1);
+      row.appendChild(nb);
+    }
+    const coeur = document.createElement('button');
+    coeur.type = 'button';
+    coeur.style.cssText = 'margin-left:auto;background:none;border:1px solid var(--ligne2);border-radius:4px;padding:5px 10px;cursor:pointer;font-family:\'IBM Plex Mono\',monospace;font-size:11.5px';
+    const majBouton = actif=>{
+      coeur.textContent = actif ? '♥ Favori' : '♡ Ajouter';
+      coeur.style.color = actif ? 'var(--rouge)' : 'var(--sourd)';
+      coeur.style.borderColor = actif ? 'rgba(229,72,77,.5)' : 'var(--ligne2)';
+    };
+    majBouton(p.deja_favori);
+    coeur.onclick = async ()=>{
+      coeur.disabled = true;
+      if(p.deja_favori){
+        const { error: e } = await sb.from('favoris_pharmaciens').delete()
+          .eq('pharmacie_id', profil.id).eq('pharmacien_id', p.pharmacien_id);
+        if(!e){ p.deja_favori = false; majBouton(false); }
+      } else {
+        const { error: e } = await sb.from('favoris_pharmaciens')
+          .insert({ pharmacie_id: profil.id, pharmacien_id: p.pharmacien_id });
+        if(!e){ p.deja_favori = true; majBouton(true); }
+      }
+      coeur.disabled = false;
+    };
+    row.appendChild(coeur);
+    zone.appendChild(row);
+  });
+}
+
 (async function(){
   profil = await cdExigerConnexion();
   cdEnteteConnecte();
@@ -794,6 +873,11 @@ function rendrePlateaux(){
     $('plafond_per_diem').value = profil.plafond_per_diem ?? '';
     $('plafond_hebergement').value = profil.plafond_hebergement ?? '';
     $('hebergement_adresse').value = profil.hebergement_adresse ?? '';
+    $('hebergement_offert_par_defaut').checked = !!profil.hebergement_offert_par_defaut;
+    majEtatHebergementDefaut();
+    $('hebergement_adresse').addEventListener('input', majEtatHebergementDefaut);
+    $('acces_prioritaire_par_defaut').checked = !!profil.acces_prioritaire_par_defaut;
+    chargerPharmaciensConfiance();
 
     /* majoration auto */
     $('bump_actif').checked = !!profil.bump_actif;
@@ -883,6 +967,8 @@ function rendrePlateaux(){
       maj.plafond_per_diem=$('plafond_per_diem').value||null;
       maj.plafond_hebergement=$('plafond_hebergement').value||null;
       maj.hebergement_adresse=$('hebergement_adresse').value.trim()||null;
+      maj.hebergement_offert_par_defaut = $('hebergement_offert_par_defaut').checked && !!$('hebergement_adresse').value.trim();
+      maj.acces_prioritaire_par_defaut = $('acces_prioritaire_par_defaut').checked;
 
       /* --- majoration automatique (validée avant envoi) --- */
       const bOn  = $('bump_actif').checked;

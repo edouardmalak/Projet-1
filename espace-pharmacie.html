@@ -290,6 +290,7 @@ function initOngletsEP(){
   const adresseHeb = (profil.hebergement_adresse || '').trim();
   if(adresseHeb){
     $('hebergement-indice').textContent = 'Adresse qui sera offerte : ' + adresseHeb + ' (révélée au pharmacien une fois le contrat confirmé).';
+    if(profil.hebergement_offert_par_defaut) $('hebergement_offerte').checked = true;
   } else {
     $('hebergement_offerte').disabled = true;
     $('hebergement-indice').innerHTML = 'Configurez d\'abord une adresse dans votre <a href="/profil.html" style="color:var(--vert-vif)">profil</a> pour pouvoir l\'offrir.';
@@ -310,9 +311,13 @@ function initOngletsEP(){
      une explication plutôt que silencieusement inopérante. */
   if(favoris.size > 0){
     $('acces-prioritaire-indice').textContent = favoris.size + ' pharmacien' + (favoris.size>1?'s':'') + ' de confiance verront ce contrat en premier ; les autres ne le verront qu\'à l\'expiration du délai choisi.';
+    if(profil.acces_prioritaire_par_defaut){
+      $('acces_prioritaire').checked = true;
+      $('acces_prioritaire_duree').style.display = '';
+    }
   } else {
     $('acces_prioritaire').disabled = true;
-    $('acces-prioritaire-indice').innerHTML = 'Aucun pharmacien de confiance pour l\'instant — ajoutez-en (♥) depuis les candidatures d\'un contrat, dans « Mes contrats ».';
+    $('acces-prioritaire-indice').innerHTML = 'Aucun pharmacien de confiance pour l\'instant — ajoutez-en (♥) depuis les candidatures d\'un contrat, dans « Mes contrats », ou depuis vos <a href="/profil.html" style="color:var(--vert-vif)">Paramètres</a>.';
   }
   $('acces_prioritaire').addEventListener('change', ()=>{
     $('acces_prioritaire_duree').style.display = $('acces_prioritaire').checked ? '' : 'none';
