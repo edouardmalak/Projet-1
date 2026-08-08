@@ -208,11 +208,29 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
     <select class="filtre-champ" id="f-tarif" style="flex:1 1 120px"><option value="">Tarif</option></select>
     <select class="filtre-champ" id="f-logiciel" style="flex:1 1 120px"><option value="">Logiciel</option></select>
     <input class="filtre-champ" id="f-dist" type="number" min="0" step="10" placeholder="Distance max km" style="flex:1 1 130px">
+    <select class="filtre-champ" id="f-mode-date" style="flex:1 1 150px">
+      <option value="tous">Toutes les dates</option>
+      <option value="jour">Jour précis</option>
+      <option value="mois">Mois</option>
+      <option value="jsem">Jour de semaine</option>
+    </select>
+    <input class="filtre-champ" id="f-jour" type="date" style="display:none;flex:1 1 140px">
+    <input class="filtre-champ" id="f-mois" type="month" style="display:none;flex:1 1 140px">
+    <select class="filtre-champ" id="f-jsem" style="display:none;flex:1 1 130px">
+      <option value="1">Lundi</option>
+      <option value="2">Mardi</option>
+      <option value="3">Mercredi</option>
+      <option value="4">Jeudi</option>
+      <option value="5">Vendredi</option>
+      <option value="6">Samedi</option>
+      <option value="0">Dimanche</option>
+    </select>
     <select class="filtre-champ" id="f-tri" style="flex:1 1 130px">
       <option value="compat">Compatibilité ↓</option>
       <option value="date">Plus récents</option>
       <option value="date_contrat">Date du contrat</option>
       <option value="tarif">Tarif ↓</option>
+      <option value="revenu">Revenu estimé ↓</option>
       <option value="distance">Distance ↑</option>
     </select>
     <button class="filtre-reset" id="f-reset" type="button">Réinitialiser</button>
@@ -323,6 +341,7 @@ const JOURS_C = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 const JOURS_MINI_C = ['L','M','M','J','V','S','D'];
 function isoC(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function dateCourteC(v){ const d=new Date(String(v).slice(0,10)+'T12:00:00'); return String(d.getDate()).padStart(2,'0')+' '+MOIS_C[d.getMonth()].slice(0,3); }
+function jourSemaineFiltre(v){ return new Date(String(v).slice(0,10)+'T12:00:00').getDay(); } // 0=dim..6=sam
 
 /* distance domicile → contrat — calculée à part de l'estimation $ (regles_reseau
    peut échouer à charger sans jamais devoir cacher le km, qui doit rester toujours visible) */
@@ -368,12 +387,34 @@ function calcMatch(k){
   return { pct:score, tier: score>=80?'fort':score>=55?'moyen':'faible', raison: raisons.join(' · ') };
 }
 
-/* favoris (par navigateur) */
-function favSet(){ try{ return new Set(JSON.parse(localStorage.getItem('cd-favoris')||'[]')); }catch(e){ return new Set(); } }
-function favSave(s){ try{ localStorage.setItem('cd-favoris', JSON.stringify([...s])); }catch(e){} }
-function estFavori(ref){ return favSet().has(ref); }
-function toggleFavori(ref){ const s=favSet(); s.has(ref)?s.delete(ref):s.add(ref); favSave(s); }
-function majCompteurSauv(){ const n = favSet().size; $('n-sauv').textContent = n ? ' ('+n+')' : ''; }
+/* favoris (compte C-Direct — table public.favoris: pharmacien_id/contrat_id,
+   RLS déjà en place). favRefIndex fait le pont numero_reference -> id une
+   fois `contrats` chargé, pour que les appels existants (qui passent la
+   référence) n'aient pas à changer. */
+let favIds = new Set();
+const favRefIndex = new Map();
+async function chargerFavoris(){
+  try{
+    const { data } = await sb.from('favoris').select('contrat_id').eq('pharmacien_id', profil.id);
+    favIds = new Set((data||[]).map(f=>f.contrat_id));
+  }catch(e){ favIds = new Set(); }
+}
+function estFavori(ref){ const id = favRefIndex.get(ref); return id ? favIds.has(id) : false; }
+async function toggleFavori(ref){
+  const id = favRefIndex.get(ref);
+  if(!id) return;
+  if(favIds.has(id)){
+    favIds.delete(id);
+    const { error } = await sb.from('favoris').delete().eq('pharmacien_id', profil.id).eq('contrat_id', id);
+    if(error) favIds.add(id);
+  } else {
+    favIds.add(id);
+    const { error } = await sb.from('favoris').insert({ pharmacien_id: profil.id, contrat_id: id });
+    if(error && error.code !== '23505') favIds.delete(id);
+  }
+  majCompteurSauv();
+}
+function majCompteurSauv(){ const n = favIds.size; $('n-sauv').textContent = n ? ' ('+n+')' : ''; }
 let favOnly = false;
 
 /* dates où le pharmacien s'est marqué indisponible (voir disponibilites.html) —
@@ -415,6 +456,7 @@ function listeFiltree(){
   const tarifSel = $('f-tarif').value;
   const lg = $('f-logiciel').value;
   const dmax = parseFloat($('f-dist').value);
+  const modeDate = $('f-mode-date').value;
   const tri = $('f-tri').value;
   let list = contrats.filter(k=>{
     if(favOnly && !estFavori(k.numero_reference)) return false;
@@ -422,11 +464,18 @@ function listeFiltree(){
     if(tarifSel && String(k.tarif_horaire) !== tarifSel) return false;
     if(lg && k.logiciel !== lg) return false;
     if(!isNaN(dmax)){ const km = k._distanceKm; if(km==null || km>dmax) return false; }
+    if(modeDate==='jour'){ const j=$('f-jour').value; if(j && String(k.date_contrat).slice(0,10)!==j) return false; }
+    if(modeDate==='mois'){ const m=$('f-mois').value; if(m && String(k.date_contrat).slice(0,7)!==m) return false; }
+    if(modeDate==='jsem'){ const js=$('f-jsem').value; if(js!=='' && jourSemaineFiltre(k.date_contrat)!==parseInt(js)) return false; }
     return true;
   });
   list.sort((a,b)=>{
     if(tri==='compat') return ((b._match&&b._match.pct)||0)-((a._match&&a._match.pct)||0);
     if(tri==='tarif') return parseFloat(b.tarif_horaire)-parseFloat(a.tarif_horaire);
+    if(tri==='revenu'){
+      const ea=(a._est&&a._est.total!=null)?a._est.total:-Infinity;
+      const eb=(b._est&&b._est.total!=null)?b._est.total:-Infinity; return eb-ea;
+    }
     if(tri==='date_contrat') return (a.date_contrat>b.date_contrat?1:(a.date_contrat<b.date_contrat?-1:0));
     if(tri==='distance'){
       const da=(a._distanceKm!=null)?a._distanceKm:Infinity;
@@ -685,6 +734,7 @@ function dessinerListeCal(list){
     const { data: di } = await sb.rpc('mes_dates_indisponibles');
     (di||[]).forEach(d=> indisponibles.add(String(d).slice(0,10)));
   }catch(e){}
+  await chargerFavoris();
   majCompteurSauv();
 
   const { data, error } = await sb.rpc('get_contrats_ouverts');
@@ -692,7 +742,7 @@ function dessinerListeCal(list){
   if(error){ $('err').textContent = 'Erreur : ' + error.message; $('err').style.display='block'; return; }
 
   contrats = data || [];
-  contrats.forEach(k=>{ k._distanceKm = calcDistance(k); k._est = calcEstim(k); k._match = calcMatch(k); });
+  contrats.forEach(k=>{ k._distanceKm = calcDistance(k); k._est = calcEstim(k); k._match = calcMatch(k); favRefIndex.set(k.numero_reference, k.id); });
   remplirFiltresDynamiques();
 
   /* Le bandeau de filtres (dont ♥ Favoris) et ses écouteurs doivent rester
@@ -705,9 +755,21 @@ function dessinerListeCal(list){
   $('filtres').style.display = 'flex';
   ['f-ville','f-tarif','f-logiciel'].forEach(id=> $(id).addEventListener('change', dessiner));
   $('f-dist').addEventListener('input', dessiner);
+  $('f-mode-date').addEventListener('change', ()=>{
+    const m = $('f-mode-date').value;
+    $('f-jour').style.display = m==='jour' ? '' : 'none';
+    $('f-mois').style.display = m==='mois' ? '' : 'none';
+    $('f-jsem').style.display = m==='jsem' ? '' : 'none';
+    dessiner();
+  });
+  $('f-jour').addEventListener('input', dessiner);
+  $('f-mois').addEventListener('input', dessiner);
+  $('f-jsem').addEventListener('change', dessiner);
   $('f-tri').addEventListener('change', dessiner);
   $('f-reset').onclick = ()=>{
     ['f-ville','f-tarif','f-logiciel','f-dist'].forEach(id=> $(id).value='');
+    $('f-mode-date').value='tous'; $('f-jour').value=''; $('f-mois').value=''; $('f-jsem').value='';
+    $('f-jour').style.display='none'; $('f-mois').style.display='none'; $('f-jsem').style.display='none';
     favOnly = false; $('v-tous').classList.add('actif'); $('v-sauvegardes').classList.remove('actif');
     $('f-tri').value='compat'; dessiner();
   };

@@ -290,18 +290,29 @@ function msg(texte, type){
   const b = badges[k.statut] || ['autre', k.statut];
   $('badge').className = 'badge ' + b[0]; $('badge').textContent = b[1];
 
-  /* ---- Sauvegarder (♥) — même mécanisme localStorage que contrats.html ---- */
-  function favSet(){ try{ return new Set(JSON.parse(localStorage.getItem('cd-favoris')||'[]')); }catch(e){ return new Set(); } }
-  function favSave(s){ try{ localStorage.setItem('cd-favoris', JSON.stringify([...s])); }catch(e){} }
-  function estFavori(ref){ return favSet().has(ref); }
-  function toggleFavori(ref){ const s=favSet(); s.has(ref)?s.delete(ref):s.add(ref); favSave(s); }
+  /* ---- Sauvegarder (♥) — compte C-Direct (table public.favoris) ---- */
   if(profil.role === 'pharmacien'){
     const coeur = $('btn-coeur');
     coeur.style.display = '';
-    const majTitreCoeur = ()=>{ coeur.title = estFavori(k.numero_reference) ? 'Retirer des sauvegardés' : 'Sauvegarder'; };
-    coeur.classList.toggle('on', estFavori(k.numero_reference));
-    majTitreCoeur();
-    coeur.onclick = ()=>{ toggleFavori(k.numero_reference); coeur.classList.toggle('on', estFavori(k.numero_reference)); majTitreCoeur(); };
+    let dejaSauv = false;
+    try{
+      const { data: favRow } = await sb.from('favoris').select('contrat_id').eq('pharmacien_id', profil.id).eq('contrat_id', k.id).maybeSingle();
+      dejaSauv = !!favRow;
+    }catch(e){}
+    const majCoeur = ()=>{ coeur.classList.toggle('on', dejaSauv); coeur.title = dejaSauv ? 'Retirer des sauvegardés' : 'Sauvegarder'; };
+    majCoeur();
+    coeur.onclick = async ()=>{
+      coeur.disabled = true;
+      if(dejaSauv){
+        const { error } = await sb.from('favoris').delete().eq('pharmacien_id', profil.id).eq('contrat_id', k.id);
+        if(!error) dejaSauv = false;
+      } else {
+        const { error } = await sb.from('favoris').insert({ pharmacien_id: profil.id, contrat_id: k.id });
+        if(!error || error.code === '23505') dejaSauv = true;
+      }
+      coeur.disabled = false;
+      majCoeur();
+    };
   }
 
   $('sous').textContent = (k.ville || 'Ville non précisée') + ' · publié le ' +

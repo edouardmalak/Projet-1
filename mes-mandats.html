@@ -266,8 +266,15 @@ const URL_PAIEMENTS = 'https://c-direct-payments.edouardmalak.workers.dev';
 let profil = null;
 let toutesMandats = [], mandatsEnAttente = [], toutesFactures = [], toutesRevenusExt = [];
 let contratsOuverts = [];
-/* signets « Sauvegardé » — même clé locale que sur Contrats disponibles */
-function favSet(){ try{ return new Set(JSON.parse(localStorage.getItem('cd-favoris')||'[]')); }catch(e){ return new Set(); } }
+/* signets « Sauvegardé » — compte C-Direct (table public.favoris), même
+   source que Contrats disponibles */
+let favIds = new Set();
+async function chargerFavoris(){
+  try{
+    const { data } = await sb.from('favoris').select('contrat_id').eq('pharmacien_id', profil.id);
+    favIds = new Set((data||[]).map(f=>f.contrat_id));
+  }catch(e){ favIds = new Set(); }
+}
 let ongletMandat = 'confirme';
 const auj = new Date();
 let calAnnee = auj.getFullYear(), calMois = auj.getMonth(); /* 0-11 */
@@ -281,6 +288,7 @@ function msg(id, texte, ok){
 (async function(){
   profil = await cdExigerConnexion(['pharmacien']);
   cdEnteteConnecte();
+  await chargerFavoris();
   $('periode-filtre').addEventListener('change', appliquerPeriode);
   $('cal-prev').onclick = ()=>{ calMois--; if(calMois<0){calMois=11; calAnnee--;} rendreCalendrier(); };
   $('cal-next').onclick = ()=>{ calMois++; if(calMois>11){calMois=0; calAnnee++;} rendreCalendrier(); };
@@ -321,11 +329,10 @@ function rendreMandats(){
 
   /* onglets Disponible / Sauvegardé — contrats ouverts du réseau (mêmes
      données que la page Contrats disponibles) ; Sauvegardé = ceux marqués
-     du signet là-bas (clé locale cd-favoris). */
+     du signet là-bas (table public.favoris, compte C-Direct). */
   if(ongletMandat === 'disponible' || ongletMandat === 'sauvegarde'){
-    const favs = favSet();
     const liste = ongletMandat === 'sauvegarde'
-      ? contratsOuverts.filter(k => favs.has(k.numero_reference))
+      ? contratsOuverts.filter(k => favIds.has(k.id))
       : contratsOuverts;
     $('n-mandats').textContent = liste.length + ' contrat' + (liste.length>1?'s':'') +
       (ongletMandat === 'sauvegarde' ? ' sauvegardé' + (liste.length>1?'s':'') : ' disponible' + (liste.length>1?'s':''));
