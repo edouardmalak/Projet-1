@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-Direct — Pharmacies préférées</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3.5" fill="%230B6E4F"/><g fill="none" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.2v8.4M5.4 12.4h5.2M3.6 4.8h8.8"/><path d="M3.6 4.8 2.3 7.6a1.45 1.45 0 0 0 2.7 0Z"/><path d="M12.4 4.8l-1.35 2.8a1.45 1.45 0 0 0 2.7 0Z"/></g></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#FAFBF9;--panneau:#FFFFFF;--panneau2:#F1F6F2;--ligne:#D5E3DB;--ligne2:#C3D6CB;--vert:#0B6E4F;--vert-vif:#0E8A62;--texte:#1B2622;--sourd:#5A6B63;--jaune:#C97B12;--rouge:#C0392B}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;min-height:100vh}
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1400px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:10px;min-width:0}
+.wrap{max-width:720px;margin:0 auto;padding:36px 18px 70px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
+#onglets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+#onglets button{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;border-radius:99px;border:1px solid var(--ligne2);background:var(--panneau);color:var(--sourd);cursor:pointer}
+#onglets button.actif{background:var(--vert);border-color:var(--vert);color:#fff}
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:8px;margin-bottom:18px}
+.rangee{display:flex;align-items:center;gap:12px;padding:14px 12px;border-bottom:1px solid var(--ligne)}
+.rangee:last-child{border-bottom:none}
+.nom{font-family:'Inter',sans-serif;font-weight:700;font-size:14.5px;color:var(--texte)}
+.ville{color:var(--sourd);font-size:12.5px}
+.note{color:var(--jaune);font-size:12.5px;white-space:nowrap}
+.badge-mutuel{display:inline-block;background:rgba(18,169,110,.12);color:var(--vert-vif);border-radius:99px;padding:2px 9px;font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;margin-left:6px}
+.actions{margin-left:auto;display:flex;gap:6px;flex:none;flex-wrap:wrap;justify-content:flex-end}
+.actions button{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.04em;padding:7px 11px;border-radius:5px;border:1px solid var(--ligne2);background:var(--panneau2);color:var(--sourd);cursor:pointer;white-space:nowrap}
+.actions button:hover{border-color:var(--vert-vif);color:var(--vert-vif)}
+.actions button.coeur.actif{background:rgba(229,72,77,.08);border-color:rgba(229,72,77,.4);color:var(--rouge)}
+.actions button.danger{color:var(--rouge)}
+.actions button.danger:hover{border-color:var(--rouge)}
+.vide{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-align:center;padding:30px 10px}
+.explic{color:var(--sourd);font-size:13px;line-height:1.6;margin-bottom:16px}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/design.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html">
+      <span class="croix"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.6v9.6M4.9 13.4h6.2M3 4.4h10"/><path d="M3 4.4 1.5 7.7a1.7 1.7 0 0 0 3.1 0Z"/><path d="M13 4.4l-1.55 3.3a1.7 1.7 0 0 0 3.1 0Z"/></svg></span>
+      C-DIRECT
+    </a>
+    <div class="droite"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1 data-fr="Pharmacies préférées" data-en="Favorite pharmacies">Pharmacies préférées</h1>
+  <p class="sous" data-fr="Gérez vos pharmacies préférées, masquées et bloquées" data-en="Manage your favorite, hidden and blocked pharmacies">Gérez vos pharmacies préférées, masquées et bloquées</p>
+
+  <div id="onglets" role="tablist">
+    <button type="button" data-onglet="preferees" class="actif" data-fr="Préférées" data-en="Favorites">Préférées</button>
+    <button type="button" data-onglet="ajouter" data-fr="Ajouter" data-en="Add">Ajouter</button>
+    <button type="button" data-onglet="gerees" data-fr="Masquées / bloquées" data-en="Hidden / blocked">Masquées / bloquées</button>
+  </div>
+
+  <div data-onglet="preferees">
+    <p class="explic" data-fr="Les pharmacies préférées sont mises en avant et vous notifient de leurs nouveaux contrats. Si une pharmacie vous a aussi mis en confiance, vous voyez ses contrats en accès prioritaire." data-en="Favorite pharmacies are surfaced first and notify you about new contracts. If a pharmacy has also trusted you back, you get priority access to their contracts.">Les pharmacies préférées sont mises en avant. Si une pharmacie vous a aussi mis en confiance, le badge « mutuellement favoris » apparaît et vous donne accès prioritaire à ses contrats.</p>
+    <div class="carte"><div id="liste-preferees"><div class="vide">Chargement…</div></div></div>
+  </div>
+
+  <div data-onglet="ajouter" style="display:none">
+    <p class="explic" data-fr="Pharmacies auxquelles vous avez déjà soumis une candidature — mettez-en une en préférée d'un tap." data-en="Pharmacies you've already applied to — favorite one with a tap.">Pharmacies auxquelles vous avez déjà soumis une candidature — mettez-en une en préférée d'un tap.</p>
+    <div class="carte"><div id="liste-ajouter"><div class="vide">Chargement…</div></div></div>
+  </div>
+
+  <div data-onglet="gerees" style="display:none">
+    <p class="explic" data-fr="Masquer retire les contrats de cette pharmacie de votre tableau (réversible en un tap). Bloquer coupe aussi la messagerie dans les deux sens et cache votre disponibilité à cette pharmacie — elle n'en est jamais avertie." data-en="Muting removes that pharmacy's contracts from your board (one tap to reverse). Blocking also cuts messaging both ways and hides your availability from that pharmacy — it is never notified.">Masquer retire les contrats de cette pharmacie de votre tableau (réversible en un tap). Bloquer coupe aussi la messagerie dans les deux sens et cache votre disponibilité à cette pharmacie — elle n'en est jamais avertie.</p>
+    <div class="carte"><div id="liste-gerees"><div class="vide">Chargement…</div></div></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js?v=20260723b"></script>
+<script src="/auth.js?v=20260808a"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+let profil = null;
+
+function afficherOnglet(nom){
+  document.querySelectorAll('div[data-onglet]').forEach(p=>{ p.style.display = (p.dataset.onglet===nom) ? '' : 'none'; });
+  document.querySelectorAll('#onglets button').forEach(b=>{ b.classList.toggle('actif', b.dataset.onglet===nom); });
+}
+document.querySelectorAll('#onglets button').forEach(b=> b.addEventListener('click', ()=>afficherOnglet(b.dataset.onglet)));
+
+function noteTxt(m, n){ return (n > 0) ? ('★ '+Number(m).toFixed(1)+' ('+n+')') : ''; }
+
+async function definir(pharmacieId, etat){
+  const { error } = await sb.rpc('definir_relation_locum', { p_pharmacie: pharmacieId, p_etat: etat });
+  if(error){ alert(cdT('Erreur : ','Error: ') + error.message); return false; }
+  return true;
+}
+
+async function chargerPreferees(){
+  const { data, error } = await sb.rpc('lister_relations_locum');
+  const zone = $('liste-preferees');
+  if(error){ zone.innerHTML = '<div class="vide">'+esc(error.message)+'</div>'; return; }
+  const preferees = (data||[]).filter(r=>r.state==='favorite');
+  if(!preferees.length){ zone.innerHTML = '<div class="vide" data-fr="Aucune pharmacie préférée pour l’instant." data-en="No favorite pharmacies yet.">Aucune pharmacie préférée pour l’instant.</div>'; return; }
+  zone.innerHTML = '';
+  for(const r of preferees){
+    const mutuel = await sb.rpc('mutuellement_favori', { p_pharmacien: profil.id, p_pharmacie: r.pharmacie_id }).then(x=>x.data).catch(()=>false);
+    const row = document.createElement('div'); row.className = 'rangee';
+    row.innerHTML = '<div><div class="nom">'+esc(r.nom_pharmacie)+(mutuel ? '<span class="badge-mutuel" data-fr="Mutuellement favoris" data-en="Mutual favorite">Mutuellement favoris</span>' : '')+'</div>'+
+      '<div class="ville">'+esc(r.ville||'')+'</div></div>'+
+      '<span class="note">'+noteTxt(r.note_moyenne, r.note_nombre)+'</span>'+
+      '<div class="actions">'+
+        '<button data-action="clear" data-fr="Retirer" data-en="Remove">Retirer</button>'+
+        '<button data-action="muted" data-fr="Masquer" data-en="Mute">Masquer</button>'+
+        '<button data-action="blocked" class="danger" data-fr="Bloquer" data-en="Block">Bloquer</button>'+
+      '</div>';
+    row.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const etat = btn.dataset.action === 'clear' ? null : btn.dataset.action;
+        if(etat === 'blocked' && !confirm(cdT('Bloquer cette pharmacie ? La messagerie sera coupée dans les deux sens.','Block this pharmacy? Messaging will be cut off both ways.'))) return;
+        if(await definir(r.pharmacie_id, etat)){ chargerPreferees(); chargerGerees(); }
+      });
+    });
+    zone.appendChild(row);
+  }
+}
+
+async function chargerAjouter(){
+  const { data, error } = await sb.rpc('lister_pharmacies_candidatees');
+  const zone = $('liste-ajouter');
+  if(error){
+    zone.innerHTML = '<div class="vide">' + (/does not exist|schema cache/i.test(error.message||'') ?
+      cdT('Cette liste n’est pas encore active — revenez bientôt.','This list isn’t active yet — check back soon.') : esc(error.message)) + '</div>';
+    return;
+  }
+  const dispo = (data||[]).filter(r=>!r.deja_favori);
+  if(!dispo.length){ zone.innerHTML = '<div class="vide" data-fr="Rien à ajouter pour l’instant — cette liste se construit à partir de vos candidatures." data-en="Nothing to add yet — this list builds from your applications.">Rien à ajouter pour l’instant — cette liste se construit à partir de vos candidatures.</div>'; return; }
+  zone.innerHTML = '';
+  dispo.forEach(r=>{
+    const row = document.createElement('div'); row.className = 'rangee';
+    row.innerHTML = '<div><div class="nom">'+esc(r.nom_pharmacie)+'</div><div class="ville">'+esc(r.ville||'')+'</div></div>'+
+      '<span class="note">'+noteTxt(r.note_moyenne, r.note_nombre)+'</span>'+
+      '<div class="actions"><button data-action="favorite" data-fr="♡ Préférer" data-en="♡ Favorite">♡ Préférer</button></div>';
+    row.querySelector('button').addEventListener('click', async (e)=>{
+      if(await definir(r.pharmacie_id, 'favorite')){ e.target.textContent = '♥ Ajoutée'; e.target.disabled = true; chargerPreferees(); }
+    });
+    zone.appendChild(row);
+  });
+}
+
+async function chargerGerees(){
+  const { data, error } = await sb.rpc('lister_relations_locum');
+  const zone = $('liste-gerees');
+  if(error){ zone.innerHTML = '<div class="vide">'+esc(error.message)+'</div>'; return; }
+  const gerees = (data||[]).filter(r=>r.state==='muted' || r.state==='blocked');
+  if(!gerees.length){ zone.innerHTML = '<div class="vide" data-fr="Aucune pharmacie masquée ou bloquée." data-en="No hidden or blocked pharmacies.">Aucune pharmacie masquée ou bloquée.</div>'; return; }
+  zone.innerHTML = '';
+  gerees.forEach(r=>{
+    const row = document.createElement('div'); row.className = 'rangee';
+    const libelle = r.state === 'muted' ? cdT('Masquée','Muted') : cdT('Bloquée','Blocked');
+    row.innerHTML = '<div><div class="nom">'+esc(r.nom_pharmacie)+'</div><div class="ville">'+esc(libelle)+' · '+esc(r.ville||'')+'</div></div>'+
+      '<div class="actions"><button data-fr="Réactiver" data-en="Restore">Réactiver</button></div>';
+    row.querySelector('button').addEventListener('click', async ()=>{
+      if(await definir(r.pharmacie_id, null)){ chargerGerees(); chargerAjouter(); }
+    });
+    zone.appendChild(row);
+  });
+}
+
+(async function(){
+  profil = await cdExigerConnexion(['pharmacien']);
+  cdEnteteConnecte();
+  chargerPreferees();
+  chargerAjouter();
+  chargerGerees();
+})();
+</script>
+</body>
+</html>

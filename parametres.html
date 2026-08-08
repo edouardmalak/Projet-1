@@ -97,6 +97,25 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
       <div class="msg" id="msg-matching"></div>
     </div>
 
+    <div class="carte" id="carte-confiance-pharmacie" style="display:none">
+      <div class="sec" data-fr="Bassin de confiance" data-en="Trusted pool">Bassin de confiance</div>
+      <label class="consent">
+        <input type="checkbox" id="confirmation_auto_favoris">
+        <span data-fr="Confirmer automatiquement (Instant Booking) les candidatures au tarif affiché de mes pharmaciens de confiance — désactivé par défaut." data-en="Automatically confirm (Instant Booking) applications at the listed rate from my trusted pharmacists — off by default.">Confirmer automatiquement (Instant Booking) les candidatures au tarif affiché de mes pharmaciens de confiance — désactivé par défaut.</span>
+      </label>
+      <label class="consent">
+        <input type="checkbox" id="acces_prioritaire_par_defaut">
+        <span data-fr="Offrir d'abord à mes pharmaciens de confiance par défaut sur mes nouveaux contrats — vous pourrez décocher au cas par cas en publiant." data-en="Offer new contracts to my trusted pharmacists first by default — you can uncheck this case by case when posting.">Offrir d'abord à mes pharmaciens de confiance par défaut sur mes nouveaux contrats — vous pourrez décocher au cas par cas en publiant.</span>
+      </label>
+      <button class="btn" id="btn-save-confiance" type="button" data-fr="Enregistrer" data-en="Save">Enregistrer</button>
+      <div class="msg" id="msg-confiance"></div>
+    </div>
+
+    <div class="carte" id="carte-lien-relations" style="display:none">
+      <a class="lien-liste" href="/pharmacies-preferees.html" id="lien-relations-locum" style="display:none"><span data-fr="Pharmacies préférées / masquées / bloquées" data-en="Favorite / hidden / blocked pharmacies">Pharmacies préférées / masquées / bloquées</span><span>→</span></a>
+      <a class="lien-liste" href="/locums-confiance.html" id="lien-relations-pharmacie" style="display:none"><span data-fr="Locums de confiance / masqués / bloqués" data-en="Trusted / hidden / blocked locums">Locums de confiance / masqués / bloqués</span><span>→</span></a>
+    </div>
+
     <div class="carte">
       <div class="sec" data-fr="Mot de passe" data-en="Password">Mot de passe</div>
       <div class="champ"><label data-fr="Nouveau mot de passe" data-en="New password">Nouveau mot de passe</label><input id="mdp1" type="password" autocomplete="new-password"></div>
@@ -239,6 +258,19 @@ if($('btn-save-matching')) $('btn-save-matching').onclick = async ()=>{
   if(error){ msg('msg-matching', cdT('Erreur : ','Error: ') + error.message, false); return; }
   Object.assign(profil, patch);
   msg('msg-matching', cdT('Préférences enregistrées.','Preferences saved.'), true);
+};
+
+if($('btn-save-confiance')) $('btn-save-confiance').onclick = async ()=>{
+  $('btn-save-confiance').disabled = true;
+  const patch = {
+    confirmation_auto_favoris: $('confirmation_auto_favoris').checked,
+    acces_prioritaire_par_defaut: $('acces_prioritaire_par_defaut').checked
+  };
+  const { error } = await sb.from('profiles').update(patch).eq('id', profil.id);
+  $('btn-save-confiance').disabled = false;
+  if(error){ msg('msg-confiance', cdT('Erreur : ','Error: ') + error.message, false); return; }
+  Object.assign(profil, patch);
+  msg('msg-confiance', cdT('Préférences enregistrées.','Preferences saved.'), true);
 };
 
 $('btn-save-mdp').onclick = async ()=>{
@@ -411,6 +443,15 @@ $('btn-push-off').onclick = async ()=>{
     $('rayon_deplacement_km').value = profil.rayon_deplacement_km ?? '';
     $('ligne-logiciel-connu').style.display = '';
     $('bloc-distance').style.display = '';
+    $('carte-lien-relations').style.display = '';
+    $('lien-relations-locum').style.display = '';
+  }
+  if(profil.role === 'pharmacie'){
+    $('carte-confiance-pharmacie').style.display = '';
+    $('confirmation_auto_favoris').checked = !!profil.confirmation_auto_favoris;
+    $('acces_prioritaire_par_defaut').checked = !!profil.acces_prioritaire_par_defaut;
+    $('carte-lien-relations').style.display = '';
+    $('lien-relations-pharmacie').style.display = '';
   }
   $('notif_push_actif').checked = profil.notif_push_actif !== false;
   $('notif_seulement_logiciel_connu').checked = !!profil.notif_seulement_logiciel_connu;
