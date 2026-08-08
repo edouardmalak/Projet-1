@@ -344,6 +344,54 @@ window.cdMenuRole = function(role){
   document.querySelectorAll('.retour, a.retour, #lien-retour').forEach(el=>{ el.style.display = 'none'; });
 };
 
+/* ---- navigation arrière globale ----
+   Remplace les anciennes flèches « ← Retour » posées page par page (déjà
+   masquées par cdMenuRole ci-dessus) par UNE règle unique dans l'en-tête
+   partagé : un chevron apparaît en haut à gauche sur toute page qui n'est
+   PAS une « racine » — une destination directe du menu principal ou du
+   menu de compte (Profil, Évaluations). Les racines sont calculées à partir
+   de CD_MENUS lui-même : si un lien y est ajouté/retiré, la liste des
+   racines suit automatiquement, pas besoin de la tenir à jour à la main.
+   Site multi-pages classique (pas de routeur SPA) : le bouton n'utilise
+   JAMAIS le bouton retour du navigateur — il appelle history.back()
+   seulement quand le referrer confirme qu'on vient bien d'une page du même
+   site (sinon on quitterait l'appli sans le vouloir) ; sinon il replie
+   vers l'accueil du rôle, jamais une page blanche. */
+function cdRacines(){
+  const deMenu = Object.values(CD_MENUS).flat().flatMap(entree=>
+    Array.isArray(entree) ? [entree[0]] : entree.items.map(i=>i[0])
+  );
+  const deCompte = ['/profil.html', '/evaluations.html'];
+  return [...deMenu, ...deCompte].map(h=> h.replace(/#.*$/,'').replace(/\.html$/,''));
+}
+function cdEstRacine(chemin){
+  const ici = (chemin||'/').replace(/\.html$/,'').replace(/\/+$/,'') || '/';
+  return cdRacines().some(r => r === ici);
+}
+window.cdBoutonRetour = function(role){
+  if(document.getElementById('cd-retour')) return;               // idempotent
+  if(cdEstRacine(location.pathname)) return;                      // racine : rien à afficher
+
+  const bouton = document.createElement('button');
+  bouton.id = 'cd-retour';
+  bouton.type = 'button';
+  bouton.setAttribute('aria-label', cdT('Retour', 'Back'));
+  bouton.textContent = '←';
+  bouton.style.cssText = 'background:none;border:none;cursor:pointer;font-size:19px;line-height:1;'+
+    'color:var(--sourd,#5A6B63);padding:6px 10px 6px 2px;margin-right:2px;flex:none';
+  bouton.addEventListener('mouseenter', ()=> bouton.style.color = 'var(--vert-vif,#0f8a5f)');
+  bouton.addEventListener('mouseleave', ()=> bouton.style.color = 'var(--sourd,#5A6B63)');
+  bouton.addEventListener('click', ()=>{
+    let refMemeOrigine = false;
+    try{ refMemeOrigine = !!document.referrer && new URL(document.referrer).origin === location.origin; }catch(e){}
+    if(refMemeOrigine && window.history.length > 1) window.history.back();
+    else location.href = cdAccueilPourRole(role);
+  });
+
+  const marque = document.querySelector('.topbar .brand');
+  if(marque && marque.parentElement) marque.parentElement.insertBefore(bouton, marque);
+};
+
 /* ---- en-tête connecté : injecte « NOM · ★ note · DÉCONNEXION » dans la topbar ----
    Le nom est celui du pharmacien(ne) OU de la pharmacie selon le rôle
    (nom_pharmacie, pas prénom, côté pharmacie). La réputation (étoiles +
@@ -468,6 +516,7 @@ window.cdEnteteConnecte = async function(){
     }
   }
   if(p && p.role) cdMenuRole(p.role);
+  if(p && p.role) cdBoutonRetour(p.role);
   if(p && p.role) cdBadgeMessagesNonLus(p.role);
   return p;
 };
