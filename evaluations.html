@@ -88,6 +88,7 @@ let profil = null;
 function etoilesTxt(n){ return '★★★★★'.slice(0,n) + '☆☆☆☆☆'.slice(0,5-n); }
 function esc(s){ return String(s||'').replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
 function refDepuisUrl(){ const q = new URLSearchParams(location.search).get('ref'); return q ? q.toUpperCase() : null; }
+function refFiabiliteDepuisUrl(){ const q = new URLSearchParams(location.search).get('fiabilite'); return q ? q.toUpperCase() : null; }
 
 (async function(){
   profil = await cdExigerConnexion(['pharmacien','pharmacie']);
@@ -96,7 +97,10 @@ function refDepuisUrl(){ const q = new URLSearchParams(location.search).get('ref
     ? '<a class="nav" href="/espace-pharmacie.html">Espace</a>'
     : '<a class="nav" href="/contrats.html">Contrats</a>');
   const ref = refDepuisUrl();
-  if(ref){ ouvrirFormulaire(ref); } else { tableauBord(); }
+  const refFiab = refFiabiliteDepuisUrl();
+  if(refFiab){ ouvrirFormulaireFiabilite(refFiab); }
+  else if(ref){ ouvrirFormulaire(ref); }
+  else { tableauBord(); }
 })();
 
 /* ---------------- TABLEAU DE BORD ÉVALUATIONS ---------------- */
@@ -105,7 +109,10 @@ async function tableauBord(){
   wrap.innerHTML = '<h1>Évaluations</h1><p class="sous">Vos avis améliorent les jumelages. Confidentiels jusqu\'à l\'envoi des deux côtés.</p>'+
     '<div id="resume"></div>'+
     '<h2>À évaluer</h2><div id="afaire"><div class="vide">Chargement…</div></div>'+
-    '<h2>Notes reçues</h2><div id="recues"><div class="vide">Chargement…</div></div>';
+    '<h2>Notes reçues</h2><div id="recues"><div class="vide">Chargement…</div></div>'+
+    (profil.role==='pharmacien'
+      ? '<h2>Fiabilité des annonces — à noter</h2><p class="sous" style="margin:-8px 0 12px">La réalité a-t-elle correspondu à ce qui était annoncé ? Distinct de votre évaluation générale ci-dessus.</p><div id="fiab-afaire"><div class="vide">Chargement…</div></div>'
+      : '<h2>Fiabilité de vos annonces</h2><p class="sous" style="margin:-8px 0 12px">Ce que les pharmaciens rapportent sur l\'exactitude de vos annonces (volume, personnel) — visible dès 3 avis.</p><div id="fiab-resume"><div class="vide">Chargement…</div></div>');
 
   // Résumé de ma note
   try{
@@ -149,10 +156,42 @@ async function tableauBord(){
       (a.commentaire?'<div class="cite">« '+esc(a.commentaire)+' »</div>':'')+
       '<div class="meta">'+esc(a.numero_reference)+' · '+cdDate(a.date_contrat)+'</div></div>').join('');
   }catch(e){ $('recues').innerHTML = '<div class="vide">—</div>'; }
+
+  // Fiabilité de l'annonce (pharmacien : à faire / pharmacie : résumé reçu)
+  if(profil.role==='pharmacien'){
+    try{
+      const { data } = await sb.rpc('get_fiabilite_a_faire');
+      const l = $('fiab-afaire');
+      if(!data || !data.length){ l.innerHTML = '<div class="vide">Rien à noter pour l\'instant.</div>'; }
+      else l.innerHTML = data.map(c =>
+        '<div class="carte"><div class="ligne-item"><div>'+
+        '<span class="r">'+esc(c.numero_reference)+'</span>'+
+        '<div class="m">'+cdDate(c.date_contrat)+' · '+esc(c.pharmacie_nom)+'</div></div>'+
+        '<a class="btn" href="/evaluations.html?fiabilite='+encodeURIComponent(c.numero_reference)+'">📋 Noter la précision</a>'+
+        '</div></div>').join('');
+    }catch(e){ $('fiab-afaire').innerHTML = '<div class="vide">—</div>'; }
+  } else {
+    try{
+      const { data } = await sb.rpc('get_fiabilite_pharmacie', { p_pharmacie_id: profil.id });
+      const n = (data && data[0]) || null;
+      const el = $('fiab-resume');
+      if(n && n.nb_avis){
+        el.innerHTML = '<div class="carte"><div class="resume">'+
+          '<div><div class="big">'+Number(n.note_moyenne).toFixed(2)+' <small>/5</small></div></div>'+
+          '<div class="kpi">Avis<b>'+n.nb_avis+'</b></div>'+
+          (n.taux_volume_conforme!=null ? '<div class="kpi">Volume conforme<b>'+n.taux_volume_conforme+' %</b></div>' : '')+
+          (n.taux_personnel_conforme!=null ? '<div class="kpi">Personnel conforme<b>'+n.taux_personnel_conforme+' %</b></div>' : '')+
+          '</div></div>';
+      } else {
+        el.innerHTML = '<div class="carte"><div class="vide">Pas encore assez d\'avis pour afficher un score (minimum 3).</div></div>';
+      }
+    }catch(e){ $('fiab-resume').innerHTML=''; }
+  }
 }
 
 /* ---------------- FORMULAIRE D'ÉVALUATION ---------------- */
 let noteSel = 0, reviendraitSel = null, contratSel = null;
+let notePrecisionSel = 0, volumeSel = null, personnelSel = null, contratFiabSel = null;
 async function ouvrirFormulaire(ref){
   const wrap = $('wrap');
   wrap.innerHTML = '<div class="vide">Chargement…</div>';
@@ -213,6 +252,77 @@ async function soumettre(){
   });
   if(error){ $('envoyer').disabled=false; msg.className='msg err'; msg.textContent='Erreur : '+error.message; return; }
   msg.className='msg ok'; msg.textContent='Merci ! Votre évaluation a été enregistrée.';
+  setTimeout(()=>location.href='/evaluations.html', 1100);
+}
+
+/* ---------------- FORMULAIRE FIABILITÉ DE L'ANNONCE (pharmacien seul) ---------------- */
+async function ouvrirFormulaireFiabilite(ref){
+  const wrap = $('wrap');
+  wrap.innerHTML = '<div class="vide">Chargement…</div>';
+  if(profil.role !== 'pharmacien'){
+    wrap.innerHTML = '<a class="retour" href="/evaluations.html">← Évaluations</a>'+
+      '<div class="carte"><div class="vide">Seuls les pharmaciens remplaçants notent la précision d\'une annonce.</div></div>';
+    return;
+  }
+  let cible = null;
+  try{
+    const { data } = await sb.rpc('get_fiabilite_a_faire');
+    cible = (data||[]).find(c => c.numero_reference === ref);
+  }catch(e){}
+  if(!cible){
+    wrap.innerHTML = '<a class="retour" href="/evaluations.html">← Évaluations</a>'+
+      '<div class="carte"><div class="vide">Ce contrat est introuvable, pas encore complété, ou vous l\'avez déjà noté.</div></div>';
+    return;
+  }
+  contratFiabSel = cible.contrat_id;
+  wrap.innerHTML =
+    '<a class="retour" href="/evaluations.html">← Toutes les évaluations</a>'+
+    '<h1>Précision de l\'annonce</h1>'+
+    '<p class="sous">'+esc(cible.numero_reference)+' · '+cdDate(cible.date_contrat)+' · '+esc(cible.pharmacie_nom)+'</p>'+
+    '<div class="carte forme">'+
+      '<div class="avis-note">La réalité correspondait-elle à ce qui était annoncé ? (≈ 20 secondes)<br>'+
+      'Distinct de votre évaluation générale — ceci porte uniquement sur l\'exactitude de l\'annonce (volume, personnel).</div>'+
+      '<div class="champ"><div class="lbl">Précision globale de l\'annonce <b>*</b></div>'+
+        '<div class="etoiles" id="etoiles-fiab">'+[1,2,3,4,5].map(i=>'<span data-n="'+i+'">★</span>').join('')+'</div></div>'+
+      '<div class="champ"><div class="lbl">Volume de Rx conforme à l\'annonce ?</div>'+
+        '<div class="ouinon" id="ouinon-volume"><button data-v="oui">Oui</button><button data-v="non">Non</button></div></div>'+
+      '<div class="champ"><div class="lbl">Personnel (ATP / seul(e)) conforme à l\'annonce ?</div>'+
+        '<div class="ouinon" id="ouinon-personnel"><button data-v="oui">Oui</button><button data-v="non">Non</button></div></div>'+
+      '<div class="champ"><div class="lbl">Commentaire (optionnel)</div>'+
+        '<textarea id="comm-fiab" maxlength="1000" placeholder="Ce qui différait de l\'annonce…"></textarea></div>'+
+      '<div class="forme-actions"><button class="btn" id="envoyer-fiab">Soumettre</button>'+
+        '<a class="btn ligne" href="/evaluations.html">Passer pour l\'instant</a></div>'+
+      '<div class="msg" id="msg-fiab"></div>'+
+    '</div>';
+
+  document.querySelectorAll('#etoiles-fiab span').forEach(s=>{
+    s.onclick = ()=>{ notePrecisionSel = +s.dataset.n; peindreEtoilesFiab(); };
+    s.onmouseenter = ()=>peindreEtoilesFiab(+s.dataset.n);
+  });
+  $('etoiles-fiab').onmouseleave = ()=>peindreEtoilesFiab();
+  document.querySelectorAll('#ouinon-volume button').forEach(b=>{
+    b.onclick = ()=>{ volumeSel = b.dataset.v==='oui'; document.querySelectorAll('#ouinon-volume button').forEach(x=>x.classList.toggle('on', x===b)); };
+  });
+  document.querySelectorAll('#ouinon-personnel button').forEach(b=>{
+    b.onclick = ()=>{ personnelSel = b.dataset.v==='oui'; document.querySelectorAll('#ouinon-personnel button').forEach(x=>x.classList.toggle('on', x===b)); };
+  });
+  $('envoyer-fiab').onclick = soumettreFiabilite;
+}
+function peindreEtoilesFiab(survol){
+  const n = survol || notePrecisionSel;
+  document.querySelectorAll('#etoiles-fiab span').forEach(s=> s.classList.toggle('on', +s.dataset.n <= n));
+}
+async function soumettreFiabilite(){
+  const msg = $('msg-fiab');
+  if(!notePrecisionSel){ msg.className='msg err'; msg.textContent='Choisissez une note (1 à 5 étoiles).'; return; }
+  $('envoyer-fiab').disabled = true; msg.className='msg'; msg.textContent='Envoi…';
+  const { error } = await sb.rpc('soumettre_fiabilite', {
+    p_contrat: contratFiabSel, p_note_precision: notePrecisionSel,
+    p_volume_conforme: volumeSel, p_personnel_conforme: personnelSel,
+    p_commentaire: ($('comm-fiab').value || '').trim()
+  });
+  if(error){ $('envoyer-fiab').disabled=false; msg.className='msg err'; msg.textContent='Erreur : '+error.message; return; }
+  msg.className='msg ok'; msg.textContent='Merci ! Votre avis a été enregistré.';
   setTimeout(()=>location.href='/evaluations.html', 1100);
 }
 </script>

@@ -535,6 +535,12 @@ function dessinerTableau(list){
       if(k._match.raison) c.title = k._match.raison;
       refTd.appendChild(c);
     }
+    if(k.fiabilite_note != null){
+      const fb = document.createElement('div');
+      fb.style.cssText = 'margin-top:3px;color:var(--vert-vif);font-size:10.5px;font-family:\'IBM Plex Mono\',monospace';
+      fb.textContent = '📋 ' + Number(k.fiabilite_note).toFixed(1) + '/5 fiabilité';
+      refTd.appendChild(fb);
+    }
     /* cellule statut (sans coeur — déplacé dans sa propre colonne, voir sauvTd) */
     const statutTd = document.createElement('td');
     statutTd.innerHTML = k.deja_postule

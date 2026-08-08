@@ -129,9 +129,11 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
       </div>
     </div>
     <p class="sous" id="sous">—</p>
+    <p class="sous" id="badge-fiabilite" style="display:none;color:var(--vert-vif);font-weight:700">—</p>
     <div id="bloc-parties" style="display:none;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--sourd);line-height:1.8"></div>
     <a id="lien-messagerie" class="btn-clavarder" href="#" style="display:none">💬 Clavarder</a>
     <a id="lien-evaluer" href="#" style="display:none;margin:2px 0 10px 18px;text-decoration:none;color:var(--jaune);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.04em">★ Évaluer l'autre partie →</a>
+    <a id="lien-fiabilite" href="#" style="display:none;margin:2px 0 10px 18px;text-decoration:none;color:var(--jaune);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.04em">📋 Noter la précision de l'annonce →</a>
 
     <div class="grille">
       <div class="cellule"><small>Date</small><b id="date">—</b></div>
@@ -319,6 +321,10 @@ function msg(texte, type){
 
   $('sous').textContent = (k.ville || 'Ville non précisée') + ' · publié le ' +
     new Date(k.created_at).toLocaleDateString('fr-CA');
+  if(k.fiabilite_note != null){
+    $('badge-fiabilite').style.display = '';
+    $('badge-fiabilite').textContent = '📋 Fiabilité de l\'annonce · ' + Number(k.fiabilite_note).toFixed(1) + '/5 (' + k.fiabilite_nb + ' avis)';
+  }
 
   /* ---- Nom + note + favoris des deux parties — révélés une fois le
      contrat confirmé (même règle que la messagerie/l'évaluation) ---- */
@@ -431,6 +437,12 @@ function msg(texte, type){
     const le = $('lien-evaluer');
     le.href = '/evaluations.html?ref=' + encodeURIComponent(k.numero_reference);
     le.style.display = 'inline-block';
+  }
+  /* fiabilité de l'annonce — pharmacien seulement, contrat COMPLÉTÉ (pas juste attribué) */
+  if(k.statut==='complete' && suisPartie && profil.role==='pharmacien'){
+    const lf = $('lien-fiabilite');
+    lf.href = '/evaluations.html?fiabilite=' + encodeURIComponent(k.numero_reference);
+    lf.style.display = 'inline-block';
   }
   if(k.statut === 'attribue' && dateContratPassee && suisPartie){
     $('bloc-completer').style.display = '';
