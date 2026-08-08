@@ -342,6 +342,13 @@ const JOURS_MINI_C = ['L','M','M','J','V','S','D'];
 function isoC(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function dateCourteC(v){ const d=new Date(String(v).slice(0,10)+'T12:00:00'); return String(d.getDate()).padStart(2,'0')+' '+MOIS_C[d.getMonth()].slice(0,3); }
 function jourSemaineFiltre(v){ return new Date(String(v).slice(0,10)+'T12:00:00').getDay(); } // 0=dim..6=sam
+/* résout le volume Rx/jour applicable à CE contrat selon son jour réel (semaine vs weekend) */
+function resoudreRxVolume(k){
+  if(!k.date_contrat) return null;
+  const we = [0,6].includes(jourSemaineFiltre(k.date_contrat));
+  const v = we ? k.rx_jour_weekend : k.rx_jour_semaine;
+  return (v==null) ? null : v;
+}
 
 /* distance domicile → contrat — calculée à part de l'estimation $ (regles_reseau
    peut échouer à charger sans jamais devoir cacher le km, qui doit rester toujours visible) */
@@ -553,13 +560,28 @@ function dessinerTableau(list){
       flag.title = 'Vous vous êtes marqué indisponible ce jour dans Mes disponibilités';
       dateTd.appendChild(flag);
     }
+    /* cellule Logiciel + résumé compact des conditions de travail (volume/ATP/robot) */
+    const logicielTd = document.createElement('td'); logicielTd.className = 'cache-mobile';
+    logicielTd.textContent = k.logiciel || '—';
+    const cond = [];
+    const rxVol = resoudreRxVolume(k);
+    if(rxVol!=null) cond.push('≈'+rxVol+' Rx');
+    if(k.atp_presente) cond.push('ATP');
+    if(k.seul_pharmacien) cond.push('Seul(e)');
+    if(k.has_automation) cond.push('Robot');
+    if(cond.length){
+      const s = document.createElement('div');
+      s.style.cssText = 'font-weight:400;color:var(--sourd);font-size:11px;margin-top:2px';
+      s.textContent = cond.join(' · ');
+      logicielTd.appendChild(s);
+    }
     tr.append(
       sauvTd,
       refTd,
       dateTd,
       txt(cdHeure(k.heure_debut) + ' – ' + cdHeure(k.heure_fin)),
       txt(k.ville || '—', 'cache-mobile'),
-      txt(k.logiciel || '—', 'cache-mobile'),
+      logicielTd,
       tarifTd,
       statutTd
     );

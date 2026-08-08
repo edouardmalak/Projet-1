@@ -188,6 +188,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
       <div class="champ">
         <div class="coches">
           <label><input type="checkbox" id="hebergement_offerte"> Offrir l'hébergement pour ce contrat</label>
+          <label><input type="checkbox" id="lunch_coverage"> Dîner couvert (relève pour la pause)</label>
         </div>
         <div class="indice" id="hebergement-indice" style="margin-top:6px"></div>
       </div>
@@ -327,6 +328,8 @@ function initOngletsEP(){
       seul_pharmacien: profil.seul_pharmacien !== false,
       atp_presente: profil.atp_presente !== false,
       services: profil.services_offerts || [],
+      has_automation: profil.has_automation || false,
+      lunch_coverage: $('lunch_coverage').checked,
       notes: $('notes').value.trim() || null,
       hebergement_offerte: $('hebergement_offerte').checked && !!(profil.hebergement_adresse && profil.hebergement_adresse.trim())
     }).select('numero_reference').single();

@@ -144,6 +144,8 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
       <div class="cellule"><small>Rx / jour (weekend)</small><b id="rx_we">—</b></div>
       <div class="cellule"><small>Seul(e) pharmacien(ne)</small><b id="seul">—</b></div>
       <div class="cellule"><small>ATP présente</small><b id="atp">—</b></div>
+      <div class="cellule"><small>Automatisation</small><b id="auto">—</b></div>
+      <div class="cellule" id="cellule-diner" style="display:none"><small>Dîner couvert</small><b id="diner">—</b></div>
     </div>
 
     <div id="bloc-estim" style="display:none">
@@ -343,6 +345,8 @@ function msg(texte, type){
   $('rx_we').textContent = k.rx_jour_weekend ?? '—';
   $('seul').textContent = k.seul_pharmacien ? 'Oui' : 'Non';
   $('atp').textContent = k.atp_presente ? 'Oui' : 'Non';
+  $('auto').textContent = k.has_automation ? 'Oui (robot)' : 'Non';
+  if(k.lunch_coverage != null){ $('cellule-diner').style.display=''; $('diner').textContent = k.lunch_coverage ? 'Oui' : 'Non'; }
   $('hebergement').textContent = k.hebergement_offerte ? 'Offert par la pharmacie' : 'Non offert';
 
   if(k.services && k.services.length){

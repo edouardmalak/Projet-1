@@ -212,6 +212,7 @@ a.lien{color:var(--vert-vif)}
           <div class="coches">
             <label><input type="checkbox" id="seul_pharmacien"> Seul(e) pharmacien(ne)</label>
             <label><input type="checkbox" id="atp_presente"> ATP présente</label>
+            <label><input type="checkbox" id="has_automation"> Automatisation (robot / auto-dispense)</label>
           </div>
         </div>
         <div class="champ"><label>Services habituellement requis</label>
@@ -782,6 +783,7 @@ function rendrePlateaux(){
     $('rx_jour_weekend').value=profil.rx_jour_weekend??'';
     $('seul_pharmacien').checked = profil.seul_pharmacien !== false;
     $('atp_presente').checked = profil.atp_presente !== false;
+    $('has_automation').checked = !!profil.has_automation;
     (profil.services_offerts||[]).forEach(l=>{
       const c=[...document.querySelectorAll('#coches-services-pharmacie input')].find(i=>i.value===l);
       if(c) c.checked=true;
@@ -873,6 +875,7 @@ function rendrePlateaux(){
       maj.rx_jour_weekend=$('rx_jour_weekend').value||null;
       maj.seul_pharmacien=$('seul_pharmacien').checked;
       maj.atp_presente=$('atp_presente').checked;
+      maj.has_automation=$('has_automation').checked;
       maj.services_offerts=[...document.querySelectorAll('#coches-services-pharmacie input:checked')].map(i=>i.value);
       maj.confirmation_auto_favoris=$('confirmation_auto_favoris').checked;
       maj.horaires_ouverture=lireHoraires();
