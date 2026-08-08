@@ -17,6 +17,8 @@
   Cache-Control: no-cache
 /outils.js
   Cache-Control: no-cache
+/trajet.js
+  Cache-Control: no-cache
 /fsa-qc.js
   Cache-Control: no-cache
 
