@@ -164,10 +164,12 @@ tbody tr:last-child td{border-bottom:none}
       <div class="carte">
         <div class="sec">Mes remplacements<small id="n-mandats"></small></div>
         <div class="onglets" id="onglets-mandats">
+          <button class="onglet" data-onglet="disponible" type="button">Disponible</button>
           <button class="onglet actif" data-onglet="confirme" type="button">Confirmé</button>
           <button class="onglet" data-onglet="demande" type="button">Demandé</button>
           <button class="onglet" data-onglet="complete" type="button">Complété</button>
           <button class="onglet" data-onglet="annule" type="button">Annulé</button>
+          <button class="onglet" data-onglet="sauvegarde" type="button">Sauvegardé</button>
         </div>
         <div class="table-scroll defile">
           <table>
@@ -263,6 +265,9 @@ const CHIPS_G = {
 const URL_PAIEMENTS = 'https://c-direct-payments.edouardmalak.workers.dev';
 let profil = null;
 let toutesMandats = [], mandatsEnAttente = [], toutesFactures = [], toutesRevenusExt = [];
+let contratsOuverts = [];
+/* signets « Sauvegardé » — même clé locale que sur Contrats disponibles */
+function favSet(){ try{ return new Set(JSON.parse(localStorage.getItem('cd-favoris')||'[]')); }catch(e){ return new Set(); } }
 let ongletMandat = 'confirme';
 const auj = new Date();
 let calAnnee = auj.getFullYear(), calMois = auj.getMonth(); /* 0-11 */
@@ -298,19 +303,59 @@ function msg(id, texte, ok){
 const CHIPS_DEMANDE = {propose:'Envoyée', contre_offre:'Contre-offre'};
 
 async function chargerMandats(){
-  const [{ data, error }, { data: attente, error: eAttente }] = await Promise.all([
+  const [{ data, error }, { data: attente, error: eAttente }, { data: ouverts }] = await Promise.all([
     sb.rpc('get_mes_mandats'),
-    sb.rpc('get_mes_candidatures_en_attente')
+    sb.rpc('get_mes_candidatures_en_attente'),
+    sb.rpc('get_contrats_ouverts')
   ]);
   if(error){ $('t-mandats').innerHTML = '<tr><td colspan="7" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
   toutesMandats = data || [];
   mandatsEnAttente = eAttente ? [] : (attente || []);
+  contratsOuverts = ouverts || [];
   rendreMandats();
 }
 
 function rendreMandats(){
   const tb = $('t-mandats');
   const aujourdhui = new Date().toISOString().slice(0,10);
+
+  /* onglets Disponible / Sauvegardé — contrats ouverts du réseau (mêmes
+     données que la page Contrats disponibles) ; Sauvegardé = ceux marqués
+     du signet là-bas (clé locale cd-favoris). */
+  if(ongletMandat === 'disponible' || ongletMandat === 'sauvegarde'){
+    const favs = favSet();
+    const liste = ongletMandat === 'sauvegarde'
+      ? contratsOuverts.filter(k => favs.has(k.numero_reference))
+      : contratsOuverts;
+    $('n-mandats').textContent = liste.length + ' contrat' + (liste.length>1?'s':'') +
+      (ongletMandat === 'sauvegarde' ? ' sauvegardé' + (liste.length>1?'s':'') : ' disponible' + (liste.length>1?'s':''));
+    if(!liste.length){
+      tb.innerHTML = '<tr><td colspan="7" class="vide">' + (ongletMandat === 'sauvegarde'
+        ? 'Aucun contrat sauvegardé — utilisez le signet sur la page Contrats disponibles.'
+        : 'Aucun contrat disponible pour l\'instant.') + '</td></tr>';
+      return;
+    }
+    tb.innerHTML = '';
+    liste.forEach(k=>{
+      const tr = document.createElement('tr');
+      const td = t=>{ const c=document.createElement('td'); c.textContent=t; return c; };
+      const ref = document.createElement('td'); ref.className='ref';
+      ref.innerHTML = '<a href="/c/'+encodeURIComponent(k.numero_reference)+'">'+k.numero_reference+'</a>';
+      const st = document.createElement('td');
+      st.innerHTML = k.deja_postule
+        ? '<span class="chip envoyee">Quart demandé</span>'
+        : '<span class="chip complete">Disponible</span>';
+      const act = document.createElement('td');
+      const f = document.createElement('a');
+      f.className = 'btn-mini ghost'; f.textContent = 'Voir le contrat'; f.style.textDecoration = 'none';
+      f.href = '/c/' + encodeURIComponent(k.numero_reference);
+      act.appendChild(f);
+      tr.append(ref, td(cdDate(k.date_contrat)), td(cdHeure(k.heure_debut)+'–'+cdHeure(k.heure_fin)),
+                td(k.ville||'—'), td(cdArgent(k.tarif_horaire)+'/h'), st, act);
+      tb.appendChild(tr);
+    });
+    return;
+  }
 
   if(ongletMandat === 'demande'){
     $('n-mandats').textContent = mandatsEnAttente.length + ' candidature' + (mandatsEnAttente.length>1?'s':'') + ' en attente';

@@ -56,6 +56,8 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
 .legende span{display:inline-flex;align-items:center;gap:7px}
 .pnt{width:12px;height:12px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:inline-block;border:2px solid #FFFFFF}
 .pnt.vert{background:var(--vert)} .pnt.jaune{background:var(--jaune);border-color:#1a1405}
+.btn-recentrer{background:var(--panneau);border:2px solid rgba(0,0,0,.2);border-radius:4px;padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--vert);cursor:pointer}
+.btn-recentrer:hover{background:var(--panneau2)}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/design.css">
@@ -113,6 +115,11 @@ const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 let profil = null, contrats = [], map = null, couche = null, maCP = null, maPos = null;
 let filtre = { mode:'tous', jour:null, mois:null, jsem:null };
+let dernieresBornes = [];
+function recadrer(){
+  if(dernieresBornes.length) map.fitBounds(dernieresBornes, { padding:[40,40], maxZoom:11 });
+  else map.setView([47.0, -71.5], 6);
+}
 function esc(s){ return String(s||'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
 function jourSemaine(d){ return new Date(String(d).slice(0,10)+'T12:00:00').getDay(); } // 0=dim..6=sam
 
@@ -129,11 +136,31 @@ function passeFiltre(k){
   cdEnteteConnecte();
   try{ const { data } = await sb.rpc('get_contrats_ouverts'); contrats = data || []; }catch(e){}
 
-  map = L.map('carte', { zoomControl:true, scrollWheelZoom:true }).setView([47.0, -71.5], 6);
+  /* clôture : la carte ne peut pas être glissée hors du Québec (elle revient
+     élastiquement à la limite) ni dézoomée au point de perdre les contrats */
+  map = L.map('carte', {
+    zoomControl:true, scrollWheelZoom:true,
+    maxBounds: L.latLngBounds([43.5, -82.5], [63.5, -54.0]),
+    maxBoundsViscosity: 1.0,
+    minZoom: 5
+  }).setView([47.0, -71.5], 6);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution:'© OpenStreetMap · © CARTO', maxZoom:19, subdomains:'abcd'
   }).addTo(map);
   couche = L.layerGroup().addTo(map);
+
+  /* bouton « Recentrer » sur la carte — revient d'un clic sur les contrats */
+  const Recentrer = L.Control.extend({
+    options: { position:'topleft' },
+    onAdd: function(){
+      const b = L.DomUtil.create('button', 'btn-recentrer');
+      b.type = 'button'; b.textContent = 'Recentrer'; b.title = 'Revenir aux contrats';
+      L.DomEvent.on(b, 'click', function(e){ L.DomEvent.stop(e); recadrer(); });
+      L.DomEvent.disableClickPropagation(b);
+      return b;
+    }
+  });
+  map.addControl(new Recentrer());
 
   maCP = profil.code_postal || null;
   maPos = (maCP && window.CD_FSA_QC) ? CD_FSA_QC[cdFsa(maCP)] : null;
@@ -192,6 +219,7 @@ function dessiner(){
     bornes.push(g.pos);
   });
   if(maPos) bornes.push(maPos);
+  dernieresBornes = bornes;
   if(bornes.length){ map.fitBounds(bornes, { padding:[40,40], maxZoom:11 }); }
 
   const nbGeo = visibles.length - hors.length;

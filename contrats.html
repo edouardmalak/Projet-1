@@ -225,8 +225,8 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
       <table id="tableau" style="display:none">
         <thead>
           <tr>
-            <th>Référence</th>
             <th class="cache-mobile">Sauvegarder</th>
+            <th>Référence</th>
             <th>Date</th>
             <th>Heures</th>
             <th class="cache-mobile">Ville</th>
@@ -484,7 +484,7 @@ function dessinerTableau(list){
     statutTd.innerHTML = k.deja_postule
       ? '<span class="badge postule">Quart demandé</span>'
       : '<span class="badge ouvert">Disponible</span>';
-    /* cellule Sauvegarder — colonne dédiée, juste après la référence.
+    /* cellule Sauvegarder — colonne dédiée, juste avant la référence.
        Cachée entièrement pour un quart déjà demandé (rien à sauvegarder). */
     const sauvTd = document.createElement('td'); sauvTd.className = 'cache-mobile';
     if(!k.deja_postule){
@@ -505,8 +505,8 @@ function dessinerTableau(list){
       dateTd.appendChild(flag);
     }
     tr.append(
-      refTd,
       sauvTd,
+      refTd,
       dateTd,
       txt(cdHeure(k.heure_debut) + ' – ' + cdHeure(k.heure_fin)),
       txt(k.ville || '—', 'cache-mobile'),
