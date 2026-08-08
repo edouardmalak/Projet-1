@@ -73,6 +73,14 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
   <h1>Maps des contrats</h1>
   <p class="sous">Contrats ouverts près de vous. Positions approximatives (secteur du code postal).</p>
 
+  <!-- pendant de la bascule Liste/Calendrier/Maps de contrats.html — dossier
+       de refonte 2026-08-08, « Maps devient une bascule », pas une page isolée -->
+  <div class="seg" style="margin-bottom:16px">
+    <button type="button" onclick="location.href='/contrats.html'">Liste</button>
+    <button type="button" onclick="location.href='/contrats.html'">Calendrier</button>
+    <button type="button" class="on" disabled>Maps</button>
+  </div>
+
   <div class="filtres">
     <div class="seg" id="seg">
       <button data-m="tous" class="on">Tous</button>
@@ -108,7 +116,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260808a"></script>
+<script src="/auth.js?v=20260808b"></script>
 <script src="/fsa-qc.js"></script>
 <script>
 const sb = window.sbClient;

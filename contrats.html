@@ -198,6 +198,7 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
   <div class="vues no-print">
     <button id="v-liste" class="actif" type="button">Liste</button>
     <button id="v-calendrier" type="button">Calendrier</button>
+    <button id="v-maps" type="button">Maps</button>
   </div>
   <div class="vues no-print" id="vues-fav" style="margin-left:10px">
     <button id="v-tous" class="actif" type="button">Tous</button>
@@ -320,7 +321,7 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260808a"></script>
+<script src="/auth.js?v=20260808b"></script>
 <script src="/assistant.js?v=20260723b" defer></script>
 <script src="/fsa-qc.js"></script>
 <script src="/trajet.js"></script>
@@ -768,6 +769,10 @@ function dessinerListeCal(list){
   JOURS_C.forEach(j=>{ const d=document.createElement('div'); d.className='jour-tete'; d.textContent=j; jtC.appendChild(d); });
   $('v-liste').onclick      = ()=> basculerVuePrincipale('liste');
   $('v-calendrier').onclick = ()=> basculerVuePrincipale('calendrier');
+  /* Maps n'est pas une 3e vue en place (comme Liste/Calendrier) mais une
+     page distincte (carte.html) qui réutilise la vue carte existante —
+     dossier de refonte 2026-08-08, « Maps devient une bascule ». */
+  $('v-maps').onclick = ()=> location.href = '/carte.html';
   $('vc-mois').onclick  = ()=> basculerVueCal('mois');
   $('vc-annee').onclick = ()=> basculerVueCal('annee');
   $('bc-prev').onclick = ()=>{ curseurCal.setMonth(curseurCal.getMonth()-1); dessinerMoisCal(indexerParJour(listeFiltree())); };
