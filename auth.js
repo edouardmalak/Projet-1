@@ -551,15 +551,20 @@ window.cdEnteteConnecte = async function(){
     let entete = null, items;
     if(p.role === 'pharmacien'){
       /* « Mon profil » porte sa note ★ à même la ligne (dossier de refonte) —
-         pas d'en-tête séparé pour ce rôle */
-      const ligneProfil = document.createElement('a');
-      ligneProfil.href = '/profil.html';
+         pas d'en-tête séparé pour ce rôle. Rangée en <div> (pas <a>) : elle
+         contient à la fois le lien Profil et le lien ★ Évaluations, et un
+         <a> ne peut pas légalement en contenir un autre (HTML invalide,
+         comportement de clic imprévisible selon le navigateur). */
+      const ligneProfil = document.createElement('div');
       ligneProfil.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;'+
-        "padding:9px 10px;font-family:'Inter',sans-serif;font-size:13px;text-decoration:none;border-radius:7px;color:var(--texte,#1B2622)";
+        'padding:1px 1px 1px 1px;border-radius:7px';
       ligneProfil.addEventListener('mouseenter', ()=> ligneProfil.style.background='var(--panneau2,#F1F6F2)');
       ligneProfil.addEventListener('mouseleave', ()=> ligneProfil.style.background='none');
-      const libelleProfil = document.createElement('span');
+      const libelleProfil = document.createElement('a');
+      libelleProfil.href = '/profil.html';
       libelleProfil.textContent = cdT('Mon profil','My profile');
+      libelleProfil.style.cssText = "flex:1;padding:8px 9px;font-family:'Inter',sans-serif;font-size:13px;"+
+        'text-decoration:none;color:var(--texte,#1B2622)';
       ligneProfil.append(libelleProfil, etoiles, favoris);
       items = [
         ligneProfil,
