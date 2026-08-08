@@ -322,6 +322,7 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
 <script src="/auth.js?v=20260806d"></script>
 <script src="/assistant.js?v=20260723b" defer></script>
 <script src="/fsa-qc.js"></script>
+<script src="/trajet.js"></script>
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
@@ -392,6 +393,22 @@ function calcMatch(k){
   }
   score = Math.max(0, Math.min(100, score));
   return { pct:score, tier: score>=80?'fort':score>=55?'moyen':'faible', raison: raisons.join(' · ') };
+}
+
+/* fonction Trajet — risque météo aller-retour (~7 jours), voir /trajet.js
+   + functions/api/meteo.js. Chargée APRÈS le premier rendu (jamais
+   bloquant sur l'affichage initial) ; redessine une fois reçue. Best-
+   effort : une panne météo ne doit jamais casser la liste de contrats. */
+async function chargerTrajet(){
+  try{
+    if(typeof cdMeteoFsa !== 'function' || typeof cdTrajetPourContrat !== 'function') return;
+    const candidats = contrats.filter(k => cdDansFenetreTrajet(k.date_contrat) && k.code_postal && k._distanceKm != null);
+    if(!candidats.length) return;
+    const meteo = await cdMeteoFsa(candidats.map(k => k.code_postal));
+    if(!meteo || !Object.keys(meteo).length) return;
+    candidats.forEach(k => { k._trajet = cdTrajetPourContrat(k, k._distanceKm, meteo); });
+    dessiner();
+  }catch(e){ /* fonctionnalité secondaire — jamais bloquante */ }
 }
 
 /* favoris (compte C-Direct — table public.favoris: pharmacien_id/contrat_id,
@@ -571,6 +588,11 @@ function dessinerTableau(list){
       const flag = document.createElement('div'); flag.className = 'flag-indispo'; flag.textContent = 'Indisponible';
       flag.title = 'Vous vous êtes marqué indisponible ce jour dans Mes disponibilités';
       dateTd.appendChild(flag);
+    }
+    /* fonction Trajet — pastille météo aller-retour (~7 jours), voir /trajet.js */
+    if(k._trajet && typeof cdTrajetPastilleHTML === 'function'){
+      const html = cdTrajetPastilleHTML(k._trajet);
+      if(html){ const env = document.createElement('div'); env.innerHTML = html; dateTd.appendChild(env.firstChild); }
     }
     /* cellule Logiciel + résumé compact des conditions de travail (volume/ATP/robot) */
     const logicielTd = document.createElement('td'); logicielTd.className = 'cache-mobile';
@@ -809,6 +831,7 @@ function dessinerListeCal(list){
     $('f-tri').value='compat'; dessiner();
   };
   dessiner();
+  chargerTrajet();
 })();
 
 /* ================= ONBOARDING (Phase 6.3) — défensif, jamais bloquant ========= */

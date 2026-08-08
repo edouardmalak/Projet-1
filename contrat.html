@@ -156,6 +156,11 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
       <div class="notes" id="estim" style="line-height:1.7"></div>
     </div>
 
+    <div id="bloc-trajet" style="display:none">
+      <div class="sec">Trajet</div>
+      <div id="trajet-contenu"></div>
+    </div>
+
     <div id="bloc-services" style="display:none">
       <div class="sec">Services</div>
       <div class="puces" id="services"></div>
@@ -244,6 +249,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
 <script src="/auth.js?v=20260806d"></script>
 <script src="/outils.js"></script>
 <script src="/fsa-qc.js"></script>
+<script src="/trajet.js"></script>
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
@@ -386,6 +392,19 @@ function msg(texte, type){
       if(est && est.ligne){ $('bloc-estim').style.display = ''; $('estim').textContent = est.ligne; }
     }
   }catch(e){ /* l'estimation est un plus : jamais bloquante */ }
+
+  /* ---- Trajet : risque météo aller-retour (~7 jours), voir /trajet.js +
+     functions/api/meteo.js. Best-effort : jamais bloquant pour la fiche. ---- */
+  try{
+    if(typeof cdMeteoFsa === 'function' && typeof cdTrajetPourContrat === 'function' && cdDansFenetreTrajet(k.date_contrat)){
+      const meteo = await cdMeteoFsa(k.code_postal);
+      const trajet = cdTrajetPourContrat(k, distApply, meteo);
+      if(trajet){
+        $('trajet-contenu').innerHTML = cdTrajetBlocHTML(trajet);
+        $('bloc-trajet').style.display = '';
+      }
+    }
+  }catch(e){ /* fonctionnalité secondaire — jamais bloquante */ }
 
   /* ---- Panneau de rémunération estimée (pharmacien qui postule) ---- */
   function rendreRemuneration(tarif, hd, hf){
