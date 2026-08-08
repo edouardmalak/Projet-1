@@ -544,9 +544,9 @@ window.cdEnteteConnecte = async function(){
        panneau du menu de compte */
     const etoiles = document.createElement('a');
     etoiles.href = '/evaluations.html';
-    etoiles.style.cssText = "display:none;color:var(--jaune,#C97B12);text-decoration:none;font-weight:600;font-size:12.5px";
+    etoiles.style.cssText = "display:none;color:var(--jaune,#C97B12);text-decoration:none;font-weight:600;font-size:12.5px;white-space:nowrap";
     const favoris = document.createElement('span');
-    favoris.style.cssText = 'display:none;color:var(--rouge,#C0392B);font-weight:600;font-size:12.5px;margin-left:8px';
+    favoris.style.cssText = 'display:none;color:var(--rouge,#C0392B);font-weight:600;font-size:12.5px;margin-left:8px;white-space:nowrap';
 
     let entete = null, items;
     if(p.role === 'pharmacien'){
