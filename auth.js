@@ -564,7 +564,7 @@ window.cdEnteteConnecte = async function(){
       libelleProfil.href = '/profil.html';
       libelleProfil.textContent = cdT('Mon profil','My profile');
       libelleProfil.style.cssText = "flex:1;padding:8px 9px;font-family:'Inter',sans-serif;font-size:13px;"+
-        'text-decoration:none;color:var(--texte,#1B2622)';
+        'text-decoration:none;color:var(--texte,#1B2622);white-space:nowrap';
       ligneProfil.append(libelleProfil, etoiles, favoris);
       items = [
         ligneProfil,
