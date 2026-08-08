@@ -164,15 +164,22 @@ function miniTimelineHTML(trajet){
     const op = on ? (0.35 + inten*0.55).toFixed(2) : '0.12';
     barres.push('<div style="flex:1;border-radius:2px 2px 0 0;height:'+ht+'px;background:'+coul+op+')"></div>');
   }
-  const marqueur = (min, coul, label) => '<div style="position:absolute;left:'+pct(min)+'%;top:0;bottom:16px;width:2px;background:'+coul+'">'
-    + '<span style="position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:'+coul+';white-space:nowrap">'+label+'</span></div>';
+  // étiquettes Aller/Retour dans leur PROPRE rangée au-dessus du graphique
+  // (jamais superposées aux repères d'heure 6h/9h/12h.../21h en bas — un
+  // ancien essai les mettait sous le graphique et elles se chevauchaient).
+  const etiquette = (min, coul, label) => '<span style="position:absolute;left:'+pct(min)+'%;transform:translateX(-50%);top:0;font-size:9px;font-weight:700;color:'+coul+';white-space:nowrap">'+label+'</span>';
+  const trait = (min, coul) => '<div style="position:absolute;left:'+pct(min)+'%;top:0;bottom:16px;width:2px;background:'+coul+'"></div>';
   const axe = [6,9,12,15,18,21].map(h=>'<span style="position:absolute;left:'+pct(h*60)+'%;transform:translateX(-50%);font-size:9px;color:var(--sourd)">'+h+' h</span>').join('');
-  return '<div style="background:var(--panneau2);border:1px solid var(--ligne2);border-radius:8px;padding:12px 12px 24px;margin:10px 0;position:relative">'
-    + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);margin-bottom:8px">Précipitations sur la journée</div>'
+  return '<div style="background:var(--panneau2);border:1px solid var(--ligne2);border-radius:8px;padding:12px 12px 10px;margin:10px 0">'
+    + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);margin-bottom:10px">Précipitations sur la journée</div>'
+    + '<div style="position:relative;height:13px;margin-bottom:3px">'
+    +   etiquette(trajet.win.aller.leaveMin, couleurEtat(trajet.risk.aller), 'Aller ' + fmtHM(trajet.win.aller.leaveMin))
+    +   etiquette(trajet.win.retour.from, couleurEtat(trajet.risk.retour), 'Retour ' + fmtHM(trajet.win.retour.from))
+    + '</div>'
     + '<div style="position:relative;height:46px">'
     +   '<div style="position:absolute;left:0;right:0;bottom:16px;top:0;display:flex;align-items:flex-end;gap:2px">' + barres.join('') + '</div>'
-    +   marqueur(trajet.win.aller.leaveMin, couleurEtat(trajet.risk.aller), 'Aller ' + fmtHM(trajet.win.aller.leaveMin))
-    +   marqueur(trajet.win.retour.from, couleurEtat(trajet.risk.retour), 'Retour ' + fmtHM(trajet.win.retour.from))
+    +   trait(trajet.win.aller.leaveMin, couleurEtat(trajet.risk.aller))
+    +   trait(trajet.win.retour.from, couleurEtat(trajet.risk.retour))
     +   '<div style="position:absolute;left:0;right:0;bottom:0;height:14px;border-top:1px solid var(--ligne2)">' + axe + '</div>'
     + '</div></div>';
 }
