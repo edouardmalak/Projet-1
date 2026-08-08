@@ -194,9 +194,18 @@ window.cdTrajetBlocHTML = function(trajet){
   const ligneFenetre = (label, w, etat) => '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:13px;border-top:1px solid var(--ligne2)">'
     + '<span style="color:var(--sourd)">' + label + ' · ' + fmtHM(w.from) + '–' + fmtHM(w.to) + '</span>'
     + '<b style="color:' + couleurEtat(etat) + '">' + libelleEtat(etat) + '</b></div>';
+  // Alerte officielle ECCC (verbatim — jamais paraphrasée), si trouvée pour ce point.
+  const alerteHtml = trajet.alerte
+    ? '<div style="display:flex;gap:9px;align-items:flex-start;margin-top:10px;padding:10px 12px;border-radius:8px;background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.3)">'
+      + '<span style="font-size:14px;line-height:1">🚨</span>'
+      + '<div><div style="font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--rouge)">Alerte officielle Environnement Canada</div>'
+      + '<div style="font-size:13px;font-weight:700;color:var(--rouge);margin-top:2px">' + trajet.alerte.t + '</div>'
+      + '<div style="font-size:11.5px;color:var(--sourd);margin-top:1px">' + trajet.alerte.s + '</div></div></div>'
+    : '';
   return '<div style="background:var(--panneau2);border:1px solid var(--ligne2);border-radius:8px;padding:14px 16px">'
     + '<div style="font-weight:700;font-size:15px;color:' + couleurEtat(risk.overall) + '">' + txt.titre + '</div>'
     + '<div style="color:var(--sourd);font-size:12.5px;margin-top:3px">' + txt.sous + '</div>'
+    + alerteHtml
     + miniTimelineHTML(trajet)
     + ligneFenetre('Aller', win.aller, risk.aller)
     + ligneFenetre('Retour', win.retour, risk.retour)

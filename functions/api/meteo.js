@@ -13,11 +13,11 @@
    client doit alors simplement ne rien afficher — jamais de donnée
    inventée).
 
-   Alertes ECCC officielles : DIFFÉRÉ. Aucun endpoint public gratuit
-   fiable confirmé en direct (voir A-FAIRE-CONSOLIDE.md) — `alerte` reste
-   toujours null pour l'instant. classifyRisk() gère déjà ce cas (le
-   badge se base uniquement sur les seuils neige/verglas/vent calculés
-   depuis Open-Meteo, qui couvrent l'essentiel du signal).
+   Alertes ECCC officielles : voir functions/_lib/eccc-alertes.js — flux
+   public MSC Datamart (CAP-XML), confirmé en direct le 2026-08-08. Best-
+   effort à chaque étage ; si rien n'est trouvé ou que le flux échoue,
+   `alerte` reste null et classifyRisk() continue de fonctionner sur les
+   seuils neige/verglas/vent d'Open-Meteo (son signal principal).
 
    Clé Supabase utilisée : la clé "publishable" (anon) — la même que
    dans supabase-config.js, déjà publique côté client. La sécurité de
@@ -26,6 +26,7 @@
    ===================================================================== */
 
 import { FSA_CENTROIDES } from '../_lib/fsa-centroides.js';
+import { zonesAlerteHivernale, trouverAlertePourPoint } from '../_lib/eccc-alertes.js';
 
 const SB_URL = 'https://fenlujjozanerbzyypjt.supabase.co';
 const SB_KEY = 'sb_publishable_gl9B3gY9gHX2iG_aaPoJZw_N4-qePHn';
@@ -132,15 +133,20 @@ export async function onRequestGet(context) {
 
     // 2) rafraîchir les FSA manquants/périmés en parallèle
     if (aRafraichir.length) {
+      // une seule lecture des alertes ECCC actives pour tout le lot (les
+      // zones ne dépendent pas du FSA — seul le test point-en-polygone
+      // ci-dessous l'est) ; best-effort, jamais d'exception ni de blocage.
+      const zonesHiver = await zonesAlerteHivernale().catch(() => []);
       const lignesAEcrire = [];
       await Promise.all(aRafraichir.map(async fsa => {
         const centre = FSA_CENTROIDES[fsa];
         if (!centre) return; // FSA hors Québec ou inconnu -> silencieusement absent de la réponse
         try {
           const horaire = await fetchOpenMeteo(centre[0], centre[1]);
+          const alerte = trouverAlertePourPoint(zonesHiver, centre[0], centre[1]);
           const maj_le = new Date().toISOString();
-          resultat[fsa] = { horaire, alerte: null, maj_le };
-          lignesAEcrire.push({ fsa, lat: centre[0], lng: centre[1], horaire, alerte: null, maj_le });
+          resultat[fsa] = { horaire, alerte, maj_le };
+          lignesAEcrire.push({ fsa, lat: centre[0], lng: centre[1], horaire, alerte, maj_le });
         } catch (e) {
           // Open-Meteo indisponible : retomber sur le cache périmé plutôt que rien,
           // c'est une vraie donnée (juste pas fraîche) — jamais de donnée inventée.
