@@ -22,11 +22,18 @@ body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',san
 h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
 .sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:20px}
 .carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:18px}
-.conv{display:block;text-decoration:none;color:var(--texte);border:1px solid var(--ligne);border-radius:8px;padding:14px 16px;margin-bottom:10px;background:var(--panneau);transition:border-color .1s}
-.conv:hover{border-color:var(--vert)}
-.conv .r{font-family:'IBM Plex Mono',monospace;color:var(--vert-vif);font-weight:700;letter-spacing:.05em}
-.conv .role{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);border:1px solid var(--ligne2);border-radius:99px;padding:1px 8px;margin-left:8px}
-.conv .m{color:var(--sourd);font-size:13px;font-family:'IBM Plex Mono',monospace;margin-top:3px}
+.conv{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--texte);border:1px solid var(--ligne);padding:12px 14px;margin-bottom:8px;background:var(--panneau);transition:border-color .12s,background .12s}
+.conv:hover{border-color:var(--vert-vif);background:#FBFDFB}
+.av{flex:none;width:40px;height:40px;border-radius:50%;background:var(--panneau2);color:var(--vert-vif);display:grid;place-items:center;font-family:'Inter',sans-serif;font-weight:700;font-size:13px}
+.conv .corps{flex:1;min-width:0}
+.conv .ligne1{display:flex;align-items:center;gap:7px}
+.conv .nom{font-family:'Inter',sans-serif;font-weight:600;font-size:14.5px;color:var(--texte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv.non-lu .nom{font-weight:800}
+.conv .m{color:var(--sourd);font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv .meta{flex:none;display:flex;align-items:center;gap:6px}
+.conv .quand{font-family:'Inter',sans-serif;font-size:11.5px;color:var(--sourd);white-space:nowrap}
+.conv.non-lu .quand{color:var(--vert-vif);font-weight:700}
+.point{width:8px;height:8px;border-radius:99px;background:var(--rouge);flex:none}
 .vide{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-align:center;padding:30px 0}
 .fil{display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;padding:6px 2px 12px}
 .bulle{max-width:78%;padding:9px 13px;border-radius:12px;font-size:14px;line-height:1.45;word-wrap:break-word}
@@ -34,6 +41,8 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
 .bulle .h{font-family:'IBM Plex Mono',monospace;font-size:10px;opacity:.5;margin-top:4px;text-align:right}
 .moi{align-self:flex-end;background:rgba(18,169,110,.16);border:1px solid rgba(23,201,128,.4)}
 .autre{align-self:flex-start;background:var(--panneau2);border:1px solid var(--ligne2)}
+.tete-conv{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.tete-conv .av{width:44px;height:44px;font-size:14px}
 .saisie{display:flex;gap:10px;margin-top:14px}
 .saisie textarea{flex:1;background:#F4F8F5;border:1px solid var(--ligne2);border-radius:8px;padding:11px 13px;color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:14px;resize:vertical;min-height:46px}
 .saisie textarea:focus{outline:none;border-color:var(--vert)}
@@ -41,12 +50,18 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
 .saisie button:hover{background:var(--vert-vif)}
 .saisie button:disabled{opacity:.5;cursor:default}
 .retour{display:inline-block;color:var(--vert-vif);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-bottom:14px}
-.champ-recherche{width:100%;border:1px solid var(--ligne2);border-radius:8px;padding:11px 13px;font-family:'Instrument Sans',sans-serif;font-size:14px;background:#F4F8F5;color:var(--texte);margin-bottom:14px}
+.recherche-wrap{position:relative;margin-bottom:14px}
+.recherche-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--sourd);pointer-events:none}
+.champ-recherche{width:100%;border:1px solid var(--ligne2);border-radius:8px;padding:11px 13px 11px 38px;font-family:'Instrument Sans',sans-serif;font-size:14px;background:#F4F8F5;color:var(--texte)}
 .champ-recherche:focus{outline:none;border-color:var(--vert)}
 .picker{max-height:280px;overflow-y:auto}
 .picker .item{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--ligne);cursor:pointer}
 .picker .item:hover{background:var(--panneau2)}
 .picker .item:last-child{border-bottom:none}
+.filtres{display:flex;gap:8px;margin-bottom:16px}
+.pilule{font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;color:var(--sourd);background:var(--panneau);border:1px solid var(--ligne);border-radius:99px;padding:6px 14px;cursor:pointer;transition:background .12s,border-color .12s,color .12s}
+.pilule:hover{border-color:var(--ligne2)}
+.pilule.on{background:var(--vert);border-color:var(--vert);color:#fff}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/design.css">
@@ -68,7 +83,15 @@ const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 const esc = s => String(s==null?'':s).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
 let profil = null, cibleId = null, timer = null, dernierN = 0;
+let toutesConvs = [], filtreRole = 'tous';
 const ROLE_LABEL = { pharmacien:'Pharmacien(ne)', pharmacie:'Pharmacie' };
+const ICONE_RECHERCHE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
+function initialesDe(nom){
+  const mots = String(nom||'').trim().split(/\s+/).filter(Boolean);
+  if(!mots.length) return '?';
+  if(mots.length === 1) return mots[0].slice(0,2).toUpperCase();
+  return (mots[0][0] + mots[1][0]).toUpperCase();
+}
 
 (async function(){
   profil = await cdExigerConnexion(['admin']);
@@ -79,13 +102,51 @@ const ROLE_LABEL = { pharmacien:'Pharmacien(ne)', pharmacie:'Pharmacie' };
 })();
 
 /* ---------------- LISTE + « nouveau message » ---------------- */
+function ligneConv(c){
+  const quand = c.dernier_le ? cdTempsRelatif(c.dernier_le) : '';
+  const apercu = c.dernier_message
+    ? esc(String(c.dernier_message).slice(0,90)) + (String(c.dernier_message).length>90?'…':'')
+    : 'Aucun message';
+  return '<a class="conv'+(c.non_lu?' non-lu':'')+'" href="/admin-messages.html?u='+encodeURIComponent(c.utilisateur_id)+'">'
+    + '<div class="av">'+esc(initialesDe(c.nom))+'</div>'
+    + '<div class="corps"><div class="ligne1"><span class="nom">'+esc(c.nom||'—')+'</span>'
+    + '<span class="badge" style="color:var(--sourd);background:var(--panneau2)">'+(ROLE_LABEL[c.role]||c.role)+'</span></div>'
+    + '<div class="m">'+apercu+'</div></div>'
+    + '<div class="meta">'+(quand?'<span class="quand">'+quand+'</span>':'')+(c.non_lu?'<span class="point"></span>':'')+'</div></a>';
+}
+
+function rendreListe(){
+  const l = $('liste'); if(!l) return;
+  const filtrees = filtreRole === 'tous' ? toutesConvs : toutesConvs.filter(c => c.role === filtreRole);
+  if(!filtrees.length){
+    l.innerHTML = '<div class="vide">'
+      + (toutesConvs.length ? 'Aucune conversation dans ce filtre.'
+                            : 'Aucune conversation pour l’instant — cherchez un pharmacien ou une pharmacie ci-dessus pour lui écrire.')
+      + '</div>';
+    return;
+  }
+  l.innerHTML = filtrees.map(ligneConv).join('');
+}
+
 async function listerConversations(){
   const wrap = $('wrap');
   wrap.innerHTML = '<h1>Messagerie admin</h1>'
     + '<p class="sous">Canal direct admin ↔ utilisateur — distinct des conversations pharmacie↔pharmacien.</p>'
-    + '<input class="champ-recherche" id="recherche" placeholder="Chercher un pharmacien ou une pharmacie pour lui écrire…">'
+    + '<div class="recherche-wrap">'+ICONE_RECHERCHE+'<input class="champ-recherche" id="recherche" placeholder="Chercher un pharmacien ou une pharmacie pour lui écrire…"></div>'
     + '<div id="picker" class="carte picker" style="display:none;margin-bottom:16px"></div>'
+    + '<div class="filtres" id="filtres">'
+    + '<button class="pilule on" data-role="tous">Tous</button>'
+    + '<button class="pilule" data-role="pharmacien">Pharmaciens</button>'
+    + '<button class="pilule" data-role="pharmacie">Pharmacies</button></div>'
     + '<div id="liste"><div class="vide">Chargement…</div></div>';
+
+  $('filtres').querySelectorAll('.pilule').forEach(btn=>{
+    btn.onclick = () => {
+      filtreRole = btn.dataset.role;
+      $('filtres').querySelectorAll('.pilule').forEach(b=>b.classList.toggle('on', b===btn));
+      rendreListe();
+    };
+  });
 
   let tousLesUtilisateurs = null;
   const rech = $('recherche'), picker = $('picker');
@@ -108,35 +169,18 @@ async function listerConversations(){
       const nom = (u.role==='pharmacie' ? u.nom_pharmacie : ((u.prenom||'')+' '+(u.nom||''))) || u.courriel;
       const div = document.createElement('div');
       div.className = 'item';
-      div.innerHTML = '<span style="font-weight:600">'+esc(nom)+'</span>'
-        + '<span class="role" style="margin-left:auto">'+(ROLE_LABEL[u.role]||u.role)+'</span>';
+      div.innerHTML = '<div class="av" style="width:30px;height:30px;font-size:11px">'+esc(initialesDe(nom))+'</div>'
+        + '<span style="font-weight:600">'+esc(nom)+'</span>'
+        + '<span class="badge" style="margin-left:auto;color:var(--sourd);background:var(--panneau2)">'+(ROLE_LABEL[u.role]||u.role)+'</span>';
       div.onclick = ()=>{ location.href = '/admin-messages.html?u='+encodeURIComponent(u.id); };
       picker.appendChild(div);
     });
   });
 
   const { data, error } = await sb.rpc('admin_lister_conversations');
-  const l = $('liste');
-  if(error){ l.innerHTML = '<div class="vide">Erreur : '+esc(error.message)+'</div>'; return; }
-  const convs = data || [];
-  if(!convs.length){
-    l.innerHTML = '<div class="vide">Aucune conversation pour l’instant — cherchez un pharmacien ou une pharmacie ci-dessus pour lui écrire.</div>';
-    return;
-  }
-  l.innerHTML = convs.map(c=>{
-    const quand = c.dernier_le
-      ? new Date(c.dernier_le).toLocaleString('fr-CA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
-      : '';
-    const apercu = c.dernier_message
-      ? esc(String(c.dernier_message).slice(0,90)) + (String(c.dernier_message).length>90?'…':'')
-      : 'Aucun message';
-    const point = c.non_lu
-      ? '<span style="display:inline-block;width:8px;height:8px;border-radius:99px;background:var(--rouge);margin-left:8px;vertical-align:middle"></span>' : '';
-    return '<a class="conv" href="/admin-messages.html?u='+encodeURIComponent(c.utilisateur_id)+'">'
-      + '<span class="r">'+esc(c.nom||'—')+'</span>'
-      + '<span class="role">'+(ROLE_LABEL[c.role]||c.role)+'</span>'+point
-      + '<div class="m">'+apercu+(quand?' · '+quand:'')+'</div></a>';
-  }).join('');
+  if(error){ $('liste').innerHTML = '<div class="vide">Erreur : '+esc(error.message)+'</div>'; return; }
+  toutesConvs = data || [];
+  rendreListe();
 }
 
 /* ---------------- UNE CONVERSATION ---------------- */
@@ -151,7 +195,8 @@ async function ouvrirConversation(u){
   const nom = (p.role==='pharmacie' ? p.nom_pharmacie : ((p.prenom||'')+' '+(p.nom||''))) || p.courriel;
   $('wrap').innerHTML =
     '<a class="retour" href="/admin-messages.html">← Toutes les conversations</a>'+
-    '<h1>'+esc(nom)+'</h1><p class="sous">'+(ROLE_LABEL[p.role]||p.role)+' · '+esc(p.courriel||'')+'</p>'+
+    '<div class="tete-conv"><div class="av">'+esc(initialesDe(nom))+'</div>'+
+    '<div><h1 style="margin-bottom:1px">'+esc(nom)+'</h1><p class="sous" style="margin-bottom:0">'+(ROLE_LABEL[p.role]||p.role)+' · '+esc(p.courriel||'')+'</p></div></div>'+
     '<div class="carte"><div class="fil" id="fil"><div class="vide">Chargement…</div></div>'+
     '<div class="saisie" id="saisie"><textarea id="txt" placeholder="Votre message…" rows="1"></textarea>'+
     '<button id="env">Envoyer</button></div></div>';
@@ -174,7 +219,7 @@ async function charger(){
   if(!data.length){ fil.innerHTML = '<div class="vide">Aucun message. Écrivez le premier.</div>'; return; }
   fil.innerHTML = data.map(m=>{
     const moi = m.expediteur_id !== cibleId;  // pas envoyé par l'utilisateur == envoyé par un admin
-    const h = new Date(m.created_at).toLocaleString('fr-CA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    const h = cdTempsRelatif(m.created_at);
     return '<div class="bulle '+(moi?'moi':'autre')+'"><div class="qui">'
       + (moi?'Équipe C-Direct':'Utilisateur')+'</div>'
       + esc(m.corps).replace(/\n/g,'<br>')+'<div class="h">'+h+'</div></div>';

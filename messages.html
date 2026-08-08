@@ -22,10 +22,23 @@ body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',san
 h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
 .sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:20px}
 .carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:18px}
-.conv{display:block;text-decoration:none;color:var(--texte);border:1px solid var(--ligne);border-radius:8px;padding:14px 16px;margin-bottom:10px;background:var(--panneau);transition:border-color .1s}
-.conv:hover{border-color:var(--vert)}
-.conv .r{font-family:'IBM Plex Mono',monospace;color:var(--vert-vif);font-weight:700;letter-spacing:.05em}
-.conv .m{color:var(--sourd);font-size:13px;font-family:'IBM Plex Mono',monospace;margin-top:3px}
+.conv{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--texte);border:1px solid var(--ligne);padding:12px 14px;margin-bottom:8px;background:var(--panneau);transition:border-color .12s,background .12s}
+.conv:hover{border-color:var(--vert-vif);background:#FBFDFB}
+.av{flex:none;width:40px;height:40px;border-radius:50%;background:var(--panneau2);color:var(--vert-vif);display:grid;place-items:center;font-family:'Inter',sans-serif;font-weight:700;font-size:13px}
+.av.av-admin{background:var(--vert);color:#fff}
+.conv .corps{flex:1;min-width:0}
+.conv .ligne1{display:flex;align-items:center;gap:7px}
+.conv .nom{font-family:'Inter',sans-serif;font-weight:600;font-size:14.5px;color:var(--texte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv.non-lu .nom{font-weight:800}
+.conv .m{color:var(--sourd);font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv .meta{flex:none;display:flex;align-items:center;gap:6px}
+.conv .quand{font-family:'Inter',sans-serif;font-size:11.5px;color:var(--sourd);white-space:nowrap}
+.conv.non-lu .quand{color:var(--vert-vif);font-weight:700}
+.point{width:8px;height:8px;border-radius:99px;background:var(--rouge);flex:none}
+.fermees-toggle{display:flex;align-items:center;gap:6px;width:100%;text-align:left;background:none;border:none;color:var(--sourd);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:10px 4px;cursor:pointer;margin-top:6px}
+.fermees-toggle:hover{color:var(--texte)}
+.fermees-toggle .fleche{display:inline-block;transition:transform .15s}
+.fermees-toggle.ouvert .fleche{transform:rotate(90deg)}
 .btn-cloture{background:transparent;border:1px solid var(--ligne);color:var(--sourd);border-radius:9px;padding:9px 15px;font:500 13px 'Instrument Sans',sans-serif;cursor:pointer}
 .btn-cloture:hover{border-color:var(--vert);color:var(--vert)}
 .vide{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-align:center;padding:30px 0}
@@ -35,6 +48,8 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
 .bulle .h{font-family:'IBM Plex Mono',monospace;font-size:10px;opacity:.5;margin-top:4px;text-align:right}
 .moi{align-self:flex-end;background:rgba(18,169,110,.16);border:1px solid rgba(23,201,128,.4)}
 .autre{align-self:flex-start;background:var(--panneau2);border:1px solid var(--ligne2)}
+.tete-conv{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.tete-conv .av{width:44px;height:44px;font-size:14px}
 .saisie{display:flex;gap:10px;margin-top:14px}
 .saisie textarea{flex:1;background:#F4F8F5;border:1px solid var(--ligne2);border-radius:8px;padding:11px 13px;color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:14px;resize:vertical;min-height:46px}
 .saisie textarea:focus{outline:none;border-color:var(--vert)}
@@ -63,9 +78,16 @@ const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 const esc = s => String(s==null?'':s).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
 let profil = null, contratId = null, filId = null, filEtat = null, timer = null;
+const ICONE_ADMIN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>';
 
 function refDepuisUrl(){ const q = new URLSearchParams(location.search).get('ref'); return q ? q.toUpperCase() : null; }
 function nonActive(e){ return /does not exist|schema cache/i.test((e && e.message) || ''); }
+function initialesDe(nom){
+  const mots = String(nom||'').trim().split(/\s+/).filter(Boolean);
+  if(!mots.length) return '?';
+  if(mots.length === 1) return mots[0].slice(0,2).toUpperCase();
+  return (mots[0][0] + mots[1][0]).toUpperCase();
+}
 
 (async function(){
   profil = await cdExigerConnexion(['pharmacien','pharmacie']);
@@ -101,7 +123,8 @@ async function ouvrirConversationAdmin(){
   const wrap = $('wrap');
   wrap.innerHTML =
     '<a class="retour" href="/messages.html">← Toutes les conversations</a>'+
-    '<h1>Équipe C-Direct</h1><p class="sous">Une question, un problème — écrivez-nous directement.</p>'+
+    '<div class="tete-conv"><div class="av av-admin">'+ICONE_ADMIN+'</div>'+
+    '<div><h1 style="margin-bottom:1px">Équipe C-Direct</h1><p class="sous" style="margin-bottom:0">Une question, un problème — écrivez-nous directement.</p></div></div>'+
     '<div class="carte"><div class="fil" id="fil"><div class="vide">Chargement…</div></div>'+
     '<div class="saisie" id="saisie"><textarea id="txt" placeholder="Votre message…" rows="1"></textarea>'+
     '<button id="env">Envoyer</button></div></div>';
@@ -121,7 +144,7 @@ async function chargerAdmin(){
   if(!data.length){ fil.innerHTML = '<div class="vide">Aucun message pour l’instant. Posez votre question, l’équipe C-Direct répond directement ici.</div>'; return; }
   fil.innerHTML = data.map(m=>{
     const moi = m.expediteur_id === profil.id;
-    const h = new Date(m.created_at).toLocaleString('fr-CA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    const h = cdTempsRelatif(m.created_at);
     return '<div class="bulle '+(moi?'moi':'autre')+'"><div class="qui">'
       + (moi?'Vous':'Équipe C-Direct')+'</div>'
       + esc(m.corps).replace(/\n/g,'<br>')+'<div class="h">'+h+'</div></div>';
@@ -142,25 +165,46 @@ async function envoyerAdmin(){
 /* ---------------- LISTE DES FILS ----------------
    Un seul fil par contrepartie (et non plus un par contrat) : les
    échanges avec une même pharmacie restent au même endroit. */
+function ligneConv(f){
+  const ferme = f.statut === 'ferme';
+  const quand = f.dernier_le ? cdTempsRelatif(f.dernier_le) : '';
+  const apercu = f.dernier_message
+    ? esc(String(f.dernier_message).slice(0,90)) + (String(f.dernier_message).length>90?'…':'')
+    : 'Aucun message';
+  /* demande de clôture en attente de MA réponse ? */
+  const jeSuisPharmacie = profil.role === 'pharmacie';
+  const moiFerme  = jeSuisPharmacie ? f.cloture_pharmacie : f.cloture_pharmacien;
+  const autreFerme= jeSuisPharmacie ? f.cloture_pharmacien : f.cloture_pharmacie;
+  let badge = '';
+  if(ferme) badge = '<span class="badge" style="color:var(--sourd);background:var(--panneau2)">Fermée</span>';
+  else if(autreFerme && !moiFerme) badge = '<span class="badge" style="color:#8a5a00;background:#FFF3D6">Clôture demandée</span>';
+  else if(moiFerme && !autreFerme) badge = '<span class="badge" style="color:var(--sourd);background:var(--panneau2)">En attente</span>';
+  const nonLu = f.non_lu && !ferme;
+  return '<a class="conv'+(nonLu?' non-lu':'')+'" href="/messages.html?fil='+encodeURIComponent(f.fil_id)+'">'
+    + '<div class="av">'+esc(initialesDe(f.contrepartie_nom))+'</div>'
+    + '<div class="corps"><div class="ligne1"><span class="nom">'+esc(f.contrepartie_nom || 'Contrepartie')+'</span>'+badge+'</div>'
+    + '<div class="m">'+apercu+'</div></div>'
+    + '<div class="meta">'+(quand?'<span class="quand">'+quand+'</span>':'')+(nonLu?'<span class="point"></span>':'')+'</div></a>';
+}
+
 async function listerConversations(){
   const wrap = $('wrap');
   wrap.innerHTML = '<h1>Messagerie</h1>'
     + '<p class="sous">Une seule conversation par contrepartie — tout l’historique au même endroit.</p>'
     + '<div id="carte-admin" style="margin-bottom:14px"></div>'
-    + '<div id="liste"><div class="vide">Chargement…</div></div>';
+    + '<div id="liste"><div class="vide">Chargement…</div></div>'
+    + '<div id="zone-fermees"></div>';
 
   const apercuAdmin = await chargerApercuAdmin();
-  const quandA = apercuAdmin.dernier_le
-    ? new Date(apercuAdmin.dernier_le).toLocaleString('fr-CA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
-    : '';
+  const quandA = apercuAdmin.dernier_le ? cdTempsRelatif(apercuAdmin.dernier_le) : '';
   const apercuA = apercuAdmin.dernier_message
     ? esc(String(apercuAdmin.dernier_message).slice(0,90)) + (String(apercuAdmin.dernier_message).length>90?'…':'')
     : 'Écrivez-nous si vous avez une question.';
-  const pointA = apercuAdmin.non_lu
-    ? '<span style="display:inline-block;width:8px;height:8px;border-radius:99px;background:var(--rouge);margin-left:8px;vertical-align:middle"></span>' : '';
-  $('carte-admin').innerHTML = '<a class="conv" href="/messages.html?admin=1" style="border-color:var(--vert);background:rgba(18,169,110,.05)">'
-    + '<span class="r">Équipe C-Direct</span>'+pointA
-    + '<div class="m">'+apercuA+(quandA?' · '+quandA:'')+'</div></a>';
+  $('carte-admin').innerHTML = '<a class="conv'+(apercuAdmin.non_lu?' non-lu':'')+'" href="/messages.html?admin=1">'
+    + '<div class="av av-admin">'+ICONE_ADMIN+'</div>'
+    + '<div class="corps"><div class="ligne1"><span class="nom">Équipe C-Direct</span></div>'
+    + '<div class="m">'+apercuA+'</div></div>'
+    + '<div class="meta">'+(quandA?'<span class="quand">'+quandA+'</span>':'')+(apercuAdmin.non_lu?'<span class="point"></span>':'')+'</div></a>';
 
   const { data, error } = await sb.rpc('mes_fils');
   const l = $('liste');
@@ -175,29 +219,22 @@ async function listerConversations(){
     l.innerHTML = '<div class="vide">Aucune conversation — elle s’ouvre dès qu’un contrat est confirmé des deux côtés.</div>';
     return;
   }
-  l.innerHTML = fils.map(f=>{
-    const ferme = f.statut === 'ferme';
-    const quand = f.dernier_le
-      ? new Date(f.dernier_le).toLocaleString('fr-CA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
-      : '';
-    const apercu = f.dernier_message
-      ? esc(String(f.dernier_message).slice(0,90)) + (String(f.dernier_message).length>90?'…':'')
-      : 'Aucun message';
-    /* demande de clôture en attente de MA réponse ? */
-    const jeSuisPharmacie = profil.role === 'pharmacie';
-    const moiFerme  = jeSuisPharmacie ? f.cloture_pharmacie : f.cloture_pharmacien;
-    const autreFerme= jeSuisPharmacie ? f.cloture_pharmacien : f.cloture_pharmacie;
-    let badge = '';
-    if(ferme) badge = '<span style="font-size:11px;color:var(--sourd);border:1px solid var(--ligne);border-radius:99px;padding:1px 8px;margin-left:8px">Fermée</span>';
-    else if(autreFerme && !moiFerme) badge = '<span style="font-size:11px;color:#8a5a00;background:#FFF3D6;border-radius:99px;padding:1px 8px;margin-left:8px">Clôture demandée</span>';
-    else if(moiFerme && !autreFerme) badge = '<span style="font-size:11px;color:var(--sourd);border:1px solid var(--ligne);border-radius:99px;padding:1px 8px;margin-left:8px">En attente de l’autre</span>';
-    const point = (f.non_lu && !ferme)
-      ? '<span style="display:inline-block;width:8px;height:8px;border-radius:99px;background:var(--rouge);margin-left:8px;vertical-align:middle"></span>' : '';
-    return '<a class="conv" href="/messages.html?fil='+encodeURIComponent(f.fil_id)+'"'
-      + (ferme?' style="opacity:.62"':'') + '>'
-      + '<span class="r">'+esc(f.contrepartie_nom || 'Contrepartie')+'</span>'+badge+point
-      + '<div class="m">'+apercu+(quand?' · '+quand:'')+'</div></a>';
-  }).join('');
+  const ouvertes = fils.filter(f => f.statut !== 'ferme');
+  const fermees  = fils.filter(f => f.statut === 'ferme');
+  l.innerHTML = ouvertes.length ? ouvertes.map(ligneConv).join('')
+    : '<div class="vide">Aucune conversation active pour l’instant.</div>';
+
+  if(fermees.length){
+    $('zone-fermees').innerHTML = '<button class="fermees-toggle" id="btn-fermees">'
+      + '<span class="fleche">▸</span> Fermées ('+fermees.length+')</button>'
+      + '<div id="liste-fermees" style="display:none">'+fermees.map(ligneConv).join('')+'</div>';
+    $('btn-fermees').onclick = () => {
+      const zone = $('liste-fermees'), btn = $('btn-fermees');
+      const ouvre = zone.style.display === 'none';
+      zone.style.display = ouvre ? '' : 'none';
+      btn.classList.toggle('ouvert', ouvre);
+    };
+  }
 }
 
 /* ---------------- UNE CONVERSATION ---------------- */
@@ -228,7 +265,8 @@ async function ouvrirConversation(ref){
 
   wrap.innerHTML =
     '<a class="retour" href="/messages.html">← Toutes les conversations</a>'+
-    '<h1 id="h-titre">Conversation</h1><p class="sous" id="h-sous"></p>'+
+    '<div class="tete-conv"><div class="av" id="h-av"></div>'+
+    '<div><h1 id="h-titre" style="margin-bottom:1px">Conversation</h1><p class="sous" id="h-sous" style="margin-bottom:0"></p></div></div>'+
     '<div id="bandeau"></div>'+
     '<div class="carte"><div class="fil" id="fil"><div class="vide">Chargement…</div></div>'+
     '<div class="saisie" id="saisie"><textarea id="txt" placeholder="Votre message…" rows="1"></textarea>'+
@@ -254,6 +292,7 @@ async function rafraichirEtat(){
   filEtat = f;
 
   const t = $('h-titre'); if(t) t.textContent = f.contrepartie_nom || 'Conversation';
+  const av = $('h-av'); if(av) av.textContent = initialesDe(f.contrepartie_nom);
   const s = $('h-sous');
   if(s){
     const note = (f.contrepartie_note_moyenne != null && f.contrepartie_note_nombre)
@@ -338,7 +377,7 @@ async function charger(){
   if(!data.length){ fil.innerHTML = '<div class="vide">Aucun message. Écrivez le premier — c’est direct, sans intermédiaire.</div>'; return; }
   fil.innerHTML = data.map(m=>{
     const moi = m.expediteur_id === profil.id;
-    const h = new Date(m.created_at).toLocaleString('fr-CA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    const h = cdTempsRelatif(m.created_at);
     return '<div class="bulle '+(moi?'moi':'autre')+'"><div class="qui">'
       + (moi?'Vous':(profil.role==='pharmacie'?'Pharmacien(ne)':'Pharmacie'))+'</div>'
       + esc(m.corps).replace(/\n/g,'<br>')+'<div class="h">'+h+'</div></div>';

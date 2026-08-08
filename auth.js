@@ -545,6 +545,34 @@ window.cdArgent = n => new Intl.NumberFormat('fr-CA',{minimumFractionDigits:2,ma
 window.cdDate = d => new Date(d + (String(d).length===10 ? 'T12:00:00' : '')).toLocaleDateString('fr-CA',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
 window.cdHeure = h => String(h||'').slice(0,5).replace(':',' h ');
 
+/* ---- temps relatif (messagerie : "à l'instant", "12 min", "3 h", "hier", "5 j", puis date courte) ---- */
+window.cdTempsRelatif = function(dateISO){
+  if(!dateISO) return '';
+  const d = new Date(dateISO);
+  if(isNaN(d)) return '';
+  const maintenant = new Date();
+  const secondes = Math.round((maintenant - d) / 1000);
+  if(secondes < 60) return 'à l\'instant';
+  const minutes = Math.round(secondes / 60);
+  if(minutes < 60) return minutes + ' min';
+  const heures = Math.round(minutes / 60);
+  if(heures < 24) return heures + ' h';
+  const jMaintenant = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate());
+  const jDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const jours = Math.round((jMaintenant - jDate) / 86400000);
+  if(jours === 1) return 'hier';
+  if(jours < 7) return jours + ' j';
+  return d.toLocaleDateString('fr-CA', {day:'numeric', month:'short'});
+};
+
+/* ---- initiales pour avatar rond (messagerie) ---- */
+window.cdInitiales = function(prenom, nom){
+  const a = (prenom||'').trim().charAt(0);
+  const b = (nom||'').trim().charAt(0);
+  const ini = (a+b).toUpperCase();
+  return ini || '?';
+};
+
 /* ---- langue courante (FR/EN) ----
    Persistée par le sélecteur de langue de l'accueil (localStorage 'cd-lang').
    Sert à faire suivre la langue de l'utilisateur dans les courriels de
