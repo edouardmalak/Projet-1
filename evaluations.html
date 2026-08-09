@@ -76,7 +76,7 @@ textarea:focus{outline:none;border-color:var(--vert)}
     <div class="droite" id="nav"></div>
   </div>
 </div>
-<div class="wrap" id="wrap"><div class="vide">Chargement…</div></div>
+<div class="wrap" id="wrap"><div class="vide" data-fr="Chargement…" data-en="Loading…">Chargement…</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
@@ -94,8 +94,8 @@ function refFiabiliteDepuisUrl(){ const q = new URLSearchParams(location.search)
   profil = await cdExigerConnexion(['pharmacien','pharmacie']);
   cdEnteteConnecte();
   $('nav').innerHTML = (profil.role==='pharmacie'
-    ? '<a class="nav" href="/espace-pharmacie.html">Espace</a>'
-    : '<a class="nav" href="/contrats.html">Contrats</a>');
+    ? '<a class="nav" href="/espace-pharmacie.html">'+cdT('Espace','Space')+'</a>'
+    : '<a class="nav" href="/contrats.html">'+cdT('Contrats','Contracts')+'</a>');
   const ref = refDepuisUrl();
   const refFiab = refFiabiliteDepuisUrl();
   if(refFiab){ ouvrirFormulaireFiabilite(refFiab); }
@@ -106,13 +106,13 @@ function refFiabiliteDepuisUrl(){ const q = new URLSearchParams(location.search)
 /* ---------------- TABLEAU DE BORD ÉVALUATIONS ---------------- */
 async function tableauBord(){
   const wrap = $('wrap');
-  wrap.innerHTML = '<h1>Évaluations</h1><p class="sous">Vos avis améliorent les jumelages. Confidentiels jusqu\'à l\'envoi des deux côtés.</p>'+
+  wrap.innerHTML = '<h1>'+cdT('Évaluations','Reviews')+'</h1><p class="sous">'+cdT('Vos avis améliorent les jumelages. Confidentiels jusqu\'à l\'envoi des deux côtés.','Your reviews improve matching. Confidential until both sides submit.')+'</p>'+
     '<div id="resume"></div>'+
-    '<h2>À évaluer</h2><div id="afaire"><div class="vide">Chargement…</div></div>'+
-    '<h2>Notes reçues</h2><div id="recues"><div class="vide">Chargement…</div></div>'+
+    '<h2>'+cdT('À évaluer','To review')+'</h2><div id="afaire"><div class="vide">'+cdT('Chargement…','Loading…')+'</div></div>'+
+    '<h2>'+cdT('Notes reçues','Reviews received')+'</h2><div id="recues"><div class="vide">'+cdT('Chargement…','Loading…')+'</div></div>'+
     (profil.role==='pharmacien'
-      ? '<h2>Fiabilité des annonces — à noter</h2><p class="sous" style="margin:-8px 0 12px">La réalité a-t-elle correspondu à ce qui était annoncé ? Distinct de votre évaluation générale ci-dessus.</p><div id="fiab-afaire"><div class="vide">Chargement…</div></div>'
-      : '<h2>Fiabilité de vos annonces</h2><p class="sous" style="margin:-8px 0 12px">Ce que les pharmaciens rapportent sur l\'exactitude de vos annonces (volume, personnel) — visible dès 3 avis.</p><div id="fiab-resume"><div class="vide">Chargement…</div></div>');
+      ? '<h2>'+cdT('Fiabilité des annonces — à noter','Listing accuracy — to rate')+'</h2><p class="sous" style="margin:-8px 0 12px">'+cdT('La réalité a-t-elle correspondu à ce qui était annoncé ? Distinct de votre évaluation générale ci-dessus.','Did reality match what was advertised? Separate from your general review above.')+'</p><div id="fiab-afaire"><div class="vide">'+cdT('Chargement…','Loading…')+'</div></div>'
+      : '<h2>'+cdT('Fiabilité de vos annonces','Accuracy of your listings')+'</h2><p class="sous" style="margin:-8px 0 12px">'+cdT('Ce que les pharmaciens rapportent sur l\'exactitude de vos annonces (volume, personnel) — visible dès 3 avis.','What pharmacists report about the accuracy of your listings (volume, staffing) — visible from 3 reviews.')+'</p><div id="fiab-resume"><div class="vide">'+cdT('Chargement…','Loading…')+'</div></div>');
 
   // Résumé de ma note
   try{
@@ -123,11 +123,11 @@ async function tableauBord(){
       el.innerHTML = '<div class="carte"><div class="resume">'+
         '<div><div class="big">'+Number(n.moyenne).toFixed(2)+' <small>/5</small></div>'+
         '<div class="st">'+etoilesTxt(Math.round(n.moyenne))+'</div></div>'+
-        '<div class="kpi">Évaluations<b>'+n.nombre+'</b></div>'+
-        '<div class="kpi">Retravailleraient<b>'+n.taux_reviendrait+' %</b></div>'+
+        '<div class="kpi">'+cdT('Évaluations','Reviews')+'<b>'+n.nombre+'</b></div>'+
+        '<div class="kpi">'+cdT('Retravailleraient','Would work again')+'<b>'+n.taux_reviendrait+' %</b></div>'+
         '</div></div>';
     } else {
-      el.innerHTML = '<div class="carte"><div class="vide">Aucune note reçue pour l\'instant — elle apparaîtra une fois vos contrats évalués des deux côtés.</div></div>';
+      el.innerHTML = '<div class="carte"><div class="vide">'+cdT('Aucune note reçue pour l\'instant — elle apparaîtra une fois vos contrats évalués des deux côtés.','No rating received yet — it appears once your contracts are reviewed on both sides.')+'</div></div>';
     }
   }catch(e){ $('resume').innerHTML=''; }
 
@@ -135,12 +135,12 @@ async function tableauBord(){
   try{
     const { data } = await sb.rpc('get_evaluations_a_faire');
     const l = $('afaire');
-    if(!data || !data.length){ l.innerHTML = '<div class="vide">Rien à évaluer — bravo, vous êtes à jour.</div>'; }
+    if(!data || !data.length){ l.innerHTML = '<div class="vide">'+cdT('Rien à évaluer — bravo, vous êtes à jour.','Nothing to review — you\'re all caught up.')+'</div>'; }
     else l.innerHTML = data.map(c =>
       '<div class="carte"><div class="ligne-item"><div>'+
       '<span class="r">'+esc(c.numero_reference)+'</span>'+
       '<div class="m">'+cdDate(c.date_contrat)+' · '+esc(c.autre_nom)+'</div></div>'+
-      '<a class="btn" href="/evaluations.html?ref='+encodeURIComponent(c.numero_reference)+'">★ Évaluer</a>'+
+      '<a class="btn" href="/evaluations.html?ref='+encodeURIComponent(c.numero_reference)+'">★ '+cdT('Évaluer','Review')+'</a>'+
       '</div></div>').join('');
   }catch(e){ $('afaire').innerHTML = '<div class="vide">—</div>'; }
 
@@ -148,11 +148,11 @@ async function tableauBord(){
   try{
     const { data } = await sb.rpc('get_evaluations_recues');
     const l = $('recues');
-    if(!data || !data.length){ l.innerHTML = '<div class="vide">Aucun avis reçu pour l\'instant.</div>'; }
+    if(!data || !data.length){ l.innerHTML = '<div class="vide">'+cdT('Aucun avis reçu pour l\'instant.','No review received yet.')+'</div>'; }
     else l.innerHTML = data.map(a =>
       '<div class="avis"><div class="tete"><span class="st">'+etoilesTxt(a.note)+'</span>'+
-      (a.reviendrait===true?'<span class="tag oui">Retravaillerait ✓</span>':
-       a.reviendrait===false?'<span class="tag non">Ne reviendrait pas</span>':'')+'</div>'+
+      (a.reviendrait===true?'<span class="tag oui">'+cdT('Retravaillerait ✓','Would work again ✓')+'</span>':
+       a.reviendrait===false?'<span class="tag non">'+cdT('Ne reviendrait pas','Would not return')+'</span>':'')+'</div>'+
       (a.commentaire?'<div class="cite">« '+esc(a.commentaire)+' »</div>':'')+
       '<div class="meta">'+esc(a.numero_reference)+' · '+cdDate(a.date_contrat)+'</div></div>').join('');
   }catch(e){ $('recues').innerHTML = '<div class="vide">—</div>'; }
@@ -162,12 +162,12 @@ async function tableauBord(){
     try{
       const { data } = await sb.rpc('get_fiabilite_a_faire');
       const l = $('fiab-afaire');
-      if(!data || !data.length){ l.innerHTML = '<div class="vide">Rien à noter pour l\'instant.</div>'; }
+      if(!data || !data.length){ l.innerHTML = '<div class="vide">'+cdT('Rien à noter pour l\'instant.','Nothing to rate right now.')+'</div>'; }
       else l.innerHTML = data.map(c =>
         '<div class="carte"><div class="ligne-item"><div>'+
         '<span class="r">'+esc(c.numero_reference)+'</span>'+
         '<div class="m">'+cdDate(c.date_contrat)+' · '+esc(c.pharmacie_nom)+'</div></div>'+
-        '<a class="btn" href="/evaluations.html?fiabilite='+encodeURIComponent(c.numero_reference)+'">📋 Noter la précision</a>'+
+        '<a class="btn" href="/evaluations.html?fiabilite='+encodeURIComponent(c.numero_reference)+'">📋 '+cdT('Noter la précision','Rate accuracy')+'</a>'+
         '</div></div>').join('');
     }catch(e){ $('fiab-afaire').innerHTML = '<div class="vide">—</div>'; }
   } else {
@@ -178,12 +178,12 @@ async function tableauBord(){
       if(n && n.nb_avis){
         el.innerHTML = '<div class="carte"><div class="resume">'+
           '<div><div class="big">'+Number(n.note_moyenne).toFixed(2)+' <small>/5</small></div></div>'+
-          '<div class="kpi">Avis<b>'+n.nb_avis+'</b></div>'+
-          (n.taux_volume_conforme!=null ? '<div class="kpi">Volume conforme<b>'+n.taux_volume_conforme+' %</b></div>' : '')+
-          (n.taux_personnel_conforme!=null ? '<div class="kpi">Personnel conforme<b>'+n.taux_personnel_conforme+' %</b></div>' : '')+
+          '<div class="kpi">'+cdT('Avis','Reviews')+'<b>'+n.nb_avis+'</b></div>'+
+          (n.taux_volume_conforme!=null ? '<div class="kpi">'+cdT('Volume conforme','Volume as advertised')+'<b>'+n.taux_volume_conforme+' %</b></div>' : '')+
+          (n.taux_personnel_conforme!=null ? '<div class="kpi">'+cdT('Personnel conforme','Staffing as advertised')+'<b>'+n.taux_personnel_conforme+' %</b></div>' : '')+
           '</div></div>';
       } else {
-        el.innerHTML = '<div class="carte"><div class="vide">Pas encore assez d\'avis pour afficher un score (minimum 3).</div></div>';
+        el.innerHTML = '<div class="carte"><div class="vide">'+cdT('Pas encore assez d\'avis pour afficher un score (minimum 3).','Not enough reviews yet to show a score (minimum 3).')+'</div></div>';
       }
     }catch(e){ $('fiab-resume').innerHTML=''; }
   }
@@ -202,28 +202,28 @@ async function ouvrirFormulaire(ref){
     cible = (data||[]).find(c => c.numero_reference === ref);
   }catch(e){}
   if(!cible){
-    wrap.innerHTML = '<a class="retour" href="/evaluations.html">← Évaluations</a>'+
-      '<div class="carte"><div class="vide">Ce contrat est introuvable, n\'est pas encore évaluable, ou vous l\'avez déjà évalué.</div></div>';
+    wrap.innerHTML = '<a class="retour" href="/evaluations.html">← '+cdT('Évaluations','Reviews')+'</a>'+
+      '<div class="carte"><div class="vide">'+cdT('Ce contrat est introuvable, n\'est pas encore évaluable, ou vous l\'avez déjà évalué.','This contract is not found, not yet reviewable, or you have already reviewed it.')+'</div></div>';
     return;
   }
   contratSel = cible.contrat_id;
-  const quoi = cible.mon_role === 'pharmacie' ? 'ce pharmacien remplaçant' : 'cette pharmacie';
+  const quoi = cible.mon_role === 'pharmacie' ? cdT('ce pharmacien remplaçant','this replacement pharmacist') : cdT('cette pharmacie','this pharmacy');
   wrap.innerHTML =
-    '<a class="retour" href="/evaluations.html">← Toutes les évaluations</a>'+
-    '<h1>Évaluation</h1>'+
+    '<a class="retour" href="/evaluations.html">← '+cdT('Toutes les évaluations','All reviews')+'</a>'+
+    '<h1>'+cdT('Évaluation','Review')+'</h1>'+
     '<p class="sous">'+esc(cible.numero_reference)+' · '+cdDate(cible.date_contrat)+' · '+esc(cible.autre_nom)+'</p>'+
     '<div class="carte forme">'+
-      '<div class="avis-note">Comment avez-vous trouvé '+quoi+' ? (≈ 20 secondes)<br>'+
-      'Vos commentaires améliorent les jumelages. Confidentiels jusqu\'à l\'envoi des deux côtés (max. 72 h).<br>'+
-      'Restez respectueux — aucune information sur un patient.</div>'+
-      '<div class="champ"><div class="lbl">Note globale <b>*</b></div>'+
+      '<div class="avis-note">'+cdT('Comment avez-vous trouvé ','How did you find ')+quoi+cdT(' ? (≈ 20 secondes)','? (≈ 20 seconds)')+'<br>'+
+      cdT('Vos commentaires améliorent les jumelages. Confidentiels jusqu\'à l\'envoi des deux côtés (max. 72 h).','Your comments improve matching. Confidential until both sides submit (max. 72 h).')+'<br>'+
+      cdT('Restez respectueux — aucune information sur un patient.','Stay respectful — no patient information.')+'</div>'+
+      '<div class="champ"><div class="lbl">'+cdT('Note globale','Overall rating')+' <b>*</b></div>'+
         '<div class="etoiles" id="etoiles">'+[1,2,3,4,5].map(i=>'<span data-n="'+i+'">★</span>').join('')+'</div></div>'+
-      '<div class="champ"><div class="lbl">'+(cible.mon_role==='pharmacie'?'Réembaucheriez-vous cette personne ?':'Retravailleriez-vous à cet endroit ?')+' <b>*</b></div>'+
-        '<div class="ouinon" id="ouinon"><button data-v="oui">Oui</button><button data-v="non">Non</button></div></div>'+
-      '<div class="champ"><div class="lbl">Commentaire (optionnel)</div>'+
-        '<textarea id="comm" maxlength="1000" placeholder="Ce qui s\'est bien passé, ce qui pourrait être amélioré…"></textarea></div>'+
-      '<div class="forme-actions"><button class="btn" id="envoyer">Soumettre</button>'+
-        '<a class="btn ligne" href="/evaluations.html">Passer pour l\'instant</a></div>'+
+      '<div class="champ"><div class="lbl">'+(cible.mon_role==='pharmacie'?cdT('Réembaucheriez-vous cette personne ?','Would you rehire this person?'):cdT('Retravailleriez-vous à cet endroit ?','Would you work here again?'))+' <b>*</b></div>'+
+        '<div class="ouinon" id="ouinon"><button data-v="oui">'+cdT('Oui','Yes')+'</button><button data-v="non">'+cdT('Non','No')+'</button></div></div>'+
+      '<div class="champ"><div class="lbl">'+cdT('Commentaire (optionnel)','Comment (optional)')+'</div>'+
+        '<textarea id="comm" maxlength="1000" placeholder="'+cdT('Ce qui s\'est bien passé, ce qui pourrait être amélioré…','What went well, what could be improved…')+'"></textarea></div>'+
+      '<div class="forme-actions"><button class="btn" id="envoyer">'+cdT('Soumettre','Submit')+'</button>'+
+        '<a class="btn ligne" href="/evaluations.html">'+cdT('Passer pour l\'instant','Skip for now')+'</a></div>'+
       '<div class="msg" id="msg"></div>'+
     '</div>';
 
@@ -243,15 +243,15 @@ function peindreEtoiles(survol){
 }
 async function soumettre(){
   const msg = $('msg');
-  if(!noteSel){ msg.className='msg err'; msg.textContent='Choisissez une note (1 à 5 étoiles).'; return; }
-  if(reviendraitSel===null){ msg.className='msg err'; msg.textContent='Indiquez si vous reviendriez.'; return; }
-  $('envoyer').disabled = true; msg.className='msg'; msg.textContent='Envoi…';
+  if(!noteSel){ msg.className='msg err'; msg.textContent=cdT('Choisissez une note (1 à 5 étoiles).','Choose a rating (1 to 5 stars).'); return; }
+  if(reviendraitSel===null){ msg.className='msg err'; msg.textContent=cdT('Indiquez si vous reviendriez.','Indicate whether you would return.'); return; }
+  $('envoyer').disabled = true; msg.className='msg'; msg.textContent=cdT('Envoi…','Sending…');
   const { error } = await sb.rpc('soumettre_evaluation', {
     p_contrat: contratSel, p_note: noteSel, p_reviendrait: reviendraitSel,
     p_commentaire: ($('comm').value || '').trim()
   });
-  if(error){ $('envoyer').disabled=false; msg.className='msg err'; msg.textContent='Erreur : '+error.message; return; }
-  msg.className='msg ok'; msg.textContent='Merci ! Votre évaluation a été enregistrée.';
+  if(error){ $('envoyer').disabled=false; msg.className='msg err'; msg.textContent=cdT('Erreur : ','Error: ')+error.message; return; }
+  msg.className='msg ok'; msg.textContent=cdT('Merci ! Votre évaluation a été enregistrée.','Thank you! Your review has been saved.');
   setTimeout(()=>location.href='/evaluations.html', 1100);
 }
 
@@ -260,8 +260,8 @@ async function ouvrirFormulaireFiabilite(ref){
   const wrap = $('wrap');
   wrap.innerHTML = '<div class="vide">Chargement…</div>';
   if(profil.role !== 'pharmacien'){
-    wrap.innerHTML = '<a class="retour" href="/evaluations.html">← Évaluations</a>'+
-      '<div class="carte"><div class="vide">Seuls les pharmaciens remplaçants notent la précision d\'une annonce.</div></div>';
+    wrap.innerHTML = '<a class="retour" href="/evaluations.html">← '+cdT('Évaluations','Reviews')+'</a>'+
+      '<div class="carte"><div class="vide">'+cdT('Seuls les pharmaciens remplaçants notent la précision d\'une annonce.','Only replacement pharmacists rate a listing\'s accuracy.')+'</div></div>';
     return;
   }
   let cible = null;
@@ -270,28 +270,28 @@ async function ouvrirFormulaireFiabilite(ref){
     cible = (data||[]).find(c => c.numero_reference === ref);
   }catch(e){}
   if(!cible){
-    wrap.innerHTML = '<a class="retour" href="/evaluations.html">← Évaluations</a>'+
-      '<div class="carte"><div class="vide">Ce contrat est introuvable, pas encore complété, ou vous l\'avez déjà noté.</div></div>';
+    wrap.innerHTML = '<a class="retour" href="/evaluations.html">← '+cdT('Évaluations','Reviews')+'</a>'+
+      '<div class="carte"><div class="vide">'+cdT('Ce contrat est introuvable, pas encore complété, ou vous l\'avez déjà noté.','This contract is not found, not yet completed, or you have already rated it.')+'</div></div>';
     return;
   }
   contratFiabSel = cible.contrat_id;
   wrap.innerHTML =
-    '<a class="retour" href="/evaluations.html">← Toutes les évaluations</a>'+
-    '<h1>Précision de l\'annonce</h1>'+
+    '<a class="retour" href="/evaluations.html">← '+cdT('Toutes les évaluations','All reviews')+'</a>'+
+    '<h1>'+cdT('Précision de l\'annonce','Listing accuracy')+'</h1>'+
     '<p class="sous">'+esc(cible.numero_reference)+' · '+cdDate(cible.date_contrat)+' · '+esc(cible.pharmacie_nom)+'</p>'+
     '<div class="carte forme">'+
-      '<div class="avis-note">La réalité correspondait-elle à ce qui était annoncé ? (≈ 20 secondes)<br>'+
-      'Distinct de votre évaluation générale — ceci porte uniquement sur l\'exactitude de l\'annonce (volume, personnel).</div>'+
-      '<div class="champ"><div class="lbl">Précision globale de l\'annonce <b>*</b></div>'+
+      '<div class="avis-note">'+cdT('La réalité correspondait-elle à ce qui était annoncé ? (≈ 20 secondes)','Did reality match what was advertised? (≈ 20 seconds)')+'<br>'+
+      cdT('Distinct de votre évaluation générale — ceci porte uniquement sur l\'exactitude de l\'annonce (volume, personnel).','Separate from your general review — this is only about the listing\'s accuracy (volume, staffing).')+'</div>'+
+      '<div class="champ"><div class="lbl">'+cdT('Précision globale de l\'annonce','Overall listing accuracy')+' <b>*</b></div>'+
         '<div class="etoiles" id="etoiles-fiab">'+[1,2,3,4,5].map(i=>'<span data-n="'+i+'">★</span>').join('')+'</div></div>'+
-      '<div class="champ"><div class="lbl">Volume de Rx conforme à l\'annonce ?</div>'+
-        '<div class="ouinon" id="ouinon-volume"><button data-v="oui">Oui</button><button data-v="non">Non</button></div></div>'+
-      '<div class="champ"><div class="lbl">Personnel (ATP / seul(e)) conforme à l\'annonce ?</div>'+
-        '<div class="ouinon" id="ouinon-personnel"><button data-v="oui">Oui</button><button data-v="non">Non</button></div></div>'+
-      '<div class="champ"><div class="lbl">Commentaire (optionnel)</div>'+
-        '<textarea id="comm-fiab" maxlength="1000" placeholder="Ce qui différait de l\'annonce…"></textarea></div>'+
-      '<div class="forme-actions"><button class="btn" id="envoyer-fiab">Soumettre</button>'+
-        '<a class="btn ligne" href="/evaluations.html">Passer pour l\'instant</a></div>'+
+      '<div class="champ"><div class="lbl">'+cdT('Volume de Rx conforme à l\'annonce ?','Rx volume as advertised?')+'</div>'+
+        '<div class="ouinon" id="ouinon-volume"><button data-v="oui">'+cdT('Oui','Yes')+'</button><button data-v="non">'+cdT('Non','No')+'</button></div></div>'+
+      '<div class="champ"><div class="lbl">'+cdT('Personnel (ATP / seul(e)) conforme à l\'annonce ?','Staffing (technician / solo) as advertised?')+'</div>'+
+        '<div class="ouinon" id="ouinon-personnel"><button data-v="oui">'+cdT('Oui','Yes')+'</button><button data-v="non">'+cdT('Non','No')+'</button></div></div>'+
+      '<div class="champ"><div class="lbl">'+cdT('Commentaire (optionnel)','Comment (optional)')+'</div>'+
+        '<textarea id="comm-fiab" maxlength="1000" placeholder="'+cdT('Ce qui différait de l\'annonce…','What differed from the listing…')+'"></textarea></div>'+
+      '<div class="forme-actions"><button class="btn" id="envoyer-fiab">'+cdT('Soumettre','Submit')+'</button>'+
+        '<a class="btn ligne" href="/evaluations.html">'+cdT('Passer pour l\'instant','Skip for now')+'</a></div>'+
       '<div class="msg" id="msg-fiab"></div>'+
     '</div>';
 
@@ -314,15 +314,15 @@ function peindreEtoilesFiab(survol){
 }
 async function soumettreFiabilite(){
   const msg = $('msg-fiab');
-  if(!notePrecisionSel){ msg.className='msg err'; msg.textContent='Choisissez une note (1 à 5 étoiles).'; return; }
-  $('envoyer-fiab').disabled = true; msg.className='msg'; msg.textContent='Envoi…';
+  if(!notePrecisionSel){ msg.className='msg err'; msg.textContent=cdT('Choisissez une note (1 à 5 étoiles).','Choose a rating (1 to 5 stars).'); return; }
+  $('envoyer-fiab').disabled = true; msg.className='msg'; msg.textContent=cdT('Envoi…','Sending…');
   const { error } = await sb.rpc('soumettre_fiabilite', {
     p_contrat: contratFiabSel, p_note_precision: notePrecisionSel,
     p_volume_conforme: volumeSel, p_personnel_conforme: personnelSel,
     p_commentaire: ($('comm-fiab').value || '').trim()
   });
-  if(error){ $('envoyer-fiab').disabled=false; msg.className='msg err'; msg.textContent='Erreur : '+error.message; return; }
-  msg.className='msg ok'; msg.textContent='Merci ! Votre avis a été enregistré.';
+  if(error){ $('envoyer-fiab').disabled=false; msg.className='msg err'; msg.textContent=cdT('Erreur : ','Error: ')+error.message; return; }
+  msg.className='msg ok'; msg.textContent=cdT('Merci ! Votre avis a été enregistré.','Thank you! Your feedback has been saved.');
   setTimeout(()=>location.href='/evaluations.html', 1100);
 }
 </script>
