@@ -17,7 +17,7 @@ background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),line
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
 .croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
 .topbar .droite{display:flex;align-items:center;gap:10px;color:var(--sourd);min-width:0;flex-wrap:nowrap}
-.wrap{max-width:640px;margin:0 auto;padding:36px 18px 70px}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 24px 70px}
 h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
 .sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:22px}
 .carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:24px;position:relative;margin-bottom:18px}
@@ -58,6 +58,26 @@ a.lien{color:var(--vert-vif)}
 #profil-onglets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
 #profil-onglets button{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;border-radius:99px;border:1px solid var(--ligne2);background:var(--panneau);color:var(--sourd);cursor:pointer}
 #profil-onglets button.actif{background:var(--vert);border-color:var(--vert);color:#fff}
+
+/* ---- Mise en page pleine largeur : colonne identité + contenu ---- */
+.pf-layout{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}
+@media(max-width:860px){.pf-layout{grid-template-columns:1fr}}
+.pf-aside{position:sticky;top:74px;display:flex;flex-direction:column;gap:16px}
+@media(max-width:860px){.pf-aside{position:static}}
+.pf-card{background:var(--panneau);border:1px solid var(--ligne);border-radius:14px;padding:22px}
+.pf-ident{text-align:center}
+.pf-photo{width:92px;height:92px;border-radius:50%;background:var(--panneau2);border:1px solid var(--ligne2);display:grid;place-items:center;margin:0 auto 12px;color:var(--vert);font-family:'Inter',sans-serif;font-weight:700;font-size:28px;overflow:hidden}
+.pf-photo img{width:100%;height:100%;object-fit:cover}
+.pf-nom{font-family:'Inter',sans-serif;font-weight:600;font-size:18px;line-height:1.25}
+.pf-role{display:inline-block;margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--vert);background:var(--panneau2);border:1px solid var(--ligne2);border-radius:20px;padding:3px 12px}
+.pf-note{margin-top:12px;color:var(--jaune);font-size:14px;font-weight:600}
+.pf-note small{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:400}
+.pf-mini{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pf-mini .k{background:var(--panneau2);border-radius:10px;padding:11px 8px}
+.pf-mini .k small{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--sourd);margin-bottom:4px}
+.pf-mini .k b{font-family:'Inter',sans-serif;font-size:18px;font-weight:700}
+.pf-main .carte{border-radius:14px}
+#btn-save{width:auto;min-width:220px;display:block;margin-left:auto;padding:13px 30px}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/design.css">
@@ -77,6 +97,18 @@ a.lien{color:var(--vert-vif)}
 <div class="wrap">
   <h1>Mon profil</h1>
   <p class="sous" id="sous">—</p>
+
+  <div class="pf-layout">
+  <aside class="pf-aside" id="pf-aside">
+    <div class="pf-card pf-ident">
+      <div class="pf-photo" id="pf-photo"></div>
+      <div class="pf-nom" id="pf-nom">—</div>
+      <div class="pf-role" id="pf-role"></div>
+      <div class="pf-note" id="pf-note"></div>
+      <div class="pf-mini" id="pf-mini"></div>
+    </div>
+  </aside>
+  <div class="pf-main">
 
   <div id="profil-onglets" role="tablist">
     <button type="button" data-onglet="infos" class="actif">Mes informations</button>
@@ -333,6 +365,8 @@ a.lien{color:var(--vert-vif)}
       <button class="btn" type="submit" id="btn-save">Enregistrer</button>
       <div class="msg" id="msg"></div>
     </form>
+  </div>
+  </div>
   </div>
 </div>
 
@@ -723,6 +757,40 @@ function rendrePlateaux(){
 /* case "offrir l'hébergement par défaut" — n'a de sens que si une adresse
    est renseignée ; même logique de désactivation-avec-explication que
    espace-pharmacie.html, appliquée ici en direct (avant même l'enregistrement). */
+/* ---- Carte d'identité (colonne de gauche) ---- */
+function initialesAside(nom){
+  const m=String(nom||'').trim().split(/\s+/).filter(Boolean);
+  if(!m.length) return '?';
+  if(m.length===1) return m[0].slice(0,2).toUpperCase();
+  return (m[0][0]+m[1][0]).toUpperCase();
+}
+async function remplirAside(){
+  if(!$('pf-nom')) return;
+  const nom = profil.role==='pharmacie'
+    ? (profil.nom_pharmacie || 'Ma pharmacie')
+    : (((profil.prenom||'')+' '+(profil.nom||'')).trim() || 'Mon profil');
+  $('pf-nom').textContent = nom;
+  $('pf-role').textContent = profil.role==='pharmacie' ? 'Pharmacie'
+    : profil.role==='admin' ? 'Administrateur'
+    : (profil.profession==='atp' ? 'ATP remplaçant(e)' : 'Pharmacien(ne)');
+  const ph = $('pf-photo');
+  if(profil.photo_url){ ph.innerHTML = '<img src="'+profil.photo_url+'" alt="">'; }
+  else { ph.textContent = initialesAside(nom); }
+  try{
+    const r = await sb.rpc('get_note_profil', { p_profil: profil.id });
+    const n = (r.data && r.data[0]) || null;
+    if(n && n.nombre) $('pf-note').innerHTML = '★ '+Number(n.moyenne).toFixed(1)+' <small>('+n.nombre+' avis)</small>';
+  }catch(e){}
+  if(profil.role==='pharmacien'){
+    try{
+      const r = await sb.rpc('get_stats_pharmacien', { p_profil: profil.id });
+      const s = (r.data && r.data[0]) || null;
+      if(s) $('pf-mini').innerHTML =
+        '<div class="k"><small>Mandats</small><b>'+(s.completes||0)+'</b></div>'+
+        '<div class="k"><small>Complétion</small><b>'+(s.taux_completion!=null?s.taux_completion:0)+' %</b></div>';
+    }catch(e){}
+  }
+}
 function majEtatHebergementDefaut(){
   const a = $('hebergement_adresse').value.trim();
   const cb = $('hebergement_offert_par_defaut');
@@ -744,6 +812,7 @@ function majEtatHebergementDefaut(){
   $('sous').textContent = (profil.role==='pharmacie' ? 'PHARMACIE' : profil.role==='admin' ? 'ADMINISTRATEUR' : profil.profession==='atp' ? 'ATP REMPLAÇANT(E)' : 'PHARMACIEN(NE) REMPLAÇANT(E)') + ' · ' + (profil.courriel||'');
 
   if(profil.role !== 'admin') rendreMaNote();
+  remplirAside();
 
   /* sliders logiciels 0-100% (pharmacien) + select logiciel (pharmacie) */
   $('sliders-logiciels').innerHTML = LOGICIELS.map((l,i)=>
