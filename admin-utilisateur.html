@@ -233,6 +233,26 @@ function construireActions(d){
   } else if(d.statut_verification === 'suspendu'){
     z.append(bouton('Réactiver','oui', ()=>appliquer('verifie', false)));
   }
+
+  /* ---- Activation du compte (désactivation libre-service, sql/49/64) ----
+     Distinct de la vérification ci-dessus : un usager peut désactiver son
+     propre compte depuis Paramètres ; seul l'admin peut le réactiver. */
+  async function majActivation(reactiver){
+    const verbe = reactiver ? 'RÉACTIVER' : 'DÉSACTIVER';
+    if(!confirm(verbe + ' le compte de ' + nomDe(d) + ' ?')) return;
+    const { error } = await sb.rpc(reactiver ? 'admin_reactiver_compte' : 'admin_desactiver_compte', { p_profil: d.id });
+    if(error){ cdToast('Échec : ' + error.message, false); return; }
+    cdToast(nomDe(d) + (reactiver ? ' réactivé ✓' : ' désactivé ✓'), true);
+    charger();
+  }
+  if(d.compte_desactive){
+    const info = document.createElement('span');
+    info.style.cssText = 'color:var(--rouge);font-weight:600;margin-right:auto';
+    info.textContent = 'Compte désactivé' + (d.compte_desactive_le ? ' le ' + new Date(d.compte_desactive_le).toLocaleDateString('fr-CA') : '');
+    z.append(info, bouton('Réactiver le compte','oui', ()=>majActivation(true)));
+  } else {
+    z.append(bouton('Désactiver le compte','non', ()=>majActivation(false)));
+  }
 }
 
 async function chargerHistoriqueContrats(){
