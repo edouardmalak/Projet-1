@@ -27,6 +27,9 @@
 -- À exécuter dans Supabase → SQL Editor.
 -- =====================================================================
 
+-- La version LIVE retourne void ; on ne peut pas changer le type de retour
+-- avec CREATE OR REPLACE (erreur 42P13). On DROP d'abord.
+drop function if exists public.accepter_candidature_auto(uuid);
 create or replace function public.accepter_candidature_auto(p_candidature uuid)
 returns boolean
 language plpgsql security definer set search_path = public
