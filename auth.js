@@ -806,6 +806,13 @@ window.cdT = function(fr, en){
     document.querySelectorAll('[data-fr]').forEach(el=>{
       if(el.dataset[l] != null) el.innerHTML = el.dataset[l];
     });
+    /* placeholders (data-fr-ph / data-en-ph) et infobulles (data-fr-title / data-en-title) */
+    document.querySelectorAll('[data-fr-ph]').forEach(el=>{
+      const v = el.dataset[l==='en' ? 'enPh' : 'frPh']; if(v != null) el.placeholder = v;
+    });
+    document.querySelectorAll('[data-fr-title]').forEach(el=>{
+      const v = el.dataset[l==='en' ? 'enTitle' : 'frTitle']; if(v != null) el.title = v;
+    });
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', poser);
   else poser();

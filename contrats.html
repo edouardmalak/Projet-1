@@ -183,84 +183,84 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
 </div>
 
 <div class="wrap">
-  <h1>Contrats disponibles</h1>
+  <h1 data-fr="Contrats disponibles" data-en="Available contracts">Contrats disponibles</h1>
   <p class="sous" id="sous">Réseau C-Direct · 0 % commission</p>
   <div id="banniere-messages"></div>
 
   <div class="onboard" id="onboard">
     <div class="ob-tete">
-      <div class="ob-titre">Bienvenue — 3 étapes pour recevoir les bons contrats</div>
-      <button class="ob-fermer" id="ob-fermer" title="Masquer">✕</button>
+      <div class="ob-titre" data-fr="Bienvenue — 3 étapes pour recevoir les bons contrats" data-en="Welcome — 3 steps to receive the right contracts">Bienvenue — 3 étapes pour recevoir les bons contrats</div>
+      <button class="ob-fermer" id="ob-fermer" data-fr="Masquer" data-en="Hide" title="Masquer">✕</button>
     </div>
     <div id="ob-liste"></div>
   </div>
 
   <div class="vues no-print">
-    <button id="v-liste" class="actif" type="button">Liste</button>
-    <button id="v-calendrier" type="button">Calendrier</button>
+    <button id="v-liste" class="actif" type="button" data-fr="Liste" data-en="List">Liste</button>
+    <button id="v-calendrier" type="button" data-fr="Calendrier" data-en="Calendar">Calendrier</button>
     <button id="v-maps" type="button">Maps</button>
   </div>
   <div class="vues no-print" id="vues-fav" style="margin-left:10px">
-    <button id="v-tous" class="actif" type="button">Tous</button>
-    <button id="v-sauvegardes" type="button">Sauvegardés<span class="cpt-sauv" id="n-sauv"></span></button>
+    <button id="v-tous" class="actif" type="button" data-fr="Tous" data-en="All">Tous</button>
+    <button id="v-sauvegardes" type="button"><span data-fr="Sauvegardés" data-en="Saved">Sauvegardés</span><span class="cpt-sauv" id="n-sauv"></span></button>
   </div>
 
   <div class="filtres no-print" id="filtres">
     <select class="filtre-champ" id="f-ville" style="flex:1 1 130px"><option value="">Ville</option></select>
     <select class="filtre-champ" id="f-tarif" style="flex:1 1 120px"><option value="">Tarif</option></select>
     <select class="filtre-champ" id="f-logiciel" style="flex:1 1 120px"><option value="">Logiciel</option></select>
-    <input class="filtre-champ" id="f-dist" type="number" min="0" step="10" placeholder="Distance max km" style="flex:1 1 130px">
+    <input class="filtre-champ" id="f-dist" type="number" min="0" step="10" placeholder="Distance max km" data-fr-ph="Distance max km" data-en-ph="Max distance km" style="flex:1 1 130px">
     <select class="filtre-champ" id="f-mode-date" style="flex:1 1 150px">
-      <option value="tous">Toutes les dates</option>
-      <option value="jour">Jour précis</option>
-      <option value="mois">Mois</option>
-      <option value="jsem">Jour de semaine</option>
+      <option value="tous" data-fr="Toutes les dates" data-en="All dates">Toutes les dates</option>
+      <option value="jour" data-fr="Jour précis" data-en="Specific day">Jour précis</option>
+      <option value="mois" data-fr="Mois" data-en="Month">Mois</option>
+      <option value="jsem" data-fr="Jour de semaine" data-en="Weekday">Jour de semaine</option>
     </select>
     <input class="filtre-champ" id="f-jour" type="date" style="display:none;flex:1 1 140px">
     <input class="filtre-champ" id="f-mois" type="month" style="display:none;flex:1 1 140px">
     <select class="filtre-champ" id="f-jsem" style="display:none;flex:1 1 130px">
-      <option value="1">Lundi</option>
-      <option value="2">Mardi</option>
-      <option value="3">Mercredi</option>
-      <option value="4">Jeudi</option>
-      <option value="5">Vendredi</option>
-      <option value="6">Samedi</option>
-      <option value="0">Dimanche</option>
+      <option value="1" data-fr="Lundi" data-en="Monday">Lundi</option>
+      <option value="2" data-fr="Mardi" data-en="Tuesday">Mardi</option>
+      <option value="3" data-fr="Mercredi" data-en="Wednesday">Mercredi</option>
+      <option value="4" data-fr="Jeudi" data-en="Thursday">Jeudi</option>
+      <option value="5" data-fr="Vendredi" data-en="Friday">Vendredi</option>
+      <option value="6" data-fr="Samedi" data-en="Saturday">Samedi</option>
+      <option value="0" data-fr="Dimanche" data-en="Sunday">Dimanche</option>
     </select>
     <select class="filtre-champ" id="f-tri" style="flex:1 1 130px">
-      <option value="compat">Compatibilité ↓</option>
-      <option value="date">Plus récents</option>
-      <option value="date_contrat">Date du contrat</option>
-      <option value="tarif">Tarif ↓</option>
-      <option value="revenu">Revenu estimé ↓</option>
-      <option value="distance">Distance ↑</option>
+      <option value="compat" data-fr="Compatibilité ↓" data-en="Compatibility ↓">Compatibilité ↓</option>
+      <option value="date" data-fr="Plus récents" data-en="Most recent">Plus récents</option>
+      <option value="date_contrat" data-fr="Date du contrat" data-en="Contract date">Date du contrat</option>
+      <option value="tarif" data-fr="Tarif ↓" data-en="Rate ↓">Tarif ↓</option>
+      <option value="revenu" data-fr="Revenu estimé ↓" data-en="Estimated income ↓">Revenu estimé ↓</option>
+      <option value="distance" data-fr="Distance ↑" data-en="Distance ↑">Distance ↑</option>
     </select>
-    <button class="filtre-reset" id="f-reset" type="button">Réinitialiser</button>
+    <button class="filtre-reset" id="f-reset" type="button" data-fr="Réinitialiser" data-en="Reset">Réinitialiser</button>
   </div>
 
   <!-- VUE LISTE (tableau — comportement inchangé) -->
   <div id="vue-liste">
     <div class="carte">
-      <div class="chargement" id="chargement"><i></i>Interrogation du réseau…</div>
+      <div class="chargement" id="chargement"><i></i><span data-fr="Interrogation du réseau…" data-en="Querying the network…">Interrogation du réseau…</span></div>
       <table id="tableau" style="display:none">
         <thead>
           <tr>
-            <th class="cache-mobile">Sauvegarder</th>
-            <th>Référence</th>
-            <th>Date</th>
-            <th>Heures</th>
-            <th class="cache-mobile">Ville</th>
-            <th class="cache-mobile">Logiciel</th>
-            <th>Tarif</th>
-            <th>Statut</th>
+            <th class="cache-mobile" data-fr="Sauvegarder" data-en="Save">Sauvegarder</th>
+            <th data-fr="Référence" data-en="Reference">Référence</th>
+            <th data-fr="Date" data-en="Date">Date</th>
+            <th data-fr="Heures" data-en="Hours">Heures</th>
+            <th class="cache-mobile" data-fr="Ville" data-en="City">Ville</th>
+            <th class="cache-mobile" data-fr="Logiciel" data-en="Software">Logiciel</th>
+            <th data-fr="Tarif" data-en="Rate">Tarif</th>
+            <th data-fr="Statut" data-en="Status">Statut</th>
           </tr>
         </thead>
         <tbody id="lignes"></tbody>
       </table>
       <div class="vide" id="vide" style="display:none">
         <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ligne2)" stroke-width="1.6" style="margin-bottom:12px"><circle cx="12" cy="12" r="9"/><path d="M8.5 15c1-1 5-1 7 0" stroke-linecap="round"/><circle cx="9" cy="10" r="1" fill="var(--ligne2)" stroke="none"/><circle cx="15" cy="10" r="1" fill="var(--ligne2)" stroke="none"/></svg>
-        <b>AUCUN CONTRAT DISPONIBLE</b>
-        Les nouveaux contrats apparaissent ici dès leur publication. Activez les alertes SMS dans votre profil pour être prévenu·e.
+        <b data-fr="AUCUN CONTRAT DISPONIBLE" data-en="NO CONTRACT AVAILABLE">AUCUN CONTRAT DISPONIBLE</b>
+        <span data-fr="Les nouveaux contrats apparaissent ici dès leur publication. Activez les alertes SMS dans votre profil pour être prévenu·e." data-en="New contracts appear here as soon as they're posted. Enable SMS alerts in your profile to be notified.">Les nouveaux contrats apparaissent ici dès leur publication. Activez les alertes SMS dans votre profil pour être prévenu·e.</span>
       </div>
     </div>
   </div>
@@ -269,11 +269,11 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
   <div id="vue-calendrier" style="display:none">
     <div class="entete-outils no-print">
       <div class="vues" style="margin:0">
-        <button id="vc-mois" class="actif" type="button">Mois</button>
-        <button id="vc-annee" type="button">Année</button>
+        <button id="vc-mois" class="actif" type="button" data-fr="Mois" data-en="Month">Mois</button>
+        <button id="vc-annee" type="button" data-fr="Année" data-en="Year">Année</button>
       </div>
       <div class="nav-mois" id="nav-mois-c">
-        <button class="bauj" id="bc-auj" type="button">Aujourd'hui</button>
+        <button class="bauj" id="bc-auj" type="button" data-fr="Aujourd'hui" data-en="Today">Aujourd'hui</button>
         <button class="bnav" id="bc-prev" type="button">‹</button>
         <div class="cal-mois" id="mois-lbl-c" style="min-width:150px;text-align:center">—</div>
         <button class="bnav" id="bc-next" type="button">›</button>
@@ -284,8 +284,8 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
         <button class="bnav" id="bac-next" type="button">›</button>
       </div>
       <div class="imprimer">
-        <button class="bimp" id="b-imp-cal" type="button">Imprimer le calendrier</button>
-        <button class="bimp" id="b-imp-liste-c" type="button">Imprimer la liste</button>
+        <button class="bimp" id="b-imp-cal" type="button" data-fr="Imprimer le calendrier" data-en="Print calendar">Imprimer le calendrier</button>
+        <button class="bimp" id="b-imp-liste-c" type="button" data-fr="Imprimer la liste" data-en="Print list">Imprimer la liste</button>
       </div>
     </div>
 
@@ -295,21 +295,21 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
           <div class="grille-jours" id="jours-tete-c"></div>
           <div class="grille-jours" id="grille-c" style="margin-top:7px"></div>
           <div class="legende">
-            <span><i class="pnt ouvert"></i> Disponible</span>
-            <span><i class="pnt postule"></i> Quart demandé</span>
+            <span><i class="pnt ouvert"></i> <span data-fr="Disponible" data-en="Available">Disponible</span></span>
+            <span><i class="pnt postule"></i> <span data-fr="Quart demandé" data-en="Shift requested">Quart demandé</span></span>
           </div>
         </div>
         <div class="carte cal-carte" id="cvue-annee" style="display:none">
           <div class="grille-annee" id="grille-annee-c"></div>
           <div class="legende" style="margin-top:18px">
-            <span><i class="pnt ouvert"></i> Disponible</span>
-            <span><i class="pnt postule"></i> Quart demandé</span>
+            <span><i class="pnt ouvert"></i> <span data-fr="Disponible" data-en="Available">Disponible</span></span>
+            <span><i class="pnt postule"></i> <span data-fr="Quart demandé" data-en="Shift requested">Quart demandé</span></span>
           </div>
         </div>
       </div>
       <div class="col-contrats">
         <div class="carte cal-carte">
-          <div class="sec">Contrats<small id="n-contrats-c"></small></div>
+          <div class="sec"><span data-fr="Contrats" data-en="Contracts">Contrats</span><small id="n-contrats-c"></small></div>
           <div class="liste-scroll" id="liste-c"></div>
         </div>
       </div>
@@ -321,7 +321,7 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260809b"></script>
+<script src="/auth.js?v=20260809c"></script>
 <script src="/assistant.js?v=20260723b" defer></script>
 <script src="/fsa-qc.js"></script>
 <script src="/trajet.js"></script>
@@ -332,16 +332,18 @@ let profil = null, contrats = [], regles = null;
 
 /* icône « marque-page » (sauvegarder), remplace l'ancien cœur — plus clair : sauvegarder ≠ aimer */
 const CD_ICONE_SAUV = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10a1 1 0 0 1 1 1v16l-6-4-6 4V4a1 1 0 0 1 1-1z"/></svg>';
-function cdTitreSauv(actif){ return actif ? 'Retirer des sauvegardés' : 'Sauvegarder'; }
+function cdTitreSauv(actif){ return actif ? cdT('Retirer des sauvegardés','Remove from saved') : cdT('Sauvegarder','Save'); }
 
 /* ================= vue Calendrier — état + utilitaires ================= */
 let vuePrincipale = 'liste';        // 'liste' | 'calendrier'
 let vueCal = 'mois';                // 'mois' | 'annee'
 let curseurCal = new Date();        // mois affiché (vue mois du calendrier)
 let anneeCalCourante = new Date().getFullYear();
-const MOIS_C = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-const JOURS_C = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
-const JOURS_MINI_C = ['L','M','M','J','V','S','D'];
+const MOIS_C = cdLang()==='en'
+  ? ['january','february','march','april','may','june','july','august','september','october','november','december']
+  : ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const JOURS_C = cdLang()==='en' ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] : ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const JOURS_MINI_C = cdLang()==='en' ? ['M','T','W','T','F','S','S'] : ['L','M','M','J','V','S','D'];
 function isoC(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function dateCourteC(v){ const d=new Date(String(v).slice(0,10)+'T12:00:00'); return String(d.getDate()).padStart(2,'0')+' '+MOIS_C[d.getMonth()].slice(0,3); }
 function jourSemaineFiltre(v){ return new Date(String(v).slice(0,10)+'T12:00:00').getDay(); } // 0=dim..6=sam
@@ -384,13 +386,13 @@ function calcMatch(k){
   let score = 60; const raisons = [];
   const logs = profil.logiciels || [];
   if(k.logiciel){
-    if(logs.includes(k.logiciel)){ score += 25; raisons.push('logiciel connu'); }
-    else { score -= 15; raisons.push('logiciel non maîtrisé'); }
+    if(logs.includes(k.logiciel)){ score += 25; raisons.push(cdT('logiciel connu','known software')); }
+    else { score -= 15; raisons.push(cdT('logiciel non maîtrisé','software not mastered')); }
   }
   const dist = k._distanceKm;
   const rayon = profil.rayon_deplacement_km;
   if(dist != null){
-    if(rayon){ if(dist <= rayon){ score += 15; raisons.push(dist+' km · dans votre rayon'); } else { score -= 25; raisons.push(dist+' km · hors rayon'); } }
+    if(rayon){ if(dist <= rayon){ score += 15; raisons.push(dist+' km · '+cdT('dans votre rayon','within your radius')); } else { score -= 25; raisons.push(dist+' km · '+cdT('hors rayon','out of radius')); } }
     else { if(dist <= 50) score += 15; else if(dist > 100) score -= 15; raisons.push(dist+' km'); }
   }
   score = Math.max(0, Math.min(100, score));
@@ -471,9 +473,9 @@ function remplirFiltresDynamiques(){
     });
     if(valeurs.some(v=>String(v)===valActuelle)) sel.value = valActuelle;
   };
-  remplir('f-ville', 'Ville', villes);
-  remplir('f-tarif', 'Tarif', tarifs, t=>cdArgent(t)+'/h');
-  remplir('f-logiciel', 'Logiciel', logiciels);
+  remplir('f-ville', cdT('Ville','City'), villes);
+  remplir('f-tarif', cdT('Tarif','Rate'), tarifs, t=>cdArgent(t)+'/h');
+  remplir('f-logiciel', cdT('Logiciel','Software'), logiciels);
 }
 
 /* filtrage + tri partagés par les deux vues (Liste et Calendrier) */
@@ -523,8 +525,8 @@ function dessinerTableau(list){
   const tb = $('lignes'); tb.innerHTML='';
   if(!list.length){
     $('tableau').style.display='none'; $('vide').style.display='block';
-    $('vide').querySelector('b').textContent = contrats.length ? 'AUCUN RÉSULTAT' : 'AUCUN CONTRAT DISPONIBLE';
-    $('sous').textContent = '0 contrat · 0 % commission';
+    $('vide').querySelector('b').textContent = contrats.length ? cdT('AUCUN RÉSULTAT','NO RESULTS') : cdT('AUCUN CONTRAT DISPONIBLE','NO CONTRACT AVAILABLE');
+    $('sous').textContent = cdT('0 contrat · 0 % commission','0 contract · 0% commission');
     return;
   }
   $('vide').style.display='none'; $('tableau').style.display='';
@@ -541,7 +543,7 @@ function dessinerTableau(list){
       const morceaux = [];
       if(k._est) morceaux.push('≈ ' + cdArgent(k._est.total).replace(',00',''));
       if(k._distanceKm!=null) morceaux.push(k._distanceKm + ' km');
-      if(k.hebergement_offerte) morceaux.push('🏠 Hébergement offert');
+      if(k.hebergement_offerte) morceaux.push('🏠 '+cdT('Hébergement offert','Lodging offered'));
       s.textContent = morceaux.join(' · ');
       tarifTd.appendChild(s);
     }
@@ -550,27 +552,27 @@ function dessinerTableau(list){
     refTd.textContent = k.numero_reference;
     if(k._match){
       const c = document.createElement('div'); c.className = 'match ' + k._match.tier;
-      c.textContent = k._match.pct + '% compatible';
+      c.textContent = k._match.pct + '% ' + cdT('compatible','match');
       if(k._match.raison) c.title = k._match.raison;
       refTd.appendChild(c);
     }
     if(k.fiabilite_note != null){
       const fb = document.createElement('div');
       fb.style.cssText = 'margin-top:3px;color:var(--vert-vif);font-size:10.5px;font-family:\'IBM Plex Mono\',monospace';
-      fb.textContent = '📋 ' + Number(k.fiabilite_note).toFixed(1) + '/5 fiabilité';
+      fb.textContent = '📋 ' + Number(k.fiabilite_note).toFixed(1) + '/5 ' + cdT('fiabilité','reliability');
       refTd.appendChild(fb);
     }
     if(k.acces_prioritaire_actif){
       const pa = document.createElement('div');
       pa.style.cssText = 'margin-top:3px;color:var(--jaune);font-size:10.5px;font-family:\'IBM Plex Mono\',monospace;font-weight:600';
-      pa.textContent = '🔑 Accès prioritaire · pharmacie de confiance';
+      pa.textContent = '🔑 ' + cdT('Accès prioritaire · pharmacie de confiance','Priority access · trusted pharmacy');
       refTd.appendChild(pa);
     }
     /* cellule statut (sans coeur — déplacé dans sa propre colonne, voir sauvTd) */
     const statutTd = document.createElement('td');
     statutTd.innerHTML = k.deja_postule
-      ? '<span class="badge postule">Quart demandé</span>'
-      : '<span class="badge ouvert">Disponible</span>';
+      ? '<span class="badge postule">'+cdT('Quart demandé','Shift requested')+'</span>'
+      : '<span class="badge ouvert">'+cdT('Disponible','Available')+'</span>';
     /* cellule Sauvegarder — colonne dédiée, juste avant la référence.
        Cachée entièrement pour un quart déjà demandé (rien à sauvegarder). */
     const sauvTd = document.createElement('td'); sauvTd.className = 'cache-mobile';
@@ -587,8 +589,8 @@ function dessinerTableau(list){
     dateTd.textContent = cdDate(k.date_contrat);
     if(estIndisponible(k.date_contrat)){
       tr.classList.add('indispo-ligne');
-      const flag = document.createElement('div'); flag.className = 'flag-indispo'; flag.textContent = 'Indisponible';
-      flag.title = 'Vous vous êtes marqué indisponible ce jour dans Mes disponibilités';
+      const flag = document.createElement('div'); flag.className = 'flag-indispo'; flag.textContent = cdT('Indisponible','Unavailable');
+      flag.title = cdT('Vous vous êtes marqué indisponible ce jour dans Mes disponibilités','You marked yourself unavailable that day in My availability');
       dateTd.appendChild(flag);
     }
     /* fonction Trajet — pastille météo aller-retour (~7 jours), voir /trajet.js */
@@ -603,8 +605,8 @@ function dessinerTableau(list){
     const rxVol = resoudreRxVolume(k);
     if(rxVol!=null) cond.push('≈'+rxVol+' Rx');
     if(k.atp_presente) cond.push('ATP');
-    if(k.seul_pharmacien) cond.push('Seul(e)');
-    if(k.has_automation) cond.push('Robot');
+    if(k.seul_pharmacien) cond.push(cdT('Seul(e)','Solo'));
+    if(k.has_automation) cond.push(cdT('Robot','Robot'));
     if(cond.length){
       const s = document.createElement('div');
       s.style.cssText = 'font-weight:400;color:var(--sourd);font-size:11px;margin-top:2px';
@@ -623,8 +625,8 @@ function dessinerTableau(list){
     );
     tb.appendChild(tr);
   });
-  $('sous').textContent = list.length + ' contrat' + (list.length>1?'s':'') +
-    (list.length!==contrats.length ? ' / ' + contrats.length : '') + ' · 0 % commission';
+  $('sous').textContent = list.length + ' ' + cdT('contrat'+(list.length>1?'s':''),'contract'+(list.length>1?'s':'')) +
+    (list.length!==contrats.length ? ' / ' + contrats.length : '') + ' · ' + cdT('0 % commission','0% commission');
 }
 
 /* ================= vue Calendrier ================= */
@@ -687,11 +689,11 @@ function dessinerMoisCal(parJour){
        Pas de ✓/$ pour l'instant (demanderait les mandats confirmés/complétés,
        données que cette vue n'a pas). */
     if(indispo){
-      const x=document.createElement('div'); x.className='gros indispo'; x.textContent='✕'; x.title='Indisponible';
+      const x=document.createElement('div'); x.className='gros indispo'; x.textContent='✕'; x.title=cdT('Indisponible','Unavailable');
       cell.appendChild(x);
     } else if(liste.length){
       const c=document.createElement('div'); c.className='gros compte'; c.textContent=liste.length;
-      c.title=liste.length+' contrat'+(liste.length>1?'s':'')+' ouvert'+(liste.length>1?'s':'');
+      c.title=liste.length+' '+cdT('contrat'+(liste.length>1?'s':'')+' ouvert'+(liste.length>1?'s':''),'open contract'+(liste.length>1?'s':''));
       cell.appendChild(c);
     }
     grille.appendChild(cell);
@@ -733,20 +735,20 @@ function miniMoisCal(an, mo, ajd, parJour){
 function dessinerListeCal(list){
   $('n-contrats-c').textContent = list.length ? '('+list.length+')' : '';
   const zone = $('liste-c');
-  if(!list.length){ zone.innerHTML = '<div class="vide" style="padding:20px 4px">Aucun contrat ouvert pour l\'instant.</div>'; return; }
+  if(!list.length){ zone.innerHTML = '<div class="vide" style="padding:20px 4px">'+cdT('Aucun contrat ouvert pour l\'instant.','No open contract yet.')+'</div>'; return; }
   zone.innerHTML = list.map(k=>{
     const heures = k.heure_debut ? (String(k.heure_debut).slice(0,5)+'–'+String(k.heure_fin||'').slice(0,5)) : '';
     const tarif  = k.tarif_horaire!=null ? cdArgent(k.tarif_horaire)+'/h' : '';
     const dist   = k._distanceKm!=null ? k._distanceKm+' km' : '';
-    const heb    = k.hebergement_offerte ? '🏠 Hébergement offert' : '';
-    const prio   = k.acces_prioritaire_actif ? '🔑 Accès prioritaire' : '';
+    const heb    = k.hebergement_offerte ? '🏠 '+cdT('Hébergement offert','Lodging offered') : '';
+    const prio   = k.acces_prioritaire_actif ? '🔑 '+cdT('Accès prioritaire','Priority access') : '';
     const meta   = [heures, k.ville, tarif, dist, heb, prio].filter(Boolean).join(' · ');
     const statut = k.deja_postule ? 'postule' : 'ouvert';
-    const libelle= k.deja_postule ? 'Quart demandé' : 'Disponible';
+    const libelle= k.deja_postule ? cdT('Quart demandé','Shift requested') : cdT('Disponible','Available');
     const indispo = estIndisponible(k.date_contrat);
     const dejaSauv = estFavori(k.numero_reference);
     return '<div class="ligne-contrat" data-ref="'+k.numero_reference+'">'
-      +'<span class="lc-date'+(indispo?' indispo':'')+'"'+(indispo?' title="Vous êtes indisponible ce jour"':'')+'>'+dateCourteC(k.date_contrat)+'</span>'
+      +'<span class="lc-date'+(indispo?' indispo':'')+'"'+(indispo?' title="'+cdT('Vous êtes indisponible ce jour','You are unavailable that day')+'"':'')+'>'+dateCourteC(k.date_contrat)+'</span>'
       +'<span class="lc-mid"><span class="lc-ref">'+k.numero_reference+'</span><span class="lc-meta">'+meta+'</span></span>'
       +'<span class="chip '+statut+'">'+libelle+'</span>'
       +(k.deja_postule ? '' : '<button type="button" class="coeur'+(dejaSauv?' on':'')+'" title="'+cdTitreSauv(dejaSauv)+'">'+CD_ICONE_SAUV+'</button>')
@@ -759,7 +761,7 @@ function dessinerListeCal(list){
   cdEnteteConnecte();
   if(profil.role === 'admin'){
     document.querySelector('.droite').insertAdjacentHTML('afterbegin',
-      '<a class="nav" href="/admin.html">Console</a>');
+      '<a class="nav" href="/admin.html">'+cdT('Console','Console')+'</a>');
   }
   evaluerOnboarding();
 
@@ -802,7 +804,7 @@ function dessinerListeCal(list){
 
   const { data, error } = await sb.rpc('get_contrats_ouverts');
   $('chargement').style.display = 'none';
-  if(error){ $('err').textContent = 'Erreur : ' + error.message; $('err').style.display='block'; return; }
+  if(error){ $('err').textContent = cdT('Erreur : ','Error: ') + error.message; $('err').style.display='block'; return; }
 
   contrats = data || [];
   contrats.forEach(k=>{ k._distanceKm = calcDistance(k); k._est = calcEstim(k); k._match = calcMatch(k); favRefIndex.set(k.numero_reference, k.id); });
@@ -849,11 +851,11 @@ function evaluerOnboarding(){
     try{ if(localStorage.getItem('cd-onboard-ferme') === '1') return; }catch(e){}
     const p = profil;
     const etapes = [
-      { fait: !!(p.code_postal && (p.ville_base || p.ville)), txt:'Localisation — code postal + ville de base', href:'/profil.html', lien:'Compléter' },
-      { fait: !!(p.rayon_deplacement_km && p.tarif_horaire_min && p.logiciels && p.logiciels.length), txt:'Rayon, tarif minimum et logiciels', href:'/profil.html', lien:'Régler' },
-      { fait: p.sms_optin === true, txt:'Activer les alertes SMS des nouveaux contrats', href:'/profil.html', lien:'Activer' },
-      { fait: 'action', txt:'Enregistrer le numéro C-Direct dans vos contacts', vcard:true, lien:'Télécharger' },
-      { fait: 'action', txt:'Marquer vos disponibilités au calendrier', href:'/disponibilites.html', lien:'Ouvrir' }
+      { fait: !!(p.code_postal && (p.ville_base || p.ville)), txt:cdT('Localisation — code postal + ville de base','Location — postal code + home city'), href:'/profil.html', lien:cdT('Compléter','Complete') },
+      { fait: !!(p.rayon_deplacement_km && p.tarif_horaire_min && p.logiciels && p.logiciels.length), txt:cdT('Rayon, tarif minimum et logiciels','Radius, minimum rate and software'), href:'/profil.html', lien:cdT('Régler','Set') },
+      { fait: p.sms_optin === true, txt:cdT('Activer les alertes SMS des nouveaux contrats','Enable SMS alerts for new contracts'), href:'/profil.html', lien:cdT('Activer','Enable') },
+      { fait: 'action', txt:cdT('Enregistrer le numéro C-Direct dans vos contacts','Save the C-Direct number in your contacts'), vcard:true, lien:cdT('Télécharger','Download') },
+      { fait: 'action', txt:cdT('Marquer vos disponibilités au calendrier','Mark your availability on the calendar'), href:'/disponibilites.html', lien:cdT('Ouvrir','Open') }
     ];
     const liste = document.getElementById('ob-liste'); liste.innerHTML = '';
     etapes.forEach(e=>{
@@ -879,7 +881,7 @@ function evaluerOnboarding(){
 function cdVCard(){
   const vcf = ['BEGIN:VCARD','VERSION:3.0','FN:C-Direct','ORG:C-Direct',
     'TEL;TYPE=CELL:'+CD_NUMERO,'URL:https://c-direct.ca',
-    'NOTE:Contrats de remplacement en pharmacie. Rép. ARRET pour vous désabonner.','END:VCARD'].join('\r\n');
+    'NOTE:'+cdT('Contrats de remplacement en pharmacie. Rép. ARRET pour vous désabonner.','Pharmacy replacement contracts. Reply STOP to unsubscribe.'),'END:VCARD'].join('\r\n');
   const blob = new Blob([vcf], {type:'text/vcard;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = 'C-Direct.vcf';
