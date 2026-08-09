@@ -91,6 +91,10 @@ footer a:first-child{margin-left:0}
     <b>Une autre question ?</b>
     <p>Écrivez-nous à <a href="mailto:info@c-direct.ca">info@c-direct.ca</a> — nous répondons rapidement.</p>
   </div>
+
+  <div style="text-align:center;margin:34px 0 10px">
+    <button type="button" id="btn-ok-faq" style="background:var(--vert);color:#fff;border:none;border-radius:10px;padding:13px 40px;font-size:15px;font-weight:700;cursor:pointer">OK</button>
+  </div>
 </main>
 
 <footer><div class="in">
@@ -116,6 +120,24 @@ document.querySelectorAll('.qa button').forEach(b=>{
    de menu que les autres pages et masque automatiquement la flèche
    « ← Accueil » (voir .retour dans auth.js). Sans session, rien ne change. */
 cdEnteteConnecte();
+
+/* Bouton OK : ramène l'usager là d'où il vient. S'il est arrivé
+   directement (aucun historique dans l'onglet), on l'envoie vers sa page
+   d'accueil selon son rôle — ou l'accueil public s'il n'est pas connecté. */
+(function(){
+  const btn = document.getElementById('btn-ok-faq');
+  if(!btn) return;
+  btn.onclick = async function(){
+    if(history.length > 1){ history.back(); return; }
+    /* arrivée directe : selon le rôle si connecté, sinon accueil public */
+    let cible = '/index.html';
+    try{
+      const p = (typeof cdProfil==='function') ? await cdProfil() : null;
+      if(p && p.role && typeof cdAccueilPourRole==='function') cible = cdAccueilPourRole(p.role);
+    }catch(e){}
+    location.href = cible;
+  };
+})();
 </script>
 </body>
 </html>

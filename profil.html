@@ -32,8 +32,9 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 .deux{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .trois{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .coches{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.coches label{display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--texte);background:var(--panneau2);border:1px solid var(--ligne2);border-radius:4px;padding:8px 10px;cursor:pointer}
-.coches input{accent-color:var(--vert)}
+.coches label{display:flex;align-items:flex-start;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.35;color:var(--texte);background:var(--panneau2);border:1px solid var(--ligne2);border-radius:4px;padding:8px 10px;cursor:pointer;overflow-wrap:anywhere}
+.coches input{accent-color:var(--vert);flex:none;margin-top:2px}
+.autre-uni{margin-top:8px;width:100%;padding:9px 11px;border:1px solid var(--ligne2);border-radius:6px;background:var(--panneau2);color:var(--texte);font-family:'IBM Plex Mono',monospace;font-size:13px}
 .consent{display:flex;align-items:flex-start;gap:10px;background:var(--panneau2);border:1px solid var(--ligne2);border-radius:4px;padding:11px 12px;margin:6px 0 12px;cursor:pointer;font-size:12.5px;line-height:1.55;color:var(--sourd)}
 .consent input{width:16px;height:16px;margin-top:2px;accent-color:var(--vert);flex:none;cursor:pointer}
 .btn{width:100%;background:var(--vert);color:#FFFFFF;border:none;border-radius:5px;padding:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
@@ -107,6 +108,17 @@ a.lien{color:var(--vert-vif)}
       <div id="bloc-pharmacien" style="display:none">
       <div data-onglet="infos">
         <div class="sec">Profil pharmacien(ne)</div>
+        <div class="champ"><label>Photo de profil (facultatif)</label>
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <img id="photo-apercu" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:var(--panneau2);border:1px solid var(--ligne2);display:none">
+            <div style="min-width:200px">
+              <input type="file" id="photo-fichier" accept="image/png,image/jpeg,image/webp" style="font-size:13px">
+              <div style="font-size:12px;color:var(--sourd);margin-top:4px">Facultatif — vous pouvez en ajouter une, ce n'est jamais obligatoire. JPG, PNG ou WebP, 2 Mo max.</div>
+              <button type="button" id="photo-retirer" style="display:none;margin-top:6px;font-size:12px;background:none;border:none;color:var(--rouge);cursor:pointer;padding:0">Retirer la photo</button>
+              <div id="photo-msg" style="font-size:12px;margin-top:4px"></div>
+            </div>
+          </div>
+        </div>
         <div class="champ"><label>N° OPQ</label><input id="numero_opq" inputmode="numeric"></div>
         <div class="champ"><label>Adresse</label><input id="adresse_pharmacien" placeholder="123 rue Principale, app. 4"></div>
         <div class="deux">
@@ -132,6 +144,7 @@ a.lien{color:var(--vert-vif)}
         </div>
         <div class="champ"><label>Universités fréquentées (maximum 3)</label>
           <div class="coches" id="coches-universites"></div>
+          <input type="text" id="autre-universite" class="autre-uni" placeholder="Nom de votre université" style="display:none" maxlength="120">
         </div>
         <div class="trois">
           <div class="champ"><label>Année de graduation</label>
@@ -336,15 +349,60 @@ const $ = id => document.getElementById(id);
 const LOGICIELS = ['Kroll','AssystRx','Mentor','PrioRx','RxPro','Ubik','ReflexRx (XDRx)',"L'Ordonnance (Logipharm)",'Pharmaclik'];
 const COMPETENCES = ['Loi 41','Loi 31','Vaccination','INR / ACO','MAPA','Méthadone','Suboxone','Magistrales non stériles','Magistrales stériles','Dispills / piluliers','Clé DSQ','Soins pharmaceutiques avancés'];
 const LANGUES = ['Français','Anglais','Espagnol','Arabe','Créole','Mandarin','Autre'];
-const UNIVERSITES = ['Université de Montréal','Université Laval','University of Toronto','University of Waterloo',
-                  'Dalhousie University','Memorial University','University of Manitoba','University of Saskatchewan',
-                  'University of Alberta','University of British Columbia','Autre'];
+const UNIVERSITES = ['Université de Montréal','Université Laval','Université de Sherbrooke',
+                  'Université McGill','Université Concordia','Université Bishop\'s',
+                  'UQAM — Université du Québec à Montréal','UQTR — Université du Québec à Trois-Rivières',
+                  'UQAC — Université du Québec à Chicoutimi','UQAR — Université du Québec à Rimouski',
+                  'UQO — Université du Québec en Outaouais','UQAT — Université du Québec en Abitibi-Témiscamingue',
+                  'ÉTS — École de technologie supérieure','INRS — Institut national de la recherche scientifique',
+                  'ENAP — École nationale d\'administration publique','TÉLUQ','HEC Montréal','Polytechnique Montréal',
+                  'Autre'];
 const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+/* ---- Photo de profil (facultative) — upload vers Supabase Storage ----
+   Bucket public « avatars » (voir sql/65). Rien d'obligatoire : sans
+   photo, le profil s'enregistre normalement. `photoUrlNouvelle` vaut
+   undefined = inchangé, '' = retirée, sinon = nouvelle URL. */
+let photoUrlNouvelle;
+function brancherPhoto(){
+  const inp = $('photo-fichier'); if(!inp) return;
+  inp.addEventListener('change', async ()=>{
+    const f = inp.files && inp.files[0]; if(!f) return;
+    const msg = $('photo-msg');
+    if(f.size > 2*1024*1024){ msg.style.color='var(--rouge)'; msg.textContent='Image trop lourde (max 2 Mo).'; inp.value=''; return; }
+    msg.style.color='var(--sourd)'; msg.textContent='Téléversement…';
+    try{
+      const ext = (f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
+      const chemin = profil.id + '/photo.' + ext;
+      const { error } = await sb.storage.from('avatars').upload(chemin, f, { upsert:true, contentType:f.type });
+      if(error) throw error;
+      const { data } = sb.storage.from('avatars').getPublicUrl(chemin);
+      photoUrlNouvelle = data.publicUrl + '?t=' + Date.now();
+      const ap = $('photo-apercu'); ap.src = photoUrlNouvelle; ap.style.display='block';
+      $('photo-retirer').style.display='inline-block';
+      msg.style.color='var(--vert)'; msg.textContent='Photo prête — cliquez « Enregistrer » en bas.';
+    }catch(e){
+      msg.style.color='var(--rouge)';
+      msg.textContent = /bucket|not found|exist/i.test(e.message||'') ? 'Stockage non activé — exécutez sql/65.' : ('Échec : '+(e.message||e));
+      inp.value='';
+    }
+  });
+  const btnR = $('photo-retirer');
+  if(btnR) btnR.addEventListener('click', ()=>{
+    photoUrlNouvelle = '';
+    const ap=$('photo-apercu'); ap.src=''; ap.style.display='none';
+    $('photo-fichier').value=''; btnR.style.display='none';
+    const msg=$('photo-msg'); msg.style.color='var(--sourd)'; msg.textContent='Photo retirée — cliquez « Enregistrer ».';
+  });
+}
 /* maximum 3 universités cochées : désactive les cases restantes une fois 3 atteintes */
 function appliquerMax3Universites(){
   const boite = $('coches-universites'); if(!boite) return;
   const coches = [...boite.querySelectorAll('input:checked')];
   [...boite.querySelectorAll('input')].forEach(i=>{ i.disabled = !i.checked && coches.length>=3; });
+  /* le champ libre « Autre » n'apparaît que si la case Autre est cochée */
+  const autreCoche = [...boite.querySelectorAll('input')].find(i=>i.value==='Autre');
+  const champ = $('autre-universite');
+  if(champ) champ.style.display = (autreCoche && autreCoche.checked) ? 'block' : 'none';
 }
 /* expérience calculée en direct depuis l'année/mois de graduation */
 function calculerExperience(){
@@ -703,6 +761,7 @@ function majEtatHebergementDefaut(){
   $('coches-universites').innerHTML = UNIVERSITES.map(l=>
     '<label><input type="checkbox" value="'+l.replace(/"/g,'&quot;')+'"> '+l+'</label>').join('');
   $('coches-universites').addEventListener('change', appliquerMax3Universites);
+  brancherPhoto();
   { const anneeActuelle = new Date().getFullYear();
     const selAnnee = $('diplome_annee');
     for(let a=anneeActuelle; a>=anneeActuelle-60; a--){ const o=document.createElement('option'); o.value=a; o.textContent=a; selAnnee.appendChild(o); }
@@ -755,9 +814,17 @@ function majEtatHebergementDefaut(){
     });
     (profil.universites||[]).forEach(l=>{
       const c=[...document.querySelectorAll('#coches-universites input')].find(i=>i.value===l);
-      if(c) c.checked=true;
+      if(c){ c.checked=true; }
+      else { /* valeur libre saisie précédemment : coche « Autre » + remplit le champ */
+        const autre=[...document.querySelectorAll('#coches-universites input')].find(i=>i.value==='Autre');
+        if(autre){ autre.checked=true; if($('autre-universite')) $('autre-universite').value=l; }
+      }
     });
     appliquerMax3Universites();
+    if(profil.photo_url && $('photo-apercu')){
+      $('photo-apercu').src = profil.photo_url; $('photo-apercu').style.display='block';
+      $('photo-retirer').style.display='inline-block';
+    }
     if(profil.diplome_annee) $('diplome_annee').value = profil.diplome_annee;
     if(profil.diplome_mois) $('diplome_mois').value = profil.diplome_mois;
     calculerExperience();
@@ -936,12 +1003,21 @@ function majEtatHebergementDefaut(){
     /* universités, diplôme : colonnes ajoutées par sql/53 — enregistrement tolérant. */
     if(profil.role==='pharmacien'){
       const universites=[...document.querySelectorAll('#coches-universites input:checked')].map(i=>i.value);
-      const { error: eUni } = await sb.from('profiles').update({
+      /* « Autre » : on remplace le libellé générique par le nom saisi (s'il y en a un) */
+      const iAutre = universites.indexOf('Autre');
+      if(iAutre !== -1){
+        const saisie = ($('autre-universite') && $('autre-universite').value || '').trim();
+        if(saisie) universites[iAutre] = saisie; else universites.splice(iAutre, 1);
+      }
+      const majPharmacien = {
         universites: universites,
         diplome_annee: $('diplome_annee').value||null,
         diplome_mois: $('diplome_mois').value||null
-      }).eq('id', profil.id);
-      if(eUni) console.warn('universités/diplôme non enregistrés (exécuter sql/53) :', eUni.message);
+      };
+      /* photo : n'écrit la colonne QUE si l'usager l'a changée cette fois */
+      if(typeof photoUrlNouvelle !== 'undefined') majPharmacien.photo_url = photoUrlNouvelle || null;
+      const { error: eUni } = await sb.from('profiles').update(majPharmacien).eq('id', profil.id);
+      if(eUni) console.warn('universités/diplôme/photo non enregistrés (exécuter sql/53) :', eUni.message);
     }
     if(profil.role==='pharmacien' && $('tps')){
       const { error: eFac } = await sb.from('profiles').update({
