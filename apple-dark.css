@@ -1,0 +1,205 @@
+/* =====================================================================
+   C-DIRECT · APPLE-DARK.CSS — refonte « Apple Pro » sombre (2026-08-08)
+   Chargé APRÈS design.css sur les pages publiques uniquement.
+   Concept : « la croix verte qui veille la nuit » — fond onyx,
+   verre dépoli, une seule lueur verte signature derrière le héros.
+   ===================================================================== */
+
+/* ---------- jetons : les deux dialectes de variables ---------- */
+:root{
+  /* dialecte app (design.css / acces, faq…) */
+  --fond:#0B0F0E !important;
+  --panneau:#151B19 !important;
+  --panneau2:#1B2320 !important;
+  --ligne:rgba(255,255,255,.09) !important;
+  --ligne2:rgba(255,255,255,.16) !important;
+  --vert:#0FA36B !important;
+  --vert-vif:#3ADD9A !important;
+  --texte:#F4F7F5 !important;
+  --sourd:#9CAFA6 !important;
+  --jaune:#E7B054 !important;
+  --rouge:#FF6B5E !important;
+  --menthe:rgba(58,221,154,.10) !important;
+  --argile:#D98B5B !important;
+  /* dialecte marketing (index, faq, regles…) */
+  --blanc:#0B0F0E !important;
+  --encre:#F4F7F5 !important;
+  --gris:#9CAFA6 !important;
+  --vert-fonce:#3ADD9A !important;
+  --ambre:#E7B054 !important;
+}
+
+/* ---------- socle ---------- */
+html{color-scheme:dark}
+body{
+  background:var(--fond) !important;
+  color:var(--texte) !important;
+}
+
+/* signature : lueur d'aurore verte derrière le haut de page */
+body::before{
+  content:"";
+  position:fixed;
+  top:-30vh; left:50%;
+  width:120vw; height:80vh;
+  transform:translateX(-50%);
+  background:radial-gradient(ellipse 55% 60% at 50% 35%,
+              rgba(15,163,107,.16), rgba(58,221,154,.05) 55%, transparent 75%);
+  pointer-events:none;
+  z-index:0;
+}
+body > *{position:relative;z-index:1}
+
+/* ---------- topbar en verre sombre ---------- */
+.topbar{
+  background:rgba(11,15,14,.68) !important;
+  backdrop-filter:blur(20px) saturate(1.8) !important;
+  -webkit-backdrop-filter:blur(20px) saturate(1.8) !important;
+  border-bottom:1px solid rgba(255,255,255,.08) !important;
+}
+.topbar a, .topbar .brand{color:var(--texte) !important}
+nav.liens a{color:var(--sourd) !important}
+nav.liens a:hover{color:var(--vert-vif) !important}
+.topbar .croix{background:var(--vert) !important;box-shadow:0 0 18px rgba(15,163,107,.55)}
+.lang{border-color:rgba(255,255,255,.14) !important}
+.lang button{color:var(--sourd) !important}
+.lang button.on{background:var(--vert) !important;color:#fff !important}
+
+/* ---------- typographie « Pro » ---------- */
+h1{letter-spacing:-.03em}
+.hero h1, h1.hero-titre{
+  font-size:clamp(42px, 6.5vw, 84px) !important;
+  line-height:1.04 !important;
+  letter-spacing:-.032em !important;
+}
+.hero p, .sous-hero{color:var(--sourd) !important}
+
+/* dégradé de texte façon Apple sur les mots-clés du héros */
+.hero h1 em, .hero .accent, .titre-accent, .grad{
+  background:linear-gradient(92deg,#3ADD9A 0%, #7FF2C4 60%, #C8F7E4 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  color:transparent;
+}
+
+/* ---------- panneaux, cartes, sections ---------- */
+.carte, .card, .panneau, .bloc, .tuile, .item, .faq-item, .accordeon,
+section .in > .grille > div, .stat, .encart{
+  background:var(--panneau);
+  border-color:var(--ligne);
+}
+[class]{box-shadow:none}
+.carte, .card, .tuile{
+  border-radius:20px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 12px 32px rgba(0,0,0,.35);
+}
+
+/* surfaces claires codées en dur -> sombres */
+[style*="background:#fff"], [style*="background:#FFF"],
+[style*="background:#FFFFFF"], [style*="background:white"]{
+  background:var(--panneau) !important;
+  color:var(--texte) !important;
+}
+
+/* ---------- boutons ---------- */
+.btn, .btn-top, .bouton, button[type="submit"], .cta{
+  border-radius:99px;
+}
+.btn-top, .btn.vert, .cta, button[type="submit"]{
+  background:var(--vert) !important;
+  color:#fff !important;
+  box-shadow:0 0 0 1px rgba(58,221,154,.25), 0 8px 24px rgba(15,163,107,.35);
+}
+.btn-top:hover, .btn.vert:hover, .cta:hover, button[type="submit"]:hover{
+  background:#12B87A !important;
+  box-shadow:0 0 0 1px rgba(58,221,154,.4), 0 10px 30px rgba(15,163,107,.5);
+}
+.btn.ghost, .btn-secondaire{
+  background:rgba(255,255,255,.06) !important;
+  color:var(--texte) !important;
+  border:1px solid rgba(255,255,255,.14) !important;
+}
+
+/* ---------- formulaires (acces.html…) ---------- */
+input, select, textarea{
+  background:rgba(255,255,255,.05) !important;
+  border:1px solid rgba(255,255,255,.14) !important;
+  color:var(--texte) !important;
+  border-radius:12px;
+}
+input::placeholder, textarea::placeholder{color:rgba(156,175,166,.7)}
+input:focus, select:focus, textarea:focus{
+  border-color:var(--vert-vif) !important;
+  box-shadow:0 0 0 3px rgba(58,221,154,.18) !important;
+  outline:none;
+}
+
+/* ---------- accessibilité ---------- */
+:focus-visible{
+  outline:2px solid var(--vert-vif) !important;
+  outline-offset:2px;
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+  body::before{display:none}
+}
+
+/* ---------- pied de page ---------- */
+footer, .footer, .pied{
+  background:#080B0A !important;
+  border-top:1px solid rgba(255,255,255,.07) !important;
+  color:var(--sourd) !important;
+}
+footer a, .footer a, .pied a{color:var(--sourd) !important}
+footer a:hover, .footer a:hover, .pied a:hover{color:var(--vert-vif) !important}
+
+/* ---------- tableaux / listes ---------- */
+table{border-color:var(--ligne)}
+th{color:var(--sourd)}
+tr, td, th{border-color:var(--ligne) !important}
+hr{border-color:var(--ligne)}
+
+/* ---------- accueil (index.html) ---------- */
+.hero .eyebrow{
+  color:var(--vert-vif) !important;
+  font-family:'IBM Plex Mono',monospace;
+  letter-spacing:.08em;
+}
+.hero h1 em{font-style:normal}
+.hero .chips span{
+  background:rgba(58,221,154,.08) !important;
+  border:1px solid rgba(58,221,154,.22) !important;
+  color:#BFEFD9 !important;
+  border-radius:99px;
+}
+.cta.plein{
+  background:var(--vert) !important;
+  color:#fff !important;
+  border:none !important;
+  border-radius:99px !important;
+  box-shadow:0 0 0 1px rgba(58,221,154,.25), 0 10px 28px rgba(15,163,107,.4);
+}
+.cta.plein:hover{background:#12B87A !important}
+.cta.vide{
+  background:rgba(255,255,255,.06) !important;
+  color:var(--texte) !important;
+  border:1px solid rgba(255,255,255,.16) !important;
+  border-radius:99px !important;
+}
+.cta.vide:hover{border-color:var(--vert-vif) !important;color:var(--vert-vif) !important}
+.hero .gratuit{color:var(--sourd) !important}
+.carrousel{
+  border-radius:24px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 24px 60px rgba(0,0,0,.5), 0 0 40px rgba(15,163,107,.12);
+}
+section.bloc{border-color:var(--ligne) !important}
+
+/* ---------- badges / puces ---------- */
+.badge, .pastille, .chip, .tag{
+  background:rgba(58,221,154,.10) !important;
+  color:var(--vert-vif) !important;
+  border:1px solid rgba(58,221,154,.25) !important;
+}
