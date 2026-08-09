@@ -1563,13 +1563,27 @@ async function candidatureNouvelle(env, c) {
   const qui = `${pharmacien?.prenom || 'Un pharmacien'} ${initiale(pharmacien?.nom)}`.trim();
 
   /* ---- Instant Booking : acceptation automatique d'un favori ----
-     La fonction accepter_candidature_auto() RE-VÉRIFIE elle-même toutes
-     les conditions (toggle actif, favori, non exclu, tarif affiché) —
-     ce test ici n'est qu'un raccourci pour éviter un appel RPC inutile. */
+     DÉFENSE EN PROFONDEUR (2026-08-09) : la version LIVE de
+     accepter_candidature_auto() a dérivé (voir sql/61 §9) et ne
+     re-vérifie plus les conditions — elle accepte tout ce qu'on lui
+     passe. On vérifie donc ICI, avec la clé service_role, AVANT
+     d'appeler la RPC : favori state='trusted', aucune exclusion admin,
+     aucune relation bloquée. sql/62 restaure les gardes côté base ;
+     ce code est compatible avec l'ancienne fonction (returns void →
+     réponse vide) ET la version corrigée (returns boolean). */
   let autoAcceptee = false;
   if (pharmacie.confirmation_auto_favoris && c.type_candidature === 'instantanee') {
     try {
-      autoAcceptee = (await sbRpc(env, 'accepter_candidature_auto', { p_candidature: c.id })) === true;
+      const [fav, excl, rel] = await Promise.all([
+        sbSelect(env, `favoris_pharmaciens?pharmacie_id=eq.${k.pharmacie_id}&pharmacien_id=eq.${c.pharmacien_id}&select=state&limit=1`),
+        sbSelect(env, `exclusions?pharmacie_id=eq.${k.pharmacie_id}&pharmacien_id=eq.${c.pharmacien_id}&select=pharmacien_id&limit=1`),
+        sbSelect(env, `locum_pharmacy_relations?pharmacie_id=eq.${k.pharmacie_id}&pharmacien_id=eq.${c.pharmacien_id}&state=eq.blocked&select=pharmacien_id&limit=1`),
+      ]);
+      const favoriTrusted = fav.length === 1 && (fav[0].state || 'trusted') === 'trusted';
+      if (favoriTrusted && excl.length === 0 && rel.length === 0) {
+        const r = await sbRpc(env, 'accepter_candidature_auto', { p_candidature: c.id });
+        autoAcceptee = (r === true || r === '' || r == null);
+      }
     } catch (e) { console.error('accepter_candidature_auto:', e.message); }
   }
 
