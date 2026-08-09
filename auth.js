@@ -396,6 +396,8 @@ window.cdBoutonRetour = function(role){
    de refonte) — utilisées uniquement par cdEnteteConnecte ci-dessous. */
 const SVG_COEUR = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>';
 const SVG_CLOCHE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
+const SVG_REGLAGE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>';
+const SVG_AIDE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M18 19a2 2 0 0 1-2 2h-2"/><rect x="2" y="14" width="4" height="6" rx="1"/><rect x="18" y="14" width="4" height="6" rx="1"/></svg>';
 
 function cdIconeLien(href, svg, libelleFr, libelleEn){
   const a = document.createElement('a');
@@ -515,6 +517,191 @@ function cdMenuCompte(p, items, entete){
   return enveloppe;
 }
 
+/* ---- bouton « Aide » (barre du haut) ---- */
+function cdBoutonAide(role){
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.setAttribute('aria-haspopup', 'dialog');
+  b.setAttribute('aria-label', cdT('Aide', 'Help'));
+  b.style.cssText = 'display:inline-flex;align-items:center;gap:6px;background:var(--menthe,#E7F2EC);'+
+    'color:var(--vert,#0B6E4F);border:none;border-radius:99px;padding:6px 12px;cursor:pointer;flex:none;'+
+    "font-family:'Inter',sans-serif;font-size:13px;font-weight:600";
+  b.innerHTML = SVG_AIDE + '<span>' + cdT('Aide', 'Help') + '</span>';
+  b.addEventListener('click', ()=> cdOuvrirAide(role));
+  return b;
+}
+
+/* ---- petite fenêtre modale générique (aide + réservation) ---- */
+function cdModale(titre){
+  const overlay = document.createElement('div');
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,20,18,.5);z-index:200;display:flex;'+
+    'align-items:center;justify-content:center;padding:18px';
+  const card = document.createElement('div');
+  card.style.cssText = 'background:var(--panneau,#fff);border-radius:14px;width:100%;max-width:440px;'+
+    'max-height:92vh;overflow:auto;box-shadow:0 20px 60px -20px rgba(0,0,0,.4)';
+  const tete = document.createElement('div');
+  tete.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;'+
+    'border-bottom:1px solid var(--ligne,#E6E8E4);position:sticky;top:0;background:var(--panneau,#fff);z-index:1';
+  const t = document.createElement('span');
+  t.textContent = titre;
+  t.style.cssText = "font-family:'Inter',sans-serif;font-size:14px;color:var(--sourd,#5A6B63)";
+  const x = document.createElement('button');
+  x.type = 'button'; x.innerHTML = '&times;';
+  x.setAttribute('aria-label', cdT('Fermer', 'Close'));
+  x.style.cssText = 'background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:var(--sourd,#5A6B63)';
+  function fermer(){ overlay.remove(); document.removeEventListener('keydown', onKey); }
+  function onKey(e){ if(e.key === 'Escape') fermer(); }
+  x.addEventListener('click', fermer);
+  overlay.addEventListener('click', e=>{ if(e.target === overlay) fermer(); });
+  document.addEventListener('keydown', onKey);
+  tete.append(t, x);
+  const corps = document.createElement('div');
+  corps.style.cssText = 'padding:20px';
+  card.append(tete, corps);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  return { overlay, corps, fermer };
+}
+
+/* ---- panneau « Aide » : entrevue (pharmacien/ATP) + nous écrire + FAQ ----
+   pharmacie : soutien seulement (pas d'entrevue). */
+window.cdOuvrirAide = async function(role){
+  const m = cdModale(cdT('Aide', 'Help'));
+  const bloc = (html)=>{ const d = document.createElement('div'); d.innerHTML = html; return d; };
+
+  if(role === 'pharmacien'){
+    const carte = document.createElement('div');
+    carte.style.cssText = 'border:1px solid var(--ligne,#E6E8E4);border-radius:12px;padding:18px;margin-bottom:12px';
+    carte.appendChild(bloc(
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'+
+        '<span style="width:44px;height:44px;border-radius:10px;background:var(--menthe,#E7F2EC);color:var(--vert,#0B6E4F);display:grid;place-items:center">'+SVG_AIDE.replace('width="16" height="16"','width="22" height="22"')+'</span>'+
+        '<div><div style="font-family:\'Inter\',sans-serif;font-weight:600;font-size:16px">'+cdT('Entrevue d\'intégration','Onboarding interview')+'</div>'+
+        '<div style="font-size:13px;color:var(--sourd,#5A6B63)">'+cdT('Une courte rencontre avant l\'activation de votre compte.','A short meeting before your account is activated.')+'</div></div>'+
+      '</div>'+
+      '<div id="cd-aide-statut" style="font-size:13px;color:var(--sourd,#5A6B63);margin-bottom:12px">'+cdT('Chargement…','Loading…')+'</div>'
+    ));
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = cdT('Prendre rendez-vous', 'Book an appointment');
+    btn.style.cssText = 'width:100%;background:var(--vert,#0B6E4F);color:#fff;border:none;border-radius:8px;'+
+      "padding:13px;font-family:'Inter',sans-serif;font-size:15px;font-weight:600;cursor:pointer";
+    btn.addEventListener('click', ()=>{ m.fermer(); cdOuvrirReservation({ type:'entrevue' }); });
+    carte.appendChild(btn);
+    m.corps.appendChild(carte);
+
+    /* état de l'entrevue courante */
+    try{
+      const { data } = await sb.rpc('mes_rendez_vous');
+      const rv = (data||[]).find(r=> r.type==='entrevue' && r.statut!=='annule');
+      const z = m.corps.querySelector('#cd-aide-statut');
+      if(z){
+        if(!rv){
+          z.textContent = cdT('Aucune entrevue planifiée pour l\'instant.','No interview scheduled yet.');
+        }else{
+          const quand = rv.date_confirmee || rv.date_souhaitee;
+          const qtxt = quand ? new Date(quand).toLocaleString(cdLang()==='en'?'en-CA':'fr-CA',{dateStyle:'long',timeStyle:'short'}) : '';
+          const lib = {demande:cdT('Demande envoyée — en attente de confirmation.','Request sent — awaiting confirmation.'),
+                       confirme:cdT('Entrevue confirmée : ','Interview confirmed: ')+qtxt,
+                       propose:cdT('Nouvelle plage proposée : ','New time proposed: ')+qtxt,
+                       complete:cdT('Entrevue complétée.','Interview completed.')};
+          z.textContent = lib[rv.statut] || rv.statut;
+          btn.textContent = (rv.statut==='complete') ? cdT('Reprendre rendez-vous','Book again') : cdT('Modifier / reprendre','Change / rebook');
+        }
+      }
+    }catch(e){}
+  }
+
+  const ecrire = document.createElement('a');
+  ecrire.href = 'mailto:info@c-direct.ca';
+  ecrire.style.cssText = 'display:flex;align-items:center;gap:12px;border:1px solid var(--ligne,#E6E8E4);'+
+    'border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--texte,#1B2622);margin-bottom:10px';
+  ecrire.innerHTML = '<span style="color:var(--vert,#0B6E4F);display:inline-flex"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>'+
+    '<div><div style="font-family:\'Inter\',sans-serif;font-weight:600;font-size:15px">'+cdT('Nous écrire','Write to us')+'</div>'+
+    '<div style="font-size:13px;color:var(--sourd,#5A6B63)">'+cdT('Une question ? L\'équipe répond rapidement.','A question? The team replies quickly.')+'</div></div>';
+  m.corps.appendChild(ecrire);
+
+  const faq = document.createElement('a');
+  faq.href = '/faq.html';
+  faq.style.cssText = 'display:block;text-align:center;font-family:\'Inter\',sans-serif;font-size:13px;'+
+    'color:var(--vert-vif,#0f8a5f);text-decoration:underline;text-underline-offset:3px;margin-top:4px';
+  faq.textContent = cdT('Consulter la FAQ', 'Read the FAQ');
+  m.corps.appendChild(faq);
+};
+
+/* ---- fenêtre de réservation (entrevue ou soutien) ----
+   Réutilisée par le panneau Aide ET par attente.html (écran d'entrée). */
+window.cdOuvrirReservation = async function(opts){
+  opts = opts || {};
+  const type = opts.type === 'soutien' ? 'soutien' : 'entrevue';
+  const m = cdModale(type === 'entrevue' ? cdT('Entrevue d\'intégration','Onboarding interview') : cdT('Rendez-vous','Appointment'));
+
+  const p = (typeof cdProfil === 'function') ? (await cdProfil().catch(()=>null)) : null;
+
+  /* créneaux 08:00 → 18:00 par 30 min */
+  let opts_heure = '<option value="">' + cdT('Choisir une heure','Choose a time') + '</option>';
+  for(let h=8; h<=18; h++){ for(const mn of ['00','30']){ if(h===18 && mn==='30') break; const v=(h<10?'0'+h:h)+':'+mn; opts_heure += '<option value="'+v+'">'+v+'</option>'; } }
+
+  const champ = 'width:100%;border:1px solid var(--ligne2,#C3D6CB);border-radius:8px;padding:10px 11px;'+
+    "font-size:14px;font-family:'Inter',sans-serif;background:#F4F8F5;color:var(--texte,#1B2622);box-sizing:border-box";
+  const lab = 'display:block;font-size:12px;color:var(--sourd,#5A6B63);margin-bottom:5px';
+
+  m.corps.innerHTML =
+    '<p style="margin:0 0 4px;font-family:\'Inter\',sans-serif;font-weight:600;font-size:18px;text-align:center">'+cdT('Planifions votre rendez-vous','Let\'s schedule your appointment')+'</p>'+
+    '<p style="margin:0 0 16px;font-size:13px;color:var(--sourd,#5A6B63);text-align:center">'+cdT('Choisissez le moment qui vous convient.','Pick the time that works for you.')+'</p>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'+
+      '<div><label style="'+lab+'">'+cdT('Date','Date')+'</label><input id="rv-date" type="date" style="'+champ+'"></div>'+
+      '<div><label style="'+lab+'">'+cdT('Heure','Time')+'</label><select id="rv-heure" style="'+champ+'">'+opts_heure+'</select></div>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'+
+      '<div><label style="'+lab+'">'+cdT('Prénom','First name')+'</label><input id="rv-prenom" style="'+champ+'"></div>'+
+      '<div><label style="'+lab+'">'+cdT('Nom','Last name')+'</label><input id="rv-nom" style="'+champ+'"></div>'+
+    '</div>'+
+    '<div style="margin-bottom:12px"><label style="'+lab+'">'+cdT('Adresse courriel','Email address')+'</label><input id="rv-courriel" type="email" style="'+champ+'"></div>'+
+    '<div style="margin-bottom:16px"><label style="'+lab+'">'+cdT('Numéro de téléphone','Phone number')+'</label><input id="rv-tel" type="tel" style="'+champ+'"></div>'+
+    '<div id="rv-err" style="display:none;background:rgba(192,57,43,.08);color:var(--rouge,#C0392B);border-radius:8px;padding:9px 12px;font-size:13px;margin-bottom:12px"></div>'+
+    '<button id="rv-envoyer" type="button" style="width:100%;background:var(--vert,#0B6E4F);color:#fff;border:none;border-radius:8px;padding:13px;font-family:\'Inter\',sans-serif;font-size:15px;font-weight:600;cursor:pointer">'+cdT('Prendre rendez-vous','Book appointment')+'</button>';
+
+  const g = id => m.corps.querySelector('#'+id);
+  if(p){
+    g('rv-prenom').value = p.prenom || '';
+    g('rv-nom').value = p.nom || '';
+    g('rv-courriel').value = p.courriel || '';
+    g('rv-tel').value = (typeof cdTelAffiche==='function' ? cdTelAffiche(p.telephone) : p.telephone) || '';
+  }
+  const errZone = g('rv-err');
+  const err = (msg)=>{ errZone.textContent = msg; errZone.style.display = 'block'; };
+
+  g('rv-envoyer').addEventListener('click', async ()=>{
+    const d = g('rv-date').value, h = g('rv-heure').value;
+    if(!d || !h){ err(cdT('Choisissez une date et une heure.','Choose a date and a time.')); return; }
+    if(!g('rv-prenom').value.trim() || !g('rv-nom').value.trim()){ err(cdT('Entrez votre prénom et votre nom.','Enter your first and last name.')); return; }
+    if(!g('rv-courriel').value.trim()){ err(cdT('Entrez votre courriel.','Enter your email.')); return; }
+    const quand = new Date(d + 'T' + h + ':00');
+    if(isNaN(quand.getTime())){ err(cdT('Date ou heure invalide.','Invalid date or time.')); return; }
+    const btn = g('rv-envoyer'); btn.disabled = true; btn.textContent = cdT('Envoi…','Sending…');
+    const note = (cdT('Contact : ','Contact: ') + g('rv-prenom').value.trim() + ' ' + g('rv-nom').value.trim()
+                  + ' · ' + g('rv-courriel').value.trim() + ' · ' + g('rv-tel').value.trim()).trim();
+    const { error } = await sb.rpc('demander_rendez_vous', { p_date_souhaitee: quand.toISOString(), p_type: type, p_message: note });
+    if(error){ btn.disabled = false; btn.textContent = cdT('Prendre rendez-vous','Book appointment'); err(cdT('Erreur : ','Error: ') + error.message); return; }
+    const qtxt = quand.toLocaleString(cdLang()==='en'?'en-CA':'fr-CA', { dateStyle:'long', timeStyle:'short' });
+    if(typeof cdAlerteAdmin === 'function'){
+      cdAlerteAdmin(
+        cdT('Nouvelle demande d\'entrevue', 'New interview request'),
+        cdT((p && (p.prenom||p.courriel) || 'Un usager') + ' souhaite une ' + (type==='entrevue'?'entrevue':'rencontre') + ' le ' + qtxt + '. ' + note,
+            (p && (p.prenom||p.courriel) || 'A user') + ' requested ' + (type==='entrevue'?'an interview':'a call') + ' on ' + qtxt + '. ' + note)
+      );
+    }
+    m.corps.innerHTML = '<div style="text-align:center;padding:16px 8px">'+
+      '<div style="width:48px;height:48px;border-radius:50%;background:var(--menthe,#E7F2EC);color:var(--vert,#0B6E4F);display:grid;place-items:center;margin:0 auto 14px;font-size:26px">✓</div>'+
+      '<p style="font-family:\'Inter\',sans-serif;font-weight:600;font-size:17px;margin:0 0 6px">'+cdT('Demande envoyée','Request sent')+'</p>'+
+      '<p style="font-size:14px;color:var(--sourd,#5A6B63);margin:0">'+cdT('Nous vous confirmerons le rendez-vous du ','We\'ll confirm your appointment for ')+qtxt+cdT(' rapidement.',' shortly.')+'</p>'+
+      '</div>';
+    if(typeof opts.onDone === 'function') opts.onDone();
+  });
+};
+
 /* ---- en-tête connecté : injecte le cluster de session dans la topbar ----
    Pharmacien/pharmacie : cœur + cloche + FR/EN + menu de compte, façon
    « Apple-épuré » (2026-08-08, dossier de refonte). Admin : rendu inchangé
@@ -523,6 +710,7 @@ function cdMenuCompte(p, items, entete){
 window.cdEnteteConnecte = async function(){
   const p = await cdProfil();
   if(!p) return null;
+  let gearNav = null, compteNav = null;   // placés dans la barre de nav, juste après « Messages »
   const conteneur = document.querySelector('.topbar .droite') ||
                     document.querySelector('.topbar .in') ||
                     document.querySelector('.topbar .wrap');
@@ -595,7 +783,12 @@ window.cdEnteteConnecte = async function(){
       ];
     }
     const compte = cdMenuCompte(p, items, entete);
-    el.append(coeur, cloche, cdBoutonLangue(), compte);
+    /* Barre du haut : « Aide », ♥, 🔔, FR/EN à droite ; le ⚙ Réglages et le
+       compte (RM) se rangent DANS la barre de nav, juste après « Messages »
+       (voir plus bas, après cdMenuRole). */
+    const gear = cdIconeLien('/parametres.html', SVG_REGLAGE, 'Paramètres', 'Settings');
+    gearNav = gear; compteNav = compte;
+    el.append(cdBoutonAide(p.role), coeur, cloche, cdBoutonLangue());
     conteneur.appendChild(el);
 
     /* logo = accueil du rôle plutôt que la page publique, pour les deux
@@ -670,6 +863,19 @@ window.cdEnteteConnecte = async function(){
     });
   }
   if(p && p.role) cdMenuRole(p.role);
+  /* ⚙ Réglages + compte (RM) rangés dans la barre de nav, juste après le
+     dernier lien (« Messages ») — le reste du cluster (Aide, ♥, 🔔, FR/EN)
+     reste à l'extrême droite. */
+  if(gearNav && compteNav){
+    const menu = document.getElementById('cd-menu');
+    if(menu){
+      compteNav.style.marginLeft = '4px';
+      menu.append(gearNav, compteNav);
+    } else {
+      const el = document.getElementById('cd-entete-session');
+      if(el) el.append(gearNav, compteNav);
+    }
+  }
   if(p && p.role) cdBoutonRetour(p.role);
   if(p && p.role) cdBadgeMessagesNonLus(p.role);
   return p;
