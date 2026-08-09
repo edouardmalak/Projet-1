@@ -6,6 +6,17 @@ Legend: 🧑 = only you can do this (password, account, real money, a decision).
 
 ---
 
+## 0. À exécuter maintenant — 2 migrations SQL (audit 2026-08-09)
+
+Deux correctifs de sécurité/logique poussés le 2026-08-09 attendent d'être **exécutés en base** (Supabase → SQL Editor). Le code est déjà en prod ; il faut lancer le SQL pour que la base suive.
+
+1. 🧑 **`sql/62-restaure-gardes-instant-booking.sql`** — restaure les gardes de l'acceptation automatique (Instant Booking). La version live de `accepter_candidature_auto()` avait dérivé et n'avait plus AUCUNE garde (elle acceptait toute candidature qu'on lui passait) et retournait `void` au lieu de `boolean`. Le Worker a déjà reçu une défense en profondeur (il revérifie favori/exclusions avant d'appeler), mais la base doit être recorrigée.
+2. 🧑 **`sql/63-durcissement-acl-fonctions.sql`** — ferme l'accès **anonyme** à des fonctions restées publiques. Vérifié en direct sans session : `get_stats_pharmacien` et `get_note_profil` répondaient à un client anonyme, et le mutateur `appliquer_indemnites` était exposé. Après exécution, revérifier que le site connecté marche (profil, évaluations, mandats).
+
+(Copier-coller le contenu de chaque fichier dans Supabase → SQL Editor → Run. Les deux sont idempotents.)
+
+---
+
 ## 1. Right now — Stripe live mode
 
 You just activated your live Stripe account (correctly chose not to copy sandbox data over). The app itself hasn't moved to live keys yet — it's still running on test keys, on purpose, until you're ready. Four steps left:
