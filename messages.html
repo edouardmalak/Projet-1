@@ -18,45 +18,78 @@ body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',san
 .topbar .droite{display:flex;align-items:center;gap:10px;min-width:0}
 .topbar a.nav{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
 .topbar a.nav:hover{color:var(--vert-vif)}
-.wrap{max-width:820px;margin:0 auto;padding:28px 18px 40px}
-h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
-.sous{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;margin-bottom:20px}
-.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:18px}
-.conv{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--texte);border:1px solid var(--ligne);padding:12px 14px;margin-bottom:8px;background:var(--panneau);transition:border-color .12s,background .12s}
-.conv:hover{border-color:var(--vert-vif);background:#FBFDFB}
-.av{flex:none;width:40px;height:40px;border-radius:50%;background:var(--panneau2);color:var(--vert-vif);display:grid;place-items:center;font-family:'Inter',sans-serif;font-weight:700;font-size:13px}
+.wrap{max-width:640px;margin:0 auto;padding:22px 16px 40px}
+
+.mtete{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.mtete h1{font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:22px;letter-spacing:-.01em;text-transform:none}
+.faqpill{font-size:12.5px;font-weight:600;color:var(--vert);border:1px solid #BFD8CC;border-radius:20px;padding:6px 13px;text-decoration:none}
+.faqpill:hover{background:var(--panneau2)}
+
+.recherche{display:flex;align-items:center;gap:9px;background:#EDF1EF;border-radius:11px;padding:10px 13px;margin-bottom:12px}
+.recherche svg{flex:none;color:var(--sourd)}
+.recherche input{flex:1;border:none;background:none;font-family:'Instrument Sans',sans-serif;font-size:14.5px;color:var(--texte)}
+.recherche input:focus{outline:none}
+.recherche input::placeholder{color:var(--sourd)}
+
+.tabs{display:flex;gap:7px;margin-bottom:14px}
+.tab{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;text-align:center;font-size:12.5px;font-weight:600;color:var(--vert);background:var(--panneau);border:1px solid #CFE0D7;border-radius:20px;padding:9px 6px;cursor:pointer;white-space:nowrap}
+.tab.actif{background:var(--vert);border-color:var(--vert);color:#fff}
+.tab .cpt{width:8px;height:8px;border-radius:50%;background:var(--vert)}
+.tab.actif .cpt-badge{background:#fff;color:var(--vert)}
+.cpt-badge{background:var(--vert);color:#fff;font-size:10.5px;font-weight:600;border-radius:20px;padding:0 6px;line-height:1.5}
+
+.conv{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--texte);border-radius:12px;padding:11px 12px;margin-bottom:3px;background:transparent}
+.conv:hover{background:#F0F7F3}
+.conv.non-lu{background:#F0F7F3}
+.av{flex:none;width:44px;height:44px;border-radius:50%;background:var(--panneau2);color:var(--vert-vif);display:grid;place-items:center;font-family:'Inter',sans-serif;font-weight:600;font-size:15px}
+.conv.non-lu .av{background:var(--vert);color:#fff}
 .av.av-admin{background:var(--vert);color:#fff}
 .conv .corps{flex:1;min-width:0}
-.conv .ligne1{display:flex;align-items:center;gap:7px}
-.conv .nom{font-family:'Inter',sans-serif;font-weight:600;font-size:14.5px;color:var(--texte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.conv.non-lu .nom{font-weight:800}
-.conv .m{color:var(--sourd);font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.conv .meta{flex:none;display:flex;align-items:center;gap:6px}
+.conv .ligne1{display:flex;align-items:center;gap:6px}
+.conv .nom{font-family:'Inter',sans-serif;font-weight:500;font-size:14.5px;color:var(--texte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv.non-lu .nom{font-weight:600}
+.conv .note{font-size:11.5px;color:var(--sourd);display:inline-flex;align-items:center;gap:2px;flex:none}
+.conv .m{color:var(--sourd);font-size:13px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv.non-lu .m{color:var(--texte);font-weight:500}
+.conv .meta{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .conv .quand{font-family:'Inter',sans-serif;font-size:11.5px;color:var(--sourd);white-space:nowrap}
-.conv.non-lu .quand{color:var(--vert-vif);font-weight:700}
-.point{width:8px;height:8px;border-radius:99px;background:var(--rouge);flex:none}
-.fermees-toggle{display:flex;align-items:center;gap:6px;width:100%;text-align:left;background:none;border:none;color:var(--sourd);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:10px 4px;cursor:pointer;margin-top:6px}
-.fermees-toggle:hover{color:var(--texte)}
-.fermees-toggle .fleche{display:inline-block;transition:transform .15s}
-.fermees-toggle.ouvert .fleche{transform:rotate(90deg)}
-.btn-cloture{background:transparent;border:1px solid var(--ligne);color:var(--sourd);border-radius:9px;padding:9px 15px;font:500 13px 'Instrument Sans',sans-serif;cursor:pointer}
-.btn-cloture:hover{border-color:var(--vert);color:var(--vert)}
-.vide{color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-align:center;padding:30px 0}
-.fil{display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;padding:6px 2px 12px}
-.bulle{max-width:78%;padding:9px 13px;border-radius:12px;font-size:14px;line-height:1.45;word-wrap:break-word}
-.bulle .qui{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;opacity:.7;margin-bottom:3px}
-.bulle .h{font-family:'IBM Plex Mono',monospace;font-size:10px;opacity:.5;margin-top:4px;text-align:right}
-.moi{align-self:flex-end;background:rgba(18,169,110,.16);border:1px solid rgba(23,201,128,.4)}
-.autre{align-self:flex-start;background:var(--panneau2);border:1px solid var(--ligne2)}
-.tete-conv{display:flex;align-items:center;gap:12px;margin-bottom:6px}
-.tete-conv .av{width:44px;height:44px;font-size:14px}
-.saisie{display:flex;gap:10px;margin-top:14px}
-.saisie textarea{flex:1;background:#F4F8F5;border:1px solid var(--ligne2);border-radius:8px;padding:11px 13px;color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:14px;resize:vertical;min-height:46px}
-.saisie textarea:focus{outline:none;border-color:var(--vert)}
-.saisie button{background:var(--vert);color:#FFFFFF;border:none;border-radius:8px;padding:0 20px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.point{width:9px;height:9px;border-radius:99px;background:var(--vert);flex:none}
+.mbadge{font-size:10.5px;color:var(--sourd);background:#EDF1EF;border-radius:20px;padding:1px 8px;flex:none}
+.mbadge.att{color:#8a5a00;background:#FFF3D6}
+
+.pinned{margin-bottom:10px;background:var(--vert);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;text-decoration:none}
+.pinned .picon{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.16);display:grid;place-items:center;flex:none}
+.pinned .ptxt{flex:1;min-width:0}
+.pinned .ptitre{display:block;font-size:14px;font-weight:600;color:#fff}
+.pinned .paper{display:block;font-size:12.5px;color:#CDE6DB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pinned .pcount{background:#fff;color:var(--vert);font-size:11px;font-weight:600;border-radius:20px;padding:2px 8px;flex:none}
+
+.vide{color:var(--sourd);font-family:'Instrument Sans',sans-serif;font-size:14px;text-align:center;padding:34px 16px;line-height:1.55}
+
+.conv-tete{display:flex;align-items:center;gap:11px;padding:11px 4px 14px;border-bottom:1px solid #E4EDE8;margin-bottom:12px}
+.conv-tete .av{width:40px;height:40px;font-size:13px}
+.conv-tete .ct-corps{flex:1;min-width:0}
+.conv-tete .ct-nom{display:block;font-family:'Inter',sans-serif;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv-tete .ct-sous{display:block;font-size:12.5px;color:var(--sourd);margin-top:1px}
+.retour{display:inline-flex;align-items:center;gap:4px;color:var(--vert-vif);text-decoration:none;font-size:13px;margin-bottom:6px}
+
+.fil{display:flex;flex-direction:column;gap:9px;max-height:60vh;overflow-y:auto;padding:8px 2px 12px}
+.jour{align-self:center;font-size:11px;color:var(--sourd);background:#E7EEEA;border-radius:20px;padding:3px 11px;margin:4px 0}
+.bulle{max-width:80%;padding:9px 13px;font-size:14px;line-height:1.45;word-wrap:break-word}
+.bulle .h{font-size:10.5px;margin-top:3px;text-align:right}
+.moi{align-self:flex-end;background:var(--vert);color:#fff;border-radius:14px 14px 4px 14px}
+.moi .h{color:#BFE0D2}
+.autre{align-self:flex-start;background:var(--panneau);border:1px solid #E4EDE8;border-radius:14px 14px 14px 4px}
+.autre .h{color:#8A9A92}
+
+.saisie{display:flex;align-items:center;gap:9px;margin-top:12px;padding-top:12px;border-top:1px solid #E4EDE8}
+.saisie textarea{flex:1;background:#EDF1EF;border:1px solid transparent;border-radius:20px;padding:11px 16px;color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:14px;resize:none;min-height:42px;max-height:120px;line-height:1.4}
+.saisie textarea:focus{outline:none;border-color:var(--ligne2);background:#fff}
+.saisie button{flex:none;width:42px;height:42px;border-radius:50%;background:var(--vert);color:#fff;border:none;display:grid;place-items:center;cursor:pointer}
 .saisie button:hover{background:var(--vert-vif)}
 .saisie button:disabled{opacity:.5;cursor:default}
-.retour{display:inline-block;color:var(--vert-vif);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-bottom:14px}
+.btn-cloture{background:transparent;border:1px solid var(--ligne);color:var(--sourd);border-radius:9px;padding:9px 15px;font:500 13px 'Instrument Sans',sans-serif;cursor:pointer}
+.btn-cloture:hover{border-color:var(--vert);color:var(--vert)}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/design.css">
@@ -78,7 +111,10 @@ const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 const esc = s => String(s==null?'':s).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
 let profil = null, contratId = null, filId = null, filEtat = null, timer = null;
-const ICONE_ADMIN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>';
+const SVG_SEARCH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>';
+const SVG_SEND = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14 21 3M21 3l-6.5 18a.55.55 0 0 1-1 0L10 14l-7-3.5a.55.55 0 0 1 0-1L21 3"/></svg>';
+const SVG_CHEV = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>';
+const ICONE_ADMIN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>';
 
 function refDepuisUrl(){ const q = new URLSearchParams(location.search).get('ref'); return q ? q.toUpperCase() : null; }
 function nonActive(e){ return /does not exist|schema cache/i.test((e && e.message) || ''); }
@@ -103,10 +139,7 @@ function initialesDe(nom){
   else listerConversations();
 })();
 
-/* ---------------- CANAL ADMIN (sql/60) ----------------
-   Une seule conversation, toujours ouverte, entre l'utilisateur et
-   « l'équipe C-Direct » — distincte des fils pharmacie<->pharmacien,
-   jamais de clôture. */
+/* ---------------- CANAL ADMIN (sql/60) ---------------- */
 async function chargerApercuAdmin(){
   const [{ data: msgs }, { data: etat }] = await Promise.all([
     sb.from('messages_admin').select('corps,expediteur_id,created_at')
@@ -122,14 +155,15 @@ async function chargerApercuAdmin(){
 async function ouvrirConversationAdmin(){
   const wrap = $('wrap');
   wrap.innerHTML =
-    '<a class="retour" href="/messages.html">← Toutes les conversations</a>'+
-    '<div class="tete-conv"><div class="av av-admin">'+ICONE_ADMIN+'</div>'+
-    '<div><h1 style="margin-bottom:1px">Équipe C-Direct</h1><p class="sous" style="margin-bottom:0">Une question, un problème — écrivez-nous directement.</p></div></div>'+
-    '<div class="carte"><div class="fil" id="fil"><div class="vide">Chargement…</div></div>'+
+    '<a class="retour" href="/messages.html">'+SVG_CHEV+' Messagerie</a>'+
+    '<div class="conv-tete"><div class="av av-admin">'+ICONE_ADMIN+'</div>'+
+    '<div class="ct-corps"><span class="ct-nom">Équipe C-Direct</span><span class="ct-sous">Une question, un problème — écrivez-nous directement.</span></div></div>'+
+    '<div class="fil" id="fil"><div class="vide">Chargement…</div></div>'+
     '<div class="saisie" id="saisie"><textarea id="txt" placeholder="Votre message…" rows="1"></textarea>'+
-    '<button id="env">Envoyer</button></div></div>';
+    '<button id="env" aria-label="Envoyer">'+SVG_SEND+'</button></div>';
 
   $('env').onclick = envoyerAdmin;
+  autoGrow($('txt'));
   $('txt').addEventListener('keydown', e=>{ if(e.key==='Enter' && (e.metaKey||e.ctrlKey)){ e.preventDefault(); envoyerAdmin(); } });
   await chargerAdmin();
   sb.rpc('marquer_admin_vu').catch(()=>{});
@@ -142,13 +176,7 @@ async function chargerAdmin(){
   if(error) return;
   const fil = $('fil'); if(!fil) return;
   if(!data.length){ fil.innerHTML = '<div class="vide">Aucun message pour l’instant. Posez votre question, l’équipe C-Direct répond directement ici.</div>'; return; }
-  fil.innerHTML = data.map(m=>{
-    const moi = m.expediteur_id === profil.id;
-    const h = cdTempsRelatif(m.created_at);
-    return '<div class="bulle '+(moi?'moi':'autre')+'"><div class="qui">'
-      + (moi?'Vous':'Équipe C-Direct')+'</div>'
-      + esc(m.corps).replace(/\n/g,'<br>')+'<div class="h">'+h+'</div></div>';
-  }).join('');
+  fil.innerHTML = rendreBulles(data);
   if(data.length !== dernierN){ fil.scrollTop = fil.scrollHeight; dernierN = data.length; }
 }
 
@@ -158,83 +186,105 @@ async function envoyerAdmin(){
   const { error } = await sb.from('messages_admin').insert({ utilisateur_id: profil.id, expediteur_id: profil.id, corps });
   $('env').disabled = false;
   if(error){ alert('Erreur : '+error.message); return; }
-  txt.value = '';
+  txt.value = ''; autoGrow(txt);
   await chargerAdmin();
 }
 
-/* ---------------- LISTE DES FILS ----------------
-   Un seul fil par contrepartie (et non plus un par contrat) : les
-   échanges avec une même pharmacie restent au même endroit. */
+/* ---------------- LISTE DES FILS ---------------- */
 function ligneConv(f){
   const ferme = f.statut === 'ferme';
   const quand = f.dernier_le ? cdTempsRelatif(f.dernier_le) : '';
   const apercu = f.dernier_message
     ? esc(String(f.dernier_message).slice(0,90)) + (String(f.dernier_message).length>90?'…':'')
     : 'Aucun message';
-  /* demande de clôture en attente de MA réponse ? */
   const jeSuisPharmacie = profil.role === 'pharmacie';
   const moiFerme  = jeSuisPharmacie ? f.cloture_pharmacie : f.cloture_pharmacien;
   const autreFerme= jeSuisPharmacie ? f.cloture_pharmacien : f.cloture_pharmacie;
   let badge = '';
-  if(ferme) badge = '<span class="badge" style="color:var(--sourd);background:var(--panneau2)">Fermée</span>';
-  else if(autreFerme && !moiFerme) badge = '<span class="badge" style="color:#8a5a00;background:#FFF3D6">Clôture demandée</span>';
-  else if(moiFerme && !autreFerme) badge = '<span class="badge" style="color:var(--sourd);background:var(--panneau2)">En attente</span>';
+  if(ferme) badge = '<span class="mbadge">Fermée</span>';
+  else if(autreFerme && !moiFerme) badge = '<span class="mbadge att">Clôture demandée</span>';
+  else if(moiFerme && !autreFerme) badge = '<span class="mbadge">En attente</span>';
+  const note = (f.contrepartie_note_moyenne != null && f.contrepartie_note_nombre)
+    ? '<span class="note">★ '+Number(f.contrepartie_note_moyenne).toFixed(1)+'</span>' : '';
   const nonLu = f.non_lu && !ferme;
-  return '<a class="conv'+(nonLu?' non-lu':'')+'" href="/messages.html?fil='+encodeURIComponent(f.fil_id)+'">'
-    + '<div class="av">'+esc(initialesDe(f.contrepartie_nom))+'</div>'
-    + '<div class="corps"><div class="ligne1"><span class="nom">'+esc(f.contrepartie_nom || 'Contrepartie')+'</span>'+badge+'</div>'
+  const nom = f.contrepartie_nom || 'Contrepartie';
+  return '<a class="conv'+(nonLu?' non-lu':'')+'" data-nom="'+esc(nom.toLowerCase())+'" href="/messages.html?fil='+encodeURIComponent(f.fil_id)+'">'
+    + '<div class="av">'+esc(initialesDe(nom))+'</div>'
+    + '<div class="corps"><div class="ligne1"><span class="nom">'+esc(nom)+'</span>'+note+badge+'</div>'
     + '<div class="m">'+apercu+'</div></div>'
     + '<div class="meta">'+(quand?'<span class="quand">'+quand+'</span>':'')+(nonLu?'<span class="point"></span>':'')+'</div></a>';
 }
 
+function montrerTab(nom){
+  ['messages','admin','historique'].forEach(t=>{
+    const pane = $('pane-'+t), btn = $('tab-'+t);
+    if(pane) pane.style.display = (t===nom) ? '' : 'none';
+    if(btn) btn.classList.toggle('actif', t===nom);
+  });
+  filtrerRecherche();
+}
+function filtrerRecherche(){
+  const q = ($('recherche') ? $('recherche').value : '').trim().toLowerCase();
+  const paneActif = document.querySelector('[id^="pane-"]:not([style*="display: none"])');
+  if(!paneActif) return;
+  paneActif.querySelectorAll('.conv').forEach(a=>{
+    const nom = a.getAttribute('data-nom') || '';
+    a.style.display = (!q || nom.includes(q)) ? '' : 'none';
+  });
+}
+
 async function listerConversations(){
   const wrap = $('wrap');
-  wrap.innerHTML = '<h1>Messagerie</h1>'
-    + '<p class="sous">Une seule conversation par contrepartie — tout l’historique au même endroit.</p>'
-    + '<div id="carte-admin" style="margin-bottom:14px"></div>'
-    + '<div id="liste"><div class="vide">Chargement…</div></div>'
-    + '<div id="zone-fermees"></div>';
+  wrap.innerHTML =
+    '<div class="mtete"><h1>Messagerie</h1><a class="faqpill" href="/faq.html">FAQ</a></div>'
+    + '<div class="recherche">'+SVG_SEARCH+'<input id="recherche" placeholder="Rechercher une conversation" autocomplete="off"></div>'
+    + '<div class="tabs">'
+    +   '<button class="tab actif" id="tab-messages" type="button">Messages <span id="cpt-messages"></span></button>'
+    +   '<button class="tab" id="tab-admin" type="button">Équipe C-Direct <span id="cpt-admin"></span></button>'
+    +   '<button class="tab" id="tab-historique" type="button">Historique</button>'
+    + '</div>'
+    + '<div id="pane-messages"><div class="vide">Chargement…</div></div>'
+    + '<div id="pane-admin" style="display:none"></div>'
+    + '<div id="pane-historique" style="display:none"></div>';
 
+  $('tab-messages').onclick = ()=>montrerTab('messages');
+  $('tab-admin').onclick = ()=>montrerTab('admin');
+  $('tab-historique').onclick = ()=>montrerTab('historique');
+  $('recherche').addEventListener('input', filtrerRecherche);
+
+  /* --- onglet Équipe C-Direct --- */
   const apercuAdmin = await chargerApercuAdmin();
   const quandA = apercuAdmin.dernier_le ? cdTempsRelatif(apercuAdmin.dernier_le) : '';
   const apercuA = apercuAdmin.dernier_message
     ? esc(String(apercuAdmin.dernier_message).slice(0,90)) + (String(apercuAdmin.dernier_message).length>90?'…':'')
     : 'Écrivez-nous si vous avez une question.';
-  $('carte-admin').innerHTML = '<a class="conv'+(apercuAdmin.non_lu?' non-lu':'')+'" href="/messages.html?admin=1">'
-    + '<div class="av av-admin">'+ICONE_ADMIN+'</div>'
-    + '<div class="corps"><div class="ligne1"><span class="nom">Équipe C-Direct</span></div>'
-    + '<div class="m">'+apercuA+'</div></div>'
-    + '<div class="meta">'+(quandA?'<span class="quand">'+quandA+'</span>':'')+(apercuAdmin.non_lu?'<span class="point"></span>':'')+'</div></a>';
+  $('pane-admin').innerHTML =
+    '<a class="pinned" href="/messages.html?admin=1">'
+    + '<span class="picon">'+ICONE_ADMIN+'</span>'
+    + '<span class="ptxt"><span class="ptitre">Équipe C-Direct</span><span class="paper">'+apercuA+'</span></span>'
+    + (apercuAdmin.non_lu ? '<span class="pcount">1</span>' : (quandA?'<span class="paper" style="flex:none;color:#CDE6DB">'+quandA+'</span>':''))
+    + '</a>';
+  if(apercuAdmin.non_lu) $('cpt-admin').outerHTML = '<span id="cpt-admin" class="cpt-badge">1</span>';
 
+  /* --- onglets Messages / Historique --- */
   const { data, error } = await sb.rpc('mes_fils');
-  const l = $('liste');
+  const paneM = $('pane-messages'), paneH = $('pane-historique');
   if(error){
-    l.innerHTML = '<div class="vide">'
+    paneM.innerHTML = '<div class="vide">'
       + (nonActive(error) ? 'Messagerie par fil non activée — exécuter <b>sql/23</b> dans Supabase.'
                           : 'Erreur : '+esc(error.message)) + '</div>';
     return;
   }
   const fils = data || [];
-  if(!fils.length){
-    l.innerHTML = '<div class="vide">Aucune conversation — elle s’ouvre dès qu’un contrat est confirmé des deux côtés.</div>';
-    return;
-  }
   const ouvertes = fils.filter(f => f.statut !== 'ferme');
   const fermees  = fils.filter(f => f.statut === 'ferme');
-  l.innerHTML = ouvertes.length ? ouvertes.map(ligneConv).join('')
-    : '<div class="vide">Aucune conversation active pour l’instant.</div>';
+  const nbNonLu = ouvertes.filter(f => f.non_lu).length;
+  if(nbNonLu) $('cpt-messages').outerHTML = '<span id="cpt-messages" class="cpt-badge">'+nbNonLu+'</span>';
 
-  if(fermees.length){
-    $('zone-fermees').innerHTML = '<button class="fermees-toggle" id="btn-fermees">'
-      + '<span class="fleche">▸</span> Fermées ('+fermees.length+')</button>'
-      + '<div id="liste-fermees" style="display:none">'+fermees.map(ligneConv).join('')+'</div>';
-    $('btn-fermees').onclick = () => {
-      const zone = $('liste-fermees'), btn = $('btn-fermees');
-      const ouvre = zone.style.display === 'none';
-      zone.style.display = ouvre ? '' : 'none';
-      btn.classList.toggle('ouvert', ouvre);
-    };
-  }
+  paneM.innerHTML = ouvertes.length ? ouvertes.map(ligneConv).join('')
+    : '<div class="vide">Aucune conversation active.<br>Une conversation s’ouvre dès qu’un contrat est confirmé des deux côtés.</div>';
+  paneH.innerHTML = fermees.length ? fermees.map(ligneConv).join('')
+    : '<div class="vide">Aucune conversation fermée.</div>';
 }
 
 /* ---------------- UNE CONVERSATION ---------------- */
@@ -247,16 +297,16 @@ async function ouvrirConversation(ref){
   } else {
     const { data, error } = await sb.rpc('get_contrat_fiche', { p_ref: ref });
     if(error || !data || !data.length){
-      wrap.innerHTML = '<a class="retour" href="/messages.html">← Messagerie</a><div class="vide">Conversation introuvable ou accès refusé.</div>'; return;
+      wrap.innerHTML = '<a class="retour" href="/messages.html">'+SVG_CHEV+' Messagerie</a><div class="vide">Conversation introuvable ou accès refusé.</div>'; return;
     }
     const k = data[0];
     contratId = k.id;
     if(!(k.statut==='attribue' || k.statut==='complete')){
-      wrap.innerHTML = '<a class="retour" href="/messages.html">← Messagerie</a><div class="vide">La messagerie s’ouvre une fois le contrat confirmé des deux côtés.</div>'; return;
+      wrap.innerHTML = '<a class="retour" href="/messages.html">'+SVG_CHEV+' Messagerie</a><div class="vide">La messagerie s’ouvre une fois le contrat confirmé des deux côtés.</div>'; return;
     }
     const { data: fid, error: eF } = await sb.rpc('ouvrir_fil', { p_contrat: contratId });
     if(eF){
-      wrap.innerHTML = '<a class="retour" href="/messages.html">← Messagerie</a><div class="vide">'
+      wrap.innerHTML = '<a class="retour" href="/messages.html">'+SVG_CHEV+' Messagerie</a><div class="vide">'
         + (nonActive(eF) ? 'Messagerie par fil non activée — exécuter <b>sql/23</b>.' : esc(eF.message)) + '</div>';
       return;
     }
@@ -264,16 +314,17 @@ async function ouvrirConversation(ref){
   }
 
   wrap.innerHTML =
-    '<a class="retour" href="/messages.html">← Toutes les conversations</a>'+
-    '<div class="tete-conv"><div class="av" id="h-av"></div>'+
-    '<div><h1 id="h-titre" style="margin-bottom:1px">Conversation</h1><p class="sous" id="h-sous" style="margin-bottom:0"></p></div></div>'+
+    '<a class="retour" href="/messages.html">'+SVG_CHEV+' Toutes les conversations</a>'+
+    '<div class="conv-tete"><div class="av" id="h-av"></div>'+
+    '<div class="ct-corps"><span class="ct-nom" id="h-titre">Conversation</span><span class="ct-sous" id="h-sous"></span></div></div>'+
     '<div id="bandeau"></div>'+
-    '<div class="carte"><div class="fil" id="fil"><div class="vide">Chargement…</div></div>'+
+    '<div class="fil" id="fil"><div class="vide">Chargement…</div></div>'+
     '<div class="saisie" id="saisie"><textarea id="txt" placeholder="Votre message…" rows="1"></textarea>'+
-    '<button id="env">Envoyer</button></div></div>'+
+    '<button id="env" aria-label="Envoyer">'+SVG_SEND+'</button></div>'+
     '<div style="margin-top:14px" id="zone-cloture"></div>';
 
   $('env').onclick = envoyer;
+  autoGrow($('txt'));
   $('txt').addEventListener('keydown', e=>{ if(e.key==='Enter' && (e.metaKey||e.ctrlKey)){ e.preventDefault(); envoyer(); } });
   await rafraichirEtat();
   await charger();
@@ -284,7 +335,6 @@ async function ouvrirConversation(ref){
   }, 5000);
 }
 
-/* état du fil (titre, bandeau, bouton de clôture) */
 async function rafraichirEtat(){
   const { data } = await sb.rpc('mes_fils');
   const f = (data||[]).find(x => x.fil_id === filId);
@@ -298,10 +348,7 @@ async function rafraichirEtat(){
     const note = (f.contrepartie_note_moyenne != null && f.contrepartie_note_nombre)
       ? '★ ' + Number(f.contrepartie_note_moyenne).toFixed(1) + ' (' + f.contrepartie_note_nombre + ' avis) · '
       : '';
-    const fav = f.contrepartie_favoris_nombre
-      ? '♥ ' + f.contrepartie_favoris_nombre + ' pharmacie' + (f.contrepartie_favoris_nombre>1?'s':'') + ' favori · '
-      : '';
-    s.textContent = note + fav + (f.contrat_ref ? 'Depuis '+f.contrat_ref+' · ' : '')
+    s.textContent = note + (f.contrat_ref ? f.contrat_ref + ' · ' : '')
       + f.nb_messages + ' message' + (f.nb_messages>1?'s':'');
   }
 
@@ -348,7 +395,6 @@ async function rafraichirEtat(){
   if(ba) ba.onclick = () => demanderCloture(false, false);
 }
 
-/* clôture mutuelle — avec l'avertissement doux */
 async function demanderCloture(veut, seraDefinitive){
   if(veut){
     const msg = seraDefinitive
@@ -368,6 +414,22 @@ async function demanderCloture(veut, seraDefinitive){
   await charger();
 }
 
+/* ---------------- bulles + rendu commun ---------------- */
+function libelleAutre(){ return profil.role==='pharmacie' ? 'Pharmacien(ne)' : 'Pharmacie'; }
+function jourDe(iso){ try{ return new Date(iso).toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'}); }catch(e){ return ''; } }
+function rendreBulles(data){
+  let html = '', jourCourant = '';
+  data.forEach(m=>{
+    const j = jourDe(m.created_at);
+    if(j && j !== jourCourant){ html += '<div class="jour">'+esc(j)+'</div>'; jourCourant = j; }
+    const moi = m.expediteur_id === profil.id;
+    const h = cdTempsRelatif(m.created_at);
+    html += '<div class="bulle '+(moi?'moi':'autre')+'">'
+      + esc(m.corps).replace(/\n/g,'<br>')+'<div class="h">'+h+'</div></div>';
+  });
+  return html;
+}
+
 let dernierN = 0;
 async function charger(){
   const { data, error } = await sb.from('messages').select('id,corps,expediteur_id,created_at')
@@ -375,13 +437,7 @@ async function charger(){
   if(error) return;
   const fil = $('fil'); if(!fil) return;
   if(!data.length){ fil.innerHTML = '<div class="vide">Aucun message. Écrivez le premier — c’est direct, sans intermédiaire.</div>'; return; }
-  fil.innerHTML = data.map(m=>{
-    const moi = m.expediteur_id === profil.id;
-    const h = cdTempsRelatif(m.created_at);
-    return '<div class="bulle '+(moi?'moi':'autre')+'"><div class="qui">'
-      + (moi?'Vous':(profil.role==='pharmacie'?'Pharmacien(ne)':'Pharmacie'))+'</div>'
-      + esc(m.corps).replace(/\n/g,'<br>')+'<div class="h">'+h+'</div></div>';
-  }).join('');
+  fil.innerHTML = rendreBulles(data);
   if(data.length !== dernierN){ fil.scrollTop = fil.scrollHeight; dernierN = data.length; }
 }
 
@@ -389,7 +445,7 @@ async function envoyer(){
   const txt = $('txt'); const corps = txt.value.trim(); if(!corps) return;
   $('env').disabled = true;
   const ligne = { fil_id: filId, expediteur_id: profil.id, corps };
-  if(contratId) ligne.contrat_id = contratId;          /* compatibilité ancienne colonne */
+  if(contratId) ligne.contrat_id = contratId;
   else if(filEtat && filEtat.contrat_ref){
     const { data: k } = await sb.from('contrats').select('id')
       .eq('numero_reference', filEtat.contrat_ref).maybeSingle();
@@ -398,8 +454,14 @@ async function envoyer(){
   const { error } = await sb.from('messages').insert(ligne);
   $('env').disabled = false;
   if(error){ alert('Erreur : '+error.message); return; }
-  txt.value = '';
+  txt.value = ''; autoGrow(txt);
   await charger();
+}
+
+function autoGrow(t){
+  if(!t) return;
+  const fit = ()=>{ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight,120)+'px'; };
+  t.addEventListener('input', fit); fit();
 }
 window.addEventListener('beforeunload', ()=>{ if(timer) clearInterval(timer); });
 </script>
