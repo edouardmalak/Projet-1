@@ -111,9 +111,9 @@ a.lien{color:var(--vert-vif)}
   <div class="pf-main">
 
   <div id="profil-onglets" role="tablist">
-    <button type="button" data-onglet="infos" class="actif">Mes informations</button>
-    <button type="button" id="tab-tarification" data-onglet="tarification">Tarification</button>
-    <button type="button" data-onglet="reputation">Réputation</button>
+    <button type="button" data-onglet="infos" class="actif" data-fr="Mes informations" data-en="My information">Mes informations</button>
+    <button type="button" id="tab-tarification" data-onglet="tarification" data-fr="Tarification" data-en="Pricing">Tarification</button>
+    <button type="button" data-onglet="reputation" data-fr="Réputation" data-en="Reputation">Réputation</button>
   </div>
 
   <div data-onglet="reputation">
@@ -123,67 +123,67 @@ a.lien{color:var(--vert-vif)}
   <div class="carte">
     <form id="f">
       <div data-onglet="infos">
-      <div class="sec">Identité</div>
+      <div class="sec" data-fr="Identité" data-en="Identity">Identité</div>
       <div class="deux">
-        <div class="champ"><label>Prénom</label><input id="prenom" required></div>
-        <div class="champ"><label>Nom</label><input id="nom" required></div>
+        <div class="champ"><label data-fr="Prénom" data-en="First name">Prénom</label><input id="prenom" required></div>
+        <div class="champ"><label data-fr="Nom" data-en="Last name">Nom</label><input id="nom" required></div>
       </div>
       <div class="deux">
-        <div class="champ"><label>Courriel</label><input id="courriel" type="email" readonly></div>
-        <div class="champ"><label>Téléphone</label><input id="telephone" type="tel" required placeholder="514-555-0123"></div>
+        <div class="champ"><label data-fr="Courriel" data-en="Email">Courriel</label><input id="courriel" type="email" readonly></div>
+        <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input id="telephone" type="tel" required placeholder="514-555-0123"></div>
       </div>
       </div>
 
       <!-- PHARMACIEN -->
       <div id="bloc-pharmacien" style="display:none">
       <div data-onglet="infos">
-        <div class="sec">Profil pharmacien(ne)</div>
-        <div class="champ"><label>Photo de profil (facultatif)</label>
+        <div class="sec" data-fr="Profil pharmacien(ne)" data-en="Pharmacist profile">Profil pharmacien(ne)</div>
+        <div class="champ"><label data-fr="Photo de profil (facultatif)" data-en="Profile photo (optional)">Photo de profil (facultatif)</label>
           <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
             <img id="photo-apercu" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:var(--panneau2);border:1px solid var(--ligne2);display:none">
             <div style="min-width:200px">
               <input type="file" id="photo-fichier" accept="image/png,image/jpeg,image/webp" style="font-size:13px">
-              <div style="font-size:12px;color:var(--sourd);margin-top:4px">Facultatif — vous pouvez en ajouter une, ce n'est jamais obligatoire. JPG, PNG ou WebP, 2 Mo max.</div>
-              <button type="button" id="photo-retirer" style="display:none;margin-top:6px;font-size:12px;background:none;border:none;color:var(--rouge);cursor:pointer;padding:0">Retirer la photo</button>
+              <div style="font-size:12px;color:var(--sourd);margin-top:4px" data-fr="Facultatif — vous pouvez en ajouter une, ce n'est jamais obligatoire. JPG, PNG ou WebP, 2 Mo max." data-en="Optional — you can add one, it's never required. JPG, PNG or WebP, 2 MB max.">Facultatif — vous pouvez en ajouter une, ce n'est jamais obligatoire. JPG, PNG ou WebP, 2 Mo max.</div>
+              <button type="button" id="photo-retirer" style="display:none;margin-top:6px;font-size:12px;background:none;border:none;color:var(--rouge);cursor:pointer;padding:0" data-fr="Retirer la photo" data-en="Remove photo">Retirer la photo</button>
               <div id="photo-msg" style="font-size:12px;margin-top:4px"></div>
             </div>
           </div>
         </div>
-        <div class="champ"><label>N° OPQ</label><input id="numero_opq" inputmode="numeric"></div>
-        <div class="champ"><label>Adresse</label><input id="adresse_pharmacien" placeholder="123 rue Principale, app. 4"></div>
+        <div class="champ"><label data-fr="N° OPQ" data-en="OPQ #">N° OPQ</label><input id="numero_opq" inputmode="numeric"></div>
+        <div class="champ"><label data-fr="Adresse" data-en="Address">Adresse</label><input id="adresse_pharmacien" placeholder="123 rue Principale, app. 4"></div>
         <div class="deux">
-          <div class="champ"><label>Ville de base</label><input id="ville_base"></div>
-          <div class="champ"><label>Code postal</label><input id="cp_pharmacien"></div>
+          <div class="champ"><label data-fr="Ville de base" data-en="Home city">Ville de base</label><input id="ville_base"></div>
+          <div class="champ"><label data-fr="Code postal" data-en="Postal code">Code postal</label><input id="cp_pharmacien"></div>
         </div>
-        <div class="sec" style="margin-top:14px">Facturation (mandats)</div>
+        <div class="sec" style="margin-top:14px" data-fr="Facturation (mandats)" data-en="Billing (mandates)">Facturation (mandats)</div>
         <div class="trois">
-          <div class="champ"><label>N° TPS</label><input id="tps" placeholder="123456789 RT0001"></div>
-          <div class="champ"><label>N° TVQ</label><input id="tvq" placeholder="1234567890 TQ0001"></div>
-          <div class="champ"><label>Société (raison sociale)</label><input id="societe"></div>
+          <div class="champ"><label data-fr="N° TPS" data-en="GST #">N° TPS</label><input id="tps" placeholder="123456789 RT0001"></div>
+          <div class="champ"><label data-fr="N° TVQ" data-en="QST #">N° TVQ</label><input id="tvq" placeholder="1234567890 TQ0001"></div>
+          <div class="champ"><label data-fr="Société (raison sociale)" data-en="Company (legal name)">Société (raison sociale)</label><input id="societe"></div>
         </div>
-        <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px">Nécessaire pour facturer les taxes (TPS/TVQ) sur vos mandats. Laissez vide si vous n'êtes pas inscrit.</p>
-        <div class="champ"><label>Logiciels maîtrisés</label>
+        <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px" data-fr="Nécessaire pour facturer les taxes (TPS/TVQ) sur vos mandats. Laissez vide si vous n'êtes pas inscrit." data-en="Needed to charge taxes (GST/QST) on your mandates. Leave blank if you're not registered.">Nécessaire pour facturer les taxes (TPS/TVQ) sur vos mandats. Laissez vide si vous n'êtes pas inscrit.</p>
+        <div class="champ"><label data-fr="Logiciels maîtrisés" data-en="Software mastered">Logiciels maîtrisés</label>
           <div id="sliders-logiciels"></div>
-          <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-2px">Purement informatif : affiché aux pharmacies sur vos candidatures, n'exclut jamais automatiquement d'un contrat.</p>
+          <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-2px" data-fr="Purement informatif : affiché aux pharmacies sur vos candidatures, n'exclut jamais automatiquement d'un contrat." data-en="Informational only: shown to pharmacies on your applications, never automatically excludes you from a contract.">Purement informatif : affiché aux pharmacies sur vos candidatures, n'exclut jamais automatiquement d'un contrat.</p>
         </div>
-        <div class="champ"><label>Compétences additionnelles</label>
+        <div class="champ"><label data-fr="Compétences additionnelles" data-en="Additional skills">Compétences additionnelles</label>
           <div class="coches" id="coches-competences"></div>
         </div>
-        <div class="champ"><label>Langues parlées</label>
+        <div class="champ"><label data-fr="Langues parlées" data-en="Languages spoken">Langues parlées</label>
           <div class="coches" id="coches-langues"></div>
         </div>
-        <div class="champ"><label>Universités fréquentées (maximum 3)</label>
+        <div class="champ"><label data-fr="Universités fréquentées (maximum 3)" data-en="Universities attended (maximum 3)">Universités fréquentées (maximum 3)</label>
           <div class="coches" id="coches-universites"></div>
-          <input type="text" id="autre-universite" class="autre-uni" placeholder="Nom de votre université" style="display:none" maxlength="120">
+          <input type="text" id="autre-universite" class="autre-uni" placeholder="Nom de votre université" data-fr-ph="Nom de votre université" data-en-ph="Name of your university" style="display:none" maxlength="120">
         </div>
         <div class="trois">
-          <div class="champ"><label>Année de graduation</label>
+          <div class="champ"><label data-fr="Année de graduation" data-en="Graduation year">Année de graduation</label>
             <select id="diplome_annee"><option value="">—</option></select>
           </div>
-          <div class="champ"><label>Mois de graduation</label>
+          <div class="champ"><label data-fr="Mois de graduation" data-en="Graduation month">Mois de graduation</label>
             <select id="diplome_mois"><option value="">—</option></select>
           </div>
-          <div class="champ"><label>Expérience</label>
+          <div class="champ"><label data-fr="Expérience" data-en="Experience">Expérience</label>
             <div id="experience-calculee" style="font-family:'IBM Plex Mono',monospace;font-size:14px;padding-top:10px;color:var(--texte)">—</div>
           </div>
         </div>
@@ -194,74 +194,74 @@ a.lien{color:var(--vert-vif)}
       <!-- PHARMACIE -->
       <div id="bloc-pharmacie" style="display:none">
       <div data-onglet="infos">
-        <div class="sec">Profil pharmacie</div>
+        <div class="sec" data-fr="Profil pharmacie" data-en="Pharmacy profile">Profil pharmacie</div>
         <div class="deux">
-          <div class="champ"><label>Nom de la pharmacie</label><input id="nom_pharmacie"></div>
-          <div class="champ"><label>Bannière</label><input id="banniere"></div>
+          <div class="champ"><label data-fr="Nom de la pharmacie" data-en="Pharmacy name">Nom de la pharmacie</label><input id="nom_pharmacie"></div>
+          <div class="champ"><label data-fr="Bannière" data-en="Banner">Bannière</label><input id="banniere"></div>
         </div>
-        <div class="champ"><label>Adresse</label><input id="adresse"></div>
+        <div class="champ"><label data-fr="Adresse" data-en="Address">Adresse</label><input id="adresse"></div>
         <div class="deux">
-          <div class="champ"><label>Ville</label><input id="ville"></div>
-          <div class="champ"><label>Code postal</label><input id="cp_pharmacie"></div>
+          <div class="champ"><label data-fr="Ville" data-en="City">Ville</label><input id="ville"></div>
+          <div class="champ"><label data-fr="Code postal" data-en="Postal code">Code postal</label><input id="cp_pharmacie"></div>
         </div>
         <div class="deux">
           <div class="champ"><label>NEQ</label><input id="neq"></div>
-          <div class="champ"><label>Logiciel de laboratoire</label>
+          <div class="champ"><label data-fr="Logiciel de laboratoire" data-en="Lab software">Logiciel de laboratoire</label>
             <select id="logiciel"><option value="">—</option></select>
           </div>
         </div>
         <div class="deux">
-          <div class="champ"><label>Contact propriétaire</label><input id="contact_proprietaire"></div>
-          <div class="champ"><label>Cellulaire propriétaire</label><input id="cell_proprietaire" type="tel" placeholder="514-555-0123"></div>
+          <div class="champ"><label data-fr="Contact propriétaire" data-en="Owner contact">Contact propriétaire</label><input id="contact_proprietaire"></div>
+          <div class="champ"><label data-fr="Cellulaire propriétaire" data-en="Owner cell">Cellulaire propriétaire</label><input id="cell_proprietaire" type="tel" placeholder="514-555-0123"></div>
         </div>
         <div class="deux">
-          <div class="champ"><label>Rx / jour (semaine)</label><input id="rx_jour_semaine" type="number" min="0"></div>
-          <div class="champ"><label>Rx / jour (weekend)</label><input id="rx_jour_weekend" type="number" min="0"></div>
+          <div class="champ"><label data-fr="Rx / jour (semaine)" data-en="Rx / day (weekday)">Rx / jour (semaine)</label><input id="rx_jour_semaine" type="number" min="0"></div>
+          <div class="champ"><label data-fr="Rx / jour (weekend)" data-en="Rx / day (weekend)">Rx / jour (weekend)</label><input id="rx_jour_weekend" type="number" min="0"></div>
         </div>
-        <div class="champ"><label>Conditions habituelles</label>
+        <div class="champ"><label data-fr="Conditions habituelles" data-en="Usual conditions">Conditions habituelles</label>
           <div class="coches">
-            <label><input type="checkbox" id="seul_pharmacien"> Seul(e) pharmacien(ne)</label>
-            <label><input type="checkbox" id="atp_presente"> ATP présente</label>
-            <label><input type="checkbox" id="has_automation"> Automatisation (robot / auto-dispense)</label>
+            <label><input type="checkbox" id="seul_pharmacien"> <span data-fr="Seul(e) pharmacien(ne)" data-en="Solo pharmacist">Seul(e) pharmacien(ne)</span></label>
+            <label><input type="checkbox" id="atp_presente"> <span data-fr="ATP présente" data-en="Technician present">ATP présente</span></label>
+            <label><input type="checkbox" id="has_automation"> <span data-fr="Automatisation (robot / auto-dispense)" data-en="Automation (robot / auto-dispense)">Automatisation (robot / auto-dispense)</span></label>
           </div>
         </div>
-        <div class="champ"><label>Services habituellement requis</label>
+        <div class="champ"><label data-fr="Services habituellement requis" data-en="Usually required services">Services habituellement requis</label>
           <div class="coches" id="coches-services-pharmacie"></div>
         </div>
-        <div class="champ"><label>Heures d'ouverture</label>
+        <div class="champ"><label data-fr="Heures d'ouverture" data-en="Opening hours">Heures d'ouverture</label>
           <div id="horaires-ouverture"></div>
         </div>
         <div class="deux">
-          <div class="champ"><label>Plafond frais de déplacement ($)</label><input id="plafond_deplacement" type="number" min="0" step="0.01"></div>
-          <div class="champ"><label>Plafond per diem ($/jour)</label><input id="plafond_per_diem" type="number" min="0" step="0.01"></div>
+          <div class="champ"><label data-fr="Plafond frais de déplacement ($)" data-en="Travel cost cap ($)">Plafond frais de déplacement ($)</label><input id="plafond_deplacement" type="number" min="0" step="0.01"></div>
+          <div class="champ"><label data-fr="Plafond per diem ($/jour)" data-en="Per diem cap ($/day)">Plafond per diem ($/jour)</label><input id="plafond_per_diem" type="number" min="0" step="0.01"></div>
         </div>
-        <div class="champ"><label>Plafond hébergement ($/nuit)</label><input id="plafond_hebergement" type="number" min="0" step="0.01"></div>
-        <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px">Informatif pour l'instant — n'affecte pas encore le calcul des factures.</p>
-        <div class="champ"><label>Adresse d'hébergement standard</label><input id="hebergement_adresse" placeholder="123 rue Principale, app. 4"></div>
-        <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px">Si vous offrez un logement plutôt que l'indemnité de 250&nbsp;$/jour, indiquez l'adresse ici — vous pourrez l'activer contrat par contrat en publiant. Elle n'est révélée au pharmacien qu'une fois le contrat confirmé.</p>
+        <div class="champ"><label data-fr="Plafond hébergement ($/nuit)" data-en="Lodging cap ($/night)">Plafond hébergement ($/nuit)</label><input id="plafond_hebergement" type="number" min="0" step="0.01"></div>
+        <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px" data-fr="Informatif pour l'instant — n'affecte pas encore le calcul des factures." data-en="Informational for now — does not yet affect invoice calculation.">Informatif pour l'instant — n'affecte pas encore le calcul des factures.</p>
+        <div class="champ"><label data-fr="Adresse d'hébergement standard" data-en="Standard lodging address">Adresse d'hébergement standard</label><input id="hebergement_adresse" placeholder="123 rue Principale, app. 4"></div>
+        <p style="font-size:11px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;margin-top:-4px" data-fr="Si vous offrez un logement plutôt que l'indemnité de 250&nbsp;$/jour, indiquez l'adresse ici — vous pourrez l'activer contrat par contrat en publiant. Elle n'est révélée au pharmacien qu'une fois le contrat confirmé." data-en="If you offer lodging instead of the 250&nbsp;$/day allowance, enter the address here — you can enable it contract by contract when posting. It's only revealed to the pharmacist once the contract is confirmed.">Si vous offrez un logement plutôt que l'indemnité de 250&nbsp;$/jour, indiquez l'adresse ici — vous pourrez l'activer contrat par contrat en publiant. Elle n'est révélée au pharmacien qu'une fois le contrat confirmé.</p>
         <label class="consent" id="ligne-hebergement-defaut">
           <input type="checkbox" id="hebergement_offert_par_defaut">
           <span id="hebergement-defaut-texte">Ajoutez d'abord une adresse ci-dessus pour pouvoir l'offrir par défaut.</span>
         </label>
-        <div class="champ"><label>Notes d'accès (stationnement, entrée…)</label><textarea id="notes_acces" rows="2"></textarea></div>
+        <div class="champ"><label data-fr="Notes d'accès (stationnement, entrée…)" data-en="Access notes (parking, entrance…)">Notes d'accès (stationnement, entrée…)</label><textarea id="notes_acces" rows="2"></textarea></div>
       </div>
 
       <div data-onglet="tarification">
         <!-- ============ MAJORATION AUTOMATIQUE DU TARIF ============ -->
-        <div class="sec">Majoration automatique du tarif</div>
-        <p style="font-size:13px;color:var(--sourd);margin:-6px 0 12px">
+        <div class="sec" data-fr="Majoration automatique du tarif" data-en="Automatic rate increase">Majoration automatique du tarif</div>
+        <p style="font-size:13px;color:var(--sourd);margin:-6px 0 12px" data-fr="Si personne n'a pris le quart, C-Direct monte le taux tout seul, par paliers, jusqu'à un plafond que vous fixez. Vous gardez le contrôle : rien ne dépasse le plafond." data-en="If no one takes the shift, C-Direct raises the rate on its own, in steps, up to a cap you set. You stay in control: nothing exceeds the cap.">
           Si personne n'a pris le quart, C-Direct monte le taux tout seul, par paliers,
           jusqu'à un plafond que vous fixez. Vous gardez le contrôle : rien ne dépasse le plafond.
         </p>
         <label class="consent" style="margin-bottom:10px">
           <input type="checkbox" id="bump_actif">
-          <span>Activer la majoration automatique sur mes quarts non pourvus</span>
+          <span data-fr="Activer la majoration automatique sur mes quarts non pourvus" data-en="Enable automatic increase on my unfilled shifts">Activer la majoration automatique sur mes quarts non pourvus</span>
         </label>
         <div id="bump-champs" style="display:none">
           <div class="deux">
-            <div class="champ"><label>Hausse par palier ($/h)</label>
+            <div class="champ"><label data-fr="Hausse par palier ($/h)" data-en="Increase per step ($/h)">Hausse par palier ($/h)</label>
               <input id="bump_increment" type="number" step="0.50" min="0.5" max="50" placeholder="5"></div>
-            <div class="champ"><label>Toutes les …</label>
+            <div class="champ"><label data-fr="Toutes les …" data-en="Every …">Toutes les …</label>
               <select id="bump_intervalle_min">
                 <option value="15">15 min</option>
                 <option value="30">30 min</option>
@@ -274,10 +274,10 @@ a.lien{color:var(--vert-vif)}
                 <option value="1440">24 h</option>
                 <option value="2880">48 h</option>
                 <option value="4320">72 h</option>
-                <option value="10080">7 jours</option>
+                <option value="10080" data-fr="7 jours" data-en="7 days">7 jours</option>
               </select></div>
           </div>
-          <div class="champ"><label>Plafond à ne jamais dépasser ($/h)</label>
+          <div class="champ"><label data-fr="Plafond à ne jamais dépasser ($/h)" data-en="Cap never to exceed ($/h)">Plafond à ne jamais dépasser ($/h)</label>
             <input id="bump_max" type="number" step="0.50" min="1" max="500" placeholder="140"></div>
           <div id="bump-apercu" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--vert-vif);margin-top:-4px"></div>
         </div>
@@ -285,40 +285,40 @@ a.lien{color:var(--vert-vif)}
 
       <div data-onglet="infos">
         <!-- ============ CE QUE VOUS DEVEZ SAVOIR ============ -->
-        <div class="sec">Ce que le remplaçant doit savoir</div>
-        <p style="font-size:13px;color:var(--sourd);margin:-6px 0 12px">
+        <div class="sec" data-fr="Ce que le remplaçant doit savoir" data-en="What the replacement needs to know">Ce que le remplaçant doit savoir</div>
+        <p style="font-size:13px;color:var(--sourd);margin:-6px 0 12px" data-fr="Rempli une seule fois. Ces informations ne sont montrées qu'au pharmacien &lt;b&gt;retenu&lt;/b&gt; pour un quart — jamais au public — et lui sont envoyées en PDF dès que le contrat est accepté." data-en="Filled once. This information is only shown to the pharmacist &lt;b&gt;selected&lt;/b&gt; for a shift — never to the public — and is sent to them as a PDF as soon as the contract is accepted.">
           Rempli une seule fois. Ces informations ne sont montrées qu'au pharmacien
           <b>retenu</b> pour un quart — jamais au public — et lui sont envoyées en PDF
           dès que le contrat est accepté.
         </p>
         <div class="deux">
-          <div class="champ"><label>Personne-ressource sur place</label>
+          <div class="champ"><label data-fr="Personne-ressource sur place" data-en="On-site contact person">Personne-ressource sur place</label>
             <input id="info_contact_nom" placeholder="Marie Tremblay, ATP en chef"></div>
-          <div class="champ"><label>Son numéro</label>
+          <div class="champ"><label data-fr="Son numéro" data-en="Their number">Son numéro</label>
             <input id="info_contact_tel" type="tel" placeholder="514-555-0123"></div>
         </div>
-        <div class="champ"><label>À l'arrivée (porte, code, à qui se présenter)</label>
+        <div class="champ"><label data-fr="À l'arrivée (porte, code, à qui se présenter)" data-en="On arrival (door, code, who to report to)">À l'arrivée (porte, code, à qui se présenter)</label>
           <textarea id="info_arrivee" rows="2" placeholder="Entrée arrière, code 1234#. Demander Marie au comptoir."></textarea></div>
-        <div class="champ"><label>Stationnement</label>
+        <div class="champ"><label data-fr="Stationnement" data-en="Parking">Stationnement</label>
           <textarea id="info_stationnement" rows="2" placeholder="Gratuit derrière le bâtiment, 3 places réservées « employés »."></textarea></div>
 
-        <div class="champ"><label>Code de couleurs — plateaux / paniers</label>
-          <div style="font-size:12.5px;color:var(--sourd);margin-bottom:8px">
+        <div class="champ"><label data-fr="Code de couleurs — plateaux / paniers" data-en="Colour code — trays / baskets">Code de couleurs — plateaux / paniers</label>
+          <div style="font-size:12.5px;color:var(--sourd);margin-bottom:8px" data-fr="Ce qui varie le plus d'une pharmacie à l'autre. Décrivez ce que chaque couleur veut dire chez vous." data-en="What varies most from one pharmacy to another. Describe what each colour means at yours.">
             Ce qui varie le plus d'une pharmacie à l'autre. Décrivez ce que chaque couleur veut dire chez vous.
           </div>
           <div id="plateaux-liste"></div>
           <button type="button" class="btn" id="btn-plateau"
-            style="background:transparent;border:1px solid var(--ligne);color:var(--texte);padding:8px 14px;font-size:13px;width:auto;margin-top:8px">
+            style="background:transparent;border:1px solid var(--ligne);color:var(--texte);padding:8px 14px;font-size:13px;width:auto;margin-top:8px" data-fr="+ Ajouter une couleur" data-en="+ Add a colour">
             + Ajouter une couleur</button>
         </div>
 
-        <div class="champ"><label>Autres consignes</label>
+        <div class="champ"><label data-fr="Autres consignes" data-en="Other instructions">Autres consignes</label>
           <textarea id="info_instructions" rows="3" placeholder="Livraisons à 14 h. Le télécopieur est derrière la caisse. Fermeture : compter le tiroir et verrouiller la voûte."></textarea></div>
       </div>
 
       </div>
 
-      <button class="btn" type="submit" id="btn-save">Enregistrer</button>
+      <button class="btn" type="submit" id="btn-save" data-fr="Enregistrer" data-en="Save">Enregistrer</button>
       <div class="msg" id="msg"></div>
     </form>
   </div>
@@ -343,7 +343,9 @@ const UNIVERSITES = ['Université de Montréal','Université Laval','Université
                   'ÉTS — École de technologie supérieure','INRS — Institut national de la recherche scientifique',
                   'ENAP — École nationale d\'administration publique','TÉLUQ','HEC Montréal','Polytechnique Montréal',
                   'Autre'];
-const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const MOIS_FR = cdLang()==='en'
+  ? ['January','February','March','April','May','June','July','August','September','October','November','December']
+  : ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 /* ---- Photo de profil (facultative) — upload vers Supabase Storage ----
    Bucket public « avatars » (voir sql/65). Rien d'obligatoire : sans
    photo, le profil s'enregistre normalement. `photoUrlNouvelle` vaut
@@ -354,8 +356,8 @@ function brancherPhoto(){
   inp.addEventListener('change', async ()=>{
     const f = inp.files && inp.files[0]; if(!f) return;
     const msg = $('photo-msg');
-    if(f.size > 2*1024*1024){ msg.style.color='var(--rouge)'; msg.textContent='Image trop lourde (max 2 Mo).'; inp.value=''; return; }
-    msg.style.color='var(--sourd)'; msg.textContent='Téléversement…';
+    if(f.size > 2*1024*1024){ msg.style.color='var(--rouge)'; msg.textContent=cdT('Image trop lourde (max 2 Mo).','Image too large (max 2 MB).'); inp.value=''; return; }
+    msg.style.color='var(--sourd)'; msg.textContent=cdT('Téléversement…','Uploading…');
     try{
       const ext = (f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
       const chemin = profil.id + '/photo.' + ext;
@@ -365,10 +367,10 @@ function brancherPhoto(){
       photoUrlNouvelle = data.publicUrl + '?t=' + Date.now();
       const ap = $('photo-apercu'); ap.src = photoUrlNouvelle; ap.style.display='block';
       $('photo-retirer').style.display='inline-block';
-      msg.style.color='var(--vert)'; msg.textContent='Photo prête — cliquez « Enregistrer » en bas.';
+      msg.style.color='var(--vert)'; msg.textContent=cdT('Photo prête — cliquez « Enregistrer » en bas.','Photo ready — click "Save" at the bottom.');
     }catch(e){
       msg.style.color='var(--rouge)';
-      msg.textContent = /bucket|not found|exist/i.test(e.message||'') ? 'Stockage non activé — exécutez sql/65.' : ('Échec : '+(e.message||e));
+      msg.textContent = /bucket|not found|exist/i.test(e.message||'') ? cdT('Stockage non activé — exécutez sql/65.','Storage not enabled — run sql/65.') : (cdT('Échec : ','Failed: ')+(e.message||e));
       inp.value='';
     }
   });
@@ -377,7 +379,7 @@ function brancherPhoto(){
     photoUrlNouvelle = '';
     const ap=$('photo-apercu'); ap.src=''; ap.style.display='none';
     $('photo-fichier').value=''; btnR.style.display='none';
-    const msg=$('photo-msg'); msg.style.color='var(--sourd)'; msg.textContent='Photo retirée — cliquez « Enregistrer ».';
+    const msg=$('photo-msg'); msg.style.color='var(--sourd)'; msg.textContent=cdT('Photo retirée — cliquez « Enregistrer ».','Photo removed — click "Save".');
   });
 }
 /* maximum 3 universités cochées : désactive les cases restantes une fois 3 atteintes */
@@ -400,7 +402,7 @@ function calculerExperience(){
   let mois = (maintenant.getFullYear()-a)*12 + (maintenant.getMonth()-(m-1));
   if(mois < 0) mois = 0;
   const ans = Math.floor(mois/12), moisRestants = mois%12;
-  cible.textContent = ans+' an'+(ans!==1?'s':'')+(moisRestants ? ' '+moisRestants+' mois' : '');
+  cible.textContent = ans+' '+cdT('an'+(ans!==1?'s':''),'year'+(ans!==1?'s':''))+(moisRestants ? ' '+moisRestants+' '+cdT('mois','mo') : '');
 }
 const SERVICES_PHARMACIE = ['Bill 31','Bill 41','Dispills','INR','Préparations non stériles',
                   'Suboxone','Méthadone','Vaccination','Santé voyage','Administration de médicaments'];
@@ -470,17 +472,17 @@ async function rendreMaNote(){
   if(profil.role==='pharmacien'){ try{ const r = await sb.rpc('get_stats_pharmacien', { p_profil: profil.id }); stats = (r.data && r.data[0]) || null; }catch(e){} }
   let statsKpi = '';
   if(stats){
-    if(stats.completes > 0) statsKpi += chipKpi('Mandats complétés', stats.completes);
+    if(stats.completes > 0) statsKpi += chipKpi(cdT('Mandats complétés','Completed mandates'), stats.completes);
     if(stats.confirmees_pharmacien > 0){
-      statsKpi += chipKpi('Taux d\'annulation', stats.taux_annulation_pharmacien + ' %');
-      statsKpi += chipKpi('Taux de retard', stats.taux_retard_pharmacien + ' %');
+      statsKpi += chipKpi(cdT('Taux d\'annulation','Cancellation rate'), stats.taux_annulation_pharmacien + ' %');
+      statsKpi += chipKpi(cdT('Taux de retard','Lateness rate'), stats.taux_retard_pharmacien + ' %');
     }
   }
   if(!n || !n.nombre){
     box.style.display = 'block';
-    box.innerHTML = '<div class="carte" style="margin-bottom:16px"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--sourd);margin-bottom:6px">Ma réputation</div>'+
+    box.innerHTML = '<div class="carte" style="margin-bottom:16px"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--sourd);margin-bottom:6px">'+cdT('Ma réputation','My reputation')+'</div>'+
       (statsKpi ? '<div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;margin-bottom:8px">'+statsKpi+'</div>' : '')+
-      '<div style="color:var(--sourd);font-size:13px">Aucune évaluation reçue pour l\'instant. Vos notes apparaîtront ici une fois vos contrats évalués des deux côtés. <a href="/evaluations.html" style="color:var(--vert-vif);text-decoration:none">Voir les évaluations →</a></div></div>';
+      '<div style="color:var(--sourd);font-size:13px">'+cdT('Aucune évaluation reçue pour l\'instant. Vos notes apparaîtront ici une fois vos contrats évalués des deux côtés.','No review received yet. Your ratings will appear here once your contracts are reviewed on both sides.')+' <a href="/evaluations.html" style="color:var(--vert-vif);text-decoration:none">'+cdT('Voir les évaluations →','See reviews →')+'</a></div></div>';
     return;
   }
   const listeAvis = avis.filter(a=>a.commentaire).slice(0,4).map(a=>
@@ -490,14 +492,14 @@ async function rendreMaNote(){
     '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--sourd);margin-top:4px">'+a.numero_reference+' · '+cdDate(a.date_contrat)+'</div></div>').join('');
   box.style.display = 'block';
   box.innerHTML = '<div class="carte" style="margin-bottom:16px">'+
-    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--sourd);margin-bottom:12px">Ma réputation</div>'+
+    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--sourd);margin-bottom:12px">'+cdT('Ma réputation','My reputation')+'</div>'+
     '<div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">'+
       '<div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:30px;font-weight:700;line-height:1">'+Number(n.moyenne).toFixed(2)+' <span style="font-size:14px;color:var(--sourd)">/5</span></div>'+
       '<div style="color:var(--jaune);letter-spacing:2px;font-size:18px">'+etoilesTxt(Math.round(n.moyenne))+'</div></div>'+
-      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--sourd)">Évaluations<b style="display:block;color:var(--texte);font-size:15px">'+n.nombre+'</b></div>'+
-      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--sourd)">'+(profil.role==='pharmacie'?'Réembaucheraient':'Retravailleraient')+'<b style="display:block;color:var(--texte);font-size:15px">'+n.taux_reviendrait+' %</b></div>'+
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--sourd)">'+cdT('Évaluations','Reviews')+'<b style="display:block;color:var(--texte);font-size:15px">'+n.nombre+'</b></div>'+
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--sourd)">'+(profil.role==='pharmacie'?cdT('Réembaucheraient','Would rehire'):cdT('Retravailleraient','Would work again'))+'<b style="display:block;color:var(--texte);font-size:15px">'+n.taux_reviendrait+' %</b></div>'+
       statsKpi+
-      '<a href="/evaluations.html" style="margin-left:auto;color:var(--vert-vif);text-decoration:none;font-family:\'IBM Plex Mono\',monospace;font-size:12px">Toutes les évaluations →</a>'+
+      '<a href="/evaluations.html" style="margin-left:auto;color:var(--vert-vif);text-decoration:none;font-family:\'IBM Plex Mono\',monospace;font-size:12px">'+cdT('Toutes les évaluations →','All reviews →')+'</a>'+
     '</div>'+ listeAvis +'</div>';
 }
 
@@ -510,7 +512,7 @@ function basculerBump(){
 function texteIntervalle(min){
   if(min < 60) return min + ' min';
   if(min < 1440) return (min/60) + ' h';
-  return (min/1440) + ' j';
+  return (min/1440) + ' ' + cdT('j','d');
 }
 function apercuBump(){
   const inc = parseFloat($('bump_increment').value);
@@ -518,10 +520,10 @@ function apercuBump(){
   const max = parseFloat($('bump_max').value);
   const box = $('bump-apercu');
   if(!(inc > 0 && min > 0 && max > 0)){ box.textContent = ''; return; }
-  box.textContent = 'Exemple : un quart affiché à 100 $/h passera à '
-    + (100+inc).toFixed(2) + ' $ après ' + texteIntervalle(min) + ', puis '
-    + (100+inc*2).toFixed(2) + ' $ après ' + texteIntervalle(min*2) + '… jusqu’à '
-    + max.toFixed(2) + ' $ maximum.';
+  box.textContent = cdT('Exemple : un quart affiché à 100 $/h passera à ','Example: a shift posted at $100/h will rise to ')
+    + (100+inc).toFixed(2) + ' $ ' + cdT('après ','after ') + texteIntervalle(min) + cdT(', puis ',', then ')
+    + (100+inc*2).toFixed(2) + ' $ ' + cdT('après ','after ') + texteIntervalle(min*2) + cdT('… jusqu’à ','… up to ')
+    + max.toFixed(2) + cdT(' $ maximum.',' $ maximum.');
 }
 
 /* ===== Code de couleurs des plateaux : lignes éditables ===== */
@@ -531,7 +533,7 @@ function rendrePlateaux(){
   const box = $('plateaux-liste');
   if(!plateaux.length){
     box.innerHTML = '<div style="font-size:13px;color:var(--sourd);font-style:italic">'
-      + 'Aucune couleur définie — le remplaçant ne verra rien pour cette section.</div>';
+      + cdT('Aucune couleur définie — le remplaçant ne verra rien pour cette section.','No colour defined — the replacement will see nothing for this section.')+'</div>';
     return;
   }
   box.innerHTML = '';
@@ -541,11 +543,11 @@ function rendrePlateaux(){
     ligne.innerHTML =
       '<input type="color" value="'+(p.hex||'#C0392B')+'" data-i="'+i+'" data-k="hex" '
         + 'style="width:40px;height:36px;padding:2px;border:1px solid var(--ligne);border-radius:8px;cursor:pointer;background:none">'
-      + '<input placeholder="Nom (Rouge…)" value="'+String(p.couleur||'').replace(/"/g,'&quot;')+'" data-i="'+i+'" data-k="couleur" '
+      + '<input placeholder="'+cdT('Nom (Rouge…)','Name (Red…)')+'" value="'+String(p.couleur||'').replace(/"/g,'&quot;')+'" data-i="'+i+'" data-k="couleur" '
         + 'style="flex:0 0 130px;min-width:110px">'
-      + '<input placeholder="Ce que ça veut dire ici" value="'+String(p.sens||'').replace(/"/g,'&quot;')+'" data-i="'+i+'" data-k="sens" '
+      + '<input placeholder="'+cdT('Ce que ça veut dire ici','What it means here')+'" value="'+String(p.sens||'').replace(/"/g,'&quot;')+'" data-i="'+i+'" data-k="sens" '
         + 'style="flex:1 1 200px;min-width:160px">'
-      + '<button type="button" data-sup="'+i+'" title="Retirer" '
+      + '<button type="button" data-sup="'+i+'" title="'+cdT('Retirer','Remove')+'" '
         + 'style="background:none;border:1px solid var(--ligne);border-radius:8px;color:var(--sourd);cursor:pointer;width:34px;height:34px;font-size:16px;line-height:1">&times;</button>';
     box.appendChild(ligne);
   });
@@ -570,27 +572,27 @@ function initialesAside(nom){
 async function remplirAside(){
   if(!$('pf-nom')) return;
   const nom = profil.role==='pharmacie'
-    ? (profil.nom_pharmacie || 'Ma pharmacie')
-    : (((profil.prenom||'')+' '+(profil.nom||'')).trim() || 'Mon profil');
+    ? (profil.nom_pharmacie || cdT('Ma pharmacie','My pharmacy'))
+    : (((profil.prenom||'')+' '+(profil.nom||'')).trim() || cdT('Mon profil','My profile'));
   $('pf-nom').textContent = nom;
-  $('pf-role').textContent = profil.role==='pharmacie' ? 'Pharmacie'
-    : profil.role==='admin' ? 'Administrateur'
-    : (profil.profession==='atp' ? 'ATP remplaçant(e)' : 'Pharmacien(ne)');
+  $('pf-role').textContent = profil.role==='pharmacie' ? cdT('Pharmacie','Pharmacy')
+    : profil.role==='admin' ? cdT('Administrateur','Administrator')
+    : (profil.profession==='atp' ? cdT('ATP remplaçant(e)','Replacement technician') : cdT('Pharmacien(ne)','Pharmacist'));
   const ph = $('pf-photo');
   if(profil.photo_url){ ph.innerHTML = '<img src="'+profil.photo_url+'" alt="">'; }
   else { ph.textContent = initialesAside(nom); }
   try{
     const r = await sb.rpc('get_note_profil', { p_profil: profil.id });
     const n = (r.data && r.data[0]) || null;
-    if(n && n.nombre) $('pf-note').innerHTML = '★ '+Number(n.moyenne).toFixed(1)+' <small>('+n.nombre+' avis)</small>';
+    if(n && n.nombre) $('pf-note').innerHTML = '★ '+Number(n.moyenne).toFixed(1)+' <small>('+n.nombre+' '+cdT('avis','reviews')+')</small>';
   }catch(e){}
   if(profil.role==='pharmacien'){
     try{
       const r = await sb.rpc('get_stats_pharmacien', { p_profil: profil.id });
       const s = (r.data && r.data[0]) || null;
       if(s) $('pf-mini').innerHTML =
-        '<div class="k"><small>Mandats</small><b>'+(s.completes||0)+'</b></div>'+
-        '<div class="k"><small>Complétion</small><b>'+(s.taux_completion!=null?s.taux_completion:0)+' %</b></div>';
+        '<div class="k"><small>'+cdT('Mandats','Mandates')+'</small><b>'+(s.completes||0)+'</b></div>'+
+        '<div class="k"><small>'+cdT('Complétion','Completion')+'</small><b>'+(s.taux_completion!=null?s.taux_completion:0)+' %</b></div>';
     }catch(e){}
   }
 }
@@ -600,8 +602,8 @@ function majEtatHebergementDefaut(){
   cb.disabled = !a;
   $('ligne-hebergement-defaut').style.opacity = a ? '1' : '.6';
   $('hebergement-defaut-texte').textContent = a
-    ? "Offrir l'hébergement par défaut sur mes nouveaux contrats — vous pourrez décocher au cas par cas en publiant."
-    : "Ajoutez d'abord une adresse ci-dessus pour pouvoir l'offrir par défaut.";
+    ? cdT("Offrir l'hébergement par défaut sur mes nouveaux contrats — vous pourrez décocher au cas par cas en publiant.","Offer lodging by default on my new contracts — you can uncheck it case by case when posting.")
+    : cdT("Ajoutez d'abord une adresse ci-dessus pour pouvoir l'offrir par défaut.","Add an address above first to be able to offer it by default.");
   if(!a) cb.checked = false;
 }
 
@@ -612,7 +614,7 @@ function majEtatHebergementDefaut(){
 (async function(){
   profil = await cdExigerConnexion();
   cdEnteteConnecte();
-  $('sous').textContent = (profil.role==='pharmacie' ? 'PHARMACIE' : profil.role==='admin' ? 'ADMINISTRATEUR' : profil.profession==='atp' ? 'ATP REMPLAÇANT(E)' : 'PHARMACIEN(NE) REMPLAÇANT(E)') + ' · ' + (profil.courriel||'');
+  $('sous').textContent = (profil.role==='pharmacie' ? cdT('PHARMACIE','PHARMACY') : profil.role==='admin' ? cdT('ADMINISTRATEUR','ADMINISTRATOR') : profil.profession==='atp' ? cdT('ATP REMPLAÇANT(E)','REPLACEMENT TECHNICIAN') : cdT('PHARMACIEN(NE) REMPLAÇANT(E)','REPLACEMENT PHARMACIST')) + ' · ' + (profil.courriel||'');
 
   if(profil.role !== 'admin') rendreMaNote();
   remplirAside();
@@ -762,7 +764,7 @@ function majEtatHebergementDefaut(){
   $('f').addEventListener('submit', async e=>{
     e.preventDefault();
     const tel = cdE164($('telephone').value);
-    if(!tel){ msg('msg','Téléphone invalide — 10 chiffres requis.',false); return; }
+    if(!tel){ msg('msg',cdT('Téléphone invalide — 10 chiffres requis.','Invalid phone — 10 digits required.'),false); return; }
     const maj = {
       prenom:$('prenom').value.trim(), nom:$('nom').value.trim(), telephone:tel
     };
@@ -808,9 +810,9 @@ function majEtatHebergementDefaut(){
       const bMin = parseInt($('bump_intervalle_min').value, 10);
       const bMax = parseFloat($('bump_max').value);
       if(bOn){
-        if(!(bInc > 0 && bInc <= 50)){ msg('msg','Majoration : la hausse par palier doit être entre 0,50 $ et 50 $.',false); return; }
-        if(!(bMin >= 15 && bMin <= 10080)){ msg('msg','Majoration : l’intervalle doit être entre 15 min et 7 jours.',false); return; }
-        if(!(bMax > 0 && bMax <= 500)){ msg('msg','Majoration : le plafond doit être entre 1 $ et 500 $.',false); return; }
+        if(!(bInc > 0 && bInc <= 50)){ msg('msg',cdT('Majoration : la hausse par palier doit être entre 0,50 $ et 50 $.','Increase: the step must be between $0.50 and $50.'),false); return; }
+        if(!(bMin >= 15 && bMin <= 10080)){ msg('msg',cdT('Majoration : l’intervalle doit être entre 15 min et 7 jours.','Increase: the interval must be between 15 min and 7 days.'),false); return; }
+        if(!(bMax > 0 && bMax <= 500)){ msg('msg',cdT('Majoration : le plafond doit être entre 1 $ et 500 $.','Increase: the cap must be between $1 and $500.'),false); return; }
       }
       maj.bump_actif         = bOn;
       maj.bump_increment     = bOn ? bInc : null;
@@ -843,19 +845,19 @@ function majEtatHebergementDefaut(){
       const sansMin = { ...maj }; CLES_30.forEach(k => delete sansMin[k]);
       let retry = await sb.from('profiles').update(sansMin).eq('id', profil.id);
       error = retry.error;
-      if(!error){ $('btn-save').disabled=false; msg('msg','Profil enregistré. (Palier en minutes : exécuter sql/30 pour l’activer.)', true); return; }
+      if(!error){ $('btn-save').disabled=false; msg('msg',cdT('Profil enregistré. (Palier en minutes : exécuter sql/30 pour l’activer.)','Profile saved. (Minute steps: run sql/30 to enable.)'), true); return; }
       if(error && /column .* does not exist|schema cache/i.test(error.message||'')){
         const base = { ...maj }; CLES_23.concat(CLES_30).forEach(k => delete base[k]);
         retry = await sb.from('profiles').update(base).eq('id', profil.id);
         error = retry.error;
         if(!error){
           $('btn-save').disabled=false;
-          msg('msg','Profil enregistré. (Majoration + fiche d’accueil : non activées — exécuter sql/23.)', true);
+          msg('msg',cdT('Profil enregistré. (Majoration + fiche d’accueil : non activées — exécuter sql/23.)','Profile saved. (Auto-increase + welcome sheet: not enabled — run sql/23.)'), true);
           return;
         }
       }
     }
-    if(error){ $('btn-save').disabled=false; msg('msg', error.message, false); return; }
+    if(error){ $('btn-save').disabled=false; msg('msg', (cdLang()==='en'?'Error: ':'Erreur : ') + error.message, false); return; }
     /* langue : mise à jour séparée et TOLÉRANTE — la colonne peut ne pas
        exister avant l'exécution de sql/15 ; son absence ne doit jamais
        faire échouer l'enregistrement du profil. */
@@ -896,7 +898,7 @@ function majEtatHebergementDefaut(){
     }
     $('btn-save').disabled=false;
     profil = await cdProfil(true);
-    msg('msg','Profil enregistré ✓', true);
+    msg('msg',cdT('Profil enregistré ✓','Profile saved ✓'), true);
   });
 })();
 </script>
