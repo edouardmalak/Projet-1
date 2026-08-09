@@ -116,16 +116,16 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
 </div>
 
 <div class="wrap">
-  <a class="retour" href="/contrats.html" id="lien-retour">← Retour aux contrats</a>
+  <a class="retour" href="/contrats.html" id="lien-retour" data-fr="← Retour aux contrats" data-en="← Back to contracts">← Retour aux contrats</a>
 
-  <div class="chargement" id="chargement"><i></i>Chargement de la fiche…</div>
+  <div class="chargement" id="chargement"><i></i><span data-fr="Chargement de la fiche…" data-en="Loading contract…">Chargement de la fiche…</span></div>
 
   <div class="carte" id="fiche" style="display:none">
     <div class="entete">
       <h1 id="ref">CD-______</h1>
       <div class="droite-entete">
         <span class="badge" id="badge">—</span>
-        <button type="button" class="coeur" id="btn-coeur" title="Sauvegarder" style="display:none"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10a1 1 0 0 1 1 1v16l-6-4-6 4V4a1 1 0 0 1 1-1z"/></svg></button>
+        <button type="button" class="coeur" id="btn-coeur" title="Sauvegarder" data-fr-title="Sauvegarder" data-en-title="Save" style="display:none"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10a1 1 0 0 1 1 1v16l-6-4-6 4V4a1 1 0 0 1 1-1z"/></svg></button>
       </div>
     </div>
     <p class="sous" id="sous">—</p>
@@ -133,111 +133,111 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
     <p class="sous" id="badge-prioritaire" style="display:none;color:var(--jaune);font-weight:700">—</p>
     <div id="bloc-parties" style="display:none;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--sourd);line-height:1.8"></div>
     <a id="lien-messagerie" class="btn-clavarder" href="#" style="display:none">💬 Clavarder</a>
-    <a id="lien-evaluer" href="#" style="display:none;margin:2px 0 10px 18px;text-decoration:none;color:var(--jaune);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.04em">★ Évaluer l'autre partie →</a>
-    <a id="lien-fiabilite" href="#" style="display:none;margin:2px 0 10px 18px;text-decoration:none;color:var(--jaune);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.04em">📋 Noter la précision de l'annonce →</a>
+    <a id="lien-evaluer" href="#" style="display:none;margin:2px 0 10px 18px;text-decoration:none;color:var(--jaune);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.04em" data-fr="★ Évaluer l'autre partie →" data-en="★ Rate the other party →">★ Évaluer l'autre partie →</a>
+    <a id="lien-fiabilite" href="#" style="display:none;margin:2px 0 10px 18px;text-decoration:none;color:var(--jaune);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.04em" data-fr="📋 Noter la précision de l'annonce →" data-en="📋 Rate the listing's accuracy →">📋 Noter la précision de l'annonce →</a>
 
     <div class="grille">
-      <div class="cellule"><small>Date</small><b id="date">—</b></div>
-      <div class="cellule"><small>Heures</small><b id="heures">—</b></div>
-      <div class="cellule"><small>Tarif horaire</small><b class="vert" id="tarif">—</b></div>
-      <div class="cellule"><small>Distance</small><b id="distance">—</b></div>
-      <div class="cellule"><small>Hébergement</small><b id="hebergement">—</b></div>
-      <div class="cellule"><small>Logiciel</small><b id="logiciel">—</b></div>
-      <div class="cellule"><small>Rx / jour (semaine)</small><b id="rx_sem">—</b></div>
-      <div class="cellule"><small>Rx / jour (weekend)</small><b id="rx_we">—</b></div>
-      <div class="cellule"><small>Seul(e) pharmacien(ne)</small><b id="seul">—</b></div>
-      <div class="cellule"><small>ATP présente</small><b id="atp">—</b></div>
-      <div class="cellule"><small>Automatisation</small><b id="auto">—</b></div>
-      <div class="cellule" id="cellule-diner" style="display:none"><small>Dîner couvert</small><b id="diner">—</b></div>
+      <div class="cellule"><small data-fr="Date" data-en="Date">Date</small><b id="date">—</b></div>
+      <div class="cellule"><small data-fr="Heures" data-en="Hours">Heures</small><b id="heures">—</b></div>
+      <div class="cellule"><small data-fr="Tarif horaire" data-en="Hourly rate">Tarif horaire</small><b class="vert" id="tarif">—</b></div>
+      <div class="cellule"><small data-fr="Distance" data-en="Distance">Distance</small><b id="distance">—</b></div>
+      <div class="cellule"><small data-fr="Hébergement" data-en="Accommodation">Hébergement</small><b id="hebergement">—</b></div>
+      <div class="cellule"><small data-fr="Logiciel" data-en="Software">Logiciel</small><b id="logiciel">—</b></div>
+      <div class="cellule"><small data-fr="Rx / jour (semaine)" data-en="Rx / day (weekday)">Rx / jour (semaine)</small><b id="rx_sem">—</b></div>
+      <div class="cellule"><small data-fr="Rx / jour (weekend)" data-en="Rx / day (weekend)">Rx / jour (weekend)</small><b id="rx_we">—</b></div>
+      <div class="cellule"><small data-fr="Seul(e) pharmacien(ne)" data-en="Sole pharmacist">Seul(e) pharmacien(ne)</small><b id="seul">—</b></div>
+      <div class="cellule"><small data-fr="ATP présente" data-en="Pharmacy tech present">ATP présente</small><b id="atp">—</b></div>
+      <div class="cellule"><small data-fr="Automatisation" data-en="Automation">Automatisation</small><b id="auto">—</b></div>
+      <div class="cellule" id="cellule-diner" style="display:none"><small data-fr="Dîner couvert" data-en="Lunch covered">Dîner couvert</small><b id="diner">—</b></div>
     </div>
 
     <div id="bloc-estim" style="display:none">
-      <div class="sec">Estimation pour ce contrat</div>
+      <div class="sec" data-fr="Estimation pour ce contrat" data-en="Estimate for this contract">Estimation pour ce contrat</div>
       <div class="notes" id="estim" style="line-height:1.7"></div>
     </div>
 
     <div id="bloc-trajet" style="display:none">
-      <div class="sec">Trajet</div>
+      <div class="sec" data-fr="Trajet" data-en="Travel">Trajet</div>
       <div id="trajet-contenu"></div>
     </div>
 
     <div id="bloc-services" style="display:none">
-      <div class="sec">Services</div>
+      <div class="sec" data-fr="Services" data-en="Services">Services</div>
       <div class="puces" id="services"></div>
     </div>
 
     <div id="bloc-notes" style="display:none">
-      <div class="sec">Notes de la pharmacie</div>
+      <div class="sec" data-fr="Notes de la pharmacie" data-en="Pharmacy notes">Notes de la pharmacie</div>
       <div class="notes" id="notes"></div>
     </div>
 
     <div id="bloc-entente" style="display:none">
-      <div class="entente"><small>Entente finale</small><b id="entente-termes">—</b></div>
+      <div class="entente"><small data-fr="Entente finale" data-en="Final agreement">Entente finale</small><b id="entente-termes">—</b></div>
     </div>
 
     <div id="bloc-retard" style="display:none">
-      <div class="champ"><label>Nouvelle heure de début estimée</label><input type="time" id="retard-nouvelle-heure"></div>
-      <div class="champ"><label>Motif (optionnel)</label><input type="text" id="retard-motif" maxlength="200"></div>
-      <button class="btn" id="btn-signaler-retard">Signaler un retard</button>
-      <div class="indice-btn">Le quart a commencé — si votre heure de début réelle est plus tardive que prévu, signalez-le ici. La pharmacie sera avertie automatiquement.</div>
+      <div class="champ"><label data-fr="Nouvelle heure de début estimée" data-en="New estimated start time">Nouvelle heure de début estimée</label><input type="time" id="retard-nouvelle-heure"></div>
+      <div class="champ"><label data-fr="Motif (optionnel)" data-en="Reason (optional)">Motif (optionnel)</label><input type="text" id="retard-motif" maxlength="200"></div>
+      <button class="btn" id="btn-signaler-retard" data-fr="Signaler un retard" data-en="Report a delay">Signaler un retard</button>
+      <div class="indice-btn" data-fr="Le quart a commencé — si votre heure de début réelle est plus tardive que prévu, signalez-le ici. La pharmacie sera avertie automatiquement." data-en="The shift has started — if your real start time is later than planned, report it here. The pharmacy is notified automatically.">Le quart a commencé — si votre heure de début réelle est plus tardive que prévu, signalez-le ici. La pharmacie sera avertie automatiquement.</div>
     </div>
-    <div id="bloc-retard-deja-signale" style="display:none;color:var(--sourd);font-size:13px;margin-top:10px">Retard déjà signalé pour ce contrat.</div>
+    <div id="bloc-retard-deja-signale" style="display:none;color:var(--sourd);font-size:13px;margin-top:10px" data-fr="Retard déjà signalé pour ce contrat." data-en="A delay has already been reported for this contract.">Retard déjà signalé pour ce contrat.</div>
 
     <div id="bloc-fil" style="display:none">
-      <div class="sec">Fil de la négociation</div>
+      <div class="sec" data-fr="Fil de la négociation" data-en="Negotiation thread">Fil de la négociation</div>
       <div id="fil-conteneur"></div>
     </div>
 
     <div id="bloc-completer" style="display:none">
-      <button class="btn" id="btn-completer">Marquer complété</button>
-      <div class="indice-btn">Le remplacement a eu lieu — la facture (brouillon) sera générée automatiquement.</div>
+      <button class="btn" id="btn-completer" data-fr="Marquer complété" data-en="Mark completed">Marquer complété</button>
+      <div class="indice-btn" data-fr="Le remplacement a eu lieu — la facture (brouillon) sera générée automatiquement." data-en="The shift took place — the draft invoice will be generated automatically.">Le remplacement a eu lieu — la facture (brouillon) sera générée automatiquement.</div>
     </div>
 
     <div id="bloc-contre" style="display:none">
       <div class="deux-btn">
-        <button class="btn" id="btn-accepter-co" style="margin-top:20px">Accepter la contre-offre</button>
-        <button class="btn-refus" id="btn-refuser-co">Refuser</button>
+        <button class="btn" id="btn-accepter-co" style="margin-top:20px" data-fr="Accepter la contre-offre" data-en="Accept counter-offer">Accepter la contre-offre</button>
+        <button class="btn-refus" id="btn-refuser-co" data-fr="Refuser" data-en="Decline">Refuser</button>
       </div>
     </div>
 
     <div id="zone-postuler" style="display:none">
       <div id="bloc-remuneration" style="display:none;border:1px solid var(--ligne2);border-radius:8px;background:var(--panneau2);padding:14px 16px;margin-bottom:14px">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:10px">Votre rémunération estimée</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:10px" data-fr="Votre rémunération estimée" data-en="Your estimated pay">Votre rémunération estimée</div>
         <div id="remu-lignes"></div>
-        <div style="display:flex;justify-content:space-between;border-top:1px solid var(--ligne);margin-top:8px;padding-top:8px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px"><span>Total estimé</span><span id="remu-total-val" style="color:var(--vert-vif)">—</span></div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--sourd);margin-top:8px;line-height:1.5">Indemnités calculées automatiquement par le réseau selon la distance (aller simple) — jamais négociées avec la pharmacie. Hébergement : la pharmacie peut l'offrir si possible, ou verser l'indemnité de 250 $/jour indiquée ci-dessus.</div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid var(--ligne);margin-top:8px;padding-top:8px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px"><span data-fr="Total estimé" data-en="Estimated total">Total estimé</span><span id="remu-total-val" style="color:var(--vert-vif)">—</span></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--sourd);margin-top:8px;line-height:1.5" data-fr="Indemnités calculées automatiquement par le réseau selon la distance (aller simple) — jamais négociées avec la pharmacie. Hébergement : la pharmacie peut l'offrir si possible, ou verser l'indemnité de 250 $/jour indiquée ci-dessus." data-en="Allowances are calculated automatically by the network based on one-way distance — never negotiated with the pharmacy. Accommodation: the pharmacy may provide it if possible, or pay the $250/day allowance shown above.">Indemnités calculées automatiquement par le réseau selon la distance (aller simple) — jamais négociées avec la pharmacie. Hébergement : la pharmacie peut l'offrir si possible, ou verser l'indemnité de 250 $/jour indiquée ci-dessus.</div>
       </div>
-      <button class="btn" id="btn-instant">Postulez</button>
-      <div class="indice-btn">Acceptation en un geste par la pharmacie — le plus rapide l'emporte</div>
-      <button class="btn-sec" id="btn-offrir">Postuler avec modification</button>
+      <button class="btn" id="btn-instant" data-fr="Postulez" data-en="Apply">Postulez</button>
+      <div class="indice-btn" data-fr="Acceptation en un geste par la pharmacie — le plus rapide l'emporte" data-en="One-tap acceptance by the pharmacy — fastest wins">Acceptation en un geste par la pharmacie — le plus rapide l'emporte</div>
+      <button class="btn-sec" id="btn-offrir" data-fr="Postuler avec modification" data-en="Apply with changes">Postuler avec modification</button>
       <form class="f-offre" id="f-offre">
-        <div class="titre">Postuler avec modification</div>
+        <div class="titre" data-fr="Postuler avec modification" data-en="Apply with changes">Postuler avec modification</div>
 
         <div class="off-original">
-          <small>Horaire original</small>
+          <small data-fr="Horaire original" data-en="Original schedule">Horaire original</small>
           <b id="off-original-txt">—</b>
         </div>
 
         <label class="off-toggle">
           <input type="checkbox" id="o-modifier-horaire">
-          Proposer un autre horaire
+          <span data-fr="Proposer un autre horaire" data-en="Propose a different schedule">Proposer un autre horaire</span>
         </label>
         <div class="deux-p off-horaire-champs" id="off-horaire-champs" style="display:none">
-          <div class="champ"><label>Début proposé</label><input id="o-debut" type="time"></div>
-          <div class="champ"><label>Fin proposée</label><input id="o-fin" type="time"></div>
+          <div class="champ"><label data-fr="Début proposé" data-en="Proposed start">Début proposé</label><input id="o-debut" type="time"></div>
+          <div class="champ"><label data-fr="Fin proposée" data-en="Proposed end">Fin proposée</label><input id="o-fin" type="time"></div>
         </div>
 
         <label class="off-toggle" id="off-heb-toggle" style="display:none">
           <input type="checkbox" id="o-demande-hebergement">
-          Demander l'indemnité d'hébergement standard (250&nbsp;$/jour)
+          <span data-fr="Demander l'indemnité d'hébergement standard (250&nbsp;$/jour)" data-en="Request the standard accommodation allowance ($250/day)">Demander l'indemnité d'hébergement standard (250&nbsp;$/jour)</span>
         </label>
 
-        <div class="champ"><label>Tarif proposé ($/h)</label><input id="o-tarif" type="number" step="0.01" min="0" required></div>
+        <div class="champ"><label data-fr="Tarif proposé ($/h)" data-en="Proposed rate ($/h)">Tarif proposé ($/h)</label><input id="o-tarif" type="number" step="0.01" min="0" required></div>
 
         <div class="off-resume" id="off-resume">—</div>
 
-        <div class="champ"><label>Message (optionnel)</label><textarea id="o-message" rows="2" placeholder="Ex. : disponible dès 10 h, expérience Kroll 5 ans…"></textarea></div>
-        <button class="btn" type="submit" id="btn-envoyer" style="margin-top:6px">Envoyer ma candidature</button>
+        <div class="champ"><label data-fr="Message (optionnel)" data-en="Message (optional)">Message (optionnel)</label><textarea id="o-message" rows="2" placeholder="Ex. : disponible dès 10 h, expérience Kroll 5 ans…" data-fr-ph="Ex. : disponible dès 10 h, expérience Kroll 5 ans…" data-en-ph="e.g. available from 10 a.m., 5 years Kroll experience…"></textarea></div>
+        <button class="btn" type="submit" id="btn-envoyer" style="margin-top:6px" data-fr="Envoyer ma candidature" data-en="Send my application">Envoyer ma candidature</button>
       </form>
     </div>
     <div class="msg" id="msg"></div>
@@ -275,7 +275,7 @@ function msg(texte, type){
 
   const ref = refDepuisUrl();
   if(!ref){
-    $('chargement').innerHTML = 'Référence manquante — utilisez /c/CD-XXXXXX';
+    $('chargement').innerHTML = cdT('Référence manquante — utilisez /c/CD-XXXXXX','Missing reference — use /c/CD-XXXXXX');
     return;
   }
 
@@ -286,9 +286,9 @@ function msg(texte, type){
   if(error || !data || !data.length){
     $('ref').textContent = ref;
     $('badge').style.display = 'none';
-    $('sous').textContent = 'Fiche introuvable';
-    msg(error ? 'Erreur : ' + error.message
-              : 'Contrat introuvable ou non accessible avec votre compte.', 'ko');
+    $('sous').textContent = cdT('Fiche introuvable','Contract not found');
+    msg(error ? cdT('Erreur : ','Error: ') + error.message
+              : cdT('Contrat introuvable ou non accessible avec votre compte.','Contract not found or not accessible with your account.'), 'ko');
     return;
   }
 
@@ -296,8 +296,11 @@ function msg(texte, type){
   $('ref').textContent = k.numero_reference;
   document.title = 'C-Direct — ' + k.numero_reference;
 
-  const badges = {ouvert:['ouvert','DISPONIBLE'], attribue:['attribue','CONFIRMÉ'],
-                  complete:['autre','COMPLÉTÉ'], annule:['autre','ANNULÉ']};
+  const badges = cdLang()==='en'
+    ? {ouvert:['ouvert','AVAILABLE'], attribue:['attribue','CONFIRMED'],
+       complete:['autre','COMPLETED'], annule:['autre','CANCELLED']}
+    : {ouvert:['ouvert','DISPONIBLE'], attribue:['attribue','CONFIRMÉ'],
+       complete:['autre','COMPLÉTÉ'], annule:['autre','ANNULÉ']};
   const b = badges[k.statut] || ['autre', k.statut];
   $('badge').className = 'badge ' + b[0]; $('badge').textContent = b[1];
 
@@ -310,7 +313,7 @@ function msg(texte, type){
       const { data: favRow } = await sb.from('favoris').select('contrat_id').eq('pharmacien_id', profil.id).eq('contrat_id', k.id).maybeSingle();
       dejaSauv = !!favRow;
     }catch(e){}
-    const majCoeur = ()=>{ coeur.classList.toggle('on', dejaSauv); coeur.title = dejaSauv ? 'Retirer des sauvegardés' : 'Sauvegarder'; };
+    const majCoeur = ()=>{ coeur.classList.toggle('on', dejaSauv); coeur.title = dejaSauv ? cdT('Retirer des sauvegardés','Remove from saved') : cdT('Sauvegarder','Save'); };
     majCoeur();
     coeur.onclick = async ()=>{
       coeur.disabled = true;
@@ -326,29 +329,31 @@ function msg(texte, type){
     };
   }
 
-  $('sous').textContent = (k.ville || 'Ville non précisée') + ' · publié le ' +
-    new Date(k.created_at).toLocaleDateString('fr-CA');
+  $('sous').textContent = (k.ville || cdT('Ville non précisée','City not specified')) + cdT(' · publié le ',' · posted on ') +
+    new Date(k.created_at).toLocaleDateString(cdLang()==='en'?'en-CA':'fr-CA');
   if(k.fiabilite_note != null){
     $('badge-fiabilite').style.display = '';
-    $('badge-fiabilite').textContent = '📋 Fiabilité de l\'annonce · ' + Number(k.fiabilite_note).toFixed(1) + '/5 (' + k.fiabilite_nb + ' avis)';
+    $('badge-fiabilite').textContent = cdT('📋 Fiabilité de l\'annonce · ','📋 Listing reliability · ') + Number(k.fiabilite_note).toFixed(1) + '/5 (' + k.fiabilite_nb + cdT(' avis)',' reviews)');
   }
   if(k.acces_prioritaire_actif){
     $('badge-prioritaire').style.display = '';
-    $('badge-prioritaire').textContent = '🔑 Accès prioritaire · offert d\'abord à vous, pharmacien(ne) de confiance';
+    $('badge-prioritaire').textContent = cdT('🔑 Accès prioritaire · offert d\'abord à vous, pharmacien(ne) de confiance','🔑 Priority access · offered to you first as a trusted pharmacist');
   }
 
   /* ---- Nom + note + favoris des deux parties — révélés une fois le
      contrat confirmé (même règle que la messagerie/l'évaluation) ---- */
-  const etoile = (moy, nb) => (moy != null && nb) ? ('★ ' + Number(moy).toFixed(1) + ' (' + nb + ' avis)') : 'Pas encore évalué(e)';
+  const etoile = (moy, nb) => (moy != null && nb) ? ('★ ' + Number(moy).toFixed(1) + ' (' + nb + cdT(' avis)',' reviews)')) : cdT('Pas encore évalué(e)','Not yet rated');
   if(k.pharmacie_nom || k.pharmacien_nom){
     const lignes = [];
     if(k.pharmacie_nom) lignes.push('<div><b style="color:var(--texte)">' + k.pharmacie_nom + '</b> · ' + etoile(k.pharmacie_note_moyenne, k.pharmacie_note_nombre) + '</div>');
     if(k.pharmacien_nom){
-      const fav = k.pharmacien_favoris_nombre ? ' · ♥ ' + k.pharmacien_favoris_nombre + ' pharmacie' + (k.pharmacien_favoris_nombre>1?'s':'') + ' favori' : '';
+      const fav = k.pharmacien_favoris_nombre ? (cdLang()==='en'
+        ? ' · ♥ ' + k.pharmacien_favoris_nombre + ' pharmacy favorite' + (k.pharmacien_favoris_nombre>1?'s':'')
+        : ' · ♥ ' + k.pharmacien_favoris_nombre + ' pharmacie' + (k.pharmacien_favoris_nombre>1?'s':'') + ' favori') : '';
       lignes.push('<div><b style="color:var(--texte)">' + k.pharmacien_nom + '</b> · ' + etoile(k.pharmacien_note_moyenne, k.pharmacien_note_nombre) + fav + '</div>');
     }
     if(k.hebergement_adresse){
-      lignes.push('<div>🏠 Hébergement offert : <b style="color:var(--texte)">' + k.hebergement_adresse + '</b></div>');
+      lignes.push('<div>' + cdT('🏠 Hébergement offert : ','🏠 Accommodation provided: ') + '<b style="color:var(--texte)">' + k.hebergement_adresse + '</b></div>');
     }
     $('bloc-parties').innerHTML = lignes.join('');
     $('bloc-parties').style.display = '';
@@ -360,11 +365,12 @@ function msg(texte, type){
   $('logiciel').textContent = k.logiciel || '—';
   $('rx_sem').textContent = k.rx_jour_semaine ?? '—';
   $('rx_we').textContent = k.rx_jour_weekend ?? '—';
-  $('seul').textContent = k.seul_pharmacien ? 'Oui' : 'Non';
-  $('atp').textContent = k.atp_presente ? 'Oui' : 'Non';
-  $('auto').textContent = k.has_automation ? 'Oui (robot)' : 'Non';
-  if(k.lunch_coverage != null){ $('cellule-diner').style.display=''; $('diner').textContent = k.lunch_coverage ? 'Oui' : 'Non'; }
-  $('hebergement').textContent = k.hebergement_offerte ? 'Offert par la pharmacie' : 'Non offert';
+  const oui = cdT('Oui','Yes'), non = cdT('Non','No');
+  $('seul').textContent = k.seul_pharmacien ? oui : non;
+  $('atp').textContent = k.atp_presente ? oui : non;
+  $('auto').textContent = k.has_automation ? cdT('Oui (robot)','Yes (robot)') : non;
+  if(k.lunch_coverage != null){ $('cellule-diner').style.display=''; $('diner').textContent = k.lunch_coverage ? oui : non; }
+  $('hebergement').textContent = k.hebergement_offerte ? cdT('Offert par la pharmacie','Provided by the pharmacy') : cdT('Non offert','Not provided');
 
   if(k.services && k.services.length){
     $('bloc-services').style.display = '';
@@ -416,11 +422,11 @@ function msg(texte, type){
     const taux = parseFloat(reglesReseau.taux_km).toFixed(2).replace('.',',');
     const row = (label, val, muted) => '<div style="display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-family:\'IBM Plex Mono\',monospace;font-size:12.5px;'+(muted?'color:var(--sourd)':'')+'"><span>'+label+'</span><span style="white-space:nowrap">'+val+'</span></div>';
     const rows = [];
-    rows.push(row('Honoraires · '+cdArgent(tarif).replace(',00','')+'/h × '+(Math.round(est.heures*100)/100)+' h', cdArgent(est.base)));
-    if(est.kmAR != null) rows.push(row('Déplacement · '+est.kmAR+' km A/R × '+taux+' $', cdArgent(est.montantKm)));
-    else rows.push(row('Déplacement', 'Ajoutez votre code postal au profil', true));
-    if(est.perDiem) rows.push(row('Per diem (repas)', cdArgent(est.montantPerDiem)));
-    else rows.push(row('Per diem (repas)', 'Non admissible — aller simple < '+seuilP+' km', true));
+    rows.push(row(cdT('Honoraires · ','Fees · ')+cdArgent(tarif).replace(',00','')+'/h × '+(Math.round(est.heures*100)/100)+' h', cdArgent(est.base)));
+    if(est.kmAR != null) rows.push(row(cdT('Déplacement · ','Travel · ')+est.kmAR+cdT(' km A/R × ',' km round-trip × ')+taux+' $', cdArgent(est.montantKm)));
+    else rows.push(row(cdT('Déplacement','Travel'), cdT('Ajoutez votre code postal au profil','Add your postal code to your profile'), true));
+    if(est.perDiem) rows.push(row(cdT('Per diem (repas)','Per diem (meals)'), cdArgent(est.montantPerDiem)));
+    else rows.push(row(cdT('Per diem (repas)','Per diem (meals)'), cdT('Non admissible — aller simple < ','Not eligible — one way < ')+seuilP+' km', true));
 
     /* Hébergement : trois cas mutuellement exclusifs — fourni en nature par
        la pharmacie (jamais de cash), demandé explicitement à l'offre (cash,
@@ -428,15 +434,15 @@ function msg(texte, type){
        ≥ seuil). Doit rester cohérent avec appliquer_indemnites() côté serveur. */
     let montantHeb = est.hebergement ? est.montantHebergement : 0;
     if(k.hebergement_offerte){
-      rows.push(row('Hébergement', 'Fourni par la pharmacie (logement)', true));
+      rows.push(row(cdT('Hébergement','Accommodation'), cdT('Fourni par la pharmacie (logement)','Provided by the pharmacy (lodging)'), true));
       montantHeb = 0;
     } else if($('o-demande-hebergement').checked){
       montantHeb = est.montantHebergement || parseFloat(reglesReseau.hebergement_jour) || 0;
-      rows.push(row('Hébergement (demandée)', cdArgent(montantHeb)));
+      rows.push(row(cdT('Hébergement (demandée)','Accommodation (requested)'), cdArgent(montantHeb)));
     } else if(est.hebergement){
-      rows.push(row('Hébergement', cdArgent(est.montantHebergement)));
+      rows.push(row(cdT('Hébergement','Accommodation'), cdArgent(est.montantHebergement)));
     } else {
-      rows.push(row('Hébergement', 'Non admissible — aller simple < '+seuilH+' km', true));
+      rows.push(row(cdT('Hébergement','Accommodation'), cdT('Non admissible — aller simple < ','Not eligible — one way < ')+seuilH+' km', true));
     }
 
     const total = est.base + (est.montantKm||0) + (est.perDiem?est.montantPerDiem:0) + montantHeb;
@@ -471,10 +477,10 @@ function msg(texte, type){
   if(k.statut === 'attribue' && dateContratPassee && suisPartie){
     $('bloc-completer').style.display = '';
     $('btn-completer').onclick = async ()=>{
-      if(!confirm('Confirmer que le remplacement ' + k.numero_reference + ' a bien eu lieu ? La facture sera générée en brouillon.')) return;
+      if(!confirm(cdT('Confirmer que le remplacement ' + k.numero_reference + ' a bien eu lieu ? La facture sera générée en brouillon.','Confirm that shift ' + k.numero_reference + ' actually took place? A draft invoice will be generated.'))) return;
       $('btn-completer').disabled = true;
       const { data: fid, error: e } = await sb.rpc('marquer_complete', { p_contrat: k.id });
-      if(e){ $('btn-completer').disabled = false; msg('Erreur : ' + e.message, 'ko'); return; }
+      if(e){ $('btn-completer').disabled = false; msg(cdT('Erreur : ','Error: ') + e.message, 'ko'); return; }
       cdAlerteAdmin(cdT('Contrat complété — ' + k.numero_reference, 'Contract completed — ' + k.numero_reference),
         cdT((profil.prenom||profil.courriel||'Un utilisateur') + ' (' + profil.role + ') a marqué ' + k.numero_reference + ' complété. Facture générée en brouillon.',
             (profil.prenom||profil.courriel||'A user') + ' (' + profil.role + ') marked ' + k.numero_reference + ' as completed. Draft invoice generated.'),
@@ -513,10 +519,15 @@ function msg(texte, type){
   /* ---- Candidature deux vitesses (pharmacien · contrat ouvert) ---- */
   if(profil.role === 'pharmacien'){
     if(k.ma_candidature_statut){
-      const libelles = {propose:'Candidature envoyée — en attente de la pharmacie.',
-                        contre_offre:'Contre-offre reçue de la pharmacie — répondez ci-dessous.',
-                        accepte:'Votre candidature a été ACCEPTÉE. La pharmacie vous contactera.',
-                        refuse:'Candidature non retenue.'};
+      const libelles = cdLang()==='en'
+        ? {propose:'Application sent — awaiting the pharmacy.',
+           contre_offre:'Counter-offer received from the pharmacy — respond below.',
+           accepte:'Your application was ACCEPTED. The pharmacy will contact you.',
+           refuse:'Application not selected.'}
+        : {propose:'Candidature envoyée — en attente de la pharmacie.',
+           contre_offre:'Contre-offre reçue de la pharmacie — répondez ci-dessous.',
+           accepte:'Votre candidature a été ACCEPTÉE. La pharmacie vous contactera.',
+           refuse:'Candidature non retenue.'};
       msg(libelles[k.ma_candidature_statut] || k.ma_candidature_statut,
           k.ma_candidature_statut === 'accepte' ? 'ok' : 'info');
 
@@ -546,15 +557,15 @@ function msg(texte, type){
                 $('bloc-retard').style.display = '';
                 $('btn-signaler-retard').onclick = async ()=>{
                   const nh = $('retard-nouvelle-heure').value;
-                  if(!nh){ msg('Entrez la nouvelle heure de début estimée.', 'ko'); return; }
+                  if(!nh){ msg(cdT('Entrez la nouvelle heure de début estimée.','Enter the new estimated start time.'), 'ko'); return; }
                   $('btn-signaler-retard').disabled = true;
                   const { error: eR } = await sb.rpc('declarer_retard', {
                     p_contrat: k.id, p_nouvelle_heure_debut: nh, p_motif: $('retard-motif').value.trim()||null
                   });
-                  if(eR){ $('btn-signaler-retard').disabled = false; msg('Erreur : ' + eR.message, 'ko'); return; }
+                  if(eR){ $('btn-signaler-retard').disabled = false; msg(cdT('Erreur : ','Error: ') + eR.message, 'ko'); return; }
                   $('bloc-retard').style.display = 'none';
                   $('bloc-retard-deja-signale').style.display = '';
-                  msg('Retard signalé — la pharmacie a été avertie.', 'ok');
+                  msg(cdT('Retard signalé — la pharmacie a été avertie.','Delay reported — the pharmacy has been notified.'), 'ok');
                 };
               }
             }
@@ -564,10 +575,10 @@ function msg(texte, type){
         if(ma.statut === 'contre_offre' && k.statut === 'ouvert'){
           $('bloc-contre').style.display = '';
           $('btn-accepter-co').onclick = async ()=>{
-            if(!confirm('Accepter la contre-offre (' + cdEntenteTexte(ma, k) + ') ? Le contrat vous sera attribué.')) return;
+            if(!confirm(cdT('Accepter la contre-offre (' + cdEntenteTexte(ma, k) + ') ? Le contrat vous sera attribué.','Accept the counter-offer (' + cdEntenteTexte(ma, k) + ')? The contract will be assigned to you.'))) return;
             $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = true;
             const { error: e } = await sb.rpc('accepter_contre_offre', { p_candidature: ma.id });
-            if(e){ $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = false; msg('Erreur : '+e.message,'ko'); return; }
+            if(e){ $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = false; msg(cdT('Erreur : ','Error: ')+e.message,'ko'); return; }
             cdConfirmerContrat(k.numero_reference);   /* courriel « contrat confirmé » + PDF aux 2 parties */
             cdAlerteAdmin(cdT('Contre-offre acceptée — ' + k.numero_reference, 'Counter-offer accepted — ' + k.numero_reference),
               cdT((profil.prenom||profil.courriel||'Un pharmacien') + ' a accepté la contre-offre pour ' + k.numero_reference + ' (' + cdEntenteTexte(ma, k) + ').',
@@ -576,13 +587,13 @@ function msg(texte, type){
             location.reload();
           };
           $('btn-refuser-co').onclick = async ()=>{
-            if(!confirm('Refuser la contre-offre ? Votre candidature sera close.')) return;
+            if(!confirm(cdT('Refuser la contre-offre ? Votre candidature sera close.','Decline the counter-offer? Your application will be closed.'))) return;
             $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = true;
             const { error: e } = await sb.from('candidatures').update({
               statut: 'refuse',
               message: cdJalonAjouter(ma.message, {etape:'refuse', par:'pharmacien'})
             }).eq('id', ma.id);
-            if(e){ $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = false; msg('Erreur : '+e.message,'ko'); return; }
+            if(e){ $('btn-accepter-co').disabled = $('btn-refuser-co').disabled = false; msg(cdT('Erreur : ','Error: ')+e.message,'ko'); return; }
             cdAlerteAdmin(cdT('Contre-offre refusée — ' + k.numero_reference, 'Counter-offer declined — ' + k.numero_reference),
               cdT((profil.prenom||profil.courriel||'Un pharmacien') + ' a refusé la contre-offre pour ' + k.numero_reference + '.',
                   (profil.prenom||profil.courriel||'A pharmacist') + ' declined the counter-offer for ' + k.numero_reference + '.'),
@@ -664,8 +675,8 @@ function msg(texte, type){
         const modifHoraire = $('o-modifier-horaire').checked;
         const hd = modifHoraire ? ($('o-debut').value || null) : null;
         const hf = modifHoraire ? ($('o-fin').value || null) : null;
-        if((hd && !hf) || (!hd && hf)){ msg('Précisez le début ET la fin de l’horaire proposé.', 'ko'); return; }
-        if(hd && hf && hf <= hd){ msg('La fin proposée doit suivre le début.', 'ko'); return; }
+        if((hd && !hf) || (!hd && hf)){ msg(cdT('Précisez le début ET la fin de l’horaire proposé.','Specify BOTH the start and the end of the proposed schedule.'), 'ko'); return; }
+        if(hd && hf && hf <= hd){ msg(cdT('La fin proposée doit suivre le début.','The proposed end must be after the start.'), 'ko'); return; }
         const texte = $('o-message').value.trim() || null;
         postuler({
           contrat_id: k.id, pharmacien_id: profil.id,
@@ -683,7 +694,7 @@ function msg(texte, type){
         { ref: k.numero_reference });
       });
     } else {
-      msg('Ce contrat n’est plus ouvert aux candidatures.', 'info');
+      msg(cdT('Ce contrat n’est plus ouvert aux candidatures.','This contract is no longer open for applications.'), 'info');
     }
   }
 })();
