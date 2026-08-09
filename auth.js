@@ -1050,4 +1050,36 @@ window.cdT = function(fr, en){
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', poser);
   else poser();
 })();
+
+/* Salutation « Bienvenue [, Prénom] » juste après le mot-symbole, sur toutes
+   les pages qui chargent auth.js. Visiteur anonyme = « Bienvenue » seul ;
+   connecté = avec le prénom. Masquée sur mobile pour ne pas encombrer la barre.
+   La bascule FR/EN recharge la page, donc cdT() au montage suffit. Admin ignoré
+   (sa barre affiche déjà son nom et est dense). */
+(function appliquerSalutation(){
+  async function poser(){
+    const marque = document.querySelector('.topbar .brand');
+    if(!marque || document.getElementById('cd-salut')) return;
+    let suffixe = '';
+    try{
+      const p = await cdProfil();
+      if(p && p.role === 'admin') return;
+      if(p && p.prenom) suffixe = ', ' + p.prenom;
+    }catch(e){}
+    if(document.getElementById('cd-salut')) return;
+    if(!document.getElementById('cd-salut-style')){
+      const st = document.createElement('style'); st.id = 'cd-salut-style';
+      st.textContent = '#cd-salut{font-family:"Inter",sans-serif;font-size:14px;color:var(--sourd,#5A6B63);'+
+        'border-left:1px solid var(--ligne,#E6E8E4);padding-left:12px;margin-left:2px;white-space:nowrap;flex:none}'+
+        '@media(max-width:640px){#cd-salut{display:none}}';
+      document.head.appendChild(st);
+    }
+    const s = document.createElement('span');
+    s.id = 'cd-salut';
+    s.textContent = cdT('Bienvenue', 'Welcome') + suffixe;
+    marque.insertAdjacentElement('afterend', s);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', poser);
+  else poser();
+})();
 })();
