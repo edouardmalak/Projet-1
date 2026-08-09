@@ -129,7 +129,8 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
   <div id="ep-onglets" role="tablist">
     <button type="button" data-onglet="accueil">Tableau de bord</button>
     <button type="button" data-onglet="nouvelle-demande">Publier un contrat</button>
-    <button type="button" data-onglet="mes-contrats">Mes contrats</button>
+    <button type="button" data-onglet="a-pourvoir">À pourvoir</button>
+    <button type="button" data-onglet="mes-contrats">Contrats confirmés</button>
     <button type="button" data-onglet="factures-recues">Factures reçues</button>
   </div>
 
@@ -159,7 +160,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
   <!-- PUBLIER -->
   <div class="carte" id="nouvelle-demande" data-onglet="nouvelle-demande">
     <div class="sec">Publier un contrat</div>
-    <p style="color:var(--sourd);font-size:13px;line-height:1.6;margin:-4px 0 18px;font-family:'IBM Plex Mono',monospace">Moins d'une minute. Les pharmaciens compatibles sont notifiés automatiquement (SMS + courriel), et leurs candidatures apparaissent dans « Mes contrats » ci-dessous — vous acceptez en un clic.</p>
+    <p style="color:var(--sourd);font-size:13px;line-height:1.6;margin:-4px 0 18px;font-family:'IBM Plex Mono',monospace">Moins d'une minute. Les pharmaciens compatibles sont notifiés automatiquement (SMS + courriel), et leurs candidatures apparaissent dans « À pourvoir » — vous acceptez en un clic.</p>
     <form id="f">
       <div class="champ">
         <label>Profession recherchée</label>
@@ -213,9 +214,15 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
   </div>
 
   <!-- MES CONTRATS -->
+  <div class="carte" id="a-pourvoir" data-onglet="a-pourvoir">
+    <div class="sec">À pourvoir</div>
+    <p style="color:var(--sourd);font-size:13px;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace">Vos contrats ouverts et leurs candidatures. Touchez un contrat pour voir les pharmaciens, accepter, ou faire une contre-offre.</p>
+    <div id="liste-ouverts"><div class="vide">Chargement…</div></div>
+  </div>
+
   <div class="carte" id="mes-contrats" data-onglet="mes-contrats">
-    <div class="sec">Mes contrats</div>
-    <p style="color:var(--sourd);font-size:13px;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace">Vos contrats publiés et leurs candidatures. Touchez un contrat pour voir les pharmaciens, accepter, ou faire une contre-offre.</p>
+    <div class="sec">Contrats confirmés</div>
+    <p style="color:var(--sourd);font-size:13px;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace">Vos contrats attribués et complétés. Touchez un contrat pour voir le pharmacien retenu et le détail.</p>
     <div id="liste"><div class="vide">Chargement…</div></div>
   </div>
 
@@ -230,7 +237,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260808e"></script>
+<script src="/auth.js?v=20260809a"></script>
 <script src="/assistant.js?v=20260723b" defer></script>
 <script src="/outils.js"></script>
 <script src="/fsa-qc.js"></script>
@@ -256,7 +263,7 @@ function msg(id, texte, ok){
    par des sections qu'on ouvre une à la fois. Les liens du menu du haut
    (#nouvelle-demande, #mes-contrats, #factures-recues) continuent de
    fonctionner : on lit le hash au chargement et au changement. ---- */
-const EP_ONGLETS = ['accueil','nouvelle-demande','mes-contrats','factures-recues'];
+const EP_ONGLETS = ['accueil','nouvelle-demande','a-pourvoir','mes-contrats','factures-recues'];
 function afficherOngletEP(nom){
   if(!EP_ONGLETS.includes(nom)) nom = 'accueil';
   document.querySelectorAll('div[data-onglet]').forEach(p=>{
@@ -319,7 +326,7 @@ function initOngletsEP(){
     }
   } else {
     $('acces_prioritaire').disabled = true;
-    $('acces-prioritaire-indice').innerHTML = 'Aucun pharmacien de confiance pour l\'instant — ajoutez-en (♥) depuis les candidatures d\'un contrat, dans « Mes contrats », ou depuis vos <a href="/profil.html" style="color:var(--vert-vif)">Paramètres</a>.';
+    $('acces-prioritaire-indice').innerHTML = 'Aucun pharmacien de confiance pour l\'instant — ajoutez-en (♥) depuis les candidatures d\'un contrat, dans « À pourvoir », ou depuis vos <a href="/profil.html" style="color:var(--vert-vif)">Paramètres</a>.';
   }
   $('acces_prioritaire').addEventListener('change', ()=>{
     $('acces_prioritaire_duree').style.display = $('acces_prioritaire').checked ? '' : 'none';
@@ -524,15 +531,21 @@ async function chargerContrats(){
     sb.from('contrats').select('*').eq('pharmacie_id', profil.id).order('created_at',{ascending:false}),
     sb.from('candidatures').select('contrat_id,statut')
   ]);
-  const liste = $('liste');
-  if(error){ liste.innerHTML = '<div class="vide">Erreur : '+error.message+'</div>'; return; }
+  const liste = $('liste');                 // Contrats confirmés (attribué + complété)
+  const listeOuverts = $('liste-ouverts');  // À pourvoir (ouvert + annulé)
+  if(error){ liste.innerHTML = listeOuverts.innerHTML = '<div class="vide">Erreur : '+error.message+'</div>'; return; }
   if(!contrats || !contrats.length){
-    liste.innerHTML = '<div class="vide">Aucun contrat publié pour l’instant.</div>'; return;
+    const vide = '<div class="vide">Aucun contrat publié pour l’instant.</div>';
+    liste.innerHTML = vide; listeOuverts.innerHTML = vide; return;
   }
   const compte = {};
   (cands||[]).forEach(c=>{ compte[c.contrat_id] = (compte[c.contrat_id]||0)+1; });
+  /* un contrat est « confirmé » dès qu'un pharmacien est retenu (attribué)
+     ou une fois complété ; sinon il est « à pourvoir » (ouvert / annulé). */
+  const estConfirme = k => (k.statut === 'attribue' || k.statut === 'complete');
+  let nConfirme = 0, nOuvert = 0;
 
-  liste.innerHTML = '';
+  liste.innerHTML = ''; listeOuverts.innerHTML = '';
   const badges = {ouvert:['ouvert','OUVERT'], attribue:['attribue','CONFIRMÉ'],
                   complete:['autre','COMPLÉTÉ'], annule:['autre','ANNULÉ']};
   contrats.forEach(k=>{
@@ -571,8 +584,11 @@ async function chargerContrats(){
       zone.style.display = ouverte ? 'none' : 'block';
       if(!ouverte) chargerCandidats(k, zone);
     };
-    $('liste').appendChild(div);
+    if(estConfirme(k)){ nConfirme++; liste.appendChild(div); }
+    else { nOuvert++; listeOuverts.appendChild(div); }
   });
+  if(!nConfirme) liste.innerHTML = '<div class="vide">Aucun contrat confirmé pour l’instant.</div>';
+  if(!nOuvert) listeOuverts.innerHTML = '<div class="vide">Aucun contrat à pourvoir — publiez-en un dans « Publier un contrat ».</div>';
 }
 
 /* ---- Phase 3 : annulation par la pharmacie (protection du réseau) ---- */
