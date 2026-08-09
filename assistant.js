@@ -70,7 +70,7 @@ const OUTILS = {
   },
   async mes_stats(){
     const r = {};
-    try{ const { data } = await sb.rpc('get_stats_pharmacien'); r.stats = data; }catch(e){}
+    try{ const { data } = await sb.rpc('get_stats_pharmacien', { p_profil: profil.id }); r.stats = data; }catch(e){}
     return r;
   },
   async mes_disponibilites(){
