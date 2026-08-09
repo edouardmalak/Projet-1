@@ -47,17 +47,17 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 </div>
 
 <div class="wrap">
-  <h1>Dispensaire</h1>
-  <p class="sous">Carrière, finances et pratique — des articles pour les pharmaciens et pharmacies du réseau</p>
+  <h1 data-fr="Dispensaire" data-en="Dispensary">Dispensaire</h1>
+  <p class="sous" data-fr="Carrière, finances et pratique — des articles pour les pharmaciens et pharmacies du réseau" data-en="Career, finances and practice — articles for the network's pharmacists and pharmacies">Carrière, finances et pratique — des articles pour les pharmaciens et pharmacies du réseau</p>
 
   <div class="filtres" id="filtres">
-    <button data-c="tout" class="actif">Tous</button>
-    <button data-c="carriere">Carrière</button>
-    <button data-c="finances">Finances</button>
-    <button data-c="patients">Patients / clients</button>
+    <button data-c="tout" class="actif" data-fr="Tous" data-en="All">Tous</button>
+    <button data-c="carriere" data-fr="Carrière" data-en="Career">Carrière</button>
+    <button data-c="finances" data-fr="Finances" data-en="Finances">Finances</button>
+    <button data-c="patients" data-fr="Patients / clients" data-en="Patients / clients">Patients / clients</button>
   </div>
 
-  <div id="liste"><div class="vide">Chargement…</div></div>
+  <div id="liste"><div class="vide" data-fr="Chargement…" data-en="Loading…">Chargement…</div></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -65,23 +65,25 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 <script src="/auth.js?v=20260809c"></script>
 <script>
 const sb = window.sbClient;
-const LIB_CAT = { carriere:'Carrière', finances:'Finances', patients:'Patients / clients' };
+const LIB_CAT = cdLang()==='en'
+  ? { carriere:'Career', finances:'Finances', patients:'Patients / clients' }
+  : { carriere:'Carrière', finances:'Finances', patients:'Patients / clients' };
 let ARTICLES = [], FILTRE = 'tout';
 
 function rendre(){
   const liste = document.getElementById('liste');
   const arr = FILTRE==='tout' ? ARTICLES : ARTICLES.filter(a=>a.categorie===FILTRE);
-  if(!arr.length){ liste.innerHTML = '<div class="vide">Rien à lire ici pour l\'instant — revenez bientôt.</div>'; return; }
+  if(!arr.length){ liste.innerHTML = '<div class="vide">'+cdT('Rien à lire ici pour l\'instant — revenez bientôt.','Nothing to read here yet — check back soon.')+'</div>'; return; }
   liste.innerHTML = '';
   arr.forEach(a=>{
     const div = document.createElement('div'); div.className = 'art';
-    div.innerHTML = '<span class="cat"></span><h2></h2><div class="corps"></div><span class="voirplus">Lire la suite ↓</span>';
+    div.innerHTML = '<span class="cat"></span><h2></h2><div class="corps"></div><span class="voirplus">'+cdT('Lire la suite ↓','Read more ↓')+'</span>';
     div.querySelector('.cat').textContent = LIB_CAT[a.categorie] || a.categorie;
     div.querySelector('h2').textContent = a.titre;
     div.querySelector('.corps').textContent = a.corps;
     div.onclick = ()=>{
       div.classList.toggle('ouvert');
-      div.querySelector('.voirplus').textContent = div.classList.contains('ouvert') ? 'Réduire ↑' : 'Lire la suite ↓';
+      div.querySelector('.voirplus').textContent = div.classList.contains('ouvert') ? cdT('Réduire ↑','Show less ↑') : cdT('Lire la suite ↓','Read more ↓');
     };
     liste.appendChild(div);
   });
@@ -98,7 +100,7 @@ document.getElementById('filtres').addEventListener('click', e=>{
   await cdExigerConnexion();
   cdEnteteConnecte();
   const { data, error } = await sb.from('articles').select('*').eq('publie', true).order('created_at', { ascending:false });
-  if(error){ document.getElementById('liste').innerHTML = '<div class="vide">Erreur : '+error.message+'</div>'; return; }
+  if(error){ document.getElementById('liste').innerHTML = '<div class="vide">'+cdT('Erreur : ','Error: ')+error.message+'</div>'; return; }
   ARTICLES = data || [];
   rendre();
 })();

@@ -56,17 +56,17 @@ tbody tr.pour-vous:hover{background:rgba(18,169,110,.12)}
 </div>
 
 <div class="wrap">
-  <h1>Nouveaux contrats</h1>
-  <p class="sous" id="sous">Lot de contrats publiés ensemble</p>
+  <h1 data-fr="Nouveaux contrats" data-en="New contracts">Nouveaux contrats</h1>
+  <p class="sous" id="sous" data-fr="Lot de contrats publiés ensemble" data-en="Batch of contracts posted together">Lot de contrats publiés ensemble</p>
 
   <div class="carte">
-    <div class="chargement" id="chargement">Chargement du lot…</div>
+    <div class="chargement" id="chargement" data-fr="Chargement du lot…" data-en="Loading batch…">Chargement du lot…</div>
     <table id="tableau" style="display:none">
-      <thead><tr><th>Référence</th><th>Date</th><th>Heures</th><th class="cache-mobile">Ville</th><th>Tarif</th><th></th></tr></thead>
+      <thead><tr><th data-fr="Référence" data-en="Reference">Référence</th><th data-fr="Date" data-en="Date">Date</th><th data-fr="Heures" data-en="Hours">Heures</th><th class="cache-mobile" data-fr="Ville" data-en="City">Ville</th><th data-fr="Tarif" data-en="Rate">Tarif</th><th></th></tr></thead>
       <tbody id="lignes"></tbody>
     </table>
   </div>
-  <p class="legende" id="legende" style="display:none">Les lignes <b>surlignées</b> correspondent à vos critères (distance, tarif, logiciel, disponibilités). Touchez une ligne pour ouvrir la fiche et postuler.</p>
+  <p class="legende" id="legende" style="display:none" data-fr="Les lignes <b>surlignées</b> correspondent à vos critères (distance, tarif, logiciel, disponibilités). Touchez une ligne pour ouvrir la fiche et postuler." data-en="<b>Highlighted</b> rows match your criteria (distance, rate, software, availability). Tap a row to open the details and apply.">Les lignes <b>surlignées</b> correspondent à vos critères (distance, tarif, logiciel, disponibilités). Touchez une ligne pour ouvrir la fiche et postuler.</p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -87,16 +87,18 @@ function batchDepuisUrl(){
   cdEnteteConnecte();
 
   const id = batchDepuisUrl();
-  if(!id){ $('chargement').textContent = 'Lot introuvable — lien incomplet.'; return; }
+  if(!id){ $('chargement').textContent = cdT('Lot introuvable — lien incomplet.','Batch not found — incomplete link.'); return; }
 
   const { data, error } = await sb.rpc('get_batch_contrats', { p_batch: id });
-  if(error){ $('chargement').textContent = 'Erreur : ' + error.message; return; }
-  if(!data || !data.length){ $('chargement').textContent = 'Lot introuvable ou vide.'; return; }
+  if(error){ $('chargement').textContent = cdT('Erreur : ','Error: ') + error.message; return; }
+  if(!data || !data.length){ $('chargement').textContent = cdT('Lot introuvable ou vide.','Batch not found or empty.'); return; }
 
   $('chargement').style.display = 'none';
   $('tableau').style.display = ''; $('legende').style.display = '';
   const n = data.length, m = data.filter(k=>k.correspond).length;
-  $('sous').textContent = n + ' contrats publiés ensemble · ' + m + ' correspondent à vos critères';
+  $('sous').textContent = cdLang()==='en'
+    ? (n + ' contracts posted together · ' + m + ' match your criteria')
+    : (n + ' contrats publiés ensemble · ' + m + ' correspondent à vos critères');
 
   const tb = $('lignes');
   data.forEach(k=>{
@@ -106,8 +108,8 @@ function batchDepuisUrl(){
     const td = (t, cls)=>{ const c=document.createElement('td'); if(cls) c.className=cls; c.textContent=t; return c; };
     const etat = document.createElement('td');
     etat.innerHTML = k.statut !== 'ouvert'
-      ? '<span class="badge ferme">' + (k.statut==='attribue'?'Confirmé':k.statut) + '</span>'
-      : (k.correspond ? '<span class="badge match">Pour vous</span>' : '');
+      ? '<span class="badge ferme">' + (k.statut==='attribue'?cdT('Confirmé','Confirmed'):k.statut) + '</span>'
+      : (k.correspond ? '<span class="badge match">'+cdT('Pour vous','For you')+'</span>' : '');
     tr.append(
       td(k.numero_reference, 'ref'),
       td(cdDate(k.date_contrat)),

@@ -70,45 +70,45 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
   </div>
 </div>
 <div class="wrap">
-  <h1>Maps des contrats</h1>
-  <p class="sous">Contrats ouverts près de vous. Positions approximatives (secteur du code postal).</p>
+  <h1 data-fr="Maps des contrats" data-en="Contracts map">Maps des contrats</h1>
+  <p class="sous" data-fr="Contrats ouverts près de vous. Positions approximatives (secteur du code postal)." data-en="Open contracts near you. Approximate positions (postal-code area).">Contrats ouverts près de vous. Positions approximatives (secteur du code postal).</p>
 
   <!-- pendant de la bascule Liste/Calendrier/Maps de contrats.html — dossier
        de refonte 2026-08-08, « Maps devient une bascule », pas une page isolée -->
   <div class="seg" style="margin-bottom:16px">
-    <button type="button" onclick="location.href='/contrats.html'">Liste</button>
-    <button type="button" onclick="location.href='/contrats.html'">Calendrier</button>
+    <button type="button" onclick="location.href='/contrats.html'" data-fr="Liste" data-en="List">Liste</button>
+    <button type="button" onclick="location.href='/contrats.html'" data-fr="Calendrier" data-en="Calendar">Calendrier</button>
     <button type="button" class="on" disabled>Maps</button>
   </div>
 
   <div class="filtres">
     <div class="seg" id="seg">
-      <button data-m="tous" class="on">Tous</button>
-      <button data-m="jour">Par jour</button>
-      <button data-m="mois">Par mois</button>
-      <button data-m="jsem">Jour de semaine</button>
+      <button data-m="tous" class="on" data-fr="Tous" data-en="All">Tous</button>
+      <button data-m="jour" data-fr="Par jour" data-en="By day">Par jour</button>
+      <button data-m="mois" data-fr="Par mois" data-en="By month">Par mois</button>
+      <button data-m="jsem" data-fr="Jour de semaine" data-en="Weekday">Jour de semaine</button>
     </div>
     <input type="date" id="f-jour" style="display:none">
     <input type="month" id="f-mois" style="display:none">
     <select id="f-jsem" style="display:none">
-      <option value="1">Lundi</option>
-      <option value="2">Mardi</option>
-      <option value="3">Mercredi</option>
-      <option value="4">Jeudi</option>
-      <option value="5">Vendredi</option>
-      <option value="6">Samedi</option>
-      <option value="0">Dimanche</option>
+      <option value="1" data-fr="Lundi" data-en="Monday">Lundi</option>
+      <option value="2" data-fr="Mardi" data-en="Tuesday">Mardi</option>
+      <option value="3" data-fr="Mercredi" data-en="Wednesday">Mercredi</option>
+      <option value="4" data-fr="Jeudi" data-en="Thursday">Jeudi</option>
+      <option value="5" data-fr="Vendredi" data-en="Friday">Vendredi</option>
+      <option value="6" data-fr="Samedi" data-en="Saturday">Samedi</option>
+      <option value="0" data-fr="Dimanche" data-en="Sunday">Dimanche</option>
     </select>
     <span class="compte" id="compte">—</span>
   </div>
 
-  <div id="carte"><div class="chargement">Chargement de la carte…</div></div>
+  <div id="carte"><div class="chargement" data-fr="Chargement de la carte…" data-en="Loading map…">Chargement de la carte…</div></div>
   <div class="legende">
-    <span><i class="pnt vert"></i> Contrat disponible</span>
-    <span><i class="pnt jaune"></i> Votre secteur</span>
+    <span><i class="pnt vert"></i> <span data-fr="Contrat disponible" data-en="Available contract">Contrat disponible</span></span>
+    <span><i class="pnt jaune"></i> <span data-fr="Votre secteur" data-en="Your area">Votre secteur</span></span>
   </div>
   <div class="hors" id="hors" style="display:none">
-    <h2>Sans localisation précise</h2>
+    <h2 data-fr="Sans localisation précise" data-en="Without precise location">Sans localisation précise</h2>
     <div id="hors-liste"></div>
   </div>
 </div>
@@ -162,7 +162,7 @@ function passeFiltre(k){
     options: { position:'topleft' },
     onAdd: function(){
       const b = L.DomUtil.create('button', 'btn-recentrer');
-      b.type = 'button'; b.textContent = 'Recentrer'; b.title = 'Revenir aux contrats';
+      b.type = 'button'; b.textContent = cdT('Recentrer','Recenter'); b.title = cdT('Revenir aux contrats','Back to contracts');
       L.DomEvent.on(b, 'click', function(e){ L.DomEvent.stop(e); recadrer(); });
       L.DomEvent.disableClickPropagation(b);
       return b;
@@ -174,7 +174,7 @@ function passeFiltre(k){
   maPos = (maCP && window.CD_FSA_QC) ? CD_FSA_QC[cdFsa(maCP)] : null;
   if(maPos){
     const icoMoi = L.divIcon({ className:'', iconSize:[20,20], iconAnchor:[10,20], html:'<div class="marqueur moi"></div>' });
-    L.marker(maPos, { icon:icoMoi }).addTo(map).bindPopup('<b>Votre secteur</b><br>'+esc(maCP));
+    L.marker(maPos, { icon:icoMoi }).addTo(map).bindPopup('<b>'+cdT('Votre secteur','Your area')+'</b><br>'+esc(maCP));
   }
 
   /* contrôles de filtre */
@@ -214,15 +214,15 @@ function dessiner(){
     const nb = g.liste.length;
     const icone = L.divIcon({ className:'', iconSize:[20,20], iconAnchor:[10,20], popupAnchor:[0,-18],
       html:'<div class="marqueur"><span class="nb">'+(nb>1?nb:'')+'</span></div>' });
-    const contenu = '<div class="pop-ville">'+esc(g.liste[0].ville||'Secteur')+'</div>' +
+    const contenu = '<div class="pop-ville">'+esc(g.liste[0].ville||cdT('Secteur','Area'))+'</div>' +
       g.liste.slice(0,8).map(k=>{
         const dist = (maCP && k.code_postal && typeof cdDistanceKm==='function') ? cdDistanceKm(maCP, k.code_postal) : null;
         return '<div class="pop-c"><span class="r">'+esc(k.numero_reference)+'</span>'+
           '<div class="d">'+cdDate(k.date_contrat)+' · '+cdArgent(k.tarif_horaire)+'/h'+
           (dist!=null?' · ~'+dist+' km':'')+(k.logiciel?' · '+esc(k.logiciel):'')+'</div>'+
-          '<a href="/c/'+encodeURIComponent(k.numero_reference)+'">Voir le contrat →</a></div>';
+          '<a href="/c/'+encodeURIComponent(k.numero_reference)+'">'+cdT('Voir le contrat →','View contract →')+'</a></div>';
       }).join('') +
-      (nb>8?'<div class="pop-c" style="color:var(--sourd);font-family:\'IBM Plex Mono\',monospace;font-size:11px">+ '+(nb-8)+' autre(s)…</div>':'');
+      (nb>8?'<div class="pop-c" style="color:var(--sourd);font-family:\'IBM Plex Mono\',monospace;font-size:11px">+ '+(nb-8)+cdT(' autre(s)…',' more…')+'</div>':'');
     L.marker(g.pos, { icon:icone }).addTo(couche).bindPopup(contenu, { maxWidth:260 });
     bornes.push(g.pos);
   });
@@ -231,7 +231,9 @@ function dessiner(){
   if(bornes.length){ map.fitBounds(bornes, { padding:[40,40], maxZoom:11 }); }
 
   const nbGeo = visibles.length - hors.length;
-  $('compte').innerHTML = '<b>'+visibles.length+'</b> contrat'+(visibles.length>1?'s':'')+(visibles.length? ' · '+nbGeo+' sur la carte':'');
+  $('compte').innerHTML = cdLang()==='en'
+    ? ('<b>'+visibles.length+'</b> contract'+(visibles.length>1?'s':'')+(visibles.length? ' · '+nbGeo+' on the map':''))
+    : ('<b>'+visibles.length+'</b> contrat'+(visibles.length>1?'s':'')+(visibles.length? ' · '+nbGeo+' sur la carte':''));
 
   if(hors.length){
     $('hors').style.display = '';

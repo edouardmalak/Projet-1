@@ -30,13 +30,13 @@ p b{color:var(--texte)}
 <body>
 <div class="carte">
   <div class="horloge">⏳</div>
-  <h1>Compte en attente de validation</h1>
-  <p id="texte">Chaque compte C-Direct est vérifié manuellement avant l'activation — <b>inscription à l'OPQ</b> pour les pharmacien(ne)s, <b>établissement</b> pour les pharmacies. C'est ce qui fait la fiabilité du réseau.</p>
-  <p>Vous serez avisé(e) dès l'activation. En attendant, assurez-vous que votre profil est complet — cela accélère la vérification.</p>
-  <p id="veille" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.05em;opacity:.7">
+  <h1 data-fr="Compte en attente de validation" data-en="Account pending validation">Compte en attente de validation</h1>
+  <p id="texte" data-fr="Chaque compte C-Direct est vérifié manuellement avant l'activation — <b>inscription à l'OPQ</b> pour les pharmacien(ne)s, <b>établissement</b> pour les pharmacies. C'est ce qui fait la fiabilité du réseau." data-en="Every C-Direct account is checked manually before activation — <b>OPQ registration</b> for pharmacists, <b>establishment</b> for pharmacies. That's what makes the network reliable.">Chaque compte C-Direct est vérifié manuellement avant l'activation — <b>inscription à l'OPQ</b> pour les pharmacien(ne)s, <b>établissement</b> pour les pharmacies. C'est ce qui fait la fiabilité du réseau.</p>
+  <p data-fr="Vous serez avisé(e) dès l'activation. En attendant, assurez-vous que votre profil est complet — cela accélère la vérification." data-en="You'll be notified as soon as it's activated. In the meantime, make sure your profile is complete — it speeds up verification.">Vous serez avisé(e) dès l'activation. En attendant, assurez-vous que votre profil est complet — cela accélère la vérification.</p>
+  <p id="veille" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.05em;opacity:.7" data-fr="Cette page se met à jour toute seule — laissez-la ouverte." data-en="This page refreshes on its own — leave it open.">
     Cette page se met à jour toute seule — laissez-la ouverte.</p>
-  <a class="btn" href="/profil.html">Compléter mon profil</a>
-  <button class="lien" onclick="cdDeconnexion()">Déconnexion</button>
+  <a class="btn" href="/profil.html" data-fr="Compléter mon profil" data-en="Complete my profile">Compléter mon profil</a>
+  <button class="lien" onclick="cdDeconnexion()" data-fr="Déconnexion" data-en="Sign out">Déconnexion</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -60,7 +60,7 @@ p b{color:var(--texte)}
       if(data && (data.approuve === true || data.role === 'admin')){
         arret = true;
         const v = document.getElementById('veille');
-        if(v){ v.textContent = 'Compte activé — ouverture de votre espace…'; v.style.opacity = '1'; }
+        if(v){ v.textContent = cdT('Compte activé — ouverture de votre espace…','Account activated — opening your space…'); v.style.opacity = '1'; }
         setTimeout(()=> location.replace(cdAccueilPourRole(data.role || p.role)), 900);
       }
     }catch(e){ /* silencieux : une coupure réseau ne doit rien casser */ }

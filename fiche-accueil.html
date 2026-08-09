@@ -57,12 +57,12 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:21px;letter-s
 </div>
 
 <div class="wrap">
-  <h1 id="titre">Ce que vous devez savoir</h1>
-  <div class="sous" id="sous">Chargement…</div>
+  <h1 id="titre" data-fr="Ce que vous devez savoir" data-en="What you need to know">Ce que vous devez savoir</h1>
+  <div class="sous" id="sous" data-fr="Chargement…" data-en="Loading…">Chargement…</div>
 
   <div class="actions noprint">
-    <button class="btn" id="btn-pdf">Enregistrer en PDF</button>
-    <a class="btn vide2" id="lien-retour" href="/mes-mandats.html" style="text-decoration:none;display:inline-block">← Mes mandats</a>
+    <button class="btn" id="btn-pdf" data-fr="Enregistrer en PDF" data-en="Save as PDF">Enregistrer en PDF</button>
+    <a class="btn vide2" id="lien-retour" href="/mes-mandats.html" style="text-decoration:none;display:inline-block" data-fr="← Mes mandats" data-en="← My mandates">← Mes mandats</a>
   </div>
 
   <div id="contenu"></div>
@@ -81,7 +81,7 @@ function ligne(etiquette, valeur, brut){
   const vide = !valeur || !String(valeur).trim();
   return '<div class="ligne"><div class="et">'+esc(etiquette)+'</div>'
     + '<div class="va'+(vide?' vide':'')+'">'
-    + (vide ? 'Non précisé' : (brut ? valeur : esc(valeur)))
+    + (vide ? cdT('Non précisé','Not specified') : (brut ? valeur : esc(valeur)))
     + '</div></div>';
 }
 
@@ -101,7 +101,7 @@ function ligne(etiquette, valeur, brut){
   }
   if(!contratId){
     $('sous').textContent = '';
-    $('contenu').innerHTML = '<div class="err">Référence de contrat manquante. Ouvrez cette fiche depuis « Mes mandats ».</div>';
+    $('contenu').innerHTML = '<div class="err">'+cdT('Référence de contrat manquante. Ouvrez cette fiche depuis « Mes mandats ».','Missing contract reference. Open this sheet from “My mandates”.')+'</div>';
     return;
   }
 
@@ -111,7 +111,7 @@ function ligne(etiquette, valeur, brut){
     const nonActive = /function .*get_fiche_accueil.* does not exist|schema cache/i.test(error.message||'');
     $('contenu').innerHTML = '<div class="err">'
       + (nonActive
-          ? 'Fonction non activée — exécuter <b>sql/23</b> dans Supabase.'
+          ? cdT('Fonction non activée — exécuter <b>sql/23</b> dans Supabase.','Function not enabled — run <b>sql/23</b> in Supabase.')
           : esc(error.message))
       + '</div>';
     return;
@@ -119,65 +119,64 @@ function ligne(etiquette, valeur, brut){
   const f = Array.isArray(data) ? data[0] : data;
   if(!f){
     $('sous').textContent = '';
-    $('contenu').innerHTML = '<div class="err">Fiche indisponible : ce contrat ne vous est pas attribué.</div>';
+    $('contenu').innerHTML = '<div class="err">'+cdT('Fiche indisponible : ce contrat ne vous est pas attribué.','Sheet unavailable: this contract is not assigned to you.')+'</div>';
     return;
   }
 
   const dateTxt = (typeof cdDate === 'function') ? cdDate(f.date_contrat) : f.date_contrat;
   const h = t => String(t||'').slice(0,5);
-  $('titre').textContent = 'Ce que vous devez savoir';
-  $('sous').textContent  = (f.nom_pharmacie || 'Pharmacie') + ' · ' + f.numero_reference
+  $('titre').textContent = cdT('Ce que vous devez savoir','What you need to know');
+  $('sous').textContent  = (f.nom_pharmacie || cdT('Pharmacie','Pharmacy')) + ' · ' + f.numero_reference
                          + ' · ' + dateTxt + ' · ' + h(f.heure_debut) + '–' + h(f.heure_fin);
 
   let html = '';
 
-  html += '<div class="carte"><div class="sec">Où et quand</div>'
-       + ligne('Pharmacie', f.nom_pharmacie)
-       + ligne('Adresse', [f.adresse, f.ville, f.code_postal].filter(Boolean).join(', '))
-       + ligne('Date', dateTxt + ' · ' + h(f.heure_debut) + ' à ' + h(f.heure_fin))
-       + ligne('Logiciel de laboratoire', f.logiciel)
-       + ligne('Volume Rx / jour', [
-           f.rx_jour_semaine ? f.rx_jour_semaine + ' (semaine)' : null,
-           f.rx_jour_weekend ? f.rx_jour_weekend + ' (weekend)' : null
+  html += '<div class="carte"><div class="sec">'+cdT('Où et quand','Where and when')+'</div>'
+       + ligne(cdT('Pharmacie','Pharmacy'), f.nom_pharmacie)
+       + ligne(cdT('Adresse','Address'), [f.adresse, f.ville, f.code_postal].filter(Boolean).join(', '))
+       + ligne('Date', dateTxt + ' · ' + h(f.heure_debut) + cdT(' à ',' to ') + h(f.heure_fin))
+       + ligne(cdT('Logiciel de laboratoire','Lab software'), f.logiciel)
+       + ligne(cdT('Volume Rx / jour','Rx volume / day'), [
+           f.rx_jour_semaine ? f.rx_jour_semaine + cdT(' (semaine)',' (weekday)') : null,
+           f.rx_jour_weekend ? f.rx_jour_weekend + cdT(' (weekend)',' (weekend)') : null
          ].filter(Boolean).join(' · '))
        + '</div>';
 
   const tel = t => t ? '<a href="tel:'+esc(t)+'" style="color:var(--vert);text-decoration:none">'
                      + esc(typeof cdTelAffiche==='function' ? cdTelAffiche(t) : t) + '</a>' : '';
-  html += '<div class="carte"><div class="sec">Qui contacter</div>'
-       + ligne('Personne-ressource', f.info_contact_nom)
-       + ligne('Son numéro', tel(f.info_contact_tel), true)
-       + ligne('Téléphone de la pharmacie', tel(f.telephone), true)
+  html += '<div class="carte"><div class="sec">'+cdT('Qui contacter','Who to contact')+'</div>'
+       + ligne(cdT('Personne-ressource','Contact person'), f.info_contact_nom)
+       + ligne(cdT('Son numéro','Their number'), tel(f.info_contact_tel), true)
+       + ligne(cdT('Téléphone de la pharmacie','Pharmacy phone'), tel(f.telephone), true)
        + '</div>';
 
-  html += '<div class="carte"><div class="sec">Arrivée et stationnement</div>'
-       + ligne('À l’arrivée', f.info_arrivee)
-       + ligne('Stationnement', f.info_stationnement)
-       + ligne('Notes d’accès', f.notes_acces)
+  html += '<div class="carte"><div class="sec">'+cdT('Arrivée et stationnement','Arrival and parking')+'</div>'
+       + ligne(cdT('À l’arrivée','On arrival'), f.info_arrivee)
+       + ligne(cdT('Stationnement','Parking'), f.info_stationnement)
+       + ligne(cdT('Notes d’accès','Access notes'), f.notes_acces)
        + '</div>';
 
   const pl = Array.isArray(f.info_plateaux) ? f.info_plateaux
            : (typeof f.info_plateaux === 'string' ? JSON.parse(f.info_plateaux || '[]') : []);
-  html += '<div class="carte"><div class="sec">Code de couleurs — plateaux / paniers</div>';
+  html += '<div class="carte"><div class="sec">'+cdT('Code de couleurs — plateaux / paniers','Colour code — trays / baskets')+'</div>';
   if(!pl.length){
-    html += '<div class="ligne"><div class="va vide">Cette pharmacie n’a pas précisé de code de couleurs.</div></div>';
+    html += '<div class="ligne"><div class="va vide">'+cdT('Cette pharmacie n’a pas précisé de code de couleurs.','This pharmacy has not specified a colour code.')+'</div></div>';
   } else {
     pl.forEach(c => {
       html += '<div class="ligne"><div class="et">'
            + '<span class="pastille" style="background:'+esc(c.hex||'#CCC')+'"></span>'
            + esc(c.couleur || '—') + '</div>'
            + '<div class="va'+((c.sens||'').trim()?'':' vide')+'">'
-           + esc((c.sens||'').trim() || 'Non précisé') + '</div></div>';
+           + esc((c.sens||'').trim() || cdT('Non précisé','Not specified')) + '</div></div>';
     });
   }
   html += '</div>';
 
-  html += '<div class="carte"><div class="sec">Autres consignes</div>'
-       + ligne('Consignes de la pharmacie', f.info_instructions)
+  html += '<div class="carte"><div class="sec">'+cdT('Autres consignes','Other instructions')+'</div>'
+       + ligne(cdT('Consignes de la pharmacie','Pharmacy instructions'), f.info_instructions)
        + '</div>';
 
-  html += '<div class="avis noprint">Ces informations vous sont transmises parce que ce quart vous a été '
-       + 'attribué. Elles restent confidentielles.</div>';
+  html += '<div class="avis noprint">'+cdT('Ces informations vous sont transmises parce que ce quart vous a été attribué. Elles restent confidentielles.','This information is shared with you because this shift was assigned to you. It remains confidential.')+'</div>';
 
   $('contenu').innerHTML = html;
 
