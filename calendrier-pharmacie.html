@@ -138,18 +138,18 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 </div>
 <div class="wrap">
   <h1>Calendrier</h1>
-  <p class="sous">Vos contrats par journée — demandes publiées, confirmés, complétés et annulés.</p>
+  <p class="sous" data-fr="Vos contrats par journée — demandes publiées, confirmés, complétés et annulés." data-en="Your contracts by day — posted, confirmed, completed and cancelled.">Vos contrats par journée — demandes publiées, confirmés, complétés et annulés.</p>
 
-  <div class="chargement" id="chargement">Chargement du calendrier…</div>
+  <div class="chargement" id="chargement" data-fr="Chargement du calendrier…" data-en="Loading the calendar…">Chargement du calendrier…</div>
 
   <div id="corps" style="display:none">
     <div class="entete-outils no-print">
       <div class="vues">
-        <button id="v-mois" class="actif" type="button">Mois</button>
-        <button id="v-annee" type="button">Année</button>
+        <button id="v-mois" class="actif" type="button" data-fr="Mois" data-en="Month">Mois</button>
+        <button id="v-annee" type="button" data-fr="Année" data-en="Year">Année</button>
       </div>
       <div class="nav-mois" id="nav-mois">
-        <button class="bauj" id="b-auj" type="button">Aujourd'hui</button>
+        <button class="bauj" id="b-auj" type="button" data-fr="Aujourd'hui" data-en="Today">Aujourd'hui</button>
         <button class="bnav" id="b-prev" type="button">‹</button>
         <div class="cal-mois" id="mois-lbl" style="min-width:150px;text-align:center">—</div>
         <button class="bnav" id="b-next" type="button">›</button>
@@ -160,8 +160,8 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
         <button class="bnav" id="ba-next" type="button">›</button>
       </div>
       <div class="imprimer">
-        <button class="bimp" id="b-imp-cal" type="button">Imprimer le calendrier</button>
-        <button class="bimp" id="b-imp-liste" type="button">Imprimer la liste</button>
+        <button class="bimp" id="b-imp-cal" type="button" data-fr="Imprimer le calendrier" data-en="Print calendar">Imprimer le calendrier</button>
+        <button class="bimp" id="b-imp-liste" type="button" data-fr="Imprimer la liste" data-en="Print list">Imprimer la liste</button>
       </div>
     </div>
 
@@ -171,31 +171,31 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
           <div class="grille-jours" id="jours-tete"></div>
           <div class="grille-jours" id="grille" style="margin-top:7px"></div>
           <div class="legende">
-            <span><i class="pnt ouvert"></i> Demande (publié)</span>
-            <span><i class="pnt attribue"></i> Confirmé</span>
-            <span><i class="pnt complete"></i> Complété</span>
-            <span><i class="pnt annule"></i> Annulé</span>
+            <span><i class="pnt ouvert"></i> <span data-fr="Demande (publié)" data-en="Posted">Demande (publié)</span></span>
+            <span><i class="pnt attribue"></i> <span data-fr="Confirmé" data-en="Confirmed">Confirmé</span></span>
+            <span><i class="pnt complete"></i> <span data-fr="Complété" data-en="Completed">Complété</span></span>
+            <span><i class="pnt annule"></i> <span data-fr="Annulé" data-en="Cancelled">Annulé</span></span>
           </div>
         </div>
         <div class="carte" id="vue-annee" style="display:none">
           <div class="grille-annee" id="grille-annee"></div>
           <div class="legende" style="margin-top:18px">
-            <span><i class="pnt ouvert"></i> Demande</span>
-            <span><i class="pnt attribue"></i> Confirmé</span>
-            <span><i class="pnt complete"></i> Complété</span>
-            <span><i class="pnt annule"></i> Annulé</span>
+            <span><i class="pnt ouvert"></i> <span data-fr="Demande" data-en="Posted">Demande</span></span>
+            <span><i class="pnt attribue"></i> <span data-fr="Confirmé" data-en="Confirmed">Confirmé</span></span>
+            <span><i class="pnt complete"></i> <span data-fr="Complété" data-en="Completed">Complété</span></span>
+            <span><i class="pnt annule"></i> <span data-fr="Annulé" data-en="Cancelled">Annulé</span></span>
           </div>
         </div>
       </div>
 
       <div class="col-contrats">
         <div class="carte">
-          <div class="sec">Contrats<small id="n-contrats"></small></div>
+          <div class="sec"><span data-fr="Contrats" data-en="Contracts">Contrats</span><small id="n-contrats"></small></div>
           <div class="onglets no-print" id="onglets">
-            <button class="onglet actif" data-onglet="attribue" type="button">Confirmé</button>
-            <button class="onglet" data-onglet="ouvert" type="button">Demande</button>
-            <button class="onglet" data-onglet="complete" type="button">Complété</button>
-            <button class="onglet" data-onglet="annule" type="button">Annulé</button>
+            <button class="onglet actif" data-onglet="attribue" type="button" data-fr="Confirmé" data-en="Confirmed">Confirmé</button>
+            <button class="onglet" data-onglet="ouvert" type="button" data-fr="Affiché" data-en="Posted">Affiché</button>
+            <button class="onglet" data-onglet="complete" type="button" data-fr="Complété" data-en="Completed">Complété</button>
+            <button class="onglet" data-onglet="annule" type="button" data-fr="Annulé" data-en="Cancelled">Annulé</button>
           </div>
           <div class="liste-scroll" id="liste"></div>
         </div>
@@ -210,10 +210,14 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
-const JOURS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
-const JOURS_MINI = ['L','M','M','J','V','S','D'];
-const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-const NOM_TAB = {attribue:'Confirmé', ouvert:'Affiché', complete:'Complété', annule:'Annulé'};
+const JOURS = cdLang()==='en' ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] : ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const JOURS_MINI = cdLang()==='en' ? ['M','T','W','T','F','S','S'] : ['L','M','M','J','V','S','D'];
+const MOIS = cdLang()==='en'
+  ? ['january','february','march','april','may','june','july','august','september','october','november','december']
+  : ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const NOM_TAB = cdLang()==='en'
+  ? {attribue:'Confirmed', ouvert:'Posted', complete:'Completed', annule:'Cancelled'}
+  : {attribue:'Confirmé', ouvert:'Affiché', complete:'Complété', annule:'Annulé'};
 
 let profil = null;
 let vue = 'mois';                              // 'mois' | 'annee'
@@ -362,7 +366,7 @@ function dessinerListe(){
   liste.sort((a,b)=>{ const x=d10(a.date_contrat), y=d10(b.date_contrat); return ascendant ? x.localeCompare(y) : y.localeCompare(x); });
   $('n-contrats').textContent = liste.length ? '('+liste.length+')' : '';
   const zone = $('liste');
-  if(!liste.length){ zone.innerHTML = '<div class="vide">Aucun contrat — '+NOM_TAB[ongletActif].toLowerCase()+'.</div>'; return; }
+  if(!liste.length){ zone.innerHTML = '<div class="vide">'+cdT('Aucun contrat — ','No contract — ')+NOM_TAB[ongletActif].toLowerCase()+'.</div>'; return; }
   zone.innerHTML = liste.map(k=>{
     const heures = k.heure_debut ? (String(k.heure_debut).slice(0,5)+'–'+String(k.heure_fin||'').slice(0,5)) : '';
     const tarif  = k.tarif_horaire!=null ? Number(k.tarif_horaire).toFixed(2)+' $/h' : '';
