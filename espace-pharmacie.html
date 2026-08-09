@@ -123,15 +123,15 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 </div>
 
 <div class="wrap">
-  <h1>Espace pharmacie</h1>
+  <h1 data-fr="Espace pharmacie" data-en="Pharmacy space">Espace pharmacie</h1>
   <p class="sous" id="sous">—</p>
 
   <div id="ep-onglets" role="tablist">
-    <button type="button" data-onglet="accueil">Tableau de bord</button>
-    <button type="button" data-onglet="nouvelle-demande">Publier un contrat</button>
-    <button type="button" data-onglet="a-pourvoir">Contrats affichés</button>
-    <button type="button" data-onglet="mes-contrats">Contrats confirmés</button>
-    <button type="button" data-onglet="factures-recues">Factures reçues</button>
+    <button type="button" data-onglet="accueil" data-fr="Tableau de bord" data-en="Dashboard">Tableau de bord</button>
+    <button type="button" data-onglet="nouvelle-demande" data-fr="Publier un contrat" data-en="Post a contract">Publier un contrat</button>
+    <button type="button" data-onglet="a-pourvoir" data-fr="Contrats affichés" data-en="Posted contracts">Contrats affichés</button>
+    <button type="button" data-onglet="mes-contrats" data-fr="Contrats confirmés" data-en="Confirmed contracts">Contrats confirmés</button>
+    <button type="button" data-onglet="factures-recues" data-fr="Factures reçues" data-en="Invoices received">Factures reçues</button>
   </div>
 
   <!-- TABLEAU DE BORD (Phase 6.2) -->
@@ -146,38 +146,38 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
   <div data-onglet="accueil">
   <div id="banniere-messages"></div>
   <div class="carte" id="carte-pb" style="display:none">
-    <div class="sec">Tableau de bord</div>
+    <div class="sec" data-fr="Tableau de bord" data-en="Dashboard">Tableau de bord</div>
     <div class="pb-kpis">
-      <div class="pb-kpi"><small>Contrats publiés</small><b id="pb-pub">—</b></div>
-      <div class="pb-kpi vert"><small>Taux de remplissage</small><b id="pb-fill">—</b></div>
-      <div class="pb-kpi vert"><small>Total payé</small><b id="pb-paye">—</b></div>
-      <div class="pb-kpi"><small>1<sup>re</sup> candidature (médiane)</small><b id="pb-med">—</b></div>
+      <div class="pb-kpi"><small data-fr="Contrats publiés" data-en="Contracts posted">Contrats publiés</small><b id="pb-pub">—</b></div>
+      <div class="pb-kpi vert"><small data-fr="Taux de remplissage" data-en="Fill rate">Taux de remplissage</small><b id="pb-fill">—</b></div>
+      <div class="pb-kpi vert"><small data-fr="Total payé" data-en="Total paid">Total payé</small><b id="pb-paye">—</b></div>
+      <div class="pb-kpi"><small data-fr="1<sup>re</sup> candidature (médiane)" data-en="1<sup>st</sup> application (median)">1<sup>re</sup> candidature (médiane)</small><b id="pb-med">—</b></div>
     </div>
   </div>
-  <div class="vide" id="pb-vide">Aucune donnée pour l'instant — publiez votre premier contrat dans l'onglet « Publier un contrat ».</div>
+  <div class="vide" id="pb-vide" data-fr="Aucune donnée pour l'instant — publiez votre premier contrat dans l'onglet « Publier un contrat »." data-en="No data yet — post your first contract in the “Post a contract” tab.">Aucune donnée pour l'instant — publiez votre premier contrat dans l'onglet « Publier un contrat ».</div>
   </div>
 
   <!-- PUBLIER -->
   <div class="carte" id="nouvelle-demande" data-onglet="nouvelle-demande">
-    <div class="sec">Publier un contrat</div>
-    <p style="color:var(--sourd);font-size:13px;line-height:1.6;margin:-4px 0 18px;font-family:'IBM Plex Mono',monospace">Moins d'une minute. Les pharmaciens compatibles sont notifiés automatiquement (SMS + courriel), et leurs candidatures apparaissent dans « Contrats affichés » — vous acceptez en un clic.</p>
+    <div class="sec" data-fr="Publier un contrat" data-en="Post a contract">Publier un contrat</div>
+    <p style="color:var(--sourd);font-size:13px;line-height:1.6;margin:-4px 0 18px;font-family:'IBM Plex Mono',monospace" data-fr="Moins d'une minute. Les pharmaciens compatibles sont notifiés automatiquement (SMS + courriel), et leurs candidatures apparaissent dans « Contrats affichés » — vous acceptez en un clic." data-en="Under a minute. Compatible pharmacists are notified automatically (SMS + email), and their applications appear under “Posted contracts” — you accept in one click.">Moins d'une minute. Les pharmaciens compatibles sont notifiés automatiquement (SMS + courriel), et leurs candidatures apparaissent dans « Contrats affichés » — vous acceptez en un clic.</p>
     <form id="f">
       <div class="champ">
-        <label>Profession recherchée</label>
+        <label data-fr="Profession recherchée" data-en="Profession sought">Profession recherchée</label>
         <select id="profession_recherchee">
-          <option value="pharmacien">Pharmacien(ne)</option>
-          <option value="atp">Assistant(e) technique en pharmacie (ATP)</option>
+          <option value="pharmacien" data-fr="Pharmacien(ne)" data-en="Pharmacist">Pharmacien(ne)</option>
+          <option value="atp" data-fr="Assistant(e) technique en pharmacie (ATP)" data-en="Pharmacy technician (ATP)">Assistant(e) technique en pharmacie (ATP)</option>
         </select>
       </div>
       <div class="trois">
-        <div class="champ"><label>Date</label><input id="date_contrat" type="date" required></div>
-        <div class="champ"><label>Début</label><input id="heure_debut" type="time" required value="09:00"></div>
-        <div class="champ"><label>Fin</label><input id="heure_fin" type="time" required value="17:00"></div>
+        <div class="champ"><label data-fr="Date" data-en="Date">Date</label><input id="date_contrat" type="date" required></div>
+        <div class="champ"><label data-fr="Début" data-en="Start">Début</label><input id="heure_debut" type="time" required value="09:00"></div>
+        <div class="champ"><label data-fr="Fin" data-en="End">Fin</label><input id="heure_fin" type="time" required value="17:00"></div>
       </div>
       <div class="champ">
-        <label>Tarif horaire ($/h)</label>
+        <label data-fr="Tarif horaire ($/h)" data-en="Hourly rate ($/h)">Tarif horaire ($/h)</label>
         <input id="tarif_horaire" type="number" step="0.01" required>
-        <div class="indice">Plancher réseau : <b id="plancher">—</b></div>
+        <div class="indice"><span data-fr="Plancher réseau :" data-en="Network floor:">Plancher réseau :</span> <b id="plancher">—</b></div>
         <div class="indice" id="compatibles" style="display:none;color:var(--vert-vif);margin-top:6px;font-weight:600"></div>
       </div>
       <div id="prix-dual" style="display:none;margin:-2px 0 12px;padding:10px 12px;background:#F4F8F5;border:1px solid var(--ligne2);border-radius:5px;font-family:'IBM Plex Mono',monospace;font-size:12.5px">
@@ -186,50 +186,50 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
         <div style="display:flex;justify-content:space-between;margin-top:3px"><span>Carte (si la garantie est capturée)</span><b id="prix-carte">—</b></div>
         <div style="margin-top:6px;color:var(--sourd);font-size:10.5px">Le pharmacien reçoit le même montant net sur les deux rails — la différence est le frais de carte Stripe (2,9&nbsp;% + 0,30&nbsp;$), absorbé par C-Direct sur Interac. Indemnités de déplacement non incluses ici (dépendent du pharmacien retenu).</div>
       </div>
-      <div class="indice" style="margin:-6px 0 4px">Rx/jour, conditions et services requis viennent de votre <a href="/profil.html" style="color:var(--vert-vif)">profil</a> — modifiables là-bas, une seule fois.</div>
+      <div class="indice" style="margin:-6px 0 4px" data-fr="Rx/jour, conditions et services requis viennent de votre &lt;a href=&quot;/profil.html&quot; style=&quot;color:var(--vert-vif)&quot;&gt;profil&lt;/a&gt; — modifiables là-bas, une seule fois." data-en="Rx/day, conditions and required services come from your &lt;a href=&quot;/profil.html&quot; style=&quot;color:var(--vert-vif)&quot;&gt;profile&lt;/a&gt; — editable there, once.">Rx/jour, conditions et services requis viennent de votre <a href="/profil.html" style="color:var(--vert-vif)">profil</a> — modifiables là-bas, une seule fois.</div>
       <div class="champ">
         <div class="coches">
-          <label id="ligne-hebergement" style="display:none"><input type="checkbox" id="hebergement_offerte"> Offrir l'hébergement pour ce contrat</label>
-          <label><input type="checkbox" id="lunch_coverage"> Dîner couvert (relève pour la pause)</label>
+          <label id="ligne-hebergement" style="display:none"><input type="checkbox" id="hebergement_offerte"> <span data-fr="Offrir l'hébergement pour ce contrat" data-en="Offer lodging for this contract">Offrir l'hébergement pour ce contrat</span></label>
+          <label><input type="checkbox" id="lunch_coverage"> <span data-fr="Dîner couvert (relève pour la pause)" data-en="Lunch coverage (break relief)">Dîner couvert (relève pour la pause)</span></label>
         </div>
         <div class="indice" id="hebergement-indice" style="margin-top:6px"></div>
       </div>
       <div class="champ" id="champ-acces-prioritaire" style="display:none">
         <div class="coches">
-          <label><input type="checkbox" id="acces_prioritaire"> Offrir d'abord à mes pharmaciens de confiance</label>
+          <label><input type="checkbox" id="acces_prioritaire"> <span data-fr="Offrir d'abord à mes pharmaciens de confiance" data-en="Offer first to my trusted pharmacists">Offrir d'abord à mes pharmaciens de confiance</span></label>
         </div>
         <select id="acces_prioritaire_duree" style="display:none;margin-top:8px">
-          <option value="2">Pendant 2 heures</option>
-          <option value="4" selected>Pendant 4 heures</option>
-          <option value="8">Pendant 8 heures</option>
-          <option value="24">Pendant 24 heures</option>
+          <option value="2" data-fr="Pendant 2 heures" data-en="For 2 hours">Pendant 2 heures</option>
+          <option value="4" selected data-fr="Pendant 4 heures" data-en="For 4 hours">Pendant 4 heures</option>
+          <option value="8" data-fr="Pendant 8 heures" data-en="For 8 hours">Pendant 8 heures</option>
+          <option value="24" data-fr="Pendant 24 heures" data-en="For 24 hours">Pendant 24 heures</option>
         </select>
         <div class="indice" id="acces-prioritaire-indice" style="margin-top:6px"></div>
       </div>
-      <div class="champ"><label>Notes (accès, consignes…)</label><textarea id="notes" rows="2"></textarea></div>
-      <button class="btn" type="submit" id="btn-pub">Publier le contrat</button>
-      <div class="indice" style="margin-top:8px">En publiant, vous acceptez les <a href="/regles.html" target="_blank" rel="noopener" style="color:var(--vert-vif)">règles du réseau</a> — dont la protection d'annulation (50&nbsp;% à moins de 7&nbsp;jours, 100&nbsp;% à moins de 48&nbsp;h).</div>
+      <div class="champ"><label data-fr="Notes (accès, consignes…)" data-en="Notes (access, instructions…)">Notes (accès, consignes…)</label><textarea id="notes" rows="2"></textarea></div>
+      <button class="btn" type="submit" id="btn-pub" data-fr="Publier le contrat" data-en="Post the contract">Publier le contrat</button>
+      <div class="indice" style="margin-top:8px" data-fr="En publiant, vous acceptez les &lt;a href=&quot;/regles.html&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot; style=&quot;color:var(--vert-vif)&quot;&gt;règles du réseau&lt;/a&gt; — dont la protection d'annulation (50&nbsp;% à moins de 7&nbsp;jours, 100&nbsp;% à moins de 48&nbsp;h)." data-en="By posting, you accept the &lt;a href=&quot;/regles.html&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot; style=&quot;color:var(--vert-vif)&quot;&gt;network rules&lt;/a&gt; — including cancellation protection (50&nbsp;% under 7&nbsp;days, 100&nbsp;% under 48&nbsp;h).">En publiant, vous acceptez les <a href="/regles.html" target="_blank" rel="noopener" style="color:var(--vert-vif)">règles du réseau</a> — dont la protection d'annulation (50&nbsp;% à moins de 7&nbsp;jours, 100&nbsp;% à moins de 48&nbsp;h).</div>
       <div class="msg" id="msg-pub"></div>
     </form>
   </div>
 
   <!-- MES CONTRATS -->
   <div class="carte" id="a-pourvoir" data-onglet="a-pourvoir">
-    <div class="sec">Contrats affichés</div>
-    <p style="color:var(--sourd);font-size:13px;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace">Vos contrats ouverts et leurs candidatures. Touchez un contrat pour voir les pharmaciens, accepter, ou faire une contre-offre.</p>
-    <div id="liste-ouverts"><div class="vide">Chargement…</div></div>
+    <div class="sec" data-fr="Contrats affichés" data-en="Posted contracts">Contrats affichés</div>
+    <p style="color:var(--sourd);font-size:13px;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace" data-fr="Vos contrats ouverts et leurs candidatures. Touchez un contrat pour voir les pharmaciens, accepter, ou faire une contre-offre." data-en="Your open contracts and their applications. Tap a contract to see the pharmacists, accept, or make a counter-offer.">Vos contrats ouverts et leurs candidatures. Touchez un contrat pour voir les pharmaciens, accepter, ou faire une contre-offre.</p>
+    <div id="liste-ouverts"><div class="vide" data-fr="Chargement…" data-en="Loading…">Chargement…</div></div>
   </div>
 
   <div class="carte" id="mes-contrats" data-onglet="mes-contrats">
-    <div class="sec">Contrats confirmés</div>
-    <p style="color:var(--sourd);font-size:13px;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace">Vos contrats attribués et complétés. Touchez un contrat pour voir le pharmacien retenu et le détail.</p>
-    <div id="liste"><div class="vide">Chargement…</div></div>
+    <div class="sec" data-fr="Contrats confirmés" data-en="Confirmed contracts">Contrats confirmés</div>
+    <p style="color:var(--sourd);font-size:13px;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace" data-fr="Vos contrats attribués et complétés. Touchez un contrat pour voir le pharmacien retenu et le détail." data-en="Your awarded and completed contracts. Tap a contract to see the selected pharmacist and details.">Vos contrats attribués et complétés. Touchez un contrat pour voir le pharmacien retenu et le détail.</p>
+    <div id="liste"><div class="vide" data-fr="Chargement…" data-en="Loading…">Chargement…</div></div>
   </div>
 
   <!-- FACTURES À PAYER (Phase 3) -->
   <div class="carte" id="factures-recues" data-onglet="factures-recues">
-    <div class="sec">Factures reçues</div>
-    <p style="color:var(--sourd);font-size:13px;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace">Les mandats de vos remplacements complétés. Payez le pharmacien par Interac, puis marquez « Payée ».</p>
+    <div class="sec" data-fr="Factures reçues" data-en="Invoices received">Factures reçues</div>
+    <p style="color:var(--sourd);font-size:13px;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace" data-fr="Les mandats de vos remplacements complétés. Payez le pharmacien par Interac, puis marquez « Payée »." data-en="The invoices for your completed replacements. Pay the pharmacist by Interac, then mark “Paid”.">Les mandats de vos remplacements complétés. Payez le pharmacien par Interac, puis marquez « Payée ».</p>
     <div id="liste-factures"><div class="vide">Chargement…</div></div>
     <div class="msg" id="msg-factures"></div>
   </div>
