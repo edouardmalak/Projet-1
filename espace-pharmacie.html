@@ -194,7 +194,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
         </div>
         <div class="indice" id="hebergement-indice" style="margin-top:6px"></div>
       </div>
-      <div class="champ">
+      <div class="champ" id="champ-acces-prioritaire" style="display:none">
         <div class="coches">
           <label><input type="checkbox" id="acces_prioritaire"> Offrir d'abord à mes pharmaciens de confiance</label>
         </div>
@@ -322,14 +322,17 @@ function initOngletsEP(){
      effet utile (personne à qui l'offrir en premier) : désactivée avec
      une explication plutôt que silencieusement inopérante. */
   if(favoris.size > 0){
+    /* au moins un pharmacien de confiance : on affiche l'option */
+    $('champ-acces-prioritaire').style.display = '';
     $('acces-prioritaire-indice').textContent = favoris.size + ' pharmacien' + (favoris.size>1?'s':'') + ' de confiance verront ce contrat en premier ; les autres ne le verront qu\'à l\'expiration du délai choisi.';
     if(profil.acces_prioritaire_par_defaut){
       $('acces_prioritaire').checked = true;
       $('acces_prioritaire_duree').style.display = '';
     }
   } else {
-    $('acces_prioritaire').disabled = true;
-    $('acces-prioritaire-indice').innerHTML = 'Aucun pharmacien de confiance pour l\'instant — ajoutez-en (♥) depuis les candidatures d\'un contrat, dans « Contrats affichés », ou depuis vos <a href="/profil.html" style="color:var(--vert-vif)">Paramètres</a>.';
+    /* aucun pharmacien de confiance : l'option n'a aucun effet utile,
+       on la masque entièrement (elle réapparaît dès qu'on en ajoute un). */
+    $('champ-acces-prioritaire').style.display = 'none';
   }
   $('acces_prioritaire').addEventListener('change', ()=>{
     $('acces_prioritaire_duree').style.display = $('acces_prioritaire').checked ? '' : 'none';
