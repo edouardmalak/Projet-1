@@ -116,7 +116,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260809a"></script>
+<script src="/auth.js?v=20260809b"></script>
 <script src="/fsa-qc.js"></script>
 <script>
 const sb = window.sbClient;
@@ -152,8 +152,8 @@ function passeFiltre(k){
     maxBoundsViscosity: 1.0,
     minZoom: 5
   }).setView([47.0, -71.5], 6);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution:'© OpenStreetMap · © CARTO', maxZoom:19, subdomains:'abcd'
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenStreetMap', maxZoom:19, subdomains:'abc'
   }).addTo(map);
   couche = L.layerGroup().addTo(map);
 

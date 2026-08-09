@@ -209,7 +209,7 @@ const CD_MENUS = {
        (L'ancien /demande.html est une page héritée : aucune connexion,
         aucune écriture en base — elle ne créait pas de contrat.) */
     ['/espace-pharmacie.html#nouvelle-demande', 'Publier un contrat', 'Post a contract'],
-    ['/espace-pharmacie.html#a-pourvoir',       'À pourvoir',         'To fill'],
+    ['/espace-pharmacie.html#a-pourvoir',       'Contrats affichés',  'Posted contracts'],
     ['/espace-pharmacie.html#mes-contrats',     'Contrats confirmés', 'Confirmed contracts'],
     ['/calendrier-pharmacie.html',              'Calendrier',         'Calendar'],
     ['/espace-pharmacie.html#factures-recues',  'Factures',           'Invoices'],

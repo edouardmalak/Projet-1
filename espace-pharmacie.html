@@ -129,7 +129,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
   <div id="ep-onglets" role="tablist">
     <button type="button" data-onglet="accueil">Tableau de bord</button>
     <button type="button" data-onglet="nouvelle-demande">Publier un contrat</button>
-    <button type="button" data-onglet="a-pourvoir">À pourvoir</button>
+    <button type="button" data-onglet="a-pourvoir">Contrats affichés</button>
     <button type="button" data-onglet="mes-contrats">Contrats confirmés</button>
     <button type="button" data-onglet="factures-recues">Factures reçues</button>
   </div>
@@ -160,7 +160,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
   <!-- PUBLIER -->
   <div class="carte" id="nouvelle-demande" data-onglet="nouvelle-demande">
     <div class="sec">Publier un contrat</div>
-    <p style="color:var(--sourd);font-size:13px;line-height:1.6;margin:-4px 0 18px;font-family:'IBM Plex Mono',monospace">Moins d'une minute. Les pharmaciens compatibles sont notifiés automatiquement (SMS + courriel), et leurs candidatures apparaissent dans « À pourvoir » — vous acceptez en un clic.</p>
+    <p style="color:var(--sourd);font-size:13px;line-height:1.6;margin:-4px 0 18px;font-family:'IBM Plex Mono',monospace">Moins d'une minute. Les pharmaciens compatibles sont notifiés automatiquement (SMS + courriel), et leurs candidatures apparaissent dans « Contrats affichés » — vous acceptez en un clic.</p>
     <form id="f">
       <div class="champ">
         <label>Profession recherchée</label>
@@ -189,7 +189,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
       <div class="indice" style="margin:-6px 0 4px">Rx/jour, conditions et services requis viennent de votre <a href="/profil.html" style="color:var(--vert-vif)">profil</a> — modifiables là-bas, une seule fois.</div>
       <div class="champ">
         <div class="coches">
-          <label><input type="checkbox" id="hebergement_offerte"> Offrir l'hébergement pour ce contrat</label>
+          <label id="ligne-hebergement" style="display:none"><input type="checkbox" id="hebergement_offerte"> Offrir l'hébergement pour ce contrat</label>
           <label><input type="checkbox" id="lunch_coverage"> Dîner couvert (relève pour la pause)</label>
         </div>
         <div class="indice" id="hebergement-indice" style="margin-top:6px"></div>
@@ -215,7 +215,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 
   <!-- MES CONTRATS -->
   <div class="carte" id="a-pourvoir" data-onglet="a-pourvoir">
-    <div class="sec">À pourvoir</div>
+    <div class="sec">Contrats affichés</div>
     <p style="color:var(--sourd);font-size:13px;margin:-4px 0 14px;font-family:'IBM Plex Mono',monospace">Vos contrats ouverts et leurs candidatures. Touchez un contrat pour voir les pharmaciens, accepter, ou faire une contre-offre.</p>
     <div id="liste-ouverts"><div class="vide">Chargement…</div></div>
   </div>
@@ -237,7 +237,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
-<script src="/auth.js?v=20260809a"></script>
+<script src="/auth.js?v=20260809b"></script>
 <script src="/assistant.js?v=20260723b" defer></script>
 <script src="/outils.js"></script>
 <script src="/fsa-qc.js"></script>
@@ -297,11 +297,14 @@ function initOngletsEP(){
      standard est configurée au profil (Mes informations). */
   const adresseHeb = (profil.hebergement_adresse || '').trim();
   if(adresseHeb){
+    $('ligne-hebergement').style.display = '';
     $('hebergement-indice').textContent = 'Adresse qui sera offerte : ' + adresseHeb + ' (révélée au pharmacien une fois le contrat confirmé).';
     if(profil.hebergement_offert_par_defaut) $('hebergement_offerte').checked = true;
   } else {
-    $('hebergement_offerte').disabled = true;
-    $('hebergement-indice').innerHTML = 'Configurez d\'abord une adresse dans votre <a href="/profil.html" style="color:var(--vert-vif)">profil</a> pour pouvoir l\'offrir.';
+    /* pas d'adresse d'hébergement : on masque l'option entièrement
+       (elle réapparaît dès qu'une adresse est enregistrée au profil). */
+    $('ligne-hebergement').style.display = 'none';
+    $('hebergement-indice').textContent = '';
   }
   initOngletsEP();
   chargerTableauBordPharmacie();
@@ -326,7 +329,7 @@ function initOngletsEP(){
     }
   } else {
     $('acces_prioritaire').disabled = true;
-    $('acces-prioritaire-indice').innerHTML = 'Aucun pharmacien de confiance pour l\'instant — ajoutez-en (♥) depuis les candidatures d\'un contrat, dans « À pourvoir », ou depuis vos <a href="/profil.html" style="color:var(--vert-vif)">Paramètres</a>.';
+    $('acces-prioritaire-indice').innerHTML = 'Aucun pharmacien de confiance pour l\'instant — ajoutez-en (♥) depuis les candidatures d\'un contrat, dans « Contrats affichés », ou depuis vos <a href="/profil.html" style="color:var(--vert-vif)">Paramètres</a>.';
   }
   $('acces_prioritaire').addEventListener('change', ()=>{
     $('acces_prioritaire_duree').style.display = $('acces_prioritaire').checked ? '' : 'none';
@@ -532,7 +535,7 @@ async function chargerContrats(){
     sb.from('candidatures').select('contrat_id,statut')
   ]);
   const liste = $('liste');                 // Contrats confirmés (attribué + complété)
-  const listeOuverts = $('liste-ouverts');  // À pourvoir (ouvert + annulé)
+  const listeOuverts = $('liste-ouverts');  // Contrats affichés (ouvert seulement ; annulés masqués)
   if(error){ liste.innerHTML = listeOuverts.innerHTML = '<div class="vide">Erreur : '+error.message+'</div>'; return; }
   if(!contrats || !contrats.length){
     const vide = '<div class="vide">Aucun contrat publié pour l’instant.</div>';
@@ -585,10 +588,11 @@ async function chargerContrats(){
       if(!ouverte) chargerCandidats(k, zone);
     };
     if(estConfirme(k)){ nConfirme++; liste.appendChild(div); }
-    else { nOuvert++; listeOuverts.appendChild(div); }
+    else if(k.statut === 'ouvert'){ nOuvert++; listeOuverts.appendChild(div); }
+    /* les contrats annulés ne s'affichent nulle part dans les onglets */
   });
   if(!nConfirme) liste.innerHTML = '<div class="vide">Aucun contrat confirmé pour l’instant.</div>';
-  if(!nOuvert) listeOuverts.innerHTML = '<div class="vide">Aucun contrat à pourvoir — publiez-en un dans « Publier un contrat ».</div>';
+  if(!nOuvert) listeOuverts.innerHTML = '<div class="vide">Aucun contrat affiché — publiez-en un dans « Publier un contrat ».</div>';
 }
 
 /* ---- Phase 3 : annulation par la pharmacie (protection du réseau) ---- */
