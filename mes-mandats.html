@@ -113,23 +113,23 @@ tbody tr:last-child td{border-bottom:none}
 </div>
 
 <div class="wrap">
-  <h1>Mes mandats &amp; factures</h1>
-  <p class="sous">Vos remplacements attribués, vos factures et l'état des paiements — <a href="/regles.html" style="color:var(--vert-vif)">règles du réseau</a></p>
+  <h1 data-fr="Mes mandats &amp; factures" data-en="My mandates &amp; invoices">Mes mandats &amp; factures</h1>
+  <p class="sous" data-fr="Vos remplacements attribués, vos factures et l'état des paiements — &lt;a href=&quot;/regles.html&quot; style=&quot;color:var(--vert-vif)&quot;&gt;règles du réseau&lt;/a&gt;" data-en="Your awarded replacements, your invoices and payment status — &lt;a href=&quot;/regles.html&quot; style=&quot;color:var(--vert-vif)&quot;&gt;network rules&lt;/a&gt;">Vos remplacements attribués, vos factures et l'état des paiements — <a href="/regles.html" style="color:var(--vert-vif)">règles du réseau</a></p>
 
   <!-- ARGENT -->
-  <div class="sec" style="margin-bottom:8px">Vue d'ensemble
+  <div class="sec" style="margin-bottom:8px"><span data-fr="Vue d'ensemble" data-en="Overview">Vue d'ensemble</span>
     <select id="periode-filtre" style="margin-left:auto;background:var(--panneau);border:1px solid var(--ligne2);border-radius:4px;padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--texte);text-transform:uppercase;letter-spacing:.06em">
-      <option value="tout">Tout</option>
-      <option value="mois">Ce mois-ci</option>
-      <option value="3mois">3 derniers mois</option>
-      <option value="annee">Cette année</option>
+      <option value="tout" data-fr="Tout" data-en="All">Tout</option>
+      <option value="mois" data-fr="Ce mois-ci" data-en="This month">Ce mois-ci</option>
+      <option value="3mois" data-fr="3 derniers mois" data-en="Last 3 months">3 derniers mois</option>
+      <option value="annee" data-fr="Cette année" data-en="This year">Cette année</option>
     </select>
   </div>
   <div class="totaux">
-    <div class="total facture"><small>Facturé</small><b id="t-facture">—</b></div>
-    <div class="total paye"><small>Payé</small><b id="t-paye">—</b></div>
-    <div class="total attente"><small>En attente</small><b id="t-attente">—</b></div>
-    <div class="total retard"><small>En retard</small><b id="t-retard">—</b></div>
+    <div class="total facture"><small data-fr="Facturé" data-en="Invoiced">Facturé</small><b id="t-facture">—</b></div>
+    <div class="total paye"><small data-fr="Payé" data-en="Paid">Payé</small><b id="t-paye">—</b></div>
+    <div class="total attente"><small data-fr="En attente" data-en="Pending">En attente</small><b id="t-attente">—</b></div>
+    <div class="total retard"><small data-fr="En retard" data-en="Overdue">En retard</small><b id="t-retard">—</b></div>
   </div>
 
   <!-- CALENDRIER (fixe, à gauche) + MES REMPLACEMENTS (défile, à droite) —
@@ -138,23 +138,23 @@ tbody tr:last-child td{border-bottom:none}
   <div class="grille-mandats">
     <div class="col-calendrier">
       <div class="carte">
-        <div class="sec">Calendrier<small id="cal-mois-lbl"></small>
+        <div class="sec"><span data-fr="Calendrier" data-en="Calendar">Calendrier</span><small id="cal-mois-lbl"></small>
           <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-            <button class="bauj" id="cal-auj" type="button">Aujourd'hui</button>
+            <button class="bauj" id="cal-auj" type="button" data-fr="Aujourd'hui" data-en="Today">Aujourd'hui</button>
             <button class="bnav" id="cal-prev" type="button">‹</button>
             <button class="bnav" id="cal-next" type="button">›</button>
           </div>
         </div>
-        <div class="cal-noms">
-          <span>Dim</span><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span>
+        <div class="cal-noms" id="cal-noms">
+          <span data-fr="Dim" data-en="Sun">Dim</span><span data-fr="Lun" data-en="Mon">Lun</span><span data-fr="Mar" data-en="Tue">Mar</span><span data-fr="Mer" data-en="Wed">Mer</span><span data-fr="Jeu" data-en="Thu">Jeu</span><span data-fr="Ven" data-en="Fri">Ven</span><span data-fr="Sam" data-en="Sat">Sam</span>
         </div>
         <div class="cal-grille" id="cal-grille"></div>
         <div class="cal-legende">
-          <span><i style="background:var(--vert-vif)"></i>Payé</span>
-          <span><i style="background:var(--jaune)"></i>En attente</span>
-          <span><i style="background:var(--rouge)"></i>En retard</span>
-          <span><i style="background:var(--ligne2)"></i>À venir / non facturé</span>
-          <span><i style="background:var(--bleu)"></i>Revenu hors C-Direct</span>
+          <span><i style="background:var(--vert-vif)"></i><span data-fr="Payé" data-en="Paid">Payé</span></span>
+          <span><i style="background:var(--jaune)"></i><span data-fr="En attente" data-en="Pending">En attente</span></span>
+          <span><i style="background:var(--rouge)"></i><span data-fr="En retard" data-en="Overdue">En retard</span></span>
+          <span><i style="background:var(--ligne2)"></i><span data-fr="À venir / non facturé" data-en="Upcoming / not invoiced">À venir / non facturé</span></span>
+          <span><i style="background:var(--bleu)"></i><span data-fr="Revenu hors C-Direct" data-en="Income outside C-Direct">Revenu hors C-Direct</span></span>
         </div>
       </div>
     </div>
@@ -162,19 +162,19 @@ tbody tr:last-child td{border-bottom:none}
     <!-- CONTRATS -->
     <div class="col-remplacements">
       <div class="carte">
-        <div class="sec">Mes remplacements<small id="n-mandats"></small></div>
+        <div class="sec"><span data-fr="Mes remplacements" data-en="My replacements">Mes remplacements</span><small id="n-mandats"></small></div>
         <div class="onglets" id="onglets-mandats">
-          <button class="onglet" data-onglet="disponible" type="button">Disponible</button>
-          <button class="onglet actif" data-onglet="confirme" type="button">Confirmé</button>
-          <button class="onglet" data-onglet="demande" type="button">Demandé</button>
-          <button class="onglet" data-onglet="complete" type="button">Complété</button>
-          <button class="onglet" data-onglet="annule" type="button">Annulé</button>
-          <button class="onglet" data-onglet="sauvegarde" type="button">Sauvegardé</button>
+          <button class="onglet" data-onglet="disponible" type="button" data-fr="Disponible" data-en="Available">Disponible</button>
+          <button class="onglet actif" data-onglet="confirme" type="button" data-fr="Confirmé" data-en="Confirmed">Confirmé</button>
+          <button class="onglet" data-onglet="demande" type="button" data-fr="Demandé" data-en="Requested">Demandé</button>
+          <button class="onglet" data-onglet="complete" type="button" data-fr="Complété" data-en="Completed">Complété</button>
+          <button class="onglet" data-onglet="annule" type="button" data-fr="Annulé" data-en="Cancelled">Annulé</button>
+          <button class="onglet" data-onglet="sauvegarde" type="button" data-fr="Sauvegardé" data-en="Saved">Sauvegardé</button>
         </div>
         <div class="table-scroll defile">
           <table>
-            <thead><tr><th>Référence</th><th>Date</th><th>Heures</th><th>Pharmacie</th><th>Tarif</th><th>Statut</th><th>Actions</th></tr></thead>
-            <tbody id="t-mandats"><tr><td colspan="7" class="vide">Chargement…</td></tr></tbody>
+            <thead><tr><th data-fr="Référence" data-en="Reference">Référence</th><th data-fr="Date" data-en="Date">Date</th><th data-fr="Heures" data-en="Hours">Heures</th><th data-fr="Pharmacie" data-en="Pharmacy">Pharmacie</th><th data-fr="Tarif" data-en="Rate">Tarif</th><th data-fr="Statut" data-en="Status">Statut</th><th data-fr="Actions" data-en="Actions">Actions</th></tr></thead>
+            <tbody id="t-mandats"><tr><td colspan="7" class="vide" data-fr="Chargement…" data-en="Loading…">Chargement…</td></tr></tbody>
           </table>
         </div>
         <div class="msg" id="msg-mandats"></div>
@@ -184,19 +184,19 @@ tbody tr:last-child td{border-bottom:none}
 
   <!-- REVENUS HORS C-DIRECT -->
   <div class="carte">
-    <div class="sec">Revenus hors C-Direct<small id="n-revenus-ext"></small></div>
-    <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd);margin:-6px 0 14px">Un remplacement ou revenu gagné ailleurs — pour que votre total annuel et l'export T2125 reflètent toute l'année, pas seulement C-Direct.</p>
+    <div class="sec"><span data-fr="Revenus hors C-Direct" data-en="Income outside C-Direct">Revenus hors C-Direct</span><small id="n-revenus-ext"></small></div>
+    <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd);margin:-6px 0 14px" data-fr="Un remplacement ou revenu gagné ailleurs — pour que votre total annuel et l'export T2125 reflètent toute l'année, pas seulement C-Direct." data-en="A replacement or income earned elsewhere — so your annual total and T2125 export reflect the whole year, not just C-Direct.">Un remplacement ou revenu gagné ailleurs — pour que votre total annuel et l'export T2125 reflètent toute l'année, pas seulement C-Direct.</p>
     <div class="deux-ext" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:14px">
       <input type="date" id="re-date" style="border:1px solid var(--ligne2);border-radius:4px;padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:#F4F8F5;color:var(--texte)">
-      <input type="text" id="re-desc" placeholder="Description / employeur" style="border:1px solid var(--ligne2);border-radius:4px;padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:#F4F8F5;color:var(--texte)">
-      <input type="number" id="re-montant" placeholder="Montant $" min="0" step="0.01" style="border:1px solid var(--ligne2);border-radius:4px;padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:#F4F8F5;color:var(--texte)">
-      <input type="number" id="re-km" placeholder="Km (optionnel)" min="0" step="0.1" style="border:1px solid var(--ligne2);border-radius:4px;padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:#F4F8F5;color:var(--texte)">
-      <button class="btn-mini" id="btn-ajouter-ext">Ajouter</button>
+      <input type="text" id="re-desc" placeholder="Description / employeur" data-fr-ph="Description / employeur" data-en-ph="Description / employer" style="border:1px solid var(--ligne2);border-radius:4px;padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:#F4F8F5;color:var(--texte)">
+      <input type="number" id="re-montant" placeholder="Montant $" data-fr-ph="Montant $" data-en-ph="Amount $" min="0" step="0.01" style="border:1px solid var(--ligne2);border-radius:4px;padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:#F4F8F5;color:var(--texte)">
+      <input type="number" id="re-km" placeholder="Km (optionnel)" data-fr-ph="Km (optionnel)" data-en-ph="Km (optional)" min="0" step="0.1" style="border:1px solid var(--ligne2);border-radius:4px;padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:#F4F8F5;color:var(--texte)">
+      <button class="btn-mini" id="btn-ajouter-ext" data-fr="Ajouter" data-en="Add">Ajouter</button>
     </div>
     <div class="table-scroll">
       <table>
-        <thead><tr><th>Date</th><th>Description</th><th>Montant</th><th>Km</th><th></th></tr></thead>
-        <tbody id="t-revenus-ext"><tr><td colspan="5" class="vide">Chargement…</td></tr></tbody>
+        <thead><tr><th data-fr="Date" data-en="Date">Date</th><th data-fr="Description" data-en="Description">Description</th><th data-fr="Montant" data-en="Amount">Montant</th><th>Km</th><th></th></tr></thead>
+        <tbody id="t-revenus-ext"><tr><td colspan="5" class="vide" data-fr="Chargement…" data-en="Loading…">Chargement…</td></tr></tbody>
       </table>
     </div>
     <div class="msg" id="msg-revenus-ext"></div>
@@ -204,13 +204,13 @@ tbody tr:last-child td{border-bottom:none}
 
   <!-- FACTURES -->
   <div class="carte">
-    <div class="sec">Mes factures<small id="n-factures"></small>
-      <button class="btn-lot" id="btn-lot" style="display:none">Envoyer les factures du mois</button>
+    <div class="sec"><span data-fr="Mes factures" data-en="My invoices">Mes factures</span><small id="n-factures"></small>
+      <button class="btn-lot" id="btn-lot" style="display:none" data-fr="Envoyer les factures du mois" data-en="Send this month's invoices">Envoyer les factures du mois</button>
     </div>
     <div class="table-scroll defile">
       <table>
-        <thead><tr><th>N°</th><th>Contrat</th><th>Pharmacie</th><th>Total</th><th>Statut</th><th>Échéance</th><th>Actions</th></tr></thead>
-        <tbody id="t-factures"><tr><td colspan="7" class="vide">Chargement…</td></tr></tbody>
+        <thead><tr><th>N°</th><th data-fr="Contrat" data-en="Contract">Contrat</th><th data-fr="Pharmacie" data-en="Pharmacy">Pharmacie</th><th data-fr="Total" data-en="Total">Total</th><th data-fr="Statut" data-en="Status">Statut</th><th data-fr="Échéance" data-en="Due">Échéance</th><th data-fr="Actions" data-en="Actions">Actions</th></tr></thead>
+        <tbody id="t-factures"><tr><td colspan="7" class="vide" data-fr="Chargement…" data-en="Loading…">Chargement…</td></tr></tbody>
       </table>
     </div>
     <div class="msg" id="msg-factures"></div>
@@ -218,25 +218,25 @@ tbody tr:last-child td{border-bottom:none}
 
   <!-- COMPTABILITÉ (Phase 6.2) -->
   <div class="carte" id="carte-compta" style="display:none">
-    <div class="sec">Comptabilité<small id="compta-annee"></small>
-      <button class="btn-lot" id="btn-csv">Export comptable (T2125)</button>
+    <div class="sec"><span data-fr="Comptabilité" data-en="Accounting">Comptabilité</span><small id="compta-annee"></small>
+      <button class="btn-lot" id="btn-csv" data-fr="Export comptable (T2125)" data-en="Accounting export (T2125)">Export comptable (T2125)</button>
     </div>
     <div class="totaux">
-      <div class="total facture"><small>Honoraires</small><b id="c-hono">—</b></div>
-      <div class="total facture"><small>Kilométrage</small><b id="c-km">—</b></div>
+      <div class="total facture"><small data-fr="Honoraires" data-en="Fees">Honoraires</small><b id="c-hono">—</b></div>
+      <div class="total facture"><small data-fr="Kilométrage" data-en="Mileage">Kilométrage</small><b id="c-km">—</b></div>
       <div class="total facture"><small>Per diem</small><b id="c-perdiem">—</b></div>
-      <div class="total facture"><small>Hébergement</small><b id="c-heberg">—</b></div>
+      <div class="total facture"><small data-fr="Hébergement" data-en="Lodging">Hébergement</small><b id="c-heberg">—</b></div>
     </div>
     <div class="table-scroll">
       <table>
-        <thead><tr><th>Mois</th><th>Fact.</th><th>Honoraires</th><th>Km</th><th>Indemnités</th><th>Total</th><th>Payé</th></tr></thead>
+        <thead><tr><th data-fr="Mois" data-en="Month">Mois</th><th data-fr="Fact." data-en="Inv.">Fact.</th><th data-fr="Honoraires" data-en="Fees">Honoraires</th><th>Km</th><th data-fr="Indemnités" data-en="Allowances">Indemnités</th><th data-fr="Total" data-en="Total">Total</th><th data-fr="Payé" data-en="Paid">Payé</th></tr></thead>
         <tbody id="t-mois"></tbody>
       </table>
     </div>
-    <div class="sec" style="margin-top:18px">Par pharmacie</div>
+    <div class="sec" style="margin-top:18px" data-fr="Par pharmacie" data-en="By pharmacy">Par pharmacie</div>
     <div class="table-scroll">
       <table>
-        <thead><tr><th>Pharmacie</th><th>Fact.</th><th>Total</th><th>Payé</th></tr></thead>
+        <thead><tr><th data-fr="Pharmacie" data-en="Pharmacy">Pharmacie</th><th data-fr="Fact." data-en="Inv.">Fact.</th><th data-fr="Total" data-en="Total">Total</th><th data-fr="Payé" data-en="Paid">Payé</th></tr></thead>
         <tbody id="t-parpharm"></tbody>
       </table>
     </div>
@@ -251,16 +251,16 @@ tbody tr:last-child td{border-bottom:none}
 <script>
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
-const CHIPS_F = {brouillon:'Brouillon', envoyee:'Envoyée', payee:'Payée', en_retard:'En retard'};
-const CHIPS_K = {attribue:'Confirmé', complete:'Complété', annule:'Annulé', ouvert:'Ouvert'};
+const CHIPS_F = {brouillon:cdT('Brouillon','Draft'), envoyee:cdT('Envoyée','Sent'), payee:cdT('Payée','Paid'), en_retard:cdT('En retard','Overdue')};
+const CHIPS_K = {attribue:cdT('Confirmé','Confirmed'), complete:cdT('Complété','Completed'), annule:cdT('Annulé','Cancelled'), ouvert:cdT('Ouvert','Open')};
 const CHIPS_G = {
-  awaiting_authorization:'Garantie en préparation…',
-  authorized:'Garantie de paiement active',
-  pending_locum_confirmation:'Garantie active — en attente de votre confirmation',
-  confirmed_exact:'Payé — confirmé par vous',
-  amount_mismatch:'Écart signalé — garantie toujours active',
-  captured:'Payé automatiquement (délai dépassé)',
-  authorization_failed:'Garantie non créée — contactez le support',
+  awaiting_authorization:cdT('Garantie en préparation…','Guarantee being prepared…'),
+  authorized:cdT('Garantie de paiement active','Payment guarantee active'),
+  pending_locum_confirmation:cdT('Garantie active — en attente de votre confirmation','Guarantee active — awaiting your confirmation'),
+  confirmed_exact:cdT('Payé — confirmé par vous','Paid — confirmed by you'),
+  amount_mismatch:cdT('Écart signalé — garantie toujours active','Discrepancy reported — guarantee still active'),
+  captured:cdT('Payé automatiquement (délai dépassé)','Paid automatically (deadline passed)'),
+  authorization_failed:cdT('Garantie non créée — contactez le support','Guarantee not created — contact support'),
 };
 const URL_PAIEMENTS = 'https://c-direct-payments.edouardmalak.workers.dev';
 let profil = null;
@@ -308,7 +308,7 @@ function msg(id, texte, ok){
 })();
 
 /* ================= CONTRATS ================= */
-const CHIPS_DEMANDE = {propose:'Envoyée', contre_offre:'Contre-offre'};
+const CHIPS_DEMANDE = {propose:cdT('Envoyée','Sent'), contre_offre:cdT('Contre-offre','Counter-offer')};
 
 async function chargerMandats(){
   const [{ data, error }, { data: attente, error: eAttente }, { data: ouverts }] = await Promise.all([
@@ -316,7 +316,7 @@ async function chargerMandats(){
     sb.rpc('get_mes_candidatures_en_attente'),
     sb.rpc('get_contrats_ouverts')
   ]);
-  if(error){ $('t-mandats').innerHTML = '<tr><td colspan="7" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
+  if(error){ $('t-mandats').innerHTML = '<tr><td colspan="7" class="vide">'+cdT('Erreur : ','Error: ')+error.message+'</td></tr>'; return; }
   toutesMandats = data || [];
   mandatsEnAttente = eAttente ? [] : (attente || []);
   contratsOuverts = ouverts || [];
@@ -334,12 +334,12 @@ function rendreMandats(){
     const liste = ongletMandat === 'sauvegarde'
       ? contratsOuverts.filter(k => favIds.has(k.id))
       : contratsOuverts;
-    $('n-mandats').textContent = liste.length + ' contrat' + (liste.length>1?'s':'') +
-      (ongletMandat === 'sauvegarde' ? ' sauvegardé' + (liste.length>1?'s':'') : ' disponible' + (liste.length>1?'s':''));
+    $('n-mandats').textContent = liste.length + ' ' + cdT('contrat'+(liste.length>1?'s':''),'contract'+(liste.length>1?'s':'')) + ' ' +
+      (ongletMandat === 'sauvegarde' ? cdT('sauvegardé'+(liste.length>1?'s':''),'saved') : cdT('disponible'+(liste.length>1?'s':''),'available'));
     if(!liste.length){
       tb.innerHTML = '<tr><td colspan="7" class="vide">' + (ongletMandat === 'sauvegarde'
-        ? 'Aucun contrat sauvegardé — utilisez le signet sur la page Contrats disponibles.'
-        : 'Aucun contrat disponible pour l\'instant.') + '</td></tr>';
+        ? cdT('Aucun contrat sauvegardé — utilisez le signet sur la page Contrats disponibles.','No saved contract — use the bookmark on the Available contracts page.')
+        : cdT('Aucun contrat disponible pour l\'instant.','No contract available right now.')) + '</td></tr>';
       return;
     }
     tb.innerHTML = '';
@@ -350,11 +350,11 @@ function rendreMandats(){
       ref.innerHTML = '<a href="/c/'+encodeURIComponent(k.numero_reference)+'">'+k.numero_reference+'</a>';
       const st = document.createElement('td');
       st.innerHTML = k.deja_postule
-        ? '<span class="chip envoyee">Quart demandé</span>'
-        : '<span class="chip complete">Disponible</span>';
+        ? '<span class="chip envoyee">'+cdT('Quart demandé','Shift requested')+'</span>'
+        : '<span class="chip complete">'+cdT('Disponible','Available')+'</span>';
       const act = document.createElement('td');
       const f = document.createElement('a');
-      f.className = 'btn-mini ghost'; f.textContent = 'Voir le contrat'; f.style.textDecoration = 'none';
+      f.className = 'btn-mini ghost'; f.textContent = cdT('Voir le contrat','View contract'); f.style.textDecoration = 'none';
       f.href = '/c/' + encodeURIComponent(k.numero_reference);
       act.appendChild(f);
       tr.append(ref, td(cdDate(k.date_contrat)), td(cdHeure(k.heure_debut)+'–'+cdHeure(k.heure_fin)),
@@ -365,8 +365,8 @@ function rendreMandats(){
   }
 
   if(ongletMandat === 'demande'){
-    $('n-mandats').textContent = mandatsEnAttente.length + ' candidature' + (mandatsEnAttente.length>1?'s':'') + ' en attente';
-    if(!mandatsEnAttente.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">Aucune candidature en attente pour l\'instant.</td></tr>'; return; }
+    $('n-mandats').textContent = mandatsEnAttente.length + ' ' + cdT('candidature'+(mandatsEnAttente.length>1?'s':'')+' en attente','pending application'+(mandatsEnAttente.length>1?'s':''));
+    if(!mandatsEnAttente.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">'+cdT('Aucune candidature en attente pour l\'instant.','No pending application right now.')+'</td></tr>'; return; }
     tb.innerHTML = '';
     mandatsEnAttente.forEach(m=>{
       const tr = document.createElement('tr');
@@ -377,7 +377,7 @@ function rendreMandats(){
       st.innerHTML = '<span class="chip envoyee">'+(CHIPS_DEMANDE[m.candidature_statut]||m.candidature_statut)+'</span>';
       const act = document.createElement('td');
       const f = document.createElement('a');
-      f.className = 'btn-mini ghost'; f.textContent = 'Voir l\'offre'; f.style.textDecoration = 'none';
+      f.className = 'btn-mini ghost'; f.textContent = cdT('Voir l\'offre','View offer'); f.style.textDecoration = 'none';
       f.href = '/c/' + encodeURIComponent(m.numero_reference);
       act.appendChild(f);
       tr.append(ref, td(cdDate(m.date_contrat)), td(cdHeure(m.heure_debut)+'–'+cdHeure(m.heure_fin)),
@@ -390,9 +390,11 @@ function rendreMandats(){
   const cibles = { confirme:['attribue'], complete:['complete'], annule:['annule'] };
   const cible = cibles[ongletMandat] || cibles.confirme;
   const data = toutesMandats.filter(m => cible.includes(m.statut));
-  const libellesVide = { confirme:'confirmé', complete:'complété', annule:'annulé' };
-  $('n-mandats').textContent = data.length + ' remplacement' + (data.length>1?'s':'');
-  if(!data.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">Aucun remplacement '+(libellesVide[ongletMandat]||'confirmé')+' pour l\'instant.</td></tr>'; return; }
+  const libellesVide = cdLang()==='en'
+    ? { confirme:'confirmed', complete:'completed', annule:'cancelled' }
+    : { confirme:'confirmé', complete:'complété', annule:'annulé' };
+  $('n-mandats').textContent = data.length + ' ' + cdT('remplacement'+(data.length>1?'s':''),'replacement'+(data.length>1?'s':''));
+  if(!data.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">'+cdT('Aucun remplacement '+(libellesVide[ongletMandat]||libellesVide.confirme)+' pour l\'instant.','No '+(libellesVide[ongletMandat]||libellesVide.confirme)+' replacement right now.')+'</td></tr>'; return; }
   tb.innerHTML = '';
 
   data.forEach(m=>{
@@ -408,8 +410,8 @@ function rendreMandats(){
     if(m.statut === 'attribue' || m.statut === 'complete'){
       const f = document.createElement('a');
       f.className = 'btn-mini';
-      f.textContent = 'Ce que je dois savoir';
-      f.title = 'Contact sur place, arrivée, stationnement, code de couleurs — imprimable en PDF';
+      f.textContent = cdT('Ce que je dois savoir','What I need to know');
+      f.title = cdT('Contact sur place, arrivée, stationnement, code de couleurs — imprimable en PDF','On-site contact, arrival, parking, colour code — printable to PDF');
       f.href = '/fiche-accueil.html?id=' + encodeURIComponent(m.contrat_id);
       f.style.textDecoration = 'none';
       act.appendChild(f);
@@ -417,12 +419,12 @@ function rendreMandats(){
 
     if(m.statut === 'attribue' && m.date_contrat <= aujourdhui){
       const b = document.createElement('button');
-      b.className='btn-mini'; b.textContent='Marquer complété';
+      b.className='btn-mini'; b.textContent=cdT('Marquer complété','Mark completed');
       b.onclick = async ()=>{
-        if(!confirm('Confirmer que le remplacement '+m.numero_reference+' a bien eu lieu ? La facture sera générée en brouillon.')) return;
+        if(!confirm(cdT('Confirmer que le remplacement '+m.numero_reference+' a bien eu lieu ? La facture sera générée en brouillon.','Confirm that replacement '+m.numero_reference+' took place? The invoice will be generated as a draft.'))) return;
         b.disabled = true;
         const { data: fid, error: e } = await sb.rpc('marquer_complete', { p_contrat: m.contrat_id });
-        if(e){ b.disabled=false; msg('msg-mandats','Erreur : '+e.message,false); return; }
+        if(e){ b.disabled=false; msg('msg-mandats',cdT('Erreur : ','Error: ')+e.message,false); return; }
         cdAlerteAdmin('Contrat complété — '+m.numero_reference,
           (profil.prenom||profil.courriel)+' (pharmacien) a marqué '+m.numero_reference+' complété.');
         location.href = '/facture-vue.html?id=' + fid;
@@ -431,7 +433,7 @@ function rendreMandats(){
     }
     if(m.statut === 'attribue'){
       const b = document.createElement('button');
-      b.className='btn-mini rouge'; b.style.marginLeft='6px'; b.textContent='Annuler';
+      b.className='btn-mini rouge'; b.style.marginLeft='6px'; b.textContent=cdT('Annuler','Cancel');
       b.onclick = ()=> annulerMandat(m, b);
       act.appendChild(b);
     }
@@ -450,12 +452,12 @@ function rendreMandats(){
 
       if(['authorized','pending_locum_confirmation','amount_mismatch'].includes(m.statut_garantie)){
         const bOk = document.createElement('button');
-        bOk.className='btn-mini'; bOk.textContent='Reçu, montant exact ✓';
+        bOk.className='btn-mini'; bOk.textContent=cdT('Reçu, montant exact ✓','Received, exact amount ✓');
         const bEcart = document.createElement('button');
-        bEcart.className='btn-mini rouge'; bEcart.style.marginLeft='6px'; bEcart.textContent='Montant différent';
+        bEcart.className='btn-mini rouge'; bEcart.style.marginLeft='6px'; bEcart.textContent=cdT('Montant différent','Different amount');
         bOk.onclick = ()=> confirmerPaiement(m.candidature_id, true, [bOk,bEcart]);
         bEcart.onclick = ()=>{
-          if(!confirm('Signaler que le montant reçu ne correspond PAS à '+(cdArgent(m.montant_carte)||'ce qui était prévu')+' ?\n\nLa garantie restera active — rien n\'est annulé automatiquement.')) return;
+          if(!confirm(cdT('Signaler que le montant reçu ne correspond PAS à '+(cdArgent(m.montant_carte)||'ce qui était prévu')+' ?\n\nLa garantie restera active — rien n\'est annulé automatiquement.','Report that the amount received does NOT match '+(cdArgent(m.montant_carte)||'what was expected')+'?\n\nThe guarantee stays active — nothing is cancelled automatically.'))) return;
           confirmerPaiement(m.candidature_id, false, [bOk,bEcart]);
         };
         gWrap.appendChild(bOk); gWrap.appendChild(bEcart);
@@ -483,25 +485,28 @@ async function confirmerPaiement(candidatureId, montantExact, boutons){
     });
     const data = await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(data.erreur || 'Erreur');
-    msg('msg-mandats', montantExact ? 'Confirmé — garantie libérée ✓' : 'Écart signalé — garantie toujours active', true);
+    msg('msg-mandats', montantExact ? cdT('Confirmé — garantie libérée ✓','Confirmed — guarantee released ✓') : cdT('Écart signalé — garantie toujours active','Discrepancy reported — guarantee still active'), true);
     await chargerMandats();
   }catch(e){
     boutons.forEach(b=>b.disabled=false);
-    msg('msg-mandats', 'Erreur : '+e.message, false);
+    msg('msg-mandats', cdT('Erreur : ','Error: ')+e.message, false);
   }
 }
 
 /* annulation par le pharmacien : contrat remis en ligne (Phase 3.3) */
 async function annulerMandat(m, btn){
-  if(!confirm('Annuler votre remplacement '+m.numero_reference+' ?\n\n' +
+  if(!confirm(cdT('Annuler votre remplacement '+m.numero_reference+' ?\n\n' +
     'Le contrat sera REMIS EN LIGNE pour les autres pharmaciens et votre candidature sera close. ' +
-    'L\'annulation est journalisée et visible par l\'administrateur.')) return;
+    'L\'annulation est journalisée et visible par l\'administrateur.',
+    'Cancel your replacement '+m.numero_reference+'?\n\n' +
+    'The contract will be RE-POSTED for other pharmacists and your application will be closed. ' +
+    'The cancellation is logged and visible to the administrator.'))) return;
   btn.disabled = true;
   const { error: e } = await sb.rpc('annuler_contrat_pharmacien', { p_contrat: m.contrat_id });
-  if(e){ btn.disabled=false; msg('msg-mandats','Erreur : '+e.message,false); return; }
+  if(e){ btn.disabled=false; msg('msg-mandats',cdT('Erreur : ','Error: ')+e.message,false); return; }
   cdAlerteAdmin('Annulation pharmacien — '+m.numero_reference,
     (profil.prenom||profil.courriel)+' a annulé son remplacement '+m.numero_reference+' — contrat remis en ligne.');
-  msg('msg-mandats','Remplacement annulé — le contrat est remis en ligne.',true);
+  msg('msg-mandats',cdT('Remplacement annulé — le contrat est remis en ligne.','Replacement cancelled — the contract is re-posted.'),true);
   chargerMandats();
 }
 
@@ -509,25 +514,25 @@ async function annulerMandat(m, btn){
 async function chargerFactures(){
   const { data, error } = await sb.rpc('get_factures');
   const tb = $('t-factures');
-  if(error){ tb.innerHTML = '<tr><td colspan="7" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
+  if(error){ tb.innerHTML = '<tr><td colspan="7" class="vide">'+cdT('Erreur : ','Error: ')+error.message+'</td></tr>'; return; }
   const factures = (data||[]).filter(f => f.pharmacien_id === profil.id);
   toutesFactures = factures;
   appliquerPeriode();
 
-  if(!factures.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">Aucune facture — marquez un remplacement complété pour générer la première.</td></tr>'; return; }
-  $('n-factures').textContent = factures.length + ' facture' + (factures.length>1?'s':'');
+  if(!factures.length){ tb.innerHTML = '<tr><td colspan="7" class="vide">'+cdT('Aucune facture — marquez un remplacement complété pour générer la première.','No invoice — mark a replacement completed to generate the first.')+'</td></tr>'; return; }
+  $('n-factures').textContent = factures.length + ' ' + cdT('facture'+(factures.length>1?'s':''),'invoice'+(factures.length>1?'s':''));
 
   /* envoi en lot */
   const brouillons = factures.filter(f=>f.statut==='brouillon');
   $('btn-lot').style.display = brouillons.length ? '' : 'none';
   $('btn-lot').onclick = async ()=>{
-    if(!confirm('Envoyer les '+brouillons.length+' facture(s) en brouillon aux pharmacies ?')) return;
+    if(!confirm(cdT('Envoyer les '+brouillons.length+' facture(s) en brouillon aux pharmacies ?','Send the '+brouillons.length+' draft invoice(s) to the pharmacies?'))) return;
     $('btn-lot').disabled = true;
     const { data: n, error: e } = await sb.rpc('envoyer_factures_mois');
     $('btn-lot').disabled = false;
-    if(e){ msg('msg-factures','Erreur : '+e.message,false); return; }
+    if(e){ msg('msg-factures',cdT('Erreur : ','Error: ')+e.message,false); return; }
     brouillons.forEach(function(bf){ cdEnvoyerFacture(bf.facture_id); });   /* courriel PDF pour chaque facture envoyée */
-    msg('msg-factures', n+' facture(s) envoyée(s) ✓', true);
+    msg('msg-factures', n+' '+cdT('facture(s) envoyée(s) ✓','invoice(s) sent ✓'), true);
     chargerFactures();
   };
 
@@ -537,38 +542,38 @@ async function chargerFactures(){
     const td = t=>{ const c=document.createElement('td'); c.textContent=t; return c; };
     const num = document.createElement('td'); num.className='ref';
     num.innerHTML = '<a href="/facture-vue.html?id='+f.facture_id+'">F-'+String(f.numero_facture).padStart(6,'0')+'</a>' +
-      (f.type_facture==='penalite_annulation' ? ' <span class="chip en_retard" title="Pénalité d\'annulation">Pénalité</span>' : '');
+      (f.type_facture==='penalite_annulation' ? ' <span class="chip en_retard" title="'+cdT('Pénalité d\'annulation','Cancellation penalty')+'">'+cdT('Pénalité','Penalty')+'</span>' : '');
     const st = document.createElement('td');
     st.innerHTML = '<span class="chip '+f.statut+'">'+(CHIPS_F[f.statut]||f.statut)+'</span>';
     const act = document.createElement('td');
 
     const voir = document.createElement('a');
     voir.className='btn-mini ghost'; voir.style.textDecoration='none';
-    voir.href='/facture-vue.html?id='+f.facture_id; voir.textContent='Voir';
+    voir.href='/facture-vue.html?id='+f.facture_id; voir.textContent=cdT('Voir','View');
     act.appendChild(voir);
 
     if(f.statut === 'brouillon'){
       const b = document.createElement('button');
-      b.className='btn-mini'; b.style.marginLeft='6px'; b.textContent='Envoyer';
+      b.className='btn-mini'; b.style.marginLeft='6px'; b.textContent=cdT('Envoyer','Send');
       b.onclick = async ()=>{
-        if(!confirm('Envoyer la facture à '+(f.nom_pharmacie||'la pharmacie')+' ?')) return;
+        if(!confirm(cdT('Envoyer la facture à '+(f.nom_pharmacie||'la pharmacie')+' ?','Send the invoice to '+(f.nom_pharmacie||'the pharmacy')+'?'))) return;
         b.disabled = true;
         const { error: e } = await sb.rpc('envoyer_facture', { p_facture: f.facture_id });
-        if(e){ b.disabled=false; msg('msg-factures','Erreur : '+e.message,false); return; }
+        if(e){ b.disabled=false; msg('msg-factures',cdT('Erreur : ','Error: ')+e.message,false); return; }
         cdEnvoyerFacture(f.facture_id);   /* courriel de la facture (PDF) à la pharmacie */
-        msg('msg-factures','Facture envoyée ✓',true);
+        msg('msg-factures',cdT('Facture envoyée ✓','Invoice sent ✓'),true);
         chargerFactures();
       };
       act.appendChild(b);
     }
     if(f.statut === 'envoyee' || f.statut === 'en_retard'){
       const b = document.createElement('button');
-      b.className='btn-mini ghost'; b.style.marginLeft='6px'; b.textContent='Paiement reçu';
+      b.className='btn-mini ghost'; b.style.marginLeft='6px'; b.textContent=cdT('Paiement reçu','Payment received');
       b.onclick = async ()=>{
-        if(!confirm('Confirmer la réception du paiement ?')) return;
+        if(!confirm(cdT('Confirmer la réception du paiement ?','Confirm receipt of the payment?'))) return;
         b.disabled = true;
         const { error: e } = await sb.rpc('marquer_facture_payee', { p_facture: f.facture_id });
-        if(e){ b.disabled=false; msg('msg-factures','Erreur : '+e.message,false); return; }
+        if(e){ b.disabled=false; msg('msg-factures',cdT('Erreur : ','Error: ')+e.message,false); return; }
         chargerFactures();
       };
       act.appendChild(b);
@@ -602,7 +607,9 @@ function appliquerPeriode(){
 }
 
 /* ================= CALENDRIER ================= */
-const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const MOIS_FR = cdLang()==='en'
+  ? ['January','February','March','April','May','June','July','August','September','October','November','December']
+  : ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 function rendreCalendrier(){
   const grille = $('cal-grille'); if(!grille) return;
   $('cal-mois-lbl').textContent = MOIS_FR[calMois] + ' ' + calAnnee;
@@ -639,7 +646,7 @@ function rendreCalendrier(){
     const c = document.createElement('div');
     c.className = 'cal-jour' + (parJour[iso] ? ' dot '+parJour[iso] : '') + (iso===ajd ? ' aujourdhui' : '');
     c.textContent = j;
-    if(parJour[iso]) c.title = (parJour[iso]==='externe' ? 'Revenu hors C-Direct le ' : 'Mandat le ') + cdDate(iso);
+    if(parJour[iso]) c.title = (parJour[iso]==='externe' ? cdT('Revenu hors C-Direct le ','Income outside C-Direct on ') : cdT('Mandat le ','Mandate on ')) + cdDate(iso);
     grille.appendChild(c);
   }
 }
@@ -648,26 +655,26 @@ function rendreCalendrier(){
 async function chargerRevenusExternes(){
   const { data, error } = await sb.from('revenus_externes').select('*').eq('pharmacien_id', profil.id).order('date_revenu', { ascending:false });
   const tb = $('t-revenus-ext');
-  if(error){ tb.innerHTML = '<tr><td colspan="5" class="vide">Erreur : '+error.message+'</td></tr>'; return; }
+  if(error){ tb.innerHTML = '<tr><td colspan="5" class="vide">'+cdT('Erreur : ','Error: ')+error.message+'</td></tr>'; return; }
   toutesRevenusExt = data || [];
   if(!toutesRevenusExt.length){
     $('n-revenus-ext').textContent = '';
-    tb.innerHTML = '<tr><td colspan="5" class="vide">Rien d\'ajouté pour l\'instant.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="5" class="vide">'+cdT('Rien d\'ajouté pour l\'instant.','Nothing added yet.')+'</td></tr>';
     return;
   }
-  $('n-revenus-ext').textContent = toutesRevenusExt.length + ' entrée' + (toutesRevenusExt.length>1?'s':'');
+  $('n-revenus-ext').textContent = toutesRevenusExt.length + ' ' + cdT('entrée'+(toutesRevenusExt.length>1?'s':''),'entr'+(toutesRevenusExt.length>1?'ies':'y'));
   tb.innerHTML = '';
   toutesRevenusExt.forEach(r=>{
     const tr = document.createElement('tr');
     const td = t=>{ const c=document.createElement('td'); c.textContent=t; return c; };
     const act = document.createElement('td');
     const b = document.createElement('button');
-    b.className='btn-mini rouge'; b.textContent='Supprimer';
+    b.className='btn-mini rouge'; b.textContent=cdT('Supprimer','Delete');
     b.onclick = async ()=>{
-      if(!confirm('Supprimer cette entrée ?')) return;
+      if(!confirm(cdT('Supprimer cette entrée ?','Delete this entry?'))) return;
       b.disabled = true;
       const { error:e } = await sb.from('revenus_externes').delete().eq('id', r.id);
-      if(e){ b.disabled=false; msg('msg-revenus-ext','Erreur : '+e.message,false); return; }
+      if(e){ b.disabled=false; msg('msg-revenus-ext',cdT('Erreur : ','Error: ')+e.message,false); return; }
       chargerRevenusExternes().then(rendreCalendrier);
     };
     act.appendChild(b);
@@ -679,7 +686,7 @@ async function chargerRevenusExternes(){
 async function ajouterRevenuExterne(){
   const date = $('re-date').value;
   const montant = parseFloat($('re-montant').value);
-  if(!date || !montant || montant<0){ msg('msg-revenus-ext','Date et montant sont requis.', false); return; }
+  if(!date || !montant || montant<0){ msg('msg-revenus-ext',cdT('Date et montant sont requis.','Date and amount are required.'), false); return; }
   const payload = {
     pharmacien_id: profil.id,
     date_revenu: date,
@@ -690,9 +697,9 @@ async function ajouterRevenuExterne(){
   $('btn-ajouter-ext').disabled = true;
   const { error } = await sb.from('revenus_externes').insert(payload);
   $('btn-ajouter-ext').disabled = false;
-  if(error){ msg('msg-revenus-ext','Erreur : '+error.message,false); return; }
+  if(error){ msg('msg-revenus-ext',cdT('Erreur : ','Error: ')+error.message,false); return; }
   $('re-date').value=''; $('re-desc').value=''; $('re-montant').value=''; $('re-km').value='';
-  msg('msg-revenus-ext','Ajouté ✓', true);
+  msg('msg-revenus-ext',cdT('Ajouté ✓','Added ✓'), true);
   await chargerRevenusExternes();
   rendreCalendrier();
 }
@@ -706,7 +713,7 @@ function rendreComptabilite(factures){
   const issued = (factures||[]).filter(f => f.statut !== 'brouillon');
   if(!issued.length){ $('carte-compta').style.display = 'none'; return; }
   $('carte-compta').style.display = '';
-  $('compta-annee').textContent = issued.length + ' facture' + (issued.length>1?'s':'') + ' émise' + (issued.length>1?'s':'');
+  $('compta-annee').textContent = issued.length + ' ' + cdT('facture'+(issued.length>1?'s':'')+' émise'+(issued.length>1?'s':''),'invoice'+(issued.length>1?'s':'')+' issued');
 
   const T = {hono:0, km:0, perdiem:0, heberg:0};
   issued.forEach(f=>{ T.hono+=_hono(f); T.km+=_kmM(f); T.perdiem+=_num(f.per_diem_montant); T.heberg+=_num(f.hebergement_montant); });
@@ -755,8 +762,11 @@ function rendreComptabilite(factures){
 function exportComptaCSV(factures, revenusExt){
   const esc = v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
   const dec = n => _num(n).toFixed(2).replace('.', ',');
-  const cols = ['Date contrat','N° facture','Référence','Pharmacie','Ville','Heures','Tarif horaire',
-    'Honoraires','Km A/R','Taux km','Montant km','Per diem','Hébergement','Total','Statut','Type','Date paiement'];
+  const cols = cdLang()==='en'
+    ? ['Contract date','Invoice #','Reference','Pharmacy','City','Hours','Hourly rate',
+       'Fees','Round-trip km','Km rate','Km amount','Per diem','Lodging','Total','Status','Type','Payment date']
+    : ['Date contrat','N° facture','Référence','Pharmacie','Ville','Heures','Tarif horaire',
+       'Honoraires','Km A/R','Taux km','Montant km','Per diem','Hébergement','Total','Statut','Type','Date paiement'];
   const rows = factures.map(f=>[
     f.date_contrat||'', 'F-'+String(f.numero_facture).padStart(6,'0'), f.numero_reference||'',
     f.nom_pharmacie||'', f.pharmacie_ville||'',
@@ -768,7 +778,7 @@ function exportComptaCSV(factures, revenusExt){
   (revenusExt||[]).forEach(r=>{
     rows.push([
       r.date_revenu||'', '—', r.description||'',
-      '(hors C-Direct)', '—',
+      cdT('(hors C-Direct)','(outside C-Direct)'), '—',
       '', '', '',
       r.km!=null?dec(r.km):'', '', '',
       '', '', dec(r.montant),
