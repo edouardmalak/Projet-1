@@ -1,0 +1,29 @@
+C-DIRECT — DOSSIER DE REFONTE + CAMPAGNE (à remettre à Claude Cowork)
+
+FICHIER PRINCIPAL (le seul indispensable) :
+  • c-direct-refonte-handoff.html
+    Fichier unique et autonome. Contient TOUT :
+    - les deux barres de menu (locum + pharmacie), logo intégré
+    - réorganisation Profil/Paramètres + corrections de navigation
+    - contrôles de relation (favoris / masquer / bloquer), 2 côtés
+    - fonctions différenciatrices (avec SQL Supabase)
+    - fonction météo « Trajet »
+    - matériel promotionnel + campagne « Irremplaçable »
+    Ouvre-le dans un navigateur pour tout voir.
+
+ASSET À FOURNIR AUSSI À COWORK :
+  • c-direct-logo.svg  — le vrai logo (crochet) à intégrer dans le site.
+
+SOURCES MARKDOWN (optionnel — mêmes specs en texte, faciles à citer) :
+  • c-direct-profil-parametres-reorg.md
+  • c-direct-features-build-package.md
+
+/promo (pour TOI, pas pour Cowork — à publier) :
+  • c-direct-promo-poster.png   — affiche manifeste
+  • c-direct-promo-social.png   — gabarit série hebdo (portrait)
+  • c-direct-promo-banner.png   — bannière LinkedIn
+  • c-direct-promo-sig.png      — signature courriel
+  • c-direct-promo.html         — gabarits éditables (noms/photos réels)
+
+POUR COWORK : téléverse au minimum
+  c-direct-refonte-handoff.html + c-direct-logo.svg

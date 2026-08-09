@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Irremplaçable. — C-Direct</title>
+<meta name="description" content="Les agences placent des remplaçants. Nous, on reconnaît des pharmaciens. La campagne Irremplaçable de C-Direct, la plateforme des pharmaciens du Québec.">
+<meta property="og:title" content="Irremplaçable. C'est drôle, pour un remplaçant.">
+<meta property="og:description" content="Les agences placent des remplaçants. Nous, on reconnaît des pharmaciens. — C-Direct, Québec.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_CA">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3.5" fill="%230D2B24"/><g fill="none" stroke="%23C98A2B" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.2v8.4M5.4 12.4h5.2M3.6 4.8h8.8"/><path d="M3.6 4.8 2.3 7.6a1.45 1.45 0 0 0 2.7 0Z"/><path d="M12.4 4.8l-1.35 2.8a1.45 1.45 0 0 0 2.7 0Z"/></g></svg>'>
+<style>
+  :root{
+    --vert:#0D2B24;        /* vert croix de pharmacie, presque noir */
+    --vert-2:#123830;
+    --ambre:#C98A2B;       /* ambre des fioles d'ordonnance */
+    --blanc:#FAFAF7;       /* blanc sarrau */
+    --gris:#9FB0AA;
+    --trait:rgba(250,250,247,.14);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--vert);
+    color:var(--blanc);
+    font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .condense{font-weight:900;font-family:'Arial Narrow','Helvetica Neue Condensed',Impact,'Arial Black',sans-serif;text-transform:uppercase}
+  .mono{font-family:'SF Mono','Roboto Mono',Menlo,Consolas,monospace}
+
+  /* ---------- NAV ---------- */
+  nav{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:26px clamp(20px,5vw,64px);
+    border-bottom:1px solid var(--trait);
+    position:sticky;top:0;background:var(--vert);z-index:20;
+  }
+  .logo{font-weight:900;font-family:'Arial Narrow','Helvetica Neue Condensed',Impact,'Arial Black',sans-serif;font-size:20px;letter-spacing:.04em;color:var(--blanc);text-decoration:none;display:flex;flex-direction:column;line-height:1.05}
+  .logo span{color:var(--ambre)}
+  .logo-tag{
+    font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    font-weight:500;font-size:10.5px;letter-spacing:.10em;
+    text-transform:uppercase;color:var(--gris);margin-top:3px;
+  }
+  .nav-liens{display:flex;gap:32px;align-items:center}
+  .nav-liens a{color:var(--gris);text-decoration:none;font-size:14.5px;font-weight:500;transition:color .2s}
+  .nav-liens a:hover,.nav-liens a:focus-visible{color:var(--blanc)}
+  .nav-cta{
+    color:var(--vert)!important;background:var(--blanc);
+    padding:10px 20px;border-radius:2px;font-weight:600;
+  }
+  .nav-cta:hover{background:var(--ambre);color:var(--vert)!important}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    min-height:calc(100vh - 78px);
+    display:flex;flex-direction:column;justify-content:center;
+    padding:0 clamp(20px,5vw,64px);
+    position:relative;
+  }
+  .etiquette{
+    font-family:'SF Mono','Roboto Mono',Menlo,Consolas,monospace;
+    font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ambre);
+    display:flex;align-items:center;gap:12px;
+    margin-bottom:clamp(24px,4vh,48px);
+  }
+  .etiquette::before{content:"";width:34px;height:1px;background:var(--ambre)}
+
+  /* Le mot barré : remplaçable → IRremplaçable */
+  .barre{
+    font-weight:900;font-family:'Arial Narrow','Helvetica Neue Condensed',Impact,'Arial Black',sans-serif;
+    font-size:clamp(26px,4.2vw,54px);
+    letter-spacing:.01em;
+    color:var(--gris);
+    position:relative;display:inline-block;align-self:flex-start;
+    text-transform:uppercase;
+    opacity:0;animation:app .6s .2s forwards;
+  }
+  .barre::after{
+    content:"";position:absolute;left:-2%;top:54%;width:0;height:3px;
+    background:var(--ambre);
+    animation:rayer .5s .9s forwards;
+  }
+  @keyframes rayer{to{width:104%}}
+
+  .titre{
+    font-weight:900;font-family:'Arial Narrow','Helvetica Neue Condensed',Impact,'Arial Black',sans-serif;
+    font-size:clamp(64px,13.5vw,196px);
+    line-height:.94;letter-spacing:.005em;
+    text-transform:uppercase;
+    margin-top:clamp(6px,1.2vh,14px);
+    opacity:0;animation:app .7s 1.25s forwards;
+  }
+  .titre .ir{color:var(--ambre)}
+  .titre .point{color:var(--ambre)}
+  @keyframes app{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  .chute{
+    font-size:clamp(17px,2vw,23px);
+    font-style:italic;color:var(--gris);
+    margin-top:clamp(18px,3vh,30px);
+    opacity:0;animation:app .6s 1.9s forwards;
+  }
+
+  .hero-bas{
+    display:flex;flex-wrap:wrap;gap:16px;align-items:center;
+    margin-top:clamp(32px,6vh,60px);
+    opacity:0;animation:app .6s 2.2s forwards;
+  }
+  .btn{
+    font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-weight:600;font-size:16px;
+    padding:16px 30px;border-radius:2px;text-decoration:none;
+    transition:transform .15s, background .2s;
+    display:inline-block;
+  }
+  .btn:active{transform:scale(.98)}
+  .btn-plein{background:var(--ambre);color:var(--vert)}
+  .btn-plein:hover{background:var(--blanc)}
+  .btn-ligne{border:1px solid var(--trait);color:var(--blanc)}
+  .btn-ligne:hover{border-color:var(--ambre);color:var(--ambre)}
+
+  .hero-note{
+    font-family:'SF Mono','Roboto Mono',Menlo,Consolas,monospace;font-size:12px;color:var(--gris);
+    margin-left:8px;
+  }
+
+  /* Croix de pharmacie en filigrane, coin droit */
+  .croix{
+    position:absolute;right:clamp(-40px,2vw,64px);top:50%;
+    transform:translateY(-50%);
+    width:clamp(180px,26vw,380px);aspect-ratio:1;
+    opacity:.06;pointer-events:none;
+  }
+  .croix::before,.croix::after{
+    content:"";position:absolute;background:var(--blanc);
+  }
+  .croix::before{left:36%;top:0;width:28%;height:100%}
+  .croix::after{top:36%;left:0;height:28%;width:100%}
+
+  /* ---------- SECTIONS ---------- */
+  section{padding:clamp(64px,10vh,110px) clamp(20px,5vw,64px);border-top:1px solid var(--trait)}
+  .sec-titre{
+    font-family:'SF Mono','Roboto Mono',Menlo,Consolas,monospace;
+    font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ambre);margin-bottom:clamp(28px,5vh,44px);
+    display:flex;align-items:center;gap:12px;
+  }
+  .sec-titre::before{content:"";width:34px;height:1px;background:var(--ambre)}
+
+  /* Manifeste */
+  .manifeste-punch{
+    font-size:clamp(28px,4.4vw,52px);
+    font-weight:700;line-height:1.18;
+    max-width:900px;
+  }
+  .manifeste-punch em{font-style:normal;color:var(--ambre)}
+  .manifeste-corps{
+    margin-top:clamp(28px,5vh,44px);
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:clamp(24px,4vw,48px);max-width:1100px;
+  }
+  .manifeste-corps p{color:var(--gris);font-size:16.5px;line-height:1.65}
+  .manifeste-corps p b{color:var(--blanc);font-weight:600}
+
+  /* Témoignages */
+  .temoins{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(20px,3vw,36px);max-width:1200px}
+  .temoin{
+    background:var(--vert-2);border:1px solid var(--trait);border-radius:4px;
+    padding:clamp(24px,3.5vw,40px);
+    display:flex;flex-direction:column;gap:18px;
+  }
+  .temoin q{
+    quotes:"« " " »";
+    font-family:Georgia,'Times New Roman',serif;font-style:italic;
+    font-size:clamp(17px,1.6vw,20px);line-height:1.55;
+  }
+  .temoin .qui{color:var(--ambre);font-weight:700;font-size:14.5px}
+  .temoin .tag{
+    font-family:'SF Mono','Roboto Mono',Menlo,Consolas,monospace;
+    font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gris);
+  }
+
+  /* Bandeau promesses */
+  .bandeau{
+    border-top:1px solid var(--trait);
+    padding:22px clamp(20px,5vw,64px);
+    display:flex;flex-wrap:wrap;gap:14px 40px;
+    font-family:'SF Mono','Roboto Mono',Menlo,Consolas,monospace;font-size:12.5px;color:var(--gris);
+    letter-spacing:.06em;
+  }
+  .bandeau b{color:var(--blanc);font-weight:500}
+
+  /* CTA final */
+  .final{text-align:left}
+  .final h2{
+    font-weight:900;font-family:'Arial Narrow','Helvetica Neue Condensed',Impact,'Arial Black',sans-serif;
+    text-transform:uppercase;
+    font-size:clamp(40px,7vw,96px);line-height:.96;
+  }
+  .final h2 span{color:var(--ambre)}
+  .final p{color:var(--gris);font-size:clamp(16px,1.8vw,20px);margin-top:18px;max-width:640px}
+  .final .hero-bas{animation:none;opacity:1}
+
+  footer{
+    padding:18px clamp(20px,5vw,64px);border-top:1px solid var(--trait);
+    font-family:'SF Mono','Roboto Mono',Menlo,Consolas,monospace;font-size:12px;color:var(--gris);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px 24px;
+  }
+  footer b{color:var(--blanc);font-weight:600}
+  footer a{color:var(--gris);text-decoration:none}
+  footer a:hover{color:var(--blanc)}
+
+  @media (max-width:640px){
+    .nav-liens a:not(.nav-cta){display:none}
+    .croix{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .barre,.titre,.chute,.hero-bas{animation:none;opacity:1}
+    .barre::after{animation:none;width:104%}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="index.html">C<span>-</span>DIRECT
+    <small class="logo-tag">Pharmaciens irremplaçables</small>
+  </a>
+  <div class="nav-liens">
+    <a href="index.html">Accueil</a>
+    <a href="#manifeste">Manifeste</a>
+    <a href="#temoignages">Témoignages</a>
+    <a class="nav-cta" href="acces.html?mode=insc">Créer mon profil</a>
+  </div>
+</nav>
+
+<main class="hero">
+  <div class="croix" aria-hidden="true"></div>
+
+  <p class="etiquette">La plateforme des pharmaciens du Québec</p>
+
+  <span class="barre">Remplaçable</span>
+
+  <h1 class="titre"><span class="ir">Ir</span>remplaçable<span class="point">.</span></h1>
+
+  <p class="chute">C'est drôle, pour un remplaçant.</p>
+
+  <div class="hero-bas">
+    <a class="btn btn-plein" href="acces.html?mode=insc&role=pharmacien">Je suis pharmacien</a>
+    <a class="btn btn-ligne" href="acces.html?mode=insc&role=pharmacie">Je suis une pharmacie</a>
+    <span class="hero-note">Profil en 5 minutes · Aucune exclusivité</span>
+  </div>
+</main>
+
+<div class="bandeau">
+  <span><b>Tes quarts.</b> Tes conditions.</span>
+  <span><b>Paiement direct.</b> Le taux affiché, c'est le taux payé.</span>
+  <span><b>Ton nom.</b> Pas un numéro.</span>
+</div>
+
+<section id="manifeste">
+  <p class="sec-titre">Manifeste</p>
+  <p class="manifeste-punch">Les agences placent des remplaçants. <em>Nous, on reconnaît des pharmaciens.</em></p>
+  <div class="manifeste-corps">
+    <p><b>Un remplaçant, ça se remplace.</b> Un pharmacien qui fait une heure et demie de route un samedi matin pour qu'un village ne passe pas la fin de semaine sans service, lui, non. C'est pour ces gens-là qu'on a bâti C-Direct.</p>
+    <p><b>Ton nom, pas un numéro.</b> Sur C-Direct, les pharmacies voient qui tu es : ton profil, ton expérience, tes évaluations. Pas un dossier anonyme envoyé par une agence qui garde sa commission au passage.</p>
+    <p><b>Tes conditions, pas les leurs.</b> Tu fixes ton taux, tu choisis tes quarts, tu factures en direct. Aucune commission sur tes honoraires, aucune exclusivité. Le taux affiché, c'est le taux payé.</p>
+  </div>
+</section>
+
+<section id="temoignages">
+  <p class="sec-titre">Ils sont irremplaçables</p>
+  <div class="temoins">
+    <div class="temoin">
+      <q>Une heure et demie de route un samedi matin. Sinon, le village passait la fin de semaine sans pharmacien.</q>
+      <div>
+        <div class="qui">Marie-Ève, Rimouski</div>
+        <div class="tag">Pharmacienne remplaçante</div>
+      </div>
+    </div>
+    <div class="temoin">
+      <q>Ton histoire, ici.</q>
+      <div>
+        <div class="qui">Tu fais la route, les soirs, les fins de semaine ?</div>
+        <div class="tag">Raconte-nous ton remplacement le plus mémorable — on le publiera avec ton nom.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <h2>Ton nom.<br>Tes conditions<span>.</span></h2>
+  <p>Crée ton profil en 5 minutes. Aucune exclusivité, aucune commission sur tes honoraires. Tu restes libre — et reconnu.</p>
+  <div class="hero-bas">
+    <a class="btn btn-plein" href="acces.html?mode=insc&role=pharmacien">Créer mon profil pharmacien</a>
+    <a class="btn btn-ligne" href="acces.html?mode=insc&role=pharmacie">Inscrire ma pharmacie</a>
+  </div>
+</section>
+
+<footer>
+  <span><b>C-Direct</b> — Pharmaciens irremplaçables.</span>
+  <span>
+    <a href="index.html">Accueil</a> ·
+    <a href="conditions.html">Conditions</a> ·
+    <a href="confidentialite.html">Confidentialité</a>
+  </span>
+  <span>Fait au Québec.</span>
+</footer>
+
+</body>
+</html>
