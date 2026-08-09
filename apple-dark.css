@@ -197,6 +197,26 @@ hr{border-color:var(--ligne)}
 }
 section.bloc{border-color:var(--ligne) !important}
 
+/* surfaces blanches codées en dur dans les CSS des pages */
+.carte-benef, .etape, .comp table, .faq details, .regle{
+  background:var(--panneau) !important;
+  border-color:var(--ligne) !important;
+}
+.faq summary{color:var(--texte) !important}
+.faq .rep{color:var(--sourd) !important}
+.btn-top.ligne{
+  background:rgba(255,255,255,.06) !important;
+  color:var(--texte) !important;
+  border:1px solid rgba(255,255,255,.16) !important;
+}
+.btn-top.ligne:hover{border-color:var(--vert-vif) !important;color:var(--vert-vif) !important;background:rgba(58,221,154,.08) !important}
+.carrousel{background:var(--panneau) !important}
+.etapes{background:rgba(58,221,154,.04) !important}
+.comp th{background:#0E1513 !important}
+.confiance{background:#0E1513 !important}
+.bande{background:#0E1513 !important}
+.bv-carte{background:var(--panneau) !important;color:var(--texte) !important}
+
 /* ---------- badges / puces ---------- */
 .badge, .pastille, .chip, .tag{
   background:rgba(58,221,154,.10) !important;
