@@ -33,6 +33,12 @@ p b{color:var(--texte)}
   <h1 data-fr="Compte en attente de validation" data-en="Account pending validation">Compte en attente de validation</h1>
   <p id="texte" data-fr="Chaque compte C-Direct est vérifié manuellement avant l'activation — <b>inscription à l'OPQ</b> pour les pharmacien(ne)s, <b>établissement</b> pour les pharmacies. C'est ce qui fait la fiabilité du réseau." data-en="Every C-Direct account is checked manually before activation — <b>OPQ registration</b> for pharmacists, <b>establishment</b> for pharmacies. That's what makes the network reliable.">Chaque compte C-Direct est vérifié manuellement avant l'activation — <b>inscription à l'OPQ</b> pour les pharmacien(ne)s, <b>établissement</b> pour les pharmacies. C'est ce qui fait la fiabilité du réseau.</p>
   <p data-fr="Vous serez avisé(e) dès l'activation. En attendant, assurez-vous que votre profil est complet — cela accélère la vérification." data-en="You'll be notified as soon as it's activated. In the meantime, make sure your profile is complete — it speeds up verification.">Vous serez avisé(e) dès l'activation. En attendant, assurez-vous que votre profil est complet — cela accélère la vérification.</p>
+  <div id="entrevue" style="display:none;text-align:left;border:1px solid var(--ligne);border-radius:10px;padding:16px;margin:8px 0 4px;background:var(--panneau2)">
+    <div style="font-family:'Inter',sans-serif;font-weight:700;font-size:15px;text-align:center;color:var(--texte);margin-bottom:6px" data-fr="Prochaine étape : votre entrevue" data-en="Next step: your interview">Prochaine étape : votre entrevue</div>
+    <p style="font-size:13px;text-align:center;margin-bottom:12px" data-fr="Réservez votre entrevue d'intégration — c'est ce qui débloque l'activation de votre compte." data-en="Book your onboarding interview — that's what unlocks your account activation.">Réservez votre entrevue d'intégration — c'est ce qui débloque l'activation de votre compte.</p>
+    <div id="entrevue-statut" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-align:center;margin-bottom:12px"></div>
+    <button class="btn" id="btn-entrevue" type="button" style="margin-top:0" data-fr="Prendre rendez-vous" data-en="Book an appointment">Prendre rendez-vous</button>
+  </div>
   <p id="veille" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.05em;opacity:.7" data-fr="Cette page se met à jour toute seule — laissez-la ouverte." data-en="This page refreshes on its own — leave it open.">
     Cette page se met à jour toute seule — laissez-la ouverte.</p>
   <a class="btn" href="/profil.html" data-fr="Compléter mon profil" data-en="Complete my profile">Compléter mon profil</a>
@@ -52,6 +58,39 @@ p b{color:var(--texte)}
      resterait bloqué ici à recharger la page à la main. On vérifie donc
      discrètement toutes les 15 s et on le fait entrer dès que c'est bon. */
   const sb = window.sbClient;
+
+  /* Pharmacien/ATP : l'entrevue d'intégration est l'étape qui débloque
+     l'activation (l'admin approuve après l'entrevue). On la met en avant ici. */
+  async function chargerEntrevue(){
+    try{
+      const { data } = await sb.rpc('mes_rendez_vous');
+      const rv = (data||[]).find(r=> r.type === 'entrevue' && r.statut !== 'annule');
+      const z = document.getElementById('entrevue-statut');
+      const btn = document.getElementById('btn-entrevue');
+      if(!z || !btn) return;
+      if(!rv){
+        z.textContent = cdT('Aucune entrevue planifiée pour l\'instant.', 'No interview scheduled yet.');
+        btn.textContent = cdT('Prendre rendez-vous', 'Book an appointment');
+        return;
+      }
+      const quand = rv.date_confirmee || rv.date_souhaitee;
+      const qtxt = quand ? new Date(quand).toLocaleString(cdLang()==='en'?'en-CA':'fr-CA', { dateStyle:'long', timeStyle:'short' }) : '';
+      const lib = {
+        demande:  cdT('Demande envoyée — en attente de confirmation.', 'Request sent — awaiting confirmation.'),
+        confirme: cdT('Entrevue confirmée : ', 'Interview confirmed: ') + qtxt,
+        propose:  cdT('Nouvelle plage proposée : ', 'New time proposed: ') + qtxt,
+        complete: cdT('Entrevue complétée — activation en cours.', 'Interview completed — activation in progress.')
+      };
+      z.textContent = lib[rv.statut] || rv.statut;
+      btn.textContent = cdT('Modifier / reprendre', 'Change / rebook');
+    }catch(e){}
+  }
+  if(p.role === 'pharmacien'){
+    document.getElementById('entrevue').style.display = '';
+    document.getElementById('btn-entrevue').addEventListener('click', ()=> cdOuvrirReservation({ type:'entrevue', onDone: chargerEntrevue }));
+    chargerEntrevue();
+  }
+
   let arret = false;
   async function verifier(){
     if(arret || document.hidden) return;
