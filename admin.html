@@ -167,6 +167,18 @@ tbody tr:last-child td{border-bottom:none}
     </div>
   </div>
 
+  <!-- ENTREVUES D'INTÉGRATION -->
+  <div class="carte">
+    <div class="sec">Entrevues d'intégration<small id="n-entrevues"></small></div>
+    <p class="sous" style="margin:-4px 0 14px">Rendez-vous demandés par les pharmaciens et ATP avant l'activation. Confirmez la plage souhaitée, proposez-en une autre, ou marquez l'entrevue complétée. L'activation du compte reste manuelle (colonne <b>Validation</b> ci-dessus).</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Demandeur</th><th>Profession</th><th>Exp.</th><th>Souhaité</th><th>Confirmé</th><th>Statut</th><th>Contact</th><th>Actions</th></tr></thead>
+        <tbody id="t-entrevues"><tr><td colspan="8" class="vide">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- BLOCAGES / EXCLUSIONS -->
   <div class="carte">
     <div class="sec">Blocages<small id="n-excl"></small></div>
@@ -369,6 +381,7 @@ function cdToast(texte, ok){
   chargerRegions();
   chargerSmsStats();
   chargerGarantiesEnDifficulte();
+  chargerEntrevues();
 
   /* ---- règles ---- */
   const { data: regles } = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle();
@@ -991,6 +1004,63 @@ async function chargerContratsARisque(){
       td(r.numero_reference), td(r.nom_pharmacie), td(r.ville),
       td(cdArgent(r.tarif_horaire)+'/h'), restant
     );
+    tb.appendChild(tr);
+  });
+}
+
+/* ---- Entrevues d'intégration (sql/67) ---- */
+async function chargerEntrevues(){
+  const tb = document.getElementById('t-entrevues');
+  if(!tb) return;
+  const esc = s => String(s==null?'':s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+  const fmt = d => d ? new Date(d).toLocaleString('fr-CA',{dateStyle:'medium',timeStyle:'short'}) : '—';
+  const { data, error } = await sb.rpc('admin_lister_rendez_vous');
+  if(error){ tb.innerHTML = '<tr><td colspan="8" class="vide">Erreur : '+esc(error.message)+'</td></tr>'; return; }
+  const rows = (data||[]).filter(r=> r.type === 'entrevue');
+  const n = document.getElementById('n-entrevues');
+  const enAttente = rows.filter(r=> r.statut==='demande' || r.statut==='propose').length;
+  if(n) n.textContent = enAttente ? ('  ·  '+enAttente+' à traiter') : '';
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="8" class="vide">Aucune entrevue demandée.</td></tr>'; return; }
+  const libStatut = {demande:'Demandé', confirme:'Confirmé', propose:'Autre plage proposée', complete:'Complété', annule:'Annulé'};
+  tb.innerHTML = '';
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    const nom = ((r.prenom||'')+' '+(r.nom||'')).trim() || (r.courriel||'—');
+    const prof = r.profession === 'atp' ? 'ATP' : 'Pharmacien';
+    const contact = [r.courriel, (typeof cdTelAffiche==='function' ? cdTelAffiche(r.telephone) : r.telephone)].filter(Boolean).join(' · ');
+    tr.innerHTML =
+      '<td>'+esc(nom)+'</td>'+
+      '<td>'+esc(prof)+'</td>'+
+      '<td>'+(r.annees_experience!=null ? esc(r.annees_experience)+' an'+(r.annees_experience>1?'s':'') : '—')+'</td>'+
+      '<td>'+esc(fmt(r.date_souhaitee))+'</td>'+
+      '<td>'+esc(fmt(r.date_confirmee))+'</td>'+
+      '<td>'+esc(libStatut[r.statut]||r.statut)+'</td>'+
+      '<td style="font-size:11px">'+esc(contact)+'</td>'+
+      '<td></td>';
+    const actions = tr.lastElementChild;
+    function bouton(txt, fn, danger){
+      const b = document.createElement('button'); b.type='button'; b.textContent = txt;
+      b.style.cssText = 'margin:2px;padding:5px 8px;font-family:"IBM Plex Mono",monospace;font-size:10.5px;border-radius:4px;cursor:pointer;'+
+        'border:1px solid '+(danger?'rgba(229,72,77,.5)':'var(--ligne2)')+';background:transparent;color:'+(danger?'#E5484D':'var(--vert-vif)');
+      b.addEventListener('click', fn); return b;
+    }
+    async function maj(statut, date){
+      const { error: e } = await sb.rpc('admin_maj_rendez_vous', { p_id: r.id, p_statut: statut, p_date_confirmee: date||null, p_note_admin: null });
+      if(e){ cdToast('Erreur : '+e.message, false); return; }
+      cdToast('Entrevue mise à jour ✓', true); chargerEntrevues();
+    }
+    if(r.statut !== 'complete' && r.statut !== 'annule'){
+      if(r.date_souhaitee) actions.appendChild(bouton('Confirmer la plage souhaitée', ()=> maj('confirme', r.date_souhaitee)));
+      actions.appendChild(bouton('Proposer une autre plage', ()=>{
+        const v = prompt('Nouvelle plage (AAAA-MM-JJ HH:MM) :', '');
+        if(!v) return;
+        const d = new Date(v.replace(' ','T'));
+        if(isNaN(d.getTime())){ cdToast('Date invalide', false); return; }
+        maj('propose', d.toISOString());
+      }));
+      actions.appendChild(bouton('Marquer complété', ()=> maj('complete')));
+      actions.appendChild(bouton('Annuler', ()=> maj('annule'), true));
+    }
     tb.appendChild(tr);
   });
 }
