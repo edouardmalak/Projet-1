@@ -33,12 +33,27 @@ const EXTENSIONS_BLOQUEES = [
   '.sql',         // au cas où un .sql traînerait hors de /sql/
   '.toml',        // wrangler.toml et consorts
   '.lock',
+  '.zip',         // archives de packaging internes (c-direct-*.zip)
+];
+
+// Documents internes (stratégie, journaux d'actions, rapports de test) qui
+// vivent à la racine du dépôt et ne sont liés par aucune page — publiés
+// tels quels par Cloudflare Pages, donc téléchargeables par n'importe qui
+// sans ce filtre. On bloque par PRÉFIXE pour couvrir les versions datées.
+// (Les aperçus destinés au public — apercu-*.pdf — restent accessibles.)
+const PREFIXES_FICHIERS_BLOQUES = [
+  '/c-direct-actions-',
+  '/c-direct-audit-',
+  '/c-direct-scenarios-',
+  '/phase-test-report',
+  '/rapport-test-',
 ];
 
 function estBloque(chemin) {
   const p = chemin.toLowerCase();
   if (PREFIXES_BLOQUES.some(prefixe => p.startsWith(prefixe))) return true;
   if (EXTENSIONS_BLOQUEES.some(ext => p.endsWith(ext))) return true;
+  if (PREFIXES_FICHIERS_BLOQUES.some(prefixe => p.startsWith(prefixe))) return true;
   return false;
 }
 
