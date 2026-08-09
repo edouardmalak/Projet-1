@@ -72,6 +72,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
   <div id="param-onglets" role="tablist">
     <button type="button" data-onglet="compte" class="actif" data-fr="Compte" data-en="Account">Compte</button>
     <button type="button" data-onglet="notifications" data-fr="Notifications" data-en="Notifications">Notifications</button>
+    <button type="button" data-onglet="paiements" id="tab-paiements" style="display:none" data-fr="Paiements" data-en="Payments">Paiements</button>
     <button type="button" data-onglet="apropos" data-fr="À propos" data-en="About">À propos</button>
   </div>
 
@@ -179,6 +180,43 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
     </div>
   </div>
 
+  <!-- ================= PAIEMENTS (déplacé depuis Profil) ================= -->
+  <div data-onglet="paiements" style="display:none">
+
+    <div class="carte" id="carte-paiement-pharmacien" style="display:none">
+      <div class="sec" data-fr="Recevoir mes paiements" data-en="Receive my payments">Recevoir mes paiements</div>
+      <p class="explic">Nécessaire pour recevoir vos paiements de mandats via Stripe. Configuré une seule fois.</p>
+      <div id="paiement-pharmacien-statut" style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--sourd);margin-bottom:12px">Chargement…</div>
+      <button type="button" class="btn-sec" id="btn-onboarding-stripe">Configurer mes paiements</button>
+      <div class="msg" id="msg-paiement-pharmacien"></div>
+    </div>
+
+    <div class="carte" id="carte-interac" style="display:none">
+      <div class="sec">Courriel Interac (autodépôt)</div>
+      <p class="explic">L'adresse où les pharmacies vous enverront leurs virements Interac — distincte de votre courriel de connexion, vérifiée par code. Tout changement est retardé de 72 h par sécurité : vos <a class="lien" href="/facture-vue.html" style="color:var(--vert-vif)">factures</a> basculent sur la carte de garantie pendant ce délai plutôt que d'afficher une adresse pas encore confirmée.</p>
+      <div id="interac-statut" style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--sourd);margin-bottom:10px">Chargement…</div>
+      <div class="champ"><label>Courriel Interac</label><input id="courriel_interac" type="email" placeholder="votre-autodepot@exemple.com"></div>
+      <button type="button" class="btn-sec" id="btn-interac-envoyer">Envoyer un code de vérification</button>
+      <div id="interac-code-zone" style="display:none;margin-top:12px">
+        <div class="champ"><label>Code reçu par courriel (6 chiffres)</label><input id="interac_code" inputmode="numeric" maxlength="6" placeholder="000000"></div>
+        <button type="button" class="btn" id="btn-interac-confirmer">Confirmer</button>
+      </div>
+      <div class="msg" id="msg-interac"></div>
+    </div>
+
+    <div class="carte" id="carte-garantie-pharmacie" style="display:none">
+      <div class="sec" data-fr="Garantie de paiement" data-en="Payment guarantee">Garantie de paiement</div>
+      <p class="explic">Une carte enregistrée qui sert de garantie — elle n'est chargée que si un paiement Interac n'est pas confirmé à temps par le remplaçant. Pour la plupart des pharmacies, elle ne sera jamais débitée.</p>
+      <div id="carte-statut" style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--sourd);margin-bottom:10px">Chargement…</div>
+      <div id="form-carte">
+        <div id="payment-element" style="margin-bottom:12px"></div>
+        <button type="button" class="btn-sec" id="btn-ajouter-carte">Enregistrer cette carte</button>
+      </div>
+      <div class="msg" id="msg-carte"></div>
+    </div>
+
+  </div>
+
   <!-- ================= À PROPOS ================= -->
   <div data-onglet="apropos" style="display:none">
     <div class="carte">
@@ -210,10 +248,17 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260806a"></script>
 <script src="/auth.js?v=20260809b"></script>
+<script src="https://js.stripe.com/v3/"></script>
 <script>
 const $ = id => document.getElementById(id);
 const sb = window.sbClient;
 let profil = null;
+
+/* ---- Paiements (déplacés depuis Profil) : constantes ---- */
+const STRIPE_PUBLISHABLE_KEY = 'pk_test_51Tz4YURmN5RelCsEZYolXRGCJ7N2JneFU8VJJBO9Qy4Haxhqb4d7EgNinmx2iCvX7n8BVtZiCGhwuHjjKjQle0ky00ywoepqUB';
+const URL_PAIEMENTS = 'https://c-direct-payments.edouardmalak.workers.dev';
+const URL_SMS = 'https://c-direct-sms.edouardmalak.workers.dev';
+let stripeCarteInitialisee = false;
 
 function msg(id, texte, ok){
   const el = $(id); el.textContent = texte;
@@ -234,7 +279,8 @@ function initOnglets(){
   document.querySelectorAll('#param-onglets button').forEach(b=>{
     b.addEventListener('click', ()=> afficherOnglet(b.dataset.onglet));
   });
-  afficherOnglet('compte');
+  const dep = new URLSearchParams(location.search).get('onboarding') === 'retour' ? 'paiements' : 'compte';
+  afficherOnglet(dep);
 }
 
 /* ================= COMPTE ================= */
@@ -423,11 +469,157 @@ $('btn-push-off').onclick = async ()=>{
   $('btn-push-off').disabled = false;
 };
 
+/* ================= PAIEMENTS (déplacés depuis Profil) ================= */
+async function chargerStatutInterac(){
+  if(profil.role !== 'pharmacien' || !$('interac-statut')) return;
+  const { data } = await sb.from('profiles')
+    .select('courriel_interac,courriel_interac_verifie,courriel_interac_cooldown_jusqua')
+    .eq('id', profil.id).maybeSingle();
+  const zone = $('interac-statut');
+  if(!data || !data.courriel_interac){
+    zone.textContent = 'Aucun courriel Interac configuré — vos paiements resteront sur carte de garantie jusqu\'à ce que vous en ajoutiez un.';
+  } else if(data.courriel_interac_verifie && (!data.courriel_interac_cooldown_jusqua || new Date(data.courriel_interac_cooldown_jusqua) <= new Date())){
+    zone.textContent = 'Vérifié et actif : ' + data.courriel_interac;
+    zone.style.color = 'var(--vert-vif)';
+  } else if(data.courriel_interac_verifie && data.courriel_interac_cooldown_jusqua){
+    zone.textContent = 'Changé récemment — actif à partir du ' + new Date(data.courriel_interac_cooldown_jusqua).toLocaleString('fr-CA') + ' (délai de sécurité de 72h ; vos paiements passent par la carte de garantie en attendant).';
+    zone.style.color = 'var(--jaune,#B87A0C)';
+  } else {
+    zone.textContent = 'En attente de vérification (' + data.courriel_interac + ') — entrez le code reçu par courriel ci-dessous.';
+    zone.style.color = 'var(--jaune,#B87A0C)';
+    $('courriel_interac').value = data.courriel_interac;
+    $('interac-code-zone').style.display = '';
+  }
+}
+
+if($('btn-interac-envoyer')) $('btn-interac-envoyer').addEventListener('click', async () => {
+  const email = $('courriel_interac').value.trim();
+  if(!email){ msg('msg-interac','Entrez un courriel.', false); return; }
+  const btn = $('btn-interac-envoyer'); btn.disabled = true;
+  try{
+    const { error: e1 } = await sb.rpc('demarrer_verification_courriel_interac', { p_email: email });
+    if(e1) throw new Error(e1.message);
+    const s = await cdSession();
+    const r = await fetch(URL_SMS + '/pharmacien/envoyer-code-interac', {
+      method:'POST', headers:{ 'Authorization':'Bearer '+(s && s.access_token || '') },
+    });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok || d.ok === false) throw new Error(d.erreur || d.skip || 'Échec de l\'envoi');
+    $('interac-code-zone').style.display = '';
+    msg('msg-interac','Code envoyé — vérifiez ' + email, true);
+  }catch(e){ msg('msg-interac','Erreur : '+e.message, false); }
+  btn.disabled = false;
+});
+
+if($('btn-interac-confirmer')) $('btn-interac-confirmer').addEventListener('click', async () => {
+  const code = $('interac_code').value.trim();
+  if(!code){ msg('msg-interac','Entrez le code reçu.', false); return; }
+  const btn = $('btn-interac-confirmer'); btn.disabled = true;
+  try{
+    const { data: estChangement, error: e1 } = await sb.rpc('confirmer_courriel_interac', { p_code: code });
+    if(e1) throw new Error(e1.message);
+    if(estChangement){
+      const s = await cdSession();
+      fetch(URL_SMS + '/pharmacien/alerter-changement-interac', {
+        method:'POST', headers:{ 'Authorization':'Bearer '+(s && s.access_token || '') },
+      }).catch(()=>{});
+      msg('msg-interac','Vérifié ✓ — actif dans 72h par sécurité (délai de changement).', true);
+    } else {
+      msg('msg-interac','Vérifié et actif ✓', true);
+    }
+    $('interac-code-zone').style.display = 'none';
+    $('interac_code').value = '';
+    chargerStatutInterac();
+  }catch(e){ msg('msg-interac','Erreur : '+e.message, false); }
+  btn.disabled = false;
+});
+
+async function chargerStatutPaiement(){
+  if(profil.role === 'pharmacien' && $('paiement-pharmacien-statut')){
+    const { data } = await sb.from('stripe_comptes').select('stripe_account_id').eq('profil_id', profil.id).maybeSingle();
+    $('paiement-pharmacien-statut').textContent = (data && data.stripe_account_id)
+      ? 'Compte de paiement configuré ✓'
+      : 'Aucun compte de paiement configuré — nécessaire pour être payé de vos mandats.';
+  }
+  if(profil.role === 'pharmacie' && $('carte-statut')){
+    const { data } = await sb.from('stripe_comptes').select('stripe_customer_id').eq('profil_id', profil.id).maybeSingle();
+    $('carte-statut').textContent = (data && data.stripe_customer_id)
+      ? 'Une carte est enregistrée.'
+      : 'Aucune carte enregistrée pour l’instant.';
+    initialiserFormulaireCarte();
+  }
+}
+
+if($('btn-onboarding-stripe')) $('btn-onboarding-stripe').addEventListener('click', async () => {
+  const btn = $('btn-onboarding-stripe'); btn.disabled = true;
+  try{
+    const s = await cdSession();
+    const r = await fetch(URL_PAIEMENTS + '/pharmacien/onboarding-start', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+(s && s.access_token || '') },
+      body: JSON.stringify({ return_url: location.origin + '/parametres.html?onboarding=retour' })
+    });
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.erreur || 'Erreur');
+    location.href = data.url;
+  }catch(e){
+    btn.disabled = false;
+    msg('msg-paiement-pharmacien', 'Erreur : '+e.message, false);
+  }
+});
+
+async function initialiserFormulaireCarte(){
+  if(stripeCarteInitialisee || typeof Stripe === 'undefined') return;
+  stripeCarteInitialisee = true;
+  try{
+    const s = await cdSession();
+    const r = await fetch(URL_PAIEMENTS + '/pharmacie/setup-intent', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+(s && s.access_token || '') },
+    });
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.erreur || 'Erreur');
+
+    const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+    const elements = stripe.elements({ clientSecret: data.client_secret });
+    elements.create('payment').mount('#payment-element');
+
+    $('btn-ajouter-carte').addEventListener('click', async () => {
+      const btn = $('btn-ajouter-carte'); btn.disabled = true;
+      const { error, setupIntent } = await stripe.confirmSetup({ elements, redirect: 'if_required' });
+      if(error){ btn.disabled = false; msg('msg-carte', error.message, false); return; }
+      if(setupIntent && setupIntent.id){
+        try{
+          const s2 = await cdSession();
+          await fetch(URL_PAIEMENTS + '/pharmacie/setup-confirm', {
+            method: 'POST',
+            headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+(s2 && s2.access_token || '') },
+            body: JSON.stringify({ setup_intent_id: setupIntent.id }),
+          });
+        }catch(e){ /* carte déjà enregistrée côté Stripe ; pas bloquant */ }
+      }
+      btn.disabled = false;
+      msg('msg-carte', 'Carte enregistrée ✓', true);
+      chargerStatutPaiement();
+    });
+  }catch(e){
+    if($('carte-statut')) $('carte-statut').textContent = 'Erreur de chargement : '+e.message;
+  }
+}
+
 /* ================= INIT ================= */
 (async function(){
   profil = await cdExigerConnexion();
   cdEnteteConnecte();
   if(profil.role === 'admin') $('carte-zone-sensible').style.display = 'none';
+
+  if(profil.role === 'pharmacien' || profil.role === 'pharmacie'){
+    $('tab-paiements').style.display = '';
+    if(profil.role === 'pharmacien'){ $('carte-paiement-pharmacien').style.display=''; $('carte-interac').style.display=''; }
+    if(profil.role === 'pharmacie'){ $('carte-garantie-pharmacie').style.display=''; }
+    chargerStatutPaiement();
+    chargerStatutInterac();
+  }
 
   $('langue').value = profil.langue || 'fr';
 
