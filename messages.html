@@ -101,7 +101,7 @@ body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',san
     <div class="droite" id="nav"></div>
   </div>
 </div>
-<div class="wrap" id="wrap"><div class="vide">Chargement…</div></div>
+<div class="wrap" id="wrap"><div class="vide" data-fr="Chargement…" data-en="Loading…">Chargement…</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-config.js?v=20260723b"></script>
@@ -129,8 +129,8 @@ function initialesDe(nom){
   profil = await cdExigerConnexion(['pharmacien','pharmacie']);
   cdEnteteConnecte();
   $('nav').innerHTML = (profil.role==='pharmacie'
-    ? '<a class="nav" href="/espace-pharmacie.html">Espace</a>'
-    : '<a class="nav" href="/contrats.html">Contrats</a>');
+    ? '<a class="nav" href="/espace-pharmacie.html">'+cdT('Espace','Space')+'</a>'
+    : '<a class="nav" href="/contrats.html">'+cdT('Contrats','Contracts')+'</a>');
   const ref = refDepuisUrl();
   const fil = new URLSearchParams(location.search).get('fil');
   const admin = new URLSearchParams(location.search).get('admin');
@@ -155,12 +155,12 @@ async function chargerApercuAdmin(){
 async function ouvrirConversationAdmin(){
   const wrap = $('wrap');
   wrap.innerHTML =
-    '<a class="retour" href="/messages.html">'+SVG_CHEV+' Messagerie</a>'+
+    '<a class="retour" href="/messages.html">'+SVG_CHEV+' '+cdT('Messagerie','Messages')+'</a>'+
     '<div class="conv-tete"><div class="av av-admin">'+ICONE_ADMIN+'</div>'+
-    '<div class="ct-corps"><span class="ct-nom">Équipe C-Direct</span><span class="ct-sous">Une question, un problème — écrivez-nous directement.</span></div></div>'+
-    '<div class="fil" id="fil"><div class="vide">Chargement…</div></div>'+
-    '<div class="saisie" id="saisie"><textarea id="txt" placeholder="Votre message…" rows="1"></textarea>'+
-    '<button id="env" aria-label="Envoyer">'+SVG_SEND+'</button></div>';
+    '<div class="ct-corps"><span class="ct-nom">Équipe C-Direct</span><span class="ct-sous">'+cdT('Une question, un problème — écrivez-nous directement.','A question, a problem — write to us directly.')+'</span></div></div>'+
+    '<div class="fil" id="fil"><div class="vide">'+cdT('Chargement…','Loading…')+'</div></div>'+
+    '<div class="saisie" id="saisie"><textarea id="txt" placeholder="'+cdT('Votre message…','Your message…')+'" rows="1"></textarea>'+
+    '<button id="env" aria-label="'+cdT('Envoyer','Send')+'">'+SVG_SEND+'</button></div>';
 
   $('env').onclick = envoyerAdmin;
   autoGrow($('txt'));
@@ -175,7 +175,7 @@ async function chargerAdmin(){
     .eq('utilisateur_id', profil.id).order('created_at',{ascending:true});
   if(error) return;
   const fil = $('fil'); if(!fil) return;
-  if(!data.length){ fil.innerHTML = '<div class="vide">Aucun message pour l’instant. Posez votre question, l’équipe C-Direct répond directement ici.</div>'; return; }
+  if(!data.length){ fil.innerHTML = '<div class="vide">'+cdT('Aucun message pour l’instant. Posez votre question, l’équipe C-Direct répond directement ici.','No message yet. Ask your question — the C-Direct team replies directly here.')+'</div>'; return; }
   fil.innerHTML = rendreBulles(data);
   if(data.length !== dernierN){ fil.scrollTop = fil.scrollHeight; dernierN = data.length; }
 }
@@ -185,7 +185,7 @@ async function envoyerAdmin(){
   $('env').disabled = true;
   const { error } = await sb.from('messages_admin').insert({ utilisateur_id: profil.id, expediteur_id: profil.id, corps });
   $('env').disabled = false;
-  if(error){ alert('Erreur : '+error.message); return; }
+  if(error){ alert(cdT('Erreur : ','Error: ')+error.message); return; }
   txt.value = ''; autoGrow(txt);
   await chargerAdmin();
 }
@@ -196,18 +196,18 @@ function ligneConv(f){
   const quand = f.dernier_le ? cdTempsRelatif(f.dernier_le) : '';
   const apercu = f.dernier_message
     ? esc(String(f.dernier_message).slice(0,90)) + (String(f.dernier_message).length>90?'…':'')
-    : 'Aucun message';
+    : cdT('Aucun message','No message');
   const jeSuisPharmacie = profil.role === 'pharmacie';
   const moiFerme  = jeSuisPharmacie ? f.cloture_pharmacie : f.cloture_pharmacien;
   const autreFerme= jeSuisPharmacie ? f.cloture_pharmacien : f.cloture_pharmacie;
   let badge = '';
-  if(ferme) badge = '<span class="mbadge">Fermée</span>';
-  else if(autreFerme && !moiFerme) badge = '<span class="mbadge att">Clôture demandée</span>';
-  else if(moiFerme && !autreFerme) badge = '<span class="mbadge">En attente</span>';
+  if(ferme) badge = '<span class="mbadge">'+cdT('Fermée','Closed')+'</span>';
+  else if(autreFerme && !moiFerme) badge = '<span class="mbadge att">'+cdT('Clôture demandée','Closure requested')+'</span>';
+  else if(moiFerme && !autreFerme) badge = '<span class="mbadge">'+cdT('En attente','Pending')+'</span>';
   const note = (f.contrepartie_note_moyenne != null && f.contrepartie_note_nombre)
     ? '<span class="note">★ '+Number(f.contrepartie_note_moyenne).toFixed(1)+'</span>' : '';
   const nonLu = f.non_lu && !ferme;
-  const nom = f.contrepartie_nom || 'Contrepartie';
+  const nom = f.contrepartie_nom || cdT('Contrepartie','Counterparty');
   return '<a class="conv'+(nonLu?' non-lu':'')+'" data-nom="'+esc(nom.toLowerCase())+'" href="/messages.html?fil='+encodeURIComponent(f.fil_id)+'">'
     + '<div class="av">'+esc(initialesDe(nom))+'</div>'
     + '<div class="corps"><div class="ligne1"><span class="nom">'+esc(nom)+'</span>'+note+badge+'</div>'
@@ -236,14 +236,14 @@ function filtrerRecherche(){
 async function listerConversations(){
   const wrap = $('wrap');
   wrap.innerHTML =
-    '<div class="mtete"><h1>Messagerie</h1><a class="faqpill" href="/faq.html">FAQ</a></div>'
-    + '<div class="recherche">'+SVG_SEARCH+'<input id="recherche" placeholder="Rechercher une conversation" autocomplete="off"></div>'
+    '<div class="mtete"><h1>'+cdT('Messagerie','Messages')+'</h1><a class="faqpill" href="/faq.html">FAQ</a></div>'
+    + '<div class="recherche">'+SVG_SEARCH+'<input id="recherche" placeholder="'+cdT('Rechercher une conversation','Search a conversation')+'" autocomplete="off"></div>'
     + '<div class="tabs">'
-    +   '<button class="tab actif" id="tab-messages" type="button">Messages <span id="cpt-messages"></span></button>'
+    +   '<button class="tab actif" id="tab-messages" type="button">'+cdT('Messages','Messages')+' <span id="cpt-messages"></span></button>'
     +   '<button class="tab" id="tab-admin" type="button">Équipe C-Direct <span id="cpt-admin"></span></button>'
-    +   '<button class="tab" id="tab-historique" type="button">Historique</button>'
+    +   '<button class="tab" id="tab-historique" type="button">'+cdT('Historique','History')+'</button>'
     + '</div>'
-    + '<div id="pane-messages"><div class="vide">Chargement…</div></div>'
+    + '<div id="pane-messages"><div class="vide">'+cdT('Chargement…','Loading…')+'</div></div>'
     + '<div id="pane-admin" style="display:none"></div>'
     + '<div id="pane-historique" style="display:none"></div>';
 
@@ -257,7 +257,7 @@ async function listerConversations(){
   const quandA = apercuAdmin.dernier_le ? cdTempsRelatif(apercuAdmin.dernier_le) : '';
   const apercuA = apercuAdmin.dernier_message
     ? esc(String(apercuAdmin.dernier_message).slice(0,90)) + (String(apercuAdmin.dernier_message).length>90?'…':'')
-    : 'Écrivez-nous si vous avez une question.';
+    : cdT('Écrivez-nous si vous avez une question.','Write to us if you have a question.');
   $('pane-admin').innerHTML =
     '<a class="pinned" href="/messages.html?admin=1">'
     + '<span class="picon">'+ICONE_ADMIN+'</span>'
@@ -271,8 +271,8 @@ async function listerConversations(){
   const paneM = $('pane-messages'), paneH = $('pane-historique');
   if(error){
     paneM.innerHTML = '<div class="vide">'
-      + (nonActive(error) ? 'Messagerie par fil non activée — exécuter <b>sql/23</b> dans Supabase.'
-                          : 'Erreur : '+esc(error.message)) + '</div>';
+      + (nonActive(error) ? cdT('Messagerie par fil non activée — exécuter <b>sql/23</b> dans Supabase.','Thread messaging not enabled — run <b>sql/23</b> in Supabase.')
+                          : cdT('Erreur : ','Error: ')+esc(error.message)) + '</div>';
     return;
   }
   const fils = data || [];
@@ -282,9 +282,9 @@ async function listerConversations(){
   if(nbNonLu) $('cpt-messages').outerHTML = '<span id="cpt-messages" class="cpt-badge">'+nbNonLu+'</span>';
 
   paneM.innerHTML = ouvertes.length ? ouvertes.map(ligneConv).join('')
-    : '<div class="vide">Aucune conversation active.<br>Une conversation s’ouvre dès qu’un contrat est confirmé des deux côtés.</div>';
+    : '<div class="vide">'+cdT('Aucune conversation active.<br>Une conversation s’ouvre dès qu’un contrat est confirmé des deux côtés.','No active conversation.<br>A conversation opens as soon as a contract is confirmed on both sides.')+'</div>';
   paneH.innerHTML = fermees.length ? fermees.map(ligneConv).join('')
-    : '<div class="vide">Aucune conversation fermée.</div>';
+    : '<div class="vide">'+cdT('Aucune conversation fermée.','No closed conversation.')+'</div>';
 }
 
 /* ---------------- UNE CONVERSATION ---------------- */
@@ -297,30 +297,30 @@ async function ouvrirConversation(ref){
   } else {
     const { data, error } = await sb.rpc('get_contrat_fiche', { p_ref: ref });
     if(error || !data || !data.length){
-      wrap.innerHTML = '<a class="retour" href="/messages.html">'+SVG_CHEV+' Messagerie</a><div class="vide">Conversation introuvable ou accès refusé.</div>'; return;
+      wrap.innerHTML = '<a class="retour" href="/messages.html">'+SVG_CHEV+' '+cdT('Messagerie','Messages')+'</a><div class="vide">'+cdT('Conversation introuvable ou accès refusé.','Conversation not found or access denied.')+'</div>'; return;
     }
     const k = data[0];
     contratId = k.id;
     if(!(k.statut==='attribue' || k.statut==='complete')){
-      wrap.innerHTML = '<a class="retour" href="/messages.html">'+SVG_CHEV+' Messagerie</a><div class="vide">La messagerie s’ouvre une fois le contrat confirmé des deux côtés.</div>'; return;
+      wrap.innerHTML = '<a class="retour" href="/messages.html">'+SVG_CHEV+' '+cdT('Messagerie','Messages')+'</a><div class="vide">'+cdT('La messagerie s’ouvre une fois le contrat confirmé des deux côtés.','Messaging opens once the contract is confirmed on both sides.')+'</div>'; return;
     }
     const { data: fid, error: eF } = await sb.rpc('ouvrir_fil', { p_contrat: contratId });
     if(eF){
-      wrap.innerHTML = '<a class="retour" href="/messages.html">'+SVG_CHEV+' Messagerie</a><div class="vide">'
-        + (nonActive(eF) ? 'Messagerie par fil non activée — exécuter <b>sql/23</b>.' : esc(eF.message)) + '</div>';
+      wrap.innerHTML = '<a class="retour" href="/messages.html">'+SVG_CHEV+' '+cdT('Messagerie','Messages')+'</a><div class="vide">'
+        + (nonActive(eF) ? cdT('Messagerie par fil non activée — exécuter <b>sql/23</b>.','Thread messaging not enabled — run <b>sql/23</b>.') : esc(eF.message)) + '</div>';
       return;
     }
     filId = fid;
   }
 
   wrap.innerHTML =
-    '<a class="retour" href="/messages.html">'+SVG_CHEV+' Toutes les conversations</a>'+
+    '<a class="retour" href="/messages.html">'+SVG_CHEV+' '+cdT('Toutes les conversations','All conversations')+'</a>'+
     '<div class="conv-tete"><div class="av" id="h-av"></div>'+
-    '<div class="ct-corps"><span class="ct-nom" id="h-titre">Conversation</span><span class="ct-sous" id="h-sous"></span></div></div>'+
+    '<div class="ct-corps"><span class="ct-nom" id="h-titre">'+cdT('Conversation','Conversation')+'</span><span class="ct-sous" id="h-sous"></span></div></div>'+
     '<div id="bandeau"></div>'+
-    '<div class="fil" id="fil"><div class="vide">Chargement…</div></div>'+
-    '<div class="saisie" id="saisie"><textarea id="txt" placeholder="Votre message…" rows="1"></textarea>'+
-    '<button id="env" aria-label="Envoyer">'+SVG_SEND+'</button></div>'+
+    '<div class="fil" id="fil"><div class="vide">'+cdT('Chargement…','Loading…')+'</div></div>'+
+    '<div class="saisie" id="saisie"><textarea id="txt" placeholder="'+cdT('Votre message…','Your message…')+'" rows="1"></textarea>'+
+    '<button id="env" aria-label="'+cdT('Envoyer','Send')+'">'+SVG_SEND+'</button></div>'+
     '<div style="margin-top:14px" id="zone-cloture"></div>';
 
   $('env').onclick = envoyer;
@@ -341,15 +341,15 @@ async function rafraichirEtat(){
   if(!f) return;
   filEtat = f;
 
-  const t = $('h-titre'); if(t) t.textContent = f.contrepartie_nom || 'Conversation';
+  const t = $('h-titre'); if(t) t.textContent = f.contrepartie_nom || cdT('Conversation','Conversation');
   const av = $('h-av'); if(av) av.textContent = initialesDe(f.contrepartie_nom);
   const s = $('h-sous');
   if(s){
     const note = (f.contrepartie_note_moyenne != null && f.contrepartie_note_nombre)
-      ? '★ ' + Number(f.contrepartie_note_moyenne).toFixed(1) + ' (' + f.contrepartie_note_nombre + ' avis) · '
+      ? '★ ' + Number(f.contrepartie_note_moyenne).toFixed(1) + ' (' + f.contrepartie_note_nombre + ' ' + cdT('avis','reviews') + ') · '
       : '';
     s.textContent = note + (f.contrat_ref ? f.contrat_ref + ' · ' : '')
-      + f.nb_messages + ' message' + (f.nb_messages>1?'s':'');
+      + f.nb_messages + ' ' + cdT('message' + (f.nb_messages>1?'s':''),'message' + (f.nb_messages>1?'s':''));
   }
 
   const jeSuisPharmacie = profil.role === 'pharmacie';
@@ -367,8 +367,8 @@ async function rafraichirEtat(){
 
   if(ferme){
     bandeau.innerHTML = boite('#F4F6F5','var(--ligne)',
-      '<b>Cette conversation est fermée.</b> L’historique reste consultable. '
-      + 'Une nouvelle conversation s’ouvrira automatiquement lors d’un prochain contrat ensemble.');
+      cdT('<b>Cette conversation est fermée.</b> L’historique reste consultable. Une nouvelle conversation s’ouvrira automatiquement lors d’un prochain contrat ensemble.',
+          '<b>This conversation is closed.</b> The history remains viewable. A new conversation will open automatically on your next contract together.'));
     if(saisie) saisie.style.display = 'none';
     zone.innerHTML = '';
     return;
@@ -377,17 +377,17 @@ async function rafraichirEtat(){
 
   if(autreFerme && !moiFerme){
     bandeau.innerHTML = boite('#FFF8EC','#F0DFC0',
-      '<b>L’autre partie souhaite clore cette conversation.</b> Elle restera ouverte tant que '
-      + 'vous ne l’acceptez pas — prenez le temps de finir ce que vous aviez à vous dire.');
-    zone.innerHTML = '<button class="btn-cloture" id="b-clore">Accepter de clore</button>';
+      cdT('<b>L’autre partie souhaite clore cette conversation.</b> Elle restera ouverte tant que vous ne l’acceptez pas — prenez le temps de finir ce que vous aviez à vous dire.',
+          '<b>The other party wants to close this conversation.</b> It stays open until you accept — take the time to finish what you had to say.'));
+    zone.innerHTML = '<button class="btn-cloture" id="b-clore">'+cdT('Accepter de clore','Accept closing')+'</button>';
   } else if(moiFerme && !autreFerme){
     bandeau.innerHTML = boite('#F4F6F5','var(--ligne)',
-      'Vous avez demandé la clôture. En attente de l’accord de l’autre partie — '
-      + 'vous pouvez continuer d’écrire d’ici là.');
-    zone.innerHTML = '<button class="btn-cloture" id="b-annuler">Annuler ma demande</button>';
+      cdT('Vous avez demandé la clôture. En attente de l’accord de l’autre partie — vous pouvez continuer d’écrire d’ici là.',
+          'You requested closing. Awaiting the other party\'s agreement — you can keep writing until then.'));
+    zone.innerHTML = '<button class="btn-cloture" id="b-annuler">'+cdT('Annuler ma demande','Cancel my request')+'</button>';
   } else {
     bandeau.innerHTML = '';
-    zone.innerHTML = '<button class="btn-cloture" id="b-clore">Clore la conversation</button>';
+    zone.innerHTML = '<button class="btn-cloture" id="b-clore">'+cdT('Clore la conversation','Close conversation')+'</button>';
   }
 
   const bc = $('b-clore'), ba = $('b-annuler');
@@ -398,25 +398,33 @@ async function rafraichirEtat(){
 async function demanderCloture(veut, seraDefinitive){
   if(veut){
     const msg = seraDefinitive
-      ? 'Clore cette conversation ?\n\n'
+      ? cdT('Clore cette conversation ?\n\n'
         + 'L’autre partie l’a déjà demandé : elle se fermera donc immédiatement.\n'
         + 'Vous ne pourrez plus vous écrire ici. L’historique reste consultable, et une nouvelle\n'
-        + 'conversation s’ouvrira lors d’un prochain contrat ensemble.'
-      : 'Demander la clôture de cette conversation ?\n\n'
+        + 'conversation s’ouvrira lors d’un prochain contrat ensemble.',
+          'Close this conversation?\n\n'
+        + 'The other party already requested it: it will close immediately.\n'
+        + 'You won\'t be able to write here anymore. The history stays viewable, and a new\n'
+        + 'conversation will open on your next contract together.')
+      : cdT('Demander la clôture de cette conversation ?\n\n'
         + 'Elle ne se fermera que si l’autre partie accepte aussi — vous pouvez continuer\n'
         + 'à écrire entre-temps, et annuler votre demande à tout moment.\n\n'
-        + 'Avez-vous bien reçu toutes les informations dont vous avez besoin ?';
+        + 'Avez-vous bien reçu toutes les informations dont vous avez besoin ?',
+          'Request to close this conversation?\n\n'
+        + 'It will only close if the other party also accepts — you can keep writing\n'
+        + 'in the meantime, and cancel your request at any time.\n\n'
+        + 'Have you received all the information you need?');
     if(!confirm(msg)) return;
   }
   const { error } = await sb.rpc('demander_cloture', { p_fil: filId, p_veut: veut });
-  if(error){ alert('Erreur : '+error.message); return; }
+  if(error){ alert(cdT('Erreur : ','Error: ')+error.message); return; }
   await rafraichirEtat();
   await charger();
 }
 
 /* ---------------- bulles + rendu commun ---------------- */
-function libelleAutre(){ return profil.role==='pharmacie' ? 'Pharmacien(ne)' : 'Pharmacie'; }
-function jourDe(iso){ try{ return new Date(iso).toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'}); }catch(e){ return ''; } }
+function libelleAutre(){ return profil.role==='pharmacie' ? cdT('Pharmacien(ne)','Pharmacist') : cdT('Pharmacie','Pharmacy'); }
+function jourDe(iso){ try{ return new Date(iso).toLocaleDateString(cdLang()==='en'?'en-CA':'fr-CA',{weekday:'long',day:'numeric',month:'long'}); }catch(e){ return ''; } }
 function rendreBulles(data){
   let html = '', jourCourant = '';
   data.forEach(m=>{
@@ -436,7 +444,7 @@ async function charger(){
     .eq('fil_id', filId).order('created_at',{ascending:true});
   if(error) return;
   const fil = $('fil'); if(!fil) return;
-  if(!data.length){ fil.innerHTML = '<div class="vide">Aucun message. Écrivez le premier — c’est direct, sans intermédiaire.</div>'; return; }
+  if(!data.length){ fil.innerHTML = '<div class="vide">'+cdT('Aucun message. Écrivez le premier — c’est direct, sans intermédiaire.','No message. Write the first — it\'s direct, no middleman.')+'</div>'; return; }
   fil.innerHTML = rendreBulles(data);
   if(data.length !== dernierN){ fil.scrollTop = fil.scrollHeight; dernierN = data.length; }
 }
@@ -453,7 +461,7 @@ async function envoyer(){
   }
   const { error } = await sb.from('messages').insert(ligne);
   $('env').disabled = false;
-  if(error){ alert('Erreur : '+error.message); return; }
+  if(error){ alert(cdT('Erreur : ','Error: ')+error.message); return; }
   txt.value = ''; autoGrow(txt);
   await charger();
 }
