@@ -292,13 +292,13 @@ function initOngletsEP(){
 (async function(){
   profil = await cdExigerConnexion(['pharmacie']);
   cdEnteteConnecte();
-  $('sous').textContent = (profil.nom_pharmacie || 'Pharmacie') + (profil.ville ? ' · ' + profil.ville : '');
+  $('sous').textContent = (profil.nom_pharmacie || cdT('Pharmacie','Pharmacy')) + (profil.ville ? ' · ' + profil.ville : '');
   /* Hébergement en nature : la case n'est utilisable que si une adresse
      standard est configurée au profil (Mes informations). */
   const adresseHeb = (profil.hebergement_adresse || '').trim();
   if(adresseHeb){
     $('ligne-hebergement').style.display = '';
-    $('hebergement-indice').textContent = 'Adresse qui sera offerte : ' + adresseHeb + ' (révélée au pharmacien une fois le contrat confirmé).';
+    $('hebergement-indice').textContent = cdT('Adresse qui sera offerte : ','Address that will be offered: ') + adresseHeb + cdT(' (révélée au pharmacien une fois le contrat confirmé).',' (revealed to the pharmacist once the contract is confirmed).');
     if(profil.hebergement_offert_par_defaut) $('hebergement_offerte').checked = true;
   } else {
     /* pas d'adresse d'hébergement : on masque l'option entièrement
@@ -324,7 +324,9 @@ function initOngletsEP(){
   if(favoris.size > 0){
     /* au moins un pharmacien de confiance : on affiche l'option */
     $('champ-acces-prioritaire').style.display = '';
-    $('acces-prioritaire-indice').textContent = favoris.size + ' pharmacien' + (favoris.size>1?'s':'') + ' de confiance verront ce contrat en premier ; les autres ne le verront qu\'à l\'expiration du délai choisi.';
+    $('acces-prioritaire-indice').textContent = cdT(
+      favoris.size + ' pharmacien' + (favoris.size>1?'s':'') + ' de confiance verront ce contrat en premier ; les autres ne le verront qu\'à l\'expiration du délai choisi.',
+      favoris.size + ' trusted pharmacist' + (favoris.size>1?'s':'') + ' will see this contract first; others only see it after the chosen delay expires.');
     if(profil.acces_prioritaire_par_defaut){
       $('acces_prioritaire').checked = true;
       $('acces_prioritaire_duree').style.display = '';
@@ -354,11 +356,11 @@ function initOngletsEP(){
     e.preventDefault();
     const tarif = parseFloat($('tarif_horaire').value);
     if(regles && tarif < parseFloat(regles.tarif_horaire_minimum)){
-      msg('msg-pub','Tarif sous le plancher du réseau ('+cdArgent(regles.tarif_horaire_minimum)+'/h).',false);
+      msg('msg-pub',cdT('Tarif sous le plancher du réseau ('+cdArgent(regles.tarif_horaire_minimum)+'/h).','Rate below the network floor ('+cdArgent(regles.tarif_horaire_minimum)+'/h).'),false);
       return;
     }
     if($('heure_fin').value <= $('heure_debut').value){
-      msg('msg-pub','L’heure de fin doit suivre l’heure de début.',false);
+      msg('msg-pub',cdT('L’heure de fin doit suivre l’heure de début.','The end time must be after the start time.'),false);
       return;
     }
     $('btn-pub').disabled = true;
@@ -385,7 +387,7 @@ function initOngletsEP(){
     }).select('numero_reference').single();
     $('btn-pub').disabled = false;
     if(error){ msg('msg-pub', error.message, false); return; }
-    msg('msg-pub','Contrat '+data.numero_reference+' publié ✓ — diffusion en cours…', true);
+    msg('msg-pub',cdT('Contrat '+data.numero_reference+' publié ✓ — diffusion en cours…','Contract '+data.numero_reference+' posted ✓ — broadcasting…'), true);
     /* Diffusion SMS (site → Worker). On AFFICHE le compte rendu : sans lui,
        un contrat que personne ne reçoit ressemble à un succès complet.
 
@@ -396,41 +398,52 @@ function initOngletsEP(){
        La diffusion elle-même part dans les deux cas. */
     var diffusion = cdDiffuserContrat(data.numero_reference);
     if(!diffusion || typeof diffusion.then !== 'function'){
-      msg('msg-pub','Contrat '+data.numero_reference+' publié ✓', true);
+      msg('msg-pub',cdT('Contrat '+data.numero_reference+' publié ✓','Contract '+data.numero_reference+' posted ✓'), true);
       diffusion = null;
     }
     if(diffusion) diffusion.then(function(r){
-      var base = 'Contrat '+data.numero_reference+' publié ✓';
+      var base = cdT('Contrat '+data.numero_reference+' publié ✓','Contract '+data.numero_reference+' posted ✓');
       if(!r || r.erreur){
         /* Échec de l'appel DIRECT site → Worker uniquement. La diffusion
            part aussi par la voie automatique (webhook base de données),
            donc les SMS sont généralement envoyés malgré ce message : on
            informe sans alarmer, et sans promettre non plus. */
-        msg('msg-pub', base+' — l\'envoi immédiat depuis cette page n\'a pas répondu ('+
+        msg('msg-pub', base+cdT(' — l\'envoi immédiat depuis cette page n\'a pas répondu ('+
             ((r && r.erreur) || 'raison inconnue')+'). La diffusion automatique prend le relais ; '+
-            'vérifiez dans quelques minutes. Le contrat est bien publié et visible dans « Contrats ouverts ».', false);
+            'vérifiez dans quelques minutes. Le contrat est bien publié et visible dans « Contrats affichés ».',
+            ' — the immediate send from this page did not respond ('+
+            ((r && r.erreur) || 'unknown reason')+'). The automatic broadcast takes over; '+
+            'check back in a few minutes. The contract is posted and visible under “Posted contracts”.'), false);
         return;
       }
       var n = r.sms_envoyes || 0, vus = r.pharmaciens_evalues || 0;
       if(n > 0){
-        msg('msg-pub', base+' — '+n+' pharmacien'+(n>1?'s':'')+' notifié'+(n>1?'s':'')+
-            ' par SMS sur '+vus+' évalué'+(vus>1?'s':'')+'.', true);
+        msg('msg-pub', base+cdT(' — '+n+' pharmacien'+(n>1?'s':'')+' notifié'+(n>1?'s':'')+
+            ' par SMS sur '+vus+' évalué'+(vus>1?'s':'')+'.',
+            ' — '+n+' pharmacist'+(n>1?'s':'')+' notified by SMS out of '+vus+' evaluated.'), true);
       } else if(vus === 0){
         /* Personne n'a même été ÉVALUÉ : la liste de départ était vide.
            Ce n'est pas un problème de filtrage du contrat, mais de comptes —
            inutile de parler de dates ou de logiciel, ça envoie sur une
            fausse piste (le message précédent disait « tous écartés » alors
            que personne n'avait été examiné : contradictoire). */
-        msg('msg-pub', base+', mais AUCUN pharmacien n\'était joignable : aucun compte '+
+        msg('msg-pub', base+cdT(', mais AUCUN pharmacien n\'était joignable : aucun compte '+
             'ne remplit les conditions de base pour recevoir un SMS. Vérifiez dans un profil '+
             'pharmacien que « Je consens à recevoir des SMS » est coché, que le compte est '+
             'approuvé, et qu\'un numéro de téléphone est enregistré. '+
-            'Le contrat reste visible dans « Contrats ouverts ».', false);
+            'Le contrat reste visible dans « Contrats affichés ».',
+            ', but NO pharmacist was reachable: no account meets the basic conditions to '+
+            'receive an SMS. Check on a pharmacist profile that “I consent to receive SMS” is '+
+            'ticked, that the account is approved, and that a phone number is saved. '+
+            'The contract stays visible under “Posted contracts”.'), false);
       } else {
-        msg('msg-pub', base+', mais AUCUN pharmacien n\'a été notifié ('+vus+
+        msg('msg-pub', base+cdT(', mais AUCUN pharmacien n\'a été notifié ('+vus+
             ' évalué'+(vus>1?'s':'')+', tous écartés). Causes habituelles : la date ne figure pas '+
             'dans leur calendrier de disponibilités, les SMS sont désactivés à leur profil, '+
-            'ou le logiciel demandé n\'est pas maîtrisé. Le contrat reste visible dans « Contrats ouverts ».', false);
+            'ou le logiciel demandé n\'est pas maîtrisé. Le contrat reste visible dans « Contrats affichés ».',
+            ', but NO pharmacist was notified ('+vus+' evaluated, all excluded). Usual causes: the '+
+            'date is not in their availability calendar, SMS are off on their profile, or the '+
+            'required software isn\'t mastered. The contract stays visible under “Posted contracts”.'), false);
       }
     });
     $('notes').value='';
@@ -443,19 +456,19 @@ function initOngletsEP(){
 
 /* ---- Phase 3 : factures reçues (envoyées par les pharmaciens) ---- */
 const CHIPS_GARANTIE = {
-  authorized: 'Garantie de paiement active — la carte n\'a pas été débitée',
-  pending_locum_confirmation: 'Déclaré envoyé — en attente de confirmation du pharmacien',
-  confirmed_exact: 'Confirmé reçu par le pharmacien',
-  amount_mismatch: 'Le pharmacien signale un écart — vérifiez le montant envoyé',
-  captured: 'Carte débitée automatiquement (délai dépassé)',
+  authorized: cdT('Garantie de paiement active — la carte n\'a pas été débitée','Payment guarantee active — the card has not been charged'),
+  pending_locum_confirmation: cdT('Déclaré envoyé — en attente de confirmation du pharmacien','Declared sent — awaiting the pharmacist\'s confirmation'),
+  confirmed_exact: cdT('Confirmé reçu par le pharmacien','Confirmed received by the pharmacist'),
+  amount_mismatch: cdT('Le pharmacien signale un écart — vérifiez le montant envoyé','The pharmacist reports a discrepancy — check the amount sent'),
+  captured: cdT('Carte débitée automatiquement (délai dépassé)','Card charged automatically (deadline passed)'),
 };
 
 async function chargerFactures(){
   const { data, error } = await sb.rpc('get_factures');
   const zone = $('liste-factures');
-  if(error){ zone.innerHTML = '<div class="vide">Erreur : '+error.message+'</div>'; return; }
+  if(error){ zone.innerHTML = '<div class="vide">'+cdT('Erreur : ','Error: ')+error.message+'</div>'; return; }
   const factures = (data||[]).filter(f => f.pharmacie_id === profil.id && f.statut !== 'brouillon');
-  if(!factures.length){ zone.innerHTML = '<div class="vide">Aucune facture reçue pour l\'instant.</div>'; return; }
+  if(!factures.length){ zone.innerHTML = '<div class="vide">'+cdT('Aucune facture reçue pour l\'instant.','No invoice received yet.')+'</div>'; return; }
 
   /* Garanties de paiement (Stripe) correspondantes, une requête groupée
      plutôt qu'une par facture. RLS (sql/43) autorise déjà la pharmacie à
@@ -468,7 +481,7 @@ async function chargerFactures(){
     (gs||[]).forEach(g=> garantiesParCandidature[g.candidature_id] = g.statut);
   }
 
-  const chips = {envoyee:['attribue','À PAYER'], payee:['ouvert','PAYÉE'], en_retard:['rouge','EN RETARD']};
+  const chips = {envoyee:['attribue',cdT('À PAYER','TO PAY')], payee:['ouvert',cdT('PAYÉE','PAID')], en_retard:['rouge',cdT('EN RETARD','OVERDUE')]};
   zone.innerHTML = '';
   factures.forEach(f=>{
     const div = document.createElement('div');
@@ -482,9 +495,9 @@ async function chargerFactures(){
     const meta = document.createElement('span');
     meta.className='meta';
     meta.textContent = f.numero_reference +
-      (f.type_facture==='penalite_annulation' ? ' · PÉNALITÉ D\'ANNULATION' : '') +
+      (f.type_facture==='penalite_annulation' ? cdT(' · PÉNALITÉ D\'ANNULATION',' · CANCELLATION PENALTY') : '') +
       ' · ' + ((f.pharmacien_prenom||'')+' '+(f.pharmacien_nom||'')).trim() +
-      ' · échéance ' + (f.date_echeance||'—');
+      cdT(' · échéance ',' · due ') + (f.date_echeance||'—');
     const total = document.createElement('span');
     total.className='compteur'; total.innerHTML = '<b>'+cdArgent(f.total)+'</b>';
     const badge = document.createElement('span');
@@ -495,12 +508,12 @@ async function chargerFactures(){
     const statutGarantie = garantiesParCandidature[f.candidature_id];
     if(f.statut === 'envoyee' || f.statut === 'en_retard'){
       const b = document.createElement('button');
-      b.className='btn-mini'; b.textContent='Marquer payée';
+      b.className='btn-mini'; b.textContent=cdT('Marquer payée','Mark paid');
       b.onclick = async ()=>{
-        if(!confirm('Confirmer le paiement de '+cdArgent(f.total)+' (virement Interac au pharmacien) ?')) return;
+        if(!confirm(cdT('Confirmer le paiement de '+cdArgent(f.total)+' (virement Interac au pharmacien) ?','Confirm payment of '+cdArgent(f.total)+' (Interac transfer to the pharmacist)?'))) return;
         b.disabled = true;
         const { error: e } = await sb.rpc('marquer_facture_payee', { p_facture: f.facture_id });
-        if(e){ b.disabled=false; msg('msg-factures','Erreur : '+e.message,false); return; }
+        if(e){ b.disabled=false; msg('msg-factures',cdT('Erreur : ','Error: ')+e.message,false); return; }
         /* Déclare aussi côté garantie Stripe (carte de garantie, si le
            mandat en a une active) — au mieux : la carte reste protégée
            par la capture automatique même si cet appel échoue, donc on
@@ -515,7 +528,7 @@ async function chargerFactures(){
             });
           }catch(_e){ /* silencieux — la garantie carte protège quand même le pharmacien */ }
         }
-        msg('msg-factures','Facture marquée payée ✓',true);
+        msg('msg-factures',cdT('Facture marquée payée ✓','Invoice marked paid ✓'),true);
         chargerFactures();
       };
       tete.appendChild(b);
@@ -539,9 +552,9 @@ async function chargerContrats(){
   ]);
   const liste = $('liste');                 // Contrats confirmés (attribué + complété)
   const listeOuverts = $('liste-ouverts');  // Contrats affichés (ouvert seulement ; annulés masqués)
-  if(error){ liste.innerHTML = listeOuverts.innerHTML = '<div class="vide">Erreur : '+error.message+'</div>'; return; }
+  if(error){ liste.innerHTML = listeOuverts.innerHTML = '<div class="vide">'+cdT('Erreur : ','Error: ')+error.message+'</div>'; return; }
   if(!contrats || !contrats.length){
-    const vide = '<div class="vide">Aucun contrat publié pour l’instant.</div>';
+    const vide = '<div class="vide">'+cdT('Aucun contrat publié pour l’instant.','No contract posted yet.')+'</div>';
     liste.innerHTML = vide; listeOuverts.innerHTML = vide; return;
   }
   const compte = {};
@@ -552,8 +565,8 @@ async function chargerContrats(){
   let nConfirme = 0, nOuvert = 0;
 
   liste.innerHTML = ''; listeOuverts.innerHTML = '';
-  const badges = {ouvert:['ouvert','AFFICHÉ'], attribue:['attribue','CONFIRMÉ'],
-                  complete:['autre','COMPLÉTÉ'], annule:['autre','ANNULÉ']};
+  const badges = {ouvert:['ouvert',cdT('AFFICHÉ','POSTED')], attribue:['attribue',cdT('CONFIRMÉ','CONFIRMED')],
+                  complete:['autre',cdT('COMPLÉTÉ','COMPLETED')], annule:['autre',cdT('ANNULÉ','CANCELLED')]};
   contrats.forEach(k=>{
     const n = compte[k.id]||0;
     const b = badges[k.statut] || ['autre', k.statut];
@@ -562,8 +575,8 @@ async function chargerContrats(){
     div.innerHTML =
       '<div class="tete">'+
         '<a class="ref" href="/c/'+encodeURIComponent(k.numero_reference)+'" onclick="event.stopPropagation()">'+k.numero_reference+'</a>'+
-        '<span class="meta">'+(k.profession_recherchee==='atp'?'ATP':'Pharmacien(ne)')+' · '+cdDate(k.date_contrat)+' · '+cdHeure(k.heure_debut)+'–'+cdHeure(k.heure_fin)+' · '+cdArgent(k.tarif_horaire)+'/h</span>'+
-        '<span class="compteur"><b>'+n+'</b> candidature'+(n>1?'s':'')+'</span>'+
+        '<span class="meta">'+(k.profession_recherchee==='atp'?'ATP':cdT('Pharmacien(ne)','Pharmacist'))+' · '+cdDate(k.date_contrat)+' · '+cdHeure(k.heure_debut)+'–'+cdHeure(k.heure_fin)+' · '+cdArgent(k.tarif_horaire)+'/h</span>'+
+        '<span class="compteur"><b>'+n+'</b> '+cdT('candidature'+(n>1?'s':''),'application'+(n>1?'s':''))+'</span>'+
         '<span class="badge '+b[0]+'">'+b[1]+'</span>'+
       '</div>'+
       '<div class="candidats"></div>';
@@ -573,14 +586,14 @@ async function chargerContrats(){
       const hint = document.createElement('div');
       hint.style.cssText = 'font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--jaune);margin-top:4px';
       hint.textContent = actif
-        ? '🔑 Accès prioritaire à vos pharmaciens de confiance jusqu\'à ' + fin.toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'})
-        : '🔑 Accès prioritaire terminé — visible par tous les pharmaciens compatibles';
+        ? '🔑 ' + cdT('Accès prioritaire à vos pharmaciens de confiance jusqu\'à ','Priority access for your trusted pharmacists until ') + fin.toLocaleTimeString(cdLang()==='en'?'en-CA':'fr-CA',{hour:'2-digit',minute:'2-digit'})
+        : '🔑 ' + cdT('Accès prioritaire terminé — visible par tous les pharmaciens compatibles','Priority access ended — visible to all compatible pharmacists');
       div.appendChild(hint);
     }
     /* annulation d'un contrat encore ouvert (aucune pénalité) */
     if(k.statut === 'ouvert'){
       const bX = document.createElement('button');
-      bX.className='btn-mini rouge'; bX.textContent="Annuler l'affichage";
+      bX.className='btn-mini rouge'; bX.textContent=cdT("Annuler l'affichage","Cancel posting");
       bX.onclick = ev=>{ ev.stopPropagation(); annulerContrat(k, bX); };
       div.querySelector('.tete').appendChild(bX);
     }
@@ -594,8 +607,8 @@ async function chargerContrats(){
     else if(k.statut === 'ouvert'){ nOuvert++; listeOuverts.appendChild(div); }
     /* les contrats annulés ne s'affichent nulle part dans les onglets */
   });
-  if(!nConfirme) liste.innerHTML = '<div class="vide">Aucun contrat confirmé pour l’instant.</div>';
-  if(!nOuvert) listeOuverts.innerHTML = '<div class="vide">Aucun contrat affiché — publiez-en un dans « Publier un contrat ».</div>';
+  if(!nConfirme) liste.innerHTML = '<div class="vide">'+cdT('Aucun contrat confirmé pour l’instant.','No confirmed contract yet.')+'</div>';
+  if(!nOuvert) listeOuverts.innerHTML = '<div class="vide">'+cdT('Aucun contrat affiché — publiez-en un dans « Publier un contrat ».','No posted contract — post one in “Post a contract”.')+'</div>';
 }
 
 /* ---- Phase 3 : annulation par la pharmacie (protection du réseau) ---- */
@@ -603,22 +616,31 @@ async function annulerContrat(k, btn){
   const p7  = regles ? regles.penalite_annulation_7j_pct  : 50;
   const p48 = regles ? regles.penalite_annulation_48h_pct : 100;
   const texte = k.statut === 'attribue'
-    ? 'ANNULER le contrat ' + k.numero_reference + ' (attribué) ?\n\n' +
-      'Règle du réseau — protection d\'annulation :\n' +
-      '· moins de 7 jours avant le début : pénalité de ' + p7 + ' % des heures × tarif convenus\n' +
-      '· moins de 48 heures avant le début : ' + p48 + ' %\n\n' +
-      'Si l\'annulation tombe dans une fenêtre de pénalité, la facture est générée et envoyée AUTOMATIQUEMENT au pharmacien. Aucune pénalité hors de ces fenêtres.\n\nContinuer ?'
-    : 'Retirer le contrat ' + k.numero_reference + ' (encore ouvert) ?\n\nAucune pénalité — le contrat n\'est pas attribué. Cette action est définitive.';
+    ? cdT(
+        'ANNULER le contrat ' + k.numero_reference + ' (attribué) ?\n\n' +
+        'Règle du réseau — protection d\'annulation :\n' +
+        '· moins de 7 jours avant le début : pénalité de ' + p7 + ' % des heures × tarif convenus\n' +
+        '· moins de 48 heures avant le début : ' + p48 + ' %\n\n' +
+        'Si l\'annulation tombe dans une fenêtre de pénalité, la facture est générée et envoyée AUTOMATIQUEMENT au pharmacien. Aucune pénalité hors de ces fenêtres.\n\nContinuer ?',
+        'CANCEL contract ' + k.numero_reference + ' (awarded)?\n\n' +
+        'Network rule — cancellation protection:\n' +
+        '· under 7 days before the start: penalty of ' + p7 + ' % of hours × agreed rate\n' +
+        '· under 48 hours before the start: ' + p48 + ' %\n\n' +
+        'If the cancellation falls in a penalty window, the invoice is generated and sent AUTOMATICALLY to the pharmacist. No penalty outside these windows.\n\nContinue?')
+    : cdT(
+        'Retirer le contrat ' + k.numero_reference + ' (encore ouvert) ?\n\nAucune pénalité — le contrat n\'est pas attribué. Cette action est définitive.',
+        'Remove contract ' + k.numero_reference + ' (still open)?\n\nNo penalty — the contract is not awarded. This action is final.');
   if(!confirm(texte)) return;
   btn.disabled = true;
   const { data, error } = await sb.rpc('annuler_contrat_pharmacie', { p_contrat: k.id });
-  if(error){ btn.disabled = false; alert('Erreur : ' + error.message); return; }
+  if(error){ btn.disabled = false; alert(cdT('Erreur : ','Error: ') + error.message); return; }
   const pct = data ? (data.penalite_pct || 0) : 0;
   cdAlerteAdmin('Annulation pharmacie — ' + k.numero_reference,
     (profil.nom_pharmacie||profil.courriel) + ' a annulé ' + k.numero_reference +
     (pct > 0 ? ' — pénalité ' + pct + ' %, facture envoyée automatiquement au pharmacien.' : ' — aucune pénalité.'));
   if(pct > 0){
-    alert('Contrat annulé. Pénalité de ' + pct + ' % appliquée — la facture du pharmacien a été générée et envoyée automatiquement (voir « Factures reçues »).');
+    alert(cdT('Contrat annulé. Pénalité de ' + pct + ' % appliquée — la facture du pharmacien a été générée et envoyée automatiquement (voir « Factures reçues »).',
+              'Contract cancelled. ' + pct + ' % penalty applied — the pharmacist\'s invoice was generated and sent automatically (see “Invoices received”).'));
   }
   chargerContrats();
   chargerFactures();
@@ -626,10 +648,10 @@ async function annulerContrat(k, btn){
 
 /* ---- candidats d'un contrat : négociation 3 étapes ---- */
 async function chargerCandidats(k, zone){
-  zone.innerHTML = '<div class="aucun">Chargement…</div>';
+  zone.innerHTML = '<div class="aucun">'+cdT('Chargement…','Loading…')+'</div>';
   const { data, error } = await sb.rpc('get_candidats', { p_contrat: k.id });
-  if(error){ zone.innerHTML = '<div class="aucun">Erreur : '+error.message+'</div>'; return; }
-  if(!data || !data.length){ zone.innerHTML = '<div class="aucun">Aucune candidature pour l’instant.</div>'; return; }
+  if(error){ zone.innerHTML = '<div class="aucun">'+cdT('Erreur : ','Error: ')+error.message+'</div>'; return; }
+  if(!data || !data.length){ zone.innerHTML = '<div class="aucun">'+cdT('Aucune candidature pour l’instant.','No application yet.')+'</div>'; return; }
 
   zone.innerHTML = '';
 
@@ -638,7 +660,7 @@ async function chargerCandidats(k, zone){
   if(gagnante){
     const e = document.createElement('div');
     e.className = 'entente';
-    e.innerHTML = '<small>Entente finale</small>';
+    e.innerHTML = '<small>'+cdT('Entente finale','Final agreement')+'</small>';
     const b = document.createElement('b');
     b.textContent = cdEntenteTexte({tarif_propose:gagnante.tarif_propose,
       heure_debut_proposee:gagnante.heure_debut_proposee,
@@ -654,12 +676,12 @@ async function chargerCandidats(k, zone){
 
       if(k.date_contrat <= new Date().toISOString().slice(0,10)){
         const bC = document.createElement('button');
-        bC.className='btn-mini'; bC.textContent='Marquer complété';
+        bC.className='btn-mini'; bC.textContent=cdT('Marquer complété','Mark completed');
         bC.onclick = async ()=>{
-          if(!confirm('Confirmer que le remplacement '+k.numero_reference+' a bien eu lieu ? La facture du pharmacien sera générée en brouillon.')) return;
+          if(!confirm(cdT('Confirmer que le remplacement '+k.numero_reference+' a bien eu lieu ? La facture du pharmacien sera générée en brouillon.','Confirm that replacement '+k.numero_reference+' took place? The pharmacist\'s invoice will be generated as a draft.'))) return;
           bC.disabled = true;
           const { error: e2 } = await sb.rpc('marquer_complete', { p_contrat: k.id });
-          if(e2){ bC.disabled=false; alert('Erreur : '+e2.message); return; }
+          if(e2){ bC.disabled=false; alert(cdT('Erreur : ','Error: ')+e2.message); return; }
           cdAlerteAdmin('Contrat complété — '+k.numero_reference,
             (profil.nom_pharmacie||profil.courriel)+' (pharmacie) a marqué '+k.numero_reference+' complété.');
           chargerContrats();
@@ -669,7 +691,7 @@ async function chargerCandidats(k, zone){
 
       /* annulation par la pharmacie — protection du réseau */
       const bX = document.createElement('button');
-      bX.className='btn-mini rouge'; bX.textContent='Annuler le contrat';
+      bX.className='btn-mini rouge'; bX.textContent=cdT('Annuler le contrat','Cancel contract');
       bX.onclick = ()=> annulerContrat(k, bX);
       actions.appendChild(bX);
 
@@ -678,7 +700,7 @@ async function chargerCandidats(k, zone){
     }
   }
 
-  const etats = {propose:'Proposé', contre_offre:'Contre-offre envoyée', accepte:'Accepté', refuse:'Refusé'};
+  const etats = {propose:cdT('Proposé','Proposed'), contre_offre:cdT('Contre-offre envoyée','Counter-offer sent'), accepte:cdT('Accepté','Accepted'), refuse:cdT('Refusé','Declined')};
   data.forEach(c=>{
     const bloc = document.createElement('div');
     bloc.className = 'bloc-candidat';
@@ -692,24 +714,24 @@ async function chargerCandidats(k, zone){
     const estFavori = favoris.has(c.pharmacien_id);
     coeur.className = 'btn-mini coeur' + (estFavori?' actif':'');
     coeur.textContent = estFavori ? '♥' : '♡';
-    coeur.title = estFavori ? 'Retirer des favoris' : 'Ajouter aux favoris (Instant Booking)';
+    coeur.title = estFavori ? cdT('Retirer des favoris','Remove from favorites') : cdT('Ajouter aux favoris (Instant Booking)','Add to favorites (Instant Booking)');
     coeur.onclick = async ev=>{
       ev.stopPropagation();
       coeur.disabled = true;
       if(favoris.has(c.pharmacien_id)){
         const { error } = await sb.from('favoris_pharmaciens').delete()
           .eq('pharmacie_id', profil.id).eq('pharmacien_id', c.pharmacien_id);
-        if(!error){ favoris.delete(c.pharmacien_id); coeur.textContent='♡'; coeur.classList.remove('actif'); coeur.title='Ajouter aux favoris (Instant Booking)'; }
+        if(!error){ favoris.delete(c.pharmacien_id); coeur.textContent='♡'; coeur.classList.remove('actif'); coeur.title=cdT('Ajouter aux favoris (Instant Booking)','Add to favorites (Instant Booking)'); }
       } else {
         const { error } = await sb.from('favoris_pharmaciens')
           .insert({ pharmacie_id: profil.id, pharmacien_id: c.pharmacien_id });
-        if(!error){ favoris.add(c.pharmacien_id); coeur.textContent='♥'; coeur.classList.add('actif'); coeur.title='Retirer des favoris'; }
+        if(!error){ favoris.add(c.pharmacien_id); coeur.textContent='♥'; coeur.classList.add('actif'); coeur.title=cdT('Retirer des favoris','Remove from favorites'); }
       }
       coeur.disabled = false;
     };
     const type = document.createElement('span');
     type.className = 'type-c ' + (c.type_candidature||'');
-    type.textContent = c.type_candidature === 'instantanee' ? 'Tarif affiché' : 'Négociée';
+    type.textContent = c.type_candidature === 'instantanee' ? cdT('Tarif affiché','Listed rate') : cdT('Négociée','Negotiated');
     const det = document.createElement('span');
     det.className='detail';
     const horaire = (c.heure_debut_proposee && c.heure_fin_proposee)
@@ -726,7 +748,7 @@ async function chargerCandidats(k, zone){
     if(c.note_nombre > 0){
       const nb = document.createElement('span');
       nb.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--jaune);border:1px solid rgba(232,184,73,.4);background:rgba(232,184,73,.1);border-radius:99px;padding:2px 9px";
-      nb.textContent = '★ ' + Number(c.note_moyenne).toFixed(1) + ' · ' + c.note_nombre + ' avis';
+      nb.textContent = '★ ' + Number(c.note_moyenne).toFixed(1) + ' · ' + c.note_nombre + ' ' + cdT('avis','reviews');
       meta.appendChild(nb);
     }
     /* coût total estimé (honoraires + déplacement + indemnités) */
@@ -736,7 +758,7 @@ async function chargerCandidats(k, zone){
         const tot = document.createElement('span');
         tot.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--vert-vif);border:1px solid rgba(23,201,128,.4);background:rgba(18,169,110,.1);border-radius:99px;padding:2px 9px;font-weight:700";
         tot.textContent = '≈ ' + cdArgent(est.total) + ' total';
-        tot.title = 'Honoraires + déplacement' + (est.perDiem?' + per diem':'') + (est.hebergement?' + hébergement':'');
+        tot.title = cdT('Honoraires + déplacement','Fees + travel') + (est.perDiem?cdT(' + per diem',' + per diem'):'') + (est.hebergement?cdT(' + hébergement',' + lodging'):'');
         meta.appendChild(tot);
       }
     }
@@ -760,18 +782,18 @@ async function chargerCandidats(k, zone){
 
       if(c.statut === 'propose'){
         const bA = document.createElement('button');
-        bA.className='btn-mini'; bA.textContent='Accepter';
+        bA.className='btn-mini'; bA.textContent=cdT('Accepter','Accept');
         bA.onclick = async ()=>{
-          if(!confirm('Accepter '+nom.textContent+' ('+cdArgent(c.tarif_propose)+'/h'+horaire+') pour '+k.numero_reference+' ? Les autres candidatures seront refusées.')) return;
+          if(!confirm(cdT('Accepter '+nom.textContent+' ('+cdArgent(c.tarif_propose)+'/h'+horaire+') pour '+k.numero_reference+' ? Les autres candidatures seront refusées.','Accept '+nom.textContent+' ('+cdArgent(c.tarif_propose)+'/h'+horaire+') for '+k.numero_reference+'? The other applications will be declined.'))) return;
           bA.disabled = true;
           const { error: e } = await sb.rpc('accepter_candidature', { p_candidature: c.candidature_id });
-          if(e){ bA.disabled=false; alert('Erreur : '+e.message); return; }
+          if(e){ bA.disabled=false; alert(cdT('Erreur : ','Error: ')+e.message); return; }
           if(typeof cdBalanceConfirm === 'function') cdBalanceConfirm();  /* balance qui s'équilibre — entente conclue */
           cdConfirmerContrat(k.numero_reference);   /* courriel « contrat confirmé » + PDF aux 2 parties */
           chargerContrats();
         };
         const bC = document.createElement('button');
-        bC.className='btn-mini jaune'; bC.textContent='Contre-offre';
+        bC.className='btn-mini jaune'; bC.textContent=cdT('Contre-offre','Counter-offer');
         actions.append(bA, bC);
 
         /* formulaire de contre-offre */
@@ -779,18 +801,18 @@ async function chargerCandidats(k, zone){
         f.className = 'f-contre';
         f.innerHTML =
           '<div class="rangee">'+
-            '<div><label>Tarif ($/h)</label><input name="tarif" type="number" step="0.01" min="0" required></div>'+
-            '<div><label>Début (opt.)</label><input name="hd" type="time"></div>'+
-            '<div><label>Fin (opt.)</label><input name="hf" type="time"></div>'+
+            '<div><label>'+cdT('Tarif ($/h)','Rate ($/h)')+'</label><input name="tarif" type="number" step="0.01" min="0" required></div>'+
+            '<div><label>'+cdT('Début (opt.)','Start (opt.)')+'</label><input name="hd" type="time"></div>'+
+            '<div><label>'+cdT('Fin (opt.)','End (opt.)')+'</label><input name="hf" type="time"></div>'+
           '</div>'+
-          '<label>Message (optionnel)</label><textarea name="texte" rows="2"></textarea>'+
-          '<button class="btn-mini jaune" type="submit" style="margin-top:8px">Envoyer la contre-offre</button>';
+          '<label>'+cdT('Message (optionnel)','Message (optional)')+'</label><textarea name="texte" rows="2"></textarea>'+
+          '<button class="btn-mini jaune" type="submit" style="margin-top:8px">'+cdT('Envoyer la contre-offre','Send counter-offer')+'</button>';
         f.tarif.value = c.tarif_propose;
         bC.onclick = ev=>{ ev.preventDefault(); f.classList.toggle('on'); };
         f.addEventListener('submit', async ev=>{
           ev.preventDefault();
           const hd = f.hd.value || null, hf = f.hf.value || null;
-          if((hd && !hf) || (!hd && hf)){ alert('Précisez le début ET la fin.'); return; }
+          if((hd && !hf) || (!hd && hf)){ alert(cdT('Précisez le début ET la fin.','Specify both start AND end.')); return; }
           const tarif = parseFloat(f.tarif.value);
           const { error: e } = await sb.from('candidatures').update({
             statut: 'contre_offre',
@@ -800,28 +822,28 @@ async function chargerCandidats(k, zone){
               tarif: tarif, hd: hd||k.heure_debut, hf: hf||k.heure_fin,
               message: f.texte.value.trim()||null})
           }).eq('id', c.candidature_id);
-          if(e){ alert('Erreur : '+e.message); return; }
+          if(e){ alert(cdT('Erreur : ','Error: ')+e.message); return; }
           chargerContrats();
         });
         bloc.appendChild(actions);
         bloc.appendChild(f);
       } else {
         const att = document.createElement('span');
-        att.className = 'attente'; att.textContent = 'En attente du pharmacien';
+        att.className = 'attente'; att.textContent = cdT('En attente du pharmacien','Awaiting the pharmacist');
         actions.append(att);
         bloc.appendChild(actions);
       }
 
       const bR = document.createElement('button');
-      bR.className='btn-mini rouge'; bR.textContent='Refuser';
+      bR.className='btn-mini rouge'; bR.textContent=cdT('Refuser','Decline');
       bR.onclick = async ()=>{
-        if(!confirm('Refuser la candidature de '+nom.textContent+' ?')) return;
+        if(!confirm(cdT('Refuser la candidature de '+nom.textContent+' ?','Decline '+nom.textContent+'\'s application?'))) return;
         bR.disabled = true;
         const { error: e } = await sb.from('candidatures').update({
           statut: 'refuse',
           message: cdJalonAjouter(c.message, {etape:'refuse', par:'pharmacie'})
         }).eq('id', c.candidature_id);
-        if(e){ bR.disabled=false; alert('Erreur : '+e.message); return; }
+        if(e){ bR.disabled=false; alert(cdT('Erreur : ','Error: ')+e.message); return; }
         chargerContrats();
       };
       actions.appendChild(bR);
@@ -829,14 +851,14 @@ async function chargerCandidats(k, zone){
 
     /* fil chronologique */
     const lien = document.createElement('button');
-    lien.className = 'lien-fil'; lien.type = 'button'; lien.textContent = 'Voir le fil de la négociation';
+    lien.className = 'lien-fil'; lien.type = 'button'; lien.textContent = cdT('Voir le fil de la négociation','View negotiation thread');
     const conteneurFil = document.createElement('div');
     conteneurFil.style.display = 'none';
     conteneurFil.appendChild(cdFilNegociation(c.message));
     lien.onclick = ()=>{
       const ouvert = conteneurFil.style.display !== 'none';
       conteneurFil.style.display = ouvert ? 'none' : '';
-      lien.textContent = ouvert ? 'Voir le fil de la négociation' : 'Masquer le fil';
+      lien.textContent = ouvert ? cdT('Voir le fil de la négociation','View negotiation thread') : cdT('Masquer le fil','Hide thread');
     };
     bloc.appendChild(lien);
     bloc.appendChild(conteneurFil);
@@ -899,8 +921,8 @@ async function majCompatibles(){
   try{
     const { data, error } = await sb.rpc('compter_compatibles', { p_date:d, p_tarif:t, p_profession:prof });
     if(error || data == null){ el.style.display='none'; return; }
-    el.textContent = data + (prof==='atp' ? ' ATP' : ' pharmacien'+(data>1?'s':'')) + ' compatible' + (data>1?'s':'') +
-      ' dans le réseau le ' + cdDate(d);
+    el.textContent = data + (prof==='atp' ? ' ATP' : ' ' + cdT('pharmacien'+(data>1?'s':''),'pharmacist'+(data>1?'s':''))) + ' ' + cdT('compatible'+(data>1?'s':''),'compatible') +
+      cdT(' dans le réseau le ',' in the network on ') + cdDate(d);
     el.style.display='';
   }catch(e){ el.style.display='none'; }
 }
