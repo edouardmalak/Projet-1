@@ -207,6 +207,10 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
           </div>
           <div class="champ"><label data-fr="Courriel" data-en="Email">Courriel</label><input id="i-courriel" type="email" autocomplete="email" required></div>
           <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input id="i-tel" type="tel" required placeholder="514-555-0123"></div>
+          <div class="champ" id="champ-experience" style="display:none">
+            <label data-fr="Années d'expérience (ATP — 1 an minimum)" data-en="Years of experience (pharmacy tech — 1 year minimum)">Années d'expérience (ATP — 1 an minimum)</label>
+            <input id="i-experience" type="number" min="0" step="1" inputmode="numeric" placeholder="2">
+          </div>
           <div class="champ rel">
             <label data-fr="Mot de passe (8 caractères min.)" data-en="Password (8 characters min.)">Mot de passe (8 caractères min.)</label>
             <input id="i-mdp" type="password" autocomplete="new-password" minlength="8" required style="padding-right:74px">
@@ -252,6 +256,10 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
             <div class="champ"><label data-fr="Nom" data-en="Last name">Nom</label><input id="g-nom" autocomplete="family-name" required></div>
           </div>
           <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input id="g-tel" type="tel" required placeholder="514-555-0123"></div>
+          <div class="champ" id="champ-experience-g" style="display:none">
+            <label data-fr="Années d'expérience (ATP — 1 an minimum)" data-en="Years of experience (pharmacy tech — 1 year minimum)">Années d'expérience (ATP — 1 an minimum)</label>
+            <input id="g-experience" type="number" min="0" step="1" inputmode="numeric" placeholder="2">
+          </div>
           <label class="consent">
             <input type="checkbox" id="g-consent" required>
             <span data-fr="J'accepte la <a href=&quot;confidentialite.html&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;>politique de confidentialité</a> et le traitement de mes renseignements personnels" data-en="I accept the <a href=&quot;confidentialite.html&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;>privacy policy</a> and the processing of my personal information">J'accepte la <a href="confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a> et le traitement de mes renseignements personnels</span>
@@ -333,6 +341,7 @@ function render(){
       montrer('z-completer');
       $('role-actuel').style.display='flex';
       $('role-nom').textContent=libelleRole(role, profession);
+      $('champ-experience-g').style.display = (profession==='atp') ? '' : 'none';
     }
     return;
   }
@@ -364,6 +373,7 @@ function render(){
     montrer('z-inscription');
     $('role-actuel').style.display='flex';
     $('role-nom').textContent=libelleRole(role, profession);
+    $('champ-experience').style.display = (profession==='atp') ? '' : 'none';
   }
 }
 
@@ -529,6 +539,16 @@ $('f-inscription').addEventListener('submit', async e=>{
   if(!profilComplet()){ etape='role'; render(); return; }
   const tel = cdE164($('i-tel').value);
   if(!tel){ erreur('err-insc',cdT('Téléphone invalide — 10 chiffres requis.','Invalid phone — 10 digits required.')); return; }
+  let experience = '';
+  if(profession === 'atp'){
+    const ex = parseInt($('i-experience').value, 10);
+    if(isNaN(ex) || ex < 1){
+      erreur('err-insc', cdT("Pour vous inscrire comme ATP, un minimum de 1 an d'expérience est requis.",
+                             "To register as a pharmacy tech, at least 1 year of experience is required."));
+      return;
+    }
+    experience = String(ex);
+  }
   if(!$('i-consent').checked){ erreur('err-insc',cdT('Le consentement est requis.','Consent is required.')); return; }
   const b=$('btn-inscription'); b.disabled=true; b.textContent=cdT('Création…','Creating…');
   const { data, error } = await sb.auth.signUp({
@@ -538,7 +558,8 @@ $('f-inscription').addEventListener('submit', async e=>{
       emailRedirectTo: location.origin + location.pathname + '?mode=conn',
       data:{
         role, profession, nom:$('i-nom').value.trim(), prenom:$('i-prenom').value.trim(),
-        telephone: tel, consentement:'true', consentement_date:new Date().toISOString()
+        telephone: tel, annees_experience: experience,
+        consentement:'true', consentement_date:new Date().toISOString()
       }
     }
   });
@@ -612,6 +633,16 @@ $('f-completer').addEventListener('submit', async e=>{
   e.preventDefault();
   const tel = cdE164($('g-tel').value);
   if(!tel){ erreur('err-completer',cdT('Téléphone invalide — 10 chiffres requis.','Invalid phone — 10 digits required.')); return; }
+  let experienceG = null;
+  if(profession === 'atp'){
+    const ex = parseInt($('g-experience').value, 10);
+    if(isNaN(ex) || ex < 1){
+      erreur('err-completer', cdT("Pour vous inscrire comme ATP, un minimum de 1 an d'expérience est requis.",
+                                  "To register as a pharmacy tech, at least 1 year of experience is required."));
+      return;
+    }
+    experienceG = ex;
+  }
   if(!$('g-consent').checked){ erreur('err-completer',cdT('Le consentement est requis.','Consent is required.')); return; }
   if(!profilComplet()){ etape='role'; render(); return; }
   const s = await cdSession();
@@ -621,6 +652,7 @@ $('f-completer').addEventListener('submit', async e=>{
     prenom:$('g-prenom').value.trim(), nom:$('g-nom').value.trim(),
     telephone: tel, consentement_date:new Date().toISOString(), courriel:s.user.email
   };
+  if(experienceG != null) maj.annees_experience = experienceG;
   const actuel = await cdProfil(true);
   if(!actuel || !actuel.role) maj.role = role;
   if(!actuel || !actuel.profession) maj.profession = profession;
