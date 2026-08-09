@@ -76,37 +76,37 @@ select{background:var(--panneau);border:1px solid var(--ligne2);border-radius:4p
 
 <div class="wrap">
   <h1>Finances</h1>
-  <p class="sous">Votre historique de revenus, vos paiements et un sommaire pour vos impôts</p>
+  <p class="sous" data-fr="Votre historique de revenus, vos paiements et un sommaire pour vos impôts" data-en="Your income history, your payments and a summary for your taxes">Votre historique de revenus, vos paiements et un sommaire pour vos impôts</p>
 
   <div class="onglets" id="onglets-finances">
-    <button class="onglet actif" data-onglet="revenu" type="button">Revenu</button>
-    <button class="onglet" data-onglet="paiements" type="button">Paiements</button>
+    <button class="onglet actif" data-onglet="revenu" type="button" data-fr="Revenu" data-en="Income">Revenu</button>
+    <button class="onglet" data-onglet="paiements" type="button" data-fr="Paiements" data-en="Payments">Paiements</button>
     <button class="onglet" data-onglet="t2125" type="button">T2125</button>
   </div>
 
   <div class="carte" data-onglet="revenu">
-    <div class="sec">Historique mensuel<small id="n-mois"></small></div>
+    <div class="sec"><span data-fr="Historique mensuel" data-en="Monthly history">Historique mensuel</span><small id="n-mois"></small></div>
     <div id="liste-mois"></div>
   </div>
 
   <div class="carte" data-onglet="paiements" style="display:none">
-    <div class="sec">Paiements<small id="n-paiements"></small></div>
+    <div class="sec"><span data-fr="Paiements" data-en="Payments">Paiements</span><small id="n-paiements"></small></div>
     <div class="table-scroll defile">
       <table>
-        <thead><tr><th>Facture</th><th>Date</th><th>Référence</th><th>Montant</th><th>Statut</th></tr></thead>
+        <thead><tr><th data-fr="Facture" data-en="Invoice">Facture</th><th data-fr="Date" data-en="Date">Date</th><th data-fr="Référence" data-en="Reference">Référence</th><th data-fr="Montant" data-en="Amount">Montant</th><th data-fr="Statut" data-en="Status">Statut</th></tr></thead>
         <tbody id="t-paiements"></tbody>
       </table>
     </div>
   </div>
 
   <div class="carte" data-onglet="t2125" style="display:none">
-    <div class="sec">Sommaire pour vos impôts</div>
-    <p class="lm-note">Ceci est un sommaire pour vous aider à remplir votre propre déclaration de travailleur autonome (T2125) — ce n'est pas un feuillet fiscal émis par C-Direct. C-Direct transmet les factures entre vous et les pharmacies ; l'argent ne transite jamais par une caisse C-Direct.</p>
+    <div class="sec" data-fr="Sommaire pour vos impôts" data-en="Summary for your taxes">Sommaire pour vos impôts</div>
+    <p class="lm-note" data-fr="Ceci est un sommaire pour vous aider à remplir votre propre déclaration de travailleur autonome (T2125) — ce n'est pas un feuillet fiscal émis par C-Direct. C-Direct transmet les factures entre vous et les pharmacies ; l'argent ne transite jamais par une caisse C-Direct." data-en="This is a summary to help you fill your own self-employed return (T2125) — it is not a tax slip issued by C-Direct. C-Direct passes invoices between you and the pharmacies; money never transits through a C-Direct account.">Ceci est un sommaire pour vous aider à remplir votre propre déclaration de travailleur autonome (T2125) — ce n'est pas un feuillet fiscal émis par C-Direct. C-Direct transmet les factures entre vous et les pharmacies ; l'argent ne transite jamais par une caisse C-Direct.</p>
     <div class="champ-annee">
-      <label style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd);text-transform:uppercase;letter-spacing:.06em">Année</label>
+      <label style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sourd);text-transform:uppercase;letter-spacing:.06em" data-fr="Année" data-en="Year">Année</label>
       <select id="annee-t2125"></select>
     </div>
-    <button type="button" class="btn-lot" id="btn-export-t2125">Télécharger le sommaire (CSV)</button>
+    <button type="button" class="btn-lot" id="btn-export-t2125" data-fr="Télécharger le sommaire (CSV)" data-en="Download the summary (CSV)">Télécharger le sommaire (CSV)</button>
   </div>
 </div>
 
@@ -116,8 +116,10 @@ select{background:var(--panneau);border:1px solid var(--ligne2);border-radius:4p
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 let profil = null, toutesFactures = [], toutesMandats = [];
-const NOMS_MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-const CHIPS_F = {brouillon:'Brouillon', envoyee:'Envoyée', payee:'Payée', en_retard:'En retard'};
+const NOMS_MOIS = cdLang()==='en'
+  ? ['january','february','march','april','may','june','july','august','september','october','november','december']
+  : ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const CHIPS_F = {brouillon:cdT('Brouillon','Draft'), envoyee:cdT('Envoyée','Sent'), payee:cdT('Payée','Paid'), en_retard:cdT('En retard','Overdue')};
 
 function cleMois(dateStr){ return String(dateStr).slice(0,7); }
 function libelleMois(cle){ const [a,m] = cle.split('-'); return NOMS_MOIS[parseInt(m,10)-1] + ' ' + a; }
@@ -125,7 +127,9 @@ function libelleMois(cle){ const [a,m] = cle.split('-'); return NOMS_MOIS[parseI
 function csvDepuisFactures(factures, nomFichier){
   const esc = v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
   const dec = n => (parseFloat(n)||0).toFixed(2).replace('.', ',');
-  const cols = ['Date contrat','N° facture','Référence','Pharmacie','Ville','Tarif horaire','Total','Statut'];
+  const cols = cdLang()==='en'
+    ? ['Contract date','Invoice #','Reference','Pharmacy','City','Hourly rate','Total','Status']
+    : ['Date contrat','N° facture','Référence','Pharmacie','Ville','Tarif horaire','Total','Statut'];
   const rows = factures.map(f=>[
     f.date_contrat||'', 'F-'+String(f.numero_facture).padStart(6,'0'), f.numero_reference||'',
     f.nom_pharmacie||'', f.pharmacie_ville||'', dec(f.tarif_horaire), dec(f.total), f.statut||''
@@ -152,16 +156,16 @@ function rendreRevenuMensuel(){
     if(m.statut==='complete') b.completes++; else b.annules++;
   });
   const cles = [...parMois.keys()].sort().reverse();
-  $('n-mois').textContent = cles.length ? cles.length+' mois' : '';
-  if(!cles.length){ $('liste-mois').innerHTML = '<div class="vide">Aucun revenu enregistré pour l\'instant.</div>'; return; }
+  $('n-mois').textContent = cles.length ? cles.length+' '+cdT('mois','months') : '';
+  if(!cles.length){ $('liste-mois').innerHTML = '<div class="vide">'+cdT('Aucun revenu enregistré pour l\'instant.','No income recorded yet.')+'</div>'; return; }
   $('liste-mois').innerHTML = cles.map(cle=>{
     const d = parMois.get(cle);
     return '<div class="ligne-mois">'+
       '<span class="lm-mois">'+libelleMois(cle)+'</span>'+
-      '<span class="lm-revenu">'+cdArgent(d.revenu)+' Revenu</span>'+
-      '<span class="lm-stat">'+d.completes+' Contrat(s) complété(s)</span>'+
-      '<span class="lm-stat annule">'+d.annules+' Contrat(s) annulé(s)</span>'+
-      '<button type="button" class="btn-mini ghost" data-mois="'+cle+'" style="margin-left:auto">Télécharger</button>'+
+      '<span class="lm-revenu">'+cdArgent(d.revenu)+' '+cdT('Revenu','Income')+'</span>'+
+      '<span class="lm-stat">'+d.completes+' '+cdT('Contrat(s) complété(s)','completed contract(s)')+'</span>'+
+      '<span class="lm-stat annule">'+d.annules+' '+cdT('Contrat(s) annulé(s)','cancelled contract(s)')+'</span>'+
+      '<button type="button" class="btn-mini ghost" data-mois="'+cle+'" style="margin-left:auto">'+cdT('Télécharger','Download')+'</button>'+
     '</div>';
   }).join('');
   $('liste-mois').querySelectorAll('button[data-mois]').forEach(b=>{
@@ -171,8 +175,8 @@ function rendreRevenuMensuel(){
 
 function rendrePaiements(){
   const tb = $('t-paiements');
-  $('n-paiements').textContent = toutesFactures.length ? toutesFactures.length+' facture'+(toutesFactures.length>1?'s':'') : '';
-  if(!toutesFactures.length){ tb.innerHTML = '<tr><td colspan="5" class="vide">Aucune facture pour l\'instant.</td></tr>'; return; }
+  $('n-paiements').textContent = toutesFactures.length ? toutesFactures.length+' '+cdT('facture'+(toutesFactures.length>1?'s':''),'invoice'+(toutesFactures.length>1?'s':'')) : '';
+  if(!toutesFactures.length){ tb.innerHTML = '<tr><td colspan="5" class="vide">'+cdT('Aucune facture pour l\'instant.','No invoice yet.')+'</td></tr>'; return; }
   const triees = toutesFactures.slice().sort((a,b)=> String(b.date_contrat).localeCompare(String(a.date_contrat)));
   tb.innerHTML = triees.map(f=>
     '<tr><td class="ref"><a href="/facture-vue.html?id='+f.facture_id+'">F-'+String(f.numero_facture).padStart(6,'0')+'</a></td>'+
@@ -209,7 +213,7 @@ function initT2125(){
   const [{ data: factures, error: eF }, { data: mandats, error: eM }] = await Promise.all([
     sb.rpc('get_factures'), sb.rpc('get_mes_mandats')
   ]);
-  if(eF){ $('liste-mois').innerHTML = '<div class="vide">Erreur : '+eF.message+'</div>'; return; }
+  if(eF){ $('liste-mois').innerHTML = '<div class="vide">'+cdT('Erreur : ','Error: ')+eF.message+'</div>'; return; }
   toutesFactures = (factures||[]).filter(f=> f.pharmacien_id === profil.id);
   toutesMandats = eM ? [] : (mandats || []);
 
