@@ -10,11 +10,11 @@ Legend: 🧑 = only you can do this (password, account, real money, a decision).
 
 Deux correctifs de sécurité/logique poussés le 2026-08-09 attendent d'être **exécutés en base** (Supabase → SQL Editor). Le code est déjà en prod ; il faut lancer le SQL pour que la base suive.
 
-1. 🧑 **`sql/62-restaure-gardes-instant-booking.sql`** — restaure les gardes de l'acceptation automatique (Instant Booking). La version live de `accepter_candidature_auto()` avait dérivé et n'avait plus AUCUNE garde (elle acceptait toute candidature qu'on lui passait) et retournait `void` au lieu de `boolean`. Le Worker a déjà reçu une défense en profondeur (il revérifie favori/exclusions avant d'appeler), mais la base doit être recorrigée.
-2. 🧑 **`sql/63-durcissement-acl-fonctions.sql`** — ferme l'accès **anonyme** à des fonctions restées publiques. Vérifié en direct sans session : `get_stats_pharmacien` et `get_note_profil` répondaient à un client anonyme, et le mutateur `appliquer_indemnites` était exposé. Après exécution, revérifier que le site connecté marche (profil, évaluations, mandats).
+1. 🧑 **`sql/62-restaure-gardes-instant-booking.sql`** — restaure les gardes de l'acceptation automatique (Instant Booking). La version live de `accepter_candidature_auto()` avait dérivé et n'avait plus AUCUNE garde (elle acceptait toute candidature qu'on lui passait) et retournait `void` au lieu de `boolean`. Le Worker a déjà reçu une défense en profondeur (il revérifie favori/exclusions avant d'appeler), mais la base doit être recorrigée. ✅ **DONE — exécuté en Supabase 2026-08-09.**
+2. 🧑 **`sql/63-durcissement-acl-fonctions.sql`** — ferme l'accès **anonyme** à des fonctions restées publiques. Vérifié en direct sans session : `get_stats_pharmacien` et `get_note_profil` répondaient à un client anonyme, et le mutateur `appliquer_indemnites` était exposé. Après exécution, revérifier que le site connecté marche (profil, évaluations, mandats). ✅ **DONE — exécuté en Supabase 2026-08-09.**
 
-3. 🧑 **`sql/64-admin-reactiver-compte.sql`** — ajoute les boutons admin Réactiver/Désactiver un compte (la désactivation libre-service n'avait aucun retour arrière) et réactive au passage le compte de test `edouardmalak+pharmacien@gmail.com`.
-4. 🧑 **`sql/65-avatars-storage.sql`** — crée le bucket de stockage `avatars` pour la photo de profil **facultative** du pharmacien. Sans lui, le reste du profil s'enregistre quand même ; seule la photo affiche « Stockage non activé ».
+3. 🧑 **`sql/64-admin-reactiver-compte.sql`** — ajoute les boutons admin Réactiver/Désactiver un compte (la désactivation libre-service n'avait aucun retour arrière) et réactive au passage le compte de test `edouardmalak+pharmacien@gmail.com`. ✅ **DONE — exécuté en Supabase 2026-08-09.**
+4. 🧑 **`sql/65-avatars-storage.sql`** — crée le bucket de stockage `avatars` pour la photo de profil **facultative** du pharmacien. Sans lui, le reste du profil s'enregistre quand même ; seule la photo affiche « Stockage non activé ». ✅ **DONE — exécuté en Supabase 2026-08-09.**
 
 (Copier-coller le contenu de chaque fichier dans Supabase → SQL Editor → Run. Tous sont idempotents. Ordre conseillé : 62, 63, 64, 65.)
 
@@ -100,3 +100,33 @@ These came up during the payments build and were consciously left out rather tha
 ## Already done — for context, not action
 
 Confirmed via memory + live checks, no action needed: DMARC, Twilio token rotation, Twilio on a paid plan, Google sign-in (working live since 2026-07-26), the T-24h payment authorization/retry/capture cycle (fully automatic, confirmed via cron), the Cloudflare Workers Paid upgrade, mobile deep-link files, and the Stripe fee/liability sign-off (you gave informed consent on 2026-08-04 — Express accounts mean C-Direct absorbs Stripe's processing fee and chargeback risk, which is priced into the $39 fee).
+
+## Open items — updated 2026-08-09
+### Cowork (UI / site)
+- [ ] 1. Welcome greeting next to the name, immediately after the C-Direct
+       wordmark. Both the pharmacy site and the locum site, landing page and
+       dashboard. Logged out: "Bienvenue"/"Welcome" alone. Logged in: with the
+       first name. Must use the existing i18n mechanism — no hardcoded strings.
+       STATUS: specified, not confirmed applied. Verify before building.
+- [ ] 4. "Resend confirmation email" button on the login page. Needed because a
+       duplicate unconfirmed user in Supabase fails silently — the user gets no
+       email and no error.
+- [ ] 5. This update itself.
+- [ ] 6+. Bugs from the pre-launch test pass. To come.
+### Claude Code (backend — NOT Cowork)
+- [ ] C1. RLS audit: every table, view, and storage bucket in the public schema.
+       Report which have RLS enabled, who can read, who can write, and flag any
+       case where an anon or any-authenticated user can read another user's or
+       another pharmacy's rows. Include the `avatars` bucket — created
+       2026-08-09, default policy unverified. PRIORITY: today.
+- [ ] C2. Fix whatever C1 reveals.
+- [ ] C3. Report the real state of the Stripe payment rail: what is built,
+       what is not, what has been tested end to end. This is the critical path
+       for the September launch.
+### Robert (manual)
+- [ ] R1. Purge Cloudflare cache, verify the 8 Aug redesign is live.
+- [ ] R2. Fill in and commit CLAUDE.md at the repo root.
+- [ ] R3. Create 5 test accounts (PH-1, PH-2, LOC-1, LOC-2, ADMIN).
+- [ ] R4. Run the pre-launch test plan.
+- [ ] R5. One-week pilot: 2 pharmacists, 2 locums.
+- [ ] R6. GST/QST treatment of the $39 fee + registration numbers on invoices.
