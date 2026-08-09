@@ -552,7 +552,7 @@ async function chargerContrats(){
   let nConfirme = 0, nOuvert = 0;
 
   liste.innerHTML = ''; listeOuverts.innerHTML = '';
-  const badges = {ouvert:['ouvert','OUVERT'], attribue:['attribue','CONFIRMÉ'],
+  const badges = {ouvert:['ouvert','AFFICHÉ'], attribue:['attribue','CONFIRMÉ'],
                   complete:['autre','COMPLÉTÉ'], annule:['autre','ANNULÉ']};
   contrats.forEach(k=>{
     const n = compte[k.id]||0;
@@ -580,7 +580,7 @@ async function chargerContrats(){
     /* annulation d'un contrat encore ouvert (aucune pénalité) */
     if(k.statut === 'ouvert'){
       const bX = document.createElement('button');
-      bX.className='btn-mini rouge'; bX.textContent='Annuler';
+      bX.className='btn-mini rouge'; bX.textContent="Annuler l'affichage";
       bX.onclick = ev=>{ ev.stopPropagation(); annulerContrat(k, bX); };
       div.querySelector('.tete').appendChild(bX);
     }
