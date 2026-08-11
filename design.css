@@ -56,8 +56,17 @@ body{
   color:var(--sourd);
 }
 
-/* ---------- barre de navigation ---------- */
+/* ---------- barre de navigation ----------
+   position + z-index obligatoires : le backdrop-filter ci-dessous crée un
+   contexte d'empilement. Sans z-index explicite, la barre est peinte SOUS
+   le contenu de la page (les .carte sont en position:relative, et
+   apple-dark.css met body > * en z-index:1) — le menu déroulant du compte
+   se retrouvait alors coupé net dès qu'il touchait le texte de la page.
+   sticky + z-index:1000 garde la barre, et donc son menu, au-dessus. */
 .topbar{
+  position:sticky;
+  top:0;
+  z-index:1000;
   background:rgba(255,255,255,.82) !important;
   backdrop-filter:blur(14px) saturate(1.6);
   -webkit-backdrop-filter:blur(14px) saturate(1.6);
