@@ -130,3 +130,47 @@ Confirmed via memory + live checks, no action needed: DMARC, Twilio token rotati
 - [ ] R4. Run the pre-launch test plan.
 - [ ] R5. One-week pilot: 2 pharmacists, 2 locums.
 - [ ] R6. GST/QST treatment of the $39 fee + registration numbers on invoices.
+
+## Open items — updated 2026-08-11
+
+### Cowork (UI / site)
+- [ ] 1. Welcome greeting next to the name, immediately after the C-Direct
+      wordmark. Both the pharmacy site and the locum site, landing page and
+      dashboard. Logged out: "Bienvenue"/"Welcome" alone. Logged in: with the
+      first name. Must use the existing i18n mechanism — no hardcoded strings.
+      STATUS: specified, not confirmed applied. VERIFY FIRST before building —
+      it may already exist behind the old cache.
+- [ ] 4. "Resend confirmation email" button on the login page. Needed because a
+      duplicate unconfirmed user in Supabase fails silently — the user gets no
+      email and no error.
+- [ ] 5. This list update itself.
+- [ ] 6. Brand kit installation: swap the old logo for the new C-Direct
+      checkmark lockup (Anton, forest green + amber check) and install the
+      favicon/app-icon set + PWA manifest from c-direct-brand-kit.zip, per its
+      included handoff instructions. Separate session, own commit per step.
+- [ ] 7+. Bugs from the pre-launch test pass. To come.
+
+### Backend (separate session — full repo, database access)
+- [ ] C1. RLS audit: every table, view, and storage bucket in the public
+      schema. Report which have RLS enabled, who can read, who can write, and
+      flag any case where an anon or any-authenticated user can read another
+      user's or another pharmacy's rows. Include the `avatars` bucket —
+      created 2026-08-09, default policy unverified. PRIORITY: immediate.
+- [ ] C2. Fix whatever C1 reveals.
+- [ ] C3. Report the real state of the Stripe payment rail: what is built,
+      what is not, what has been tested end to end. Critical path for the
+      September launch.
+- [ ] C4. Auto-accept / instant fill feature: locum opts in with settings
+      (max km, max hours per shift, minimum rate, must-know-software), and
+      matching shifts book instantly; per-hour premium on auto-accepted
+      shifts, amount set globally in admin; schedule-conflict check required.
+      STATUS: to be specified in detail before any code — do not start from
+      this line alone.
+
+### Robert (manual — not for any agent)
+- [ ] R1. Purge Cloudflare cache, verify the 8 Aug redesign is live.
+- [ ] R2. Fill in and commit CLAUDE.md at the repo root.
+- [ ] R3. Create 5 test accounts (PH-1, PH-2, LOC-1, LOC-2, ADMIN).
+- [ ] R4. Run the pre-launch test plan (2–3 days).
+- [ ] R5. One-week pilot: 2 pharmacists, 2 locums.
+- [ ] R6. GST/QST treatment of the $39 fee + registration numbers on invoices.
