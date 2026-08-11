@@ -102,6 +102,44 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
       <div class="msg" id="msg-matching"></div>
     </div>
 
+    <!-- Batch 2 — #4 : auto-acceptation (pharmacien seulement) -->
+    <div class="carte" id="carte-auto-acceptation" style="display:none">
+      <div class="sec" data-fr="Auto-acceptation" data-en="Auto-acceptance">Auto-acceptation</div>
+      <div id="aa-stripe-bloque" style="display:none;background:rgba(201,123,18,.08);border:1px solid rgba(201,123,18,.35);border-left:3px solid var(--jaune);border-radius:4px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--jaune);margin-bottom:12px">
+        <span data-fr="Complétez votre configuration de paiement pour activer l'auto-acceptation — " data-en="Complete your payment setup to enable auto-acceptance — ">Complétez votre configuration de paiement pour activer l'auto-acceptation — </span><a href="#" id="lien-aa-stripe" style="color:var(--vert-vif)" data-fr="configurer mes paiements" data-en="set up my payments">configurer mes paiements</a>
+      </div>
+      <label class="consent">
+        <input type="checkbox" id="aa_enabled">
+        <span data-fr="Activer l'auto-acceptation" data-en="Enable auto-acceptance">Activer l'auto-acceptation</span>
+      </label>
+      <p class="explic" data-fr="Les quarts correspondant à vos critères seront acceptés automatiquement et immédiatement. Votre calendrier fait foi de vos disponibilités." data-en="Shifts matching your criteria will be accepted automatically and immediately. Your calendar is the authoritative record of your availability.">Les quarts correspondant à vos critères seront acceptés automatiquement et immédiatement. Votre calendrier fait foi de vos disponibilités.</p>
+      <div id="aa-champs" style="display:none">
+        <div class="champ"><label data-fr="Distance maximale (km)" data-en="Maximum distance (km)">Distance maximale (km)</label><input id="aa_distance" type="number" min="1" step="1"></div>
+        <div class="champ"><label data-fr="Heures maximales par quart" data-en="Maximum hours per shift">Heures maximales par quart</label><input id="aa_heures" type="number" min="1" step="0.5"></div>
+        <div class="champ"><label data-fr="Taux minimum ($/h)" data-en="Minimum rate ($/h)">Taux minimum ($/h)</label><input id="aa_taux" type="number" min="0" step="0.01">
+          <p class="explic" style="margin:4px 0 0;font-size:12px" data-fr="Comparé au taux INCLUANT la prime instantanée" data-en="Compared to the rate INCLUDING the instant premium">Comparé au taux INCLUANT la prime instantanée</p>
+        </div>
+        <div class="champ"><label data-fr="Jours exclus" data-en="Excluded days">Jours exclus</label>
+          <div id="aa-jours" style="display:flex;gap:6px;flex-wrap:wrap">
+            <label class="consent" style="margin:0;padding:8px 10px"><input type="checkbox" value="0"><span data-fr="Dim" data-en="Sun">Dim</span></label>
+            <label class="consent" style="margin:0;padding:8px 10px"><input type="checkbox" value="1"><span data-fr="Lun" data-en="Mon">Lun</span></label>
+            <label class="consent" style="margin:0;padding:8px 10px"><input type="checkbox" value="2"><span data-fr="Mar" data-en="Tue">Mar</span></label>
+            <label class="consent" style="margin:0;padding:8px 10px"><input type="checkbox" value="3"><span data-fr="Mer" data-en="Wed">Mer</span></label>
+            <label class="consent" style="margin:0;padding:8px 10px"><input type="checkbox" value="4"><span data-fr="Jeu" data-en="Thu">Jeu</span></label>
+            <label class="consent" style="margin:0;padding:8px 10px"><input type="checkbox" value="5"><span data-fr="Ven" data-en="Fri">Ven</span></label>
+            <label class="consent" style="margin:0;padding:8px 10px"><input type="checkbox" value="6"><span data-fr="Sam" data-en="Sat">Sam</span></label>
+          </div>
+        </div>
+        <div class="champ"><label data-fr="Périodes exclues (optionnel)" data-en="Excluded periods (optional)">Périodes exclues (optionnel)</label>
+          <div id="aa-periodes"></div>
+          <button type="button" class="btn-sec" id="btn-aa-ajouter-periode" style="width:auto;padding:8px 12px" data-fr="+ Ajouter une période" data-en="+ Add a period">+ Ajouter une période</button>
+        </div>
+      </div>
+      <p class="explic" id="aa-mois" style="display:none;margin:8px 0 12px"></p>
+      <button class="btn" id="btn-save-aa" type="button" data-fr="Enregistrer" data-en="Save">Enregistrer</button>
+      <div class="msg" id="msg-aa"></div>
+    </div>
+
     <div class="carte" id="carte-confiance-pharmacie" style="display:none">
       <div class="sec" data-fr="Bassin de confiance" data-en="Trusted pool">Bassin de confiance</div>
       <label class="consent">
@@ -611,6 +649,108 @@ async function initialiserFormulaireCarte(){
   }
 }
 
+/* ================= AUTO-ACCEPTATION (Batch 2 — #4, pharmacien) ================= */
+function majChampsAA(){
+  $('aa-champs').style.display = $('aa_enabled').checked ? '' : 'none';
+}
+
+function ajouterPeriodeAA(deb, fin){
+  const styleDate = 'flex:1;border:1px solid var(--ligne2);border-radius:4px;padding:9px 10px;font-family:\'IBM Plex Mono\',monospace;font-size:12.5px;background:#F4F8F5;color:var(--texte)';
+  const ligne = document.createElement('div');
+  ligne.className = 'aa-periode';
+  ligne.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px';
+  ligne.innerHTML = '<input type="date" class="aa-deb" style="'+styleDate+'">'
+    + '<span style="color:var(--sourd)">→</span>'
+    + '<input type="date" class="aa-fin" style="'+styleDate+'">'
+    + '<button type="button" class="aa-x" title="Retirer" style="background:transparent;border:1px solid var(--ligne2);border-radius:4px;padding:8px 10px;cursor:pointer;color:var(--rouge)">✕</button>';
+  ligne.querySelector('.aa-deb').value = deb || '';
+  ligne.querySelector('.aa-fin').value = fin || '';
+  ligne.querySelector('.aa-x').onclick = ()=> ligne.remove();
+  $('aa-periodes').appendChild(ligne);
+}
+
+async function chargerAutoAcceptation(){
+  /* Porte Stripe : le toggle exige charges_enabled && payouts_enabled */
+  let stripeOk = false;
+  try{
+    const { data: sc } = await sb.from('stripe_comptes').select('stripe_account_statut').eq('profil_id', profil.id).maybeSingle();
+    const st = sc && sc.stripe_account_statut;
+    stripeOk = !!(st && st.charges_enabled && st.payouts_enabled);
+  }catch(e){}
+  if(!stripeOk){
+    $('aa_enabled').disabled = true;
+    $('aa-stripe-bloque').style.display = '';
+  }
+
+  /* Réglages existants (auto_accept_locum_settings — RLS : sa propre ligne) */
+  const { data: reg } = await sb.from('auto_accept_locum_settings').select('*').eq('pharmacien_id', profil.id).maybeSingle();
+  if(reg){
+    $('aa_enabled').checked = !!reg.enabled && stripeOk;
+    $('aa_distance').value = reg.max_distance_km ?? '';
+    $('aa_heures').value = reg.max_hours_per_shift ?? '';
+    $('aa_taux').value = reg.min_rate ?? '';
+    (reg.excluded_weekdays || []).forEach(d=>{
+      const c = document.querySelector('#aa-jours input[value="'+d+'"]'); if(c) c.checked = true;
+    });
+    /* daterange normalisé par Postgres en [début, fin+1j) — on réaffiche la fin incluse */
+    (reg.excluded_date_ranges || []).forEach(r=>{
+      const m = String(r).match(/^[\[\(]\s*"?([0-9-]+)"?\s*,\s*"?([0-9-]+)"?\s*([\)\]])$/);
+      if(!m) return;
+      let fin = m[2];
+      if(m[3] === ')'){ const d = new Date(fin+'T00:00:00'); d.setDate(d.getDate()-1); fin = d.toISOString().slice(0,10); }
+      ajouterPeriodeAA(m[1], fin);
+    });
+  }
+  majChampsAA();
+
+  /* Mois confirmés (mois courant + suivant) — lien vers le calendrier sinon */
+  try{
+    const { data: mois } = await sb.rpc('mes_mois_confirmes');
+    const confirmes = new Set((mois || []).map(x=> String(x.mois).slice(0,7)));
+    const auj = new Date();
+    const morceaux = [];
+    for(let i = 0; i < 2; i++){
+      const d = new Date(auj.getFullYear(), auj.getMonth()+i, 1);
+      const cle = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+      const nom = d.toLocaleDateString(cdLang()==='en'?'en-CA':'fr-CA', { month:'long' });
+      morceaux.push(confirmes.has(cle)
+        ? nom+' ✓'
+        : '<a href="/mes-mandats.html" style="color:var(--vert-vif)">'+nom+'</a> —');
+    }
+    $('aa-mois').innerHTML = cdT('Auto-acceptation active pour : ','Auto-acceptance active for: ') + morceaux.join(' · ');
+    $('aa-mois').style.display = '';
+  }catch(e){}
+}
+
+if($('aa_enabled')) $('aa_enabled').addEventListener('change', majChampsAA);
+if($('btn-aa-ajouter-periode')) $('btn-aa-ajouter-periode').onclick = ()=> ajouterPeriodeAA('','');
+if($('lien-aa-stripe')) $('lien-aa-stripe').onclick = (e)=>{ e.preventDefault(); afficherOnglet('paiements'); };
+
+if($('btn-save-aa')) $('btn-save-aa').onclick = async ()=>{
+  const jours = [...document.querySelectorAll('#aa-jours input:checked')].map(c=> parseInt(c.value, 10));
+  const periodes = [...document.querySelectorAll('#aa-periodes .aa-periode')].map(l=>{
+    const d = l.querySelector('.aa-deb').value, f = l.querySelector('.aa-fin').value;
+    if(!d || !f) return null;
+    if(f < d){ return 'ERREUR'; }
+    return '['+d+','+f+']';   /* bornes incluses — Postgres normalise */
+  }).filter(Boolean);
+  if(periodes.includes('ERREUR')){ msg('msg-aa', cdT('Période exclue invalide : la fin précède le début.','Invalid excluded period: end date is before start date.'), false); return; }
+  const patch = {
+    pharmacien_id: profil.id,
+    enabled: $('aa_enabled').checked,
+    max_distance_km: parseInt($('aa_distance').value, 10) || null,
+    max_hours_per_shift: parseFloat($('aa_heures').value) || null,
+    min_rate: parseFloat($('aa_taux').value) || null,
+    excluded_weekdays: jours.length ? jours : null,
+    excluded_date_ranges: periodes.length ? periodes : null
+  };
+  $('btn-save-aa').disabled = true;
+  const { error } = await sb.from('auto_accept_locum_settings').upsert(patch, { onConflict: 'pharmacien_id' });
+  $('btn-save-aa').disabled = false;
+  if(error){ msg('msg-aa', cdT('Erreur : ','Error: ') + error.message, false); return; }
+  msg('msg-aa', cdT('Réglages d\'auto-acceptation enregistrés.','Auto-acceptance settings saved.'), true);
+};
+
 /* ================= INIT ================= */
 (async function(){
   profil = await cdExigerConnexion();
@@ -641,6 +781,8 @@ async function initialiserFormulaireCarte(){
     $('bloc-distance').style.display = '';
     $('carte-lien-relations').style.display = '';
     $('lien-relations-locum').style.display = '';
+    $('carte-auto-acceptation').style.display = '';
+    chargerAutoAcceptation();
   }
   if(profil.role === 'pharmacie'){
     $('carte-confiance-pharmacie').style.display = '';
