@@ -160,17 +160,49 @@ Confirmed via memory + live checks, no action needed: DMARC, Twilio token rotati
 - [ ] C3. Report the real state of the Stripe payment rail: what is built,
       what is not, what has been tested end to end. Critical path for the
       September launch.
-- [ ] C4. Auto-accept / instant fill feature: locum opts in with settings
-      (max km, max hours per shift, minimum rate, must-know-software), and
-      matching shifts book instantly; per-hour premium on auto-accepted
-      shifts, amount set globally in admin; schedule-conflict check required.
-      STATUS: to be specified in detail before any code — do not start from
-      this line alone.
+- [x] C4. Auto-accept / instant fill feature. DONE 2026-08-11: backend
+      (sql/68-72, Job 1) + full UI (Batch 2, items 4-8) both live. See the
+      "Pending / under review" section below for what remains before it can
+      be switched on for real users.
 
 ### Robert (manual — not for any agent)
 - [ ] R1. Purge Cloudflare cache, verify the 8 Aug redesign is live.
-- [ ] R2. Fill in and commit CLAUDE.md at the repo root.
+- [x] R2. Fill in and commit CLAUDE.md at the repo root. DONE 2026-08-11
+      (commit 8e3d15f — strict editing rules, auto-sync kept).
 - [ ] R3. Create 5 test accounts (PH-1, PH-2, LOC-1, LOC-2, ADMIN).
 - [ ] R4. Run the pre-launch test plan (2–3 days).
 - [ ] R5. One-week pilot: 2 pharmacists, 2 locums.
 - [ ] R6. GST/QST treatment of the $39 fee + registration numbers on invoices.
+
+## Pending / under review — 2026-08-11 (auto-accept: everything important to know)
+
+Auto-accept is FULLY BUILT (backend sql/68-72 + UI Batch 2 items 4-8, commits
+a07d82b, 4a58191, 34a02d5, 7f5f306, 330234e — one `git revert` per item to
+undo) but it is DORMANT: `feature_enabled = false` platform-wide. Users see
+nothing until it is switched on. Before flipping it on for real:
+
+- [ ] P1. End-to-end test (Robert + one test locum): Admin → Auto-acceptation
+      → enable + set the premium ($/h) → test locum completes Stripe
+      onboarding, turns the toggle on in Paramètres with criteria, and
+      confirms the month via the new banner on Mes disponibilités → post a
+      matching shift from a test pharmacy → shift should book itself within
+      ~30 s, premium on the contract, both parties notified.
+- [ ] P2. Decide the launch premium amount. Anything above 15 $/h requires
+      typing CONFIRMER [amount] — enforced by both the UI and the backend.
+- [ ] P3. Kill switch awareness: "Suspendre le matching" (red toggle in admin)
+      pauses all auto-acceptations instantly WITHOUT touching locum settings —
+      the queue accumulates and drains on resume. This is the emergency lever.
+- [ ] P4. Known small nuance, review then accept or ask for a change: editing
+      the calendar auto-confirms that month in the backend, but the banner on
+      Mes disponibilités only reflects it after a page reload (the button
+      itself updates instantly). Left this way to avoid touching the calendar
+      save code (the page stays under the do-not-touch rule; the 2026-08-11
+      change was a one-time, banner-only exception).
+- [ ] P5. Locum-side prerequisites worth communicating at launch: the toggle
+      stays locked until Stripe onboarding is complete (charges + payouts
+      enabled), and auto-accept only fires for months the locum has confirmed.
+      2 cancellations of auto-accepted shifts within 90 days = 30-day
+      automatic suspension.
+- [ ] P6. Admin panel is French-only (whole-page convention) — the new
+      Auto-acceptation section follows it. Fine for launch (admin = Robert);
+      flag only if the admin console ever needs EN.
