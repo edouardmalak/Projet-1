@@ -184,6 +184,13 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
         <div class="indice"><span data-fr="Plancher réseau :" data-en="Network floor:">Plancher réseau :</span> <b id="plancher">—</b></div>
         <div class="indice" id="compatibles" style="display:none;color:var(--vert-vif);margin-top:6px;font-weight:600"></div>
       </div>
+      <!-- Batch 2 — #6 : divulgation du prix « comblé instantanément » (visible
+           seulement si l'auto-acceptation est activée à l'échelle plateforme) -->
+      <div id="aa-prix-instant" style="display:none;margin:-2px 0 12px;padding:10px 12px;background:#F4F8F5;border:1px solid var(--ligne2);border-radius:5px;font-family:'IBM Plex Mono',monospace;font-size:12.5px">
+        <div style="display:flex;justify-content:space-between"><span data-fr="Taux affiché" data-en="Listed rate">Taux affiché</span><b id="aa-taux-affiche">—</b></div>
+        <div style="display:flex;justify-content:space-between;margin-top:3px"><span data-fr="Si comblé instantanément" data-en="If filled instantly">Si comblé instantanément</span><b id="aa-taux-instant">—</b></div>
+        <div style="margin-top:6px;color:var(--sourd);font-size:10.5px" data-fr="Les quarts peuvent être comblés instantanément par un pharmacien correspondant. La prime est versée entièrement au pharmacien." data-en="Shifts can be filled instantly by a matching pharmacist. The premium is paid entirely to the pharmacist.">Les quarts peuvent être comblés instantanément par un pharmacien correspondant. La prime est versée entièrement au pharmacien.</div>
+      </div>
       <div id="prix-dual" style="display:none;margin:-2px 0 12px;padding:10px 12px;background:#F4F8F5;border:1px solid var(--ligne2);border-radius:5px;font-family:'IBM Plex Mono',monospace;font-size:12.5px">
         <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:6px;font-weight:700">Ce que vous paierez (estimation de base)</div>
         <div style="display:flex;justify-content:space-between"><span>Virement Interac</span><b id="prix-interac">—</b></div>
@@ -316,6 +323,7 @@ function initOngletsEP(){
   ['date_contrat','tarif_horaire','profession_recherchee'].forEach(id=> $(id) && $(id).addEventListener('change', majCompatibles));
   ['heure_debut','heure_fin','tarif_horaire'].forEach(id=> $(id) && $(id).addEventListener('input', majPrixDual));
   majPrixDual();
+  chargerInfosAutoAcceptation();   /* Batch 2 — #6 */
 
   /* favoris (Instant Booking) — chargés une fois, tenus à jour en mémoire */
   const { data: favs } = await sb.from('favoris_pharmaciens').select('pharmacien_id').eq('pharmacie_id', profil.id);
@@ -912,6 +920,35 @@ function majPrixDual(){
   const prix = cdPrixDual(montantLocum);
   $('prix-interac').textContent = cdArgent(prix.interac);
   $('prix-carte').textContent = cdArgent(prix.carte);
+  zone.style.display = '';
+}
+
+/* Batch 2 — #6 : prix « comblé instantanément » — lecture unique de
+   auto_acceptation_infos_publiques() ; si la fonctionnalité est éteinte
+   à l'échelle plateforme, le bloc reste masqué et rien ne change. */
+let aaInfosPlateforme = null;
+async function chargerInfosAutoAcceptation(){
+  try{
+    const { data } = await sb.rpc('auto_acceptation_infos_publiques');
+    const ligne = Array.isArray(data) ? data[0] : data;
+    if(ligne && ligne.feature_enabled){
+      aaInfosPlateforme = ligne;
+      $('tarif_horaire').addEventListener('input', majPrixInstant);
+      majPrixInstant();
+    }
+  }catch(e){ /* RPC absente ou erreur : on n'affiche rien */ }
+}
+function majPrixInstant(){
+  const zone = $('aa-prix-instant'); if(!zone || !aaInfosPlateforme) return;
+  const tarif = parseFloat($('tarif_horaire').value);
+  const prime = parseFloat(aaInfosPlateforme.premium_per_hour) || 0;
+  if(!tarif || tarif <= 0){
+    $('aa-taux-affiche').textContent = '—';
+    $('aa-taux-instant').textContent = '—';
+  } else {
+    $('aa-taux-affiche').textContent = tarif.toFixed(2) + ' $/h';
+    $('aa-taux-instant').textContent = (tarif + prime).toFixed(2) + ' $/h';
+  }
   zone.style.display = '';
 }
 
