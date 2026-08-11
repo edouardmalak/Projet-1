@@ -157,6 +157,38 @@ tbody tr:last-child td{border-bottom:none}
       <div class="msg" id="msg-regles"></div>
     </form>
   </div>
+
+  <!-- Batch 2 — #8 : AUTO-ACCEPTATION (réglages plateforme) -->
+  <div class="carte">
+    <div class="sec">Auto-acceptation<small>remplissage instantané — réglages plateforme</small></div>
+    <form id="f-aa-admin">
+      <label style="display:flex;align-items:flex-start;gap:10px;border:1px solid var(--ligne2);border-radius:4px;padding:11px 12px;margin-bottom:10px;cursor:pointer;font-size:13px">
+        <input type="checkbox" id="aa_feature_enabled" style="width:16px;height:16px;margin-top:1px;accent-color:var(--vert);flex:none">
+        <span><b>Fonctionnalité activée</b> (plateforme entière) — les quarts éligibles peuvent être comblés automatiquement.</span>
+      </label>
+      <label style="display:flex;align-items:flex-start;gap:10px;border:1px solid rgba(229,72,77,.5);background:rgba(229,72,77,.06);border-radius:4px;padding:11px 12px;margin-bottom:14px;cursor:pointer;font-size:13px">
+        <input type="checkbox" id="aa_matching_paused" style="width:16px;height:16px;margin-top:1px;accent-color:#E5484D;flex:none">
+        <span><b style="color:var(--rouge)">SUSPENDRE LE MATCHING</b><br><small style="color:var(--sourd)">Suspend immédiatement toutes les acceptations automatiques sans modifier les réglages des pharmaciens.</small></span>
+      </label>
+      <div class="grille-regles">
+        <div class="champ"><label>Prime par heure ($)</label><input id="aa_premium" type="number" step="0.01" min="0" required></div>
+        <div class="champ"><label>Limite d'auto-réservations par pharmacien par heure</label><input id="aa_max_heure" type="number" step="1" min="1" required value="3"></div>
+      </div>
+      <div id="aa-confirm-zone" style="display:none;border:1px solid rgba(229,72,77,.5);background:rgba(229,72,77,.06);border-radius:4px;padding:12px;margin-bottom:12px">
+        <div style="font-size:12.5px;color:var(--rouge);margin-bottom:8px">Prime supérieure à 15&nbsp;$/h — tapez <b id="aa-confirm-attendu">CONFIRMER …</b> pour enregistrer.</div>
+        <input id="aa_confirm_txt" type="text" autocomplete="off" style="width:100%;border:1px solid rgba(229,72,77,.5);border-radius:4px;padding:10px 11px;font-family:'IBM Plex Mono',monospace;font-size:13px">
+      </div>
+      <button class="btn" type="submit" id="btn-aa-admin">Enregistrer l'auto-acceptation</button>
+      <div class="msg" id="msg-aa-admin"></div>
+    </form>
+    <div class="sec" style="margin-top:20px">Historique des changements<small id="n-aa-hist">qui / quand / ancien → nouveau</small></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Quand</th><th>Admin</th><th>Champ</th><th>Ancien → nouveau</th></tr></thead>
+        <tbody id="t-aa-hist"><tr><td colspan="4" class="vide">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
   </div>
 
   <div data-onglet="utilisateurs">
@@ -400,6 +432,84 @@ function cdToast(texte, ok){
     $('btn-regles').disabled = false;
     if(error){ msg('msg-regles', error.message, false); return; }
     msg('msg-regles','Règles du réseau enregistrées ✓', true);
+  });
+
+  /* ---- Batch 2 — #8 : auto-acceptation (réglages plateforme) ----
+     Écriture UNIQUEMENT via la RPC modifier_reglages_auto_acceptation()
+     (le backend exige p_confirmer_premium_eleve=true pour une prime > 15). */
+  const AA_CHAMPS_LIBELLES = {
+    feature_enabled: 'Fonctionnalité',
+    matching_paused: 'Matching suspendu',
+    premium_per_hour: 'Prime par heure',
+    max_auto_bookings_per_locum_per_hour: 'Limite / pharmacien / heure'
+  };
+  async function chargerAAAdmin(){
+    const { data } = await sb.from('auto_accept_admin_settings').select('*').eq('id',1).maybeSingle();
+    if(data){
+      $('aa_feature_enabled').checked = !!data.feature_enabled;
+      $('aa_matching_paused').checked = !!data.matching_paused;
+      $('aa_premium').value = data.premium_per_hour;
+      $('aa_max_heure').value = data.max_auto_bookings_per_locum_per_hour;
+    }
+  }
+  async function chargerAAHistorique(){
+    const tb = $('t-aa-hist');
+    const { data, error } = await sb.from('auto_accept_admin_settings_history')
+      .select('modifie_le,modifie_par,champ,ancienne_valeur,nouvelle_valeur')
+      .order('modifie_le', { ascending:false }).limit(100);
+    if(error){ tb.innerHTML = '<tr><td colspan="4" class="vide">'+error.message+'</td></tr>'; return; }
+    if(!data || !data.length){ tb.innerHTML = '<tr><td colspan="4" class="vide">Aucun changement pour l\'instant.</td></tr>'; $('n-aa-hist').textContent = 'aucun changement'; return; }
+    const ids = [...new Set(data.map(h=>h.modifie_par).filter(Boolean))];
+    const noms = new Map();
+    if(ids.length){
+      const { data: ps } = await sb.from('profiles').select('id,prenom,nom,courriel').in('id', ids);
+      (ps||[]).forEach(p=> noms.set(p.id, ((p.prenom||'')+' '+(p.nom||'')).trim() || p.courriel || p.id));
+    }
+    $('n-aa-hist').textContent = data.length + ' changement' + (data.length>1?'s':'');
+    tb.innerHTML = data.map(h=>
+      '<tr><td>'+new Date(h.modifie_le).toLocaleString('fr-CA')+'</td>'
+      +'<td>'+(noms.get(h.modifie_par) || '—')+'</td>'
+      +'<td>'+(AA_CHAMPS_LIBELLES[h.champ] || h.champ)+'</td>'
+      +'<td>'+(h.ancienne_valeur ?? '—')+' → '+(h.nouvelle_valeur ?? '—')+'</td></tr>').join('');
+  }
+  chargerAAAdmin();
+  chargerAAHistorique();
+
+  $('f-aa-admin').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const prime = parseFloat($('aa_premium').value);
+    if(isNaN(prime) || prime < 0){ msg('msg-aa-admin','Prime invalide.', false); return; }
+    const params = {
+      p_feature_enabled: $('aa_feature_enabled').checked,
+      p_matching_paused: $('aa_matching_paused').checked,
+      p_premium_per_hour: prime,
+      p_max_par_heure: parseInt($('aa_max_heure').value, 10) || 3
+    };
+    if(prime > 15){
+      const attendu = 'CONFIRMER ' + String(prime);
+      if($('aa-confirm-zone').style.display === 'none'){
+        $('aa-confirm-attendu').textContent = attendu;
+        $('aa_confirm_txt').value = '';
+        $('aa-confirm-zone').style.display = '';
+        $('aa_confirm_txt').focus();
+        msg('msg-aa-admin','Prime > 15 $/h : tapez la confirmation ci-dessus, puis enregistrez de nouveau.', false);
+        return;
+      }
+      if($('aa_confirm_txt').value.trim() !== attendu){
+        msg('msg-aa-admin','Texte de confirmation incorrect — tapez exactement : ' + attendu, false);
+        return;
+      }
+      params.p_confirmer_premium_eleve = true;
+    } else {
+      $('aa-confirm-zone').style.display = 'none';
+    }
+    $('btn-aa-admin').disabled = true;
+    const { error } = await sb.rpc('modifier_reglages_auto_acceptation', params);
+    $('btn-aa-admin').disabled = false;
+    if(error){ msg('msg-aa-admin','Erreur : '+error.message, false); return; }
+    $('aa-confirm-zone').style.display = 'none';
+    msg('msg-aa-admin','Réglages d\'auto-acceptation enregistrés ✓', true);
+    chargerAAHistorique();
   });
 
   /* ---- utilisateurs (lecture seule) ---- */
