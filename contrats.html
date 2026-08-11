@@ -242,6 +242,10 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
     <button class="filtre-reset" id="f-reset" type="button" data-fr="Réinitialiser" data-en="Reset">Réinitialiser</button>
   </div>
 
+  <!-- Batch 2 — #7 : légende des quarts instantanés (visible seulement si
+       l'auto-acceptation plateforme est activée) -->
+  <div id="aa-legende" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--sourd);margin:0 0 10px" data-fr="⚡ = accepté immédiatement si vos critères correspondent" data-en="⚡ = accepted immediately if your criteria match">⚡ = accepté immédiatement si vos critères correspondent</div>
+
   <!-- VUE LISTE (tableau — comportement inchangé) -->
   <div id="vue-liste">
     <div class="carte">
@@ -525,6 +529,30 @@ function dessiner(){
   dessinerCalendrier(list);
 }
 
+/* Batch 2 — #7 : quarts « Instantané » — lecture unique de
+   auto_acceptation_infos_publiques(). Fonctionnalité éteinte → aucun badge,
+   aucune légende, tarifs inchangés. */
+let aaPlateforme = null;
+async function chargerInfosAA(){
+  try{
+    const { data } = await sb.rpc('auto_acceptation_infos_publiques');
+    const l = Array.isArray(data) ? data[0] : data;
+    if(l && l.feature_enabled){
+      aaPlateforme = l;
+      $('aa-legende').style.display = '';
+      dessiner();   /* redessine avec badge + tarif prime incluse */
+    }
+  }catch(e){ /* RPC absente ou erreur : affichage inchangé */ }
+}
+function aaEligible(k){
+  /* éligible = fonctionnalité active + quart toujours ouvert (non comblé) */
+  return !!aaPlateforme && (!k.statut || k.statut === 'ouvert');
+}
+function aaTarifAvecPrime(k){
+  return parseFloat(k.tarif_horaire) + (parseFloat(aaPlateforme.premium_per_hour) || 0);
+}
+const AA_BADGE_STYLE = 'font-family:\'IBM Plex Mono\',monospace;font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--jaune);border:1px solid rgba(201,123,18,.4);border-radius:99px;padding:2px 8px;white-space:nowrap';
+
 function dessinerTableau(list){
   const tb = $('lignes'); tb.innerHTML='';
   if(!list.length){
@@ -540,7 +568,9 @@ function dessinerTableau(list){
     const cel = (html, cls)=>{ const td=document.createElement('td'); if(cls) td.className=cls; td.innerHTML=html; return td; };
     const txt = (t, cls)=>{ const td=document.createElement('td'); if(cls) td.className=cls; td.textContent=t; return td; };
     const tarifTd = document.createElement('td'); tarifTd.className='tarif';
-    tarifTd.textContent = cdArgent(k.tarif_horaire) + '/h';
+    /* Batch 2 — #7 : quart éligible → tarif affiché PRIME INCLUSE (ce que
+       recevrait un pharmacien en auto-acceptation) */
+    tarifTd.textContent = cdArgent(aaEligible(k) ? aaTarifAvecPrime(k) : k.tarif_horaire) + '/h';
     if(k._est || k._distanceKm!=null || k.hebergement_offerte){
       const s = document.createElement('div');
       s.style.cssText = 'font-weight:400;color:var(--sourd);font-size:11px;margin-top:2px';
@@ -577,6 +607,9 @@ function dessinerTableau(list){
     statutTd.innerHTML = k.deja_postule
       ? '<span class="badge postule">'+cdT('Quart demandé','Shift requested')+'</span>'
       : '<span class="badge ouvert">'+cdT('Disponible','Available')+'</span>';
+    if(aaEligible(k)){
+      statutTd.innerHTML += '<div style="margin-top:3px"><span style="'+AA_BADGE_STYLE+'">⚡ '+cdT('Instantané','Instant')+'</span></div>';
+    }
     /* cellule Sauvegarder — colonne dédiée, juste avant la référence.
        Cachée entièrement pour un quart déjà demandé (rien à sauvegarder). */
     const sauvTd = document.createElement('td'); sauvTd.className = 'cache-mobile';
@@ -742,11 +775,14 @@ function dessinerListeCal(list){
   if(!list.length){ zone.innerHTML = '<div class="vide" style="padding:20px 4px">'+cdT('Aucun contrat ouvert pour l\'instant.','No open contract yet.')+'</div>'; return; }
   zone.innerHTML = list.map(k=>{
     const heures = k.heure_debut ? (String(k.heure_debut).slice(0,5)+'–'+String(k.heure_fin||'').slice(0,5)) : '';
-    const tarif  = k.tarif_horaire!=null ? cdArgent(k.tarif_horaire)+'/h' : '';
+    /* Batch 2 — #7 : tarif prime incluse + badge ⚡ pour les quarts éligibles */
+    const eligAA = aaEligible(k);
+    const tarif  = k.tarif_horaire!=null ? cdArgent(eligAA ? aaTarifAvecPrime(k) : k.tarif_horaire)+'/h' : '';
+    const inst   = eligAA ? '⚡ '+cdT('Instantané','Instant') : '';
     const dist   = k._distanceKm!=null ? k._distanceKm+' km' : '';
     const heb    = k.hebergement_offerte ? '🏠 '+cdT('Hébergement offert','Lodging offered') : '';
     const prio   = k.acces_prioritaire_actif ? '🔑 '+cdT('Accès prioritaire','Priority access') : '';
-    const meta   = [heures, k.ville, tarif, dist, heb, prio].filter(Boolean).join(' · ');
+    const meta   = [heures, k.ville, tarif, inst, dist, heb, prio].filter(Boolean).join(' · ');
     const statut = k.deja_postule ? 'postule' : 'ouvert';
     const libelle= k.deja_postule ? cdT('Quart demandé','Shift requested') : cdT('Disponible','Available');
     const indispo = estIndisponible(k.date_contrat);
@@ -768,6 +804,7 @@ function dessinerListeCal(list){
       '<a class="nav" href="/admin.html">'+cdT('Console','Console')+'</a>');
   }
   evaluerOnboarding();
+  chargerInfosAA();   /* Batch 2 — #7 */
 
   /* vue Calendrier — bascules et navigation (indépendantes du chargement,
      actives dès le départ ; les fonctions de dessin gèrent une liste vide) */
