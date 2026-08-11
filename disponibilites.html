@@ -166,6 +166,15 @@ body[data-mode="indisponible"] .recur-ok:hover{background:#a53125}
     </div>
   </div>
 
+  <!-- Batch 2 — #5 : confirmation mensuelle des disponibilités.
+       BANNIÈRE SEULEMENT — aucun changement au calendrier, à la grille,
+       à la navigation ni au blocage/déblocage des jours. -->
+  <div id="aa-banniere" style="display:none;align-items:center;gap:12px;flex-wrap:wrap;background:rgba(201,123,18,.08);border:1px solid rgba(201,123,18,.35);border-left:3px solid #C97B12;border-radius:6px;padding:10px 14px;margin:0 0 8px;font-size:13px">
+    <span id="aa-banniere-txt" style="flex:1 1 260px"></span>
+    <button type="button" id="aa-banniere-btn" style="background:var(--vert,#0B6E4F);color:#fff;border:none;border-radius:5px;padding:9px 14px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap">Mes disponibilités sont à jour</button>
+  </div>
+  <div id="aa-confirme" style="display:none;color:var(--vert-vif,#0E8A62);font-family:'IBM Plex Mono',monospace;font-size:12px;margin:0 0 8px"></div>
+
   <div class="carte">
     <div class="chargement" id="chargement">Chargement du calendrier…</div>
     <div id="cal" style="display:none;flex:1 1 auto;min-height:0;flex-direction:column;gap:6px">
@@ -574,6 +583,71 @@ async function synchroniser(){
   }catch(e){ msg(e.message, false); }
   finally{ b.disabled=false; t.textContent = jeton ? 'Envoyer' : avant; }
 }
+
+/* =====================================================================
+   Batch 2 — #5 : CONFIRMATION MENSUELLE (bannière au-dessus du calendrier)
+   Ne modifie AUCUNE fonction existante : dessiner() est enveloppée après
+   coup pour rafraîchir la bannière au changement de mois. Écrit via la
+   RPC existante confirmer_mon_calendrier() ; une ÉDITION du calendrier
+   auto-confirme déjà le mois côté backend (trigger — reflété au rechargement).
+===================================================================== */
+const aaMoisConfirmes = new Set();
+let aaInitFait = false;
+
+function aaCleMois(){ return curseur.getFullYear()+'-'+String(curseur.getMonth()+1).padStart(2,'0'); }
+function aaLibelleMois(){
+  const nom = cdLang()==='en' ? curseur.toLocaleDateString('en-CA', { month:'long' }) : MOIS[curseur.getMonth()];
+  return nom + ' ' + curseur.getFullYear();
+}
+function majBanniereAA(){
+  const b = $('aa-banniere'), c = $('aa-confirme');
+  if(!b || !c) return;
+  /* mois passés : rien — l'auto-acceptation ne concerne que le présent/futur */
+  const debutMoisCourant = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  if(new Date(curseur.getFullYear(), curseur.getMonth(), 1) < debutMoisCourant){
+    b.style.display = 'none'; c.style.display = 'none'; return;
+  }
+  const libelle = aaLibelleMois();
+  if(aaMoisConfirmes.has(aaCleMois())){
+    b.style.display = 'none';
+    c.textContent = cdT('Disponibilités confirmées pour '+libelle+' ✓',
+                        'Availability confirmed for '+libelle+' ✓');
+    c.style.display = '';
+  } else {
+    c.style.display = 'none';
+    $('aa-banniere-txt').textContent = cdT(
+      'Confirmez que vos disponibilités pour '+libelle+' sont à jour pour activer l\'auto-acceptation ce mois-ci',
+      'Confirm that your availability for '+libelle+' is up to date to enable auto-acceptance this month');
+    $('aa-banniere-btn').textContent = cdT('Mes disponibilités sont à jour','My availability is up to date');
+    b.style.display = 'flex';
+  }
+}
+async function aaChargerMoisConfirmes(){
+  try{
+    const { data } = await sb.rpc('mes_mois_confirmes');
+    (data || []).forEach(x=> aaMoisConfirmes.add(String(x.mois).slice(0,7)));
+  }catch(e){ /* RPC absente : bannière simplement affichée, bouton gérera l'erreur */ }
+  majBanniereAA();
+}
+$('aa-banniere-btn').onclick = async ()=>{
+  const btn = $('aa-banniere-btn'); btn.disabled = true;
+  const premier = curseur.getFullYear()+'-'+String(curseur.getMonth()+1).padStart(2,'0')+'-01';
+  const { error } = await sb.rpc('confirmer_mon_calendrier', { p_mois: premier });
+  btn.disabled = false;
+  if(error){ msg(cdT('Erreur : ','Error: ') + error.message, false); return; }
+  aaMoisConfirmes.add(aaCleMois());
+  majBanniereAA();
+  msg(cdT('Disponibilités confirmées ✓','Availability confirmed ✓'), true);
+};
+/* enveloppe : rafraîchit la bannière après chaque redessin (navigation de
+   mois incluse) ; premier passage = chargement des mois confirmés, après
+   que la connexion est établie (le 1er dessiner() suit cdExigerConnexion) */
+const aaDessinerOriginal = dessiner;
+dessiner = function(){
+  aaDessinerOriginal.apply(this, arguments);
+  if(!aaInitFait){ aaInitFait = true; aaChargerMoisConfirmes(); }
+  else { majBanniereAA(); }
+};
 </script>
 </body>
 </html>
