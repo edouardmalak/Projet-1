@@ -15,8 +15,8 @@ self.addEventListener('push', event => {
   const titre = data.title || 'C-Direct';
   const options = {
     body: data.body || '',
-    icon: data.icon || '/logo-balance-final.png',
-    badge: data.badge || '/logo-balance-final.png',
+    icon: data.icon || '/icon-192.png',
+    badge: data.badge || '/icon-192.png',
     data: { url: data.url || '/' }
   };
   event.waitUntil(self.registration.showNotification(titre, options));

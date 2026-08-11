@@ -148,7 +148,7 @@ The mirror of the locum model, pointed the other way. From the pharmacy's point 
 
 Visual reference: `c-direct-locum-bar` (finalized desktop bar; mobile behaviour described in the language-toggle note below). Structure:
 
-**Left — brand:** the finalized C-Direct wordmark logo (`c-direct-logo.svg` — balance scale built into the "C‑DIRECT" wordmark, gold on forest green) with "Québec" beneath. Replaces the earlier placeholder icon.
+**Left — brand:** the finalized C-Direct wordmark logo (`logo-primary.svg` — amber checkmark forming the hyphen in "C‑DIRECT", forest green + amber) with "Québec" beneath. Replaces the earlier placeholder icon.
 
 **Primary destinations (text, left-aligned), in order:**
 1. **Trouver un contrat** — the primary action, kept visually emphasized (soft-green active pill).
@@ -178,7 +178,7 @@ Visual reference: `c-direct-locum-bar` (finalized desktop bar; mobile behaviour 
 
 Visual reference: `c-direct-pharmacy-bar`. Same structure as the locum bar so both sides feel identical.
 
-**Left — brand:** the same finalized C-Direct wordmark logo (`c-direct-logo.svg`) + "Québec". Logo click = **Tableau de bord** (home).
+**Left — brand:** the same finalized C-Direct wordmark logo (`logo-primary.svg`) + "Québec". Logo click = **Tableau de bord** (home).
 
 **Primary destinations (text, left-aligned), in order:**
 1. **Publier un contrat** — the primary action, emphasized (soft-green active pill), mirroring the locum's "Trouver un contrat".
