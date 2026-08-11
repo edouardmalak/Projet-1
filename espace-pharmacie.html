@@ -765,7 +765,8 @@ async function chargerCandidats(k, zone){
     }
     /* coût total estimé (honoraires + déplacement + indemnités) */
     if(regles && typeof cdEstimation === 'function'){
-      const est = cdEstimation(c.tarif_propose, c.heure_debut_proposee||k.heure_debut, c.heure_fin_proposee||k.heure_fin, c.distance_km, regles);
+      const est = cdEstimation(c.tarif_propose, c.heure_debut_proposee||k.heure_debut, c.heure_fin_proposee||k.heure_fin, c.distance_km, regles,
+        { deplacement: profil.plafond_deplacement, perDiem: profil.plafond_per_diem, hebergement: profil.plafond_hebergement });
       if(est){
         const tot = document.createElement('span');
         tot.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--vert-vif);border:1px solid rgba(23,201,128,.4);background:rgba(18,169,110,.1);border-radius:99px;padding:2px 9px;font-weight:700";

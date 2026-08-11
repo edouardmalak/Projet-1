@@ -50,29 +50,51 @@ window.cdHeuresContrat = function(hd, hf){
    distanceKm = ALLER SIMPLE. Renvoie null si regles manquantes.
    Indemnités : accordées automatiquement quand la distance aller simple
    atteint les seuils du réseau (le moteur de règles décide).        ---- */
-window.cdEstimation = function(tarif, hd, hf, distanceKm, regles){
+/* plafonds (optionnel, sql/73) : { deplacement, perDiem, hebergement } en $ —
+   les plafonds de la pharmacie photographiés sur le contrat. Le calcul
+   reproduit EXACTEMENT le bloc plafonds SQL de marquer_complete /
+   calculer_montant_locum : km facturables = min(km A/R, plafond ÷ taux). */
+window.cdEstimation = function(tarif, hd, hf, distanceKm, regles, plafonds){
   if(!regles || tarif == null) return null;
   const heures = cdHeuresContrat(hd, hf);
   const base = heures * tarif;
+  const pl = plafonds || {};
   const e = { heures, tarif, base, distanceKm,
-              kmAR: null, montantKm: 0,
+              kmAR: null, kmFactures: null, montantKm: 0,
               perDiem: false, montantPerDiem: 0,
-              hebergement: false, montantHebergement: 0 };
+              hebergement: false, montantHebergement: 0,
+              kmPlafonne: false, perDiemPlafonne: false, hebergementPlafonne: false };
   if(distanceKm != null){
+    const taux = parseFloat(regles.taux_km);
     e.kmAR = distanceKm * 2;
-    e.montantKm = e.kmAR * parseFloat(regles.taux_km);
+    e.kmFactures = Math.round(e.kmAR * 100) / 100;
+    if(pl.deplacement != null && taux > 0){
+      const kmMax = Math.round((parseFloat(pl.deplacement) / taux) * 100) / 100;
+      if(kmMax < e.kmFactures){ e.kmFactures = kmMax; e.kmPlafonne = true; }
+    }
+    e.montantKm = e.kmFactures * taux;
     e.perDiem = distanceKm >= parseInt(regles.seuil_per_diem_km);
     e.hebergement = distanceKm >= parseInt(regles.seuil_hebergement_km);
-    if(e.perDiem) e.montantPerDiem = parseFloat(regles.per_diem_jour);
-    if(e.hebergement) e.montantHebergement = parseFloat(regles.hebergement_jour);
+    if(e.perDiem){
+      e.montantPerDiem = parseFloat(regles.per_diem_jour);
+      if(pl.perDiem != null && parseFloat(pl.perDiem) < e.montantPerDiem){
+        e.montantPerDiem = parseFloat(pl.perDiem); e.perDiemPlafonne = true;
+      }
+    }
+    if(e.hebergement){
+      e.montantHebergement = parseFloat(regles.hebergement_jour);
+      if(pl.hebergement != null && parseFloat(pl.hebergement) < e.montantHebergement){
+        e.montantHebergement = parseFloat(pl.hebergement); e.hebergementPlafonne = true;
+      }
+    }
   }
   e.total = e.base + e.montantKm + e.montantPerDiem + e.montantHebergement;
 
   /* ligne façon « 130$/h × 9h = 1 170$ · 84 km A/R × 0,70$ = 58,80$ · … » */
   const p = [cdArgent(tarif).replace(',00','') + '/h × ' + (Math.round(heures*100)/100) + ' h = ' + cdArgent(e.base)];
-  if(e.kmAR != null) p.push(e.kmAR + ' km A/R × ' + parseFloat(regles.taux_km).toFixed(2).replace('.',',') + ' $ = ' + cdArgent(e.montantKm));
-  if(e.perDiem) p.push('Per diem ' + cdArgent(e.montantPerDiem) + ' (≥' + regles.seuil_per_diem_km + ' km)');
-  if(e.hebergement) p.push('Hébergement ' + cdArgent(e.montantHebergement) + ' (≥' + regles.seuil_hebergement_km + ' km)');
+  if(e.kmAR != null) p.push((e.kmPlafonne ? e.kmFactures + ' km facturables (plafond pharmacie)' : e.kmAR + ' km A/R') + ' × ' + parseFloat(regles.taux_km).toFixed(2).replace('.',',') + ' $ = ' + cdArgent(e.montantKm));
+  if(e.perDiem) p.push('Per diem ' + cdArgent(e.montantPerDiem) + (e.perDiemPlafonne ? ' (plafonné)' : ' (≥' + regles.seuil_per_diem_km + ' km)'));
+  if(e.hebergement) p.push('Hébergement ' + cdArgent(e.montantHebergement) + (e.hebergementPlafonne ? ' (plafonné)' : ' (≥' + regles.seuil_hebergement_km + ' km)'));
   e.ligne = p.join(' · ') + ' · Total estimé ≈ ' + cdArgent(e.total);
   return e;
 };

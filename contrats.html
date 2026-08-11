@@ -377,7 +377,8 @@ function calcDistance(k){
 function calcEstim(k){
   try{
     if(typeof cdEstimation !== 'function' || !regles) return null;
-    const est = cdEstimation(k.tarif_horaire, k.heure_debut, k.heure_fin, k._distanceKm, regles);
+    const est = cdEstimation(k.tarif_horaire, k.heure_debut, k.heure_fin, k._distanceKm, regles,
+      { deplacement: k.plafond_deplacement, perDiem: k.plafond_per_diem, hebergement: k.plafond_hebergement });
     /* hébergement en nature : la pharmacie fournit un logement au lieu de
        verser l'indemnité cash — ne pas l'inclure dans le total affiché. */
     if(est && k.hebergement_offerte && est.hebergement){

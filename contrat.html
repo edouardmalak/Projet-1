@@ -398,7 +398,8 @@ function msg(texte, type){
     const { data: rg } = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle();
     reglesReseau = rg || null;
     if(rg && typeof cdEstimation === 'function'){
-      const est = cdEstimation(k.tarif_horaire, k.heure_debut, k.heure_fin, distApply, rg);
+      const est = cdEstimation(k.tarif_horaire, k.heure_debut, k.heure_fin, distApply, rg,
+        { deplacement: k.plafond_deplacement, perDiem: k.plafond_per_diem, hebergement: k.plafond_hebergement });
       if(est && est.ligne){ $('bloc-estim').style.display = ''; $('estim').textContent = est.ligne; }
     }
   }catch(e){ /* l'estimation est un plus : jamais bloquante */ }
@@ -419,7 +420,8 @@ function msg(texte, type){
   /* ---- Panneau de rémunération estimée (pharmacien qui postule) ---- */
   function rendreRemuneration(tarif, hd, hf){
     if(!reglesReseau || typeof cdEstimation !== 'function') return;
-    const est = cdEstimation(tarif, hd, hf, distApply, reglesReseau);
+    const est = cdEstimation(tarif, hd, hf, distApply, reglesReseau,
+      { deplacement: k.plafond_deplacement, perDiem: k.plafond_per_diem, hebergement: k.plafond_hebergement });
     if(!est) return;
     const bloc = $('bloc-remuneration'); if(!bloc) return;
     const seuilP = reglesReseau.seuil_per_diem_km, seuilH = reglesReseau.seuil_hebergement_km;
