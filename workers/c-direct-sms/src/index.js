@@ -58,6 +58,7 @@ export default {
     try {
       if (event.cron === '* * * * *') {
         await flushQueue(env);
+        await drainerFileNotifications(env);   // push + courriels du moteur d'auto-acceptation (sql/68-72)
       } else {
         const h = heureMontreal();
         if (h === 10) await cronDunning(env);        // 14/15 UTC → 10:00 locale
@@ -940,6 +941,55 @@ async function flushQueue(env) {
    propriétaire. Envoyé à 18:00 : hors heures de silence par définition.
    (Message volontairement complet → souvent 2 segments, assumé.)
 ===================================================================== */
+/* =====================================================================
+   FILE_NOTIFICATIONS (sql/68) — push + courriels produits par le moteur
+   d'auto-acceptation (SQL pur, qui ne peut pas appeler VAPID/Resend).
+   Vidée ici chaque minute, même cadence que la sms_queue. Chaque ligne :
+   { canal: 'push'|'courriel', payload }. Push → tous les abonnements du
+   profil ; courriel → Resend. Statut : attente → envoi → envoye/echec.
+===================================================================== */
+async function drainerFileNotifications(env) {
+  const rows = await sbUpdate(env,
+    'file_notifications?statut=eq.attente',
+    { statut: 'envoi' });
+  if (!rows.length) return { traite: 0 };
+
+  for (const n of rows) {
+    let ok = false;
+    try {
+      if (n.canal === 'push') {
+        if (env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY && n.profil_id) {
+          const subs = await sbSelect(env, `push_subscriptions?select=*&profil_id=eq.${n.profil_id}`);
+          for (const s of subs) {
+            await envoyerPush(env, s, {
+              title: n.payload.title || 'C-Direct',
+              body: n.payload.body || '',
+              url: n.payload.url || '/',
+            });
+          }
+        }
+        /* best-effort, comme le push partout ailleurs dans ce Worker :
+           pas de VAPID ou pas d'abonnement n'est pas un échec à retenter */
+        ok = true;
+      } else if (n.canal === 'courriel') {
+        const r = await envoyerEmailResend(env, {
+          to: n.payload.to,
+          subject: n.payload.subject || 'C-Direct',
+          html: n.payload.html || '',
+          text: n.payload.text || '',
+        });
+        ok = !!(r && (r.ok || r.skip));   // RESEND absent = skip, pas un échec à retenter
+      }
+    } catch (e) {
+      console.error('file_notifications:', n.id, e.stack || e.message);
+      ok = false;
+    }
+    await sbUpdate(env, `file_notifications?id=eq.${n.id}`,
+      { statut: ok ? 'envoye' : 'echec', traite_le: new Date().toISOString() });
+  }
+  return { traite: rows.length };
+}
+
 async function cronRappelVeille(env) {
   const p = partiesMontreal();
   const demainUtc = new Date(Date.UTC(+p.year, +p.month - 1, +p.day + 1));
@@ -1549,6 +1599,11 @@ async function routeTestPush(request, env) {
 
 /* ---- candidatures INSERT → pharmacie ---- */
 async function candidatureNouvelle(env, c) {
+  /* Auto-acceptation (sql/68-72) : la candidature est créée déjà acceptée
+     par le moteur ; ses notifications passent par file_notifications +
+     sms_queue — pas de SMS « nouvelle candidature » à la pharmacie. */
+  if (c.type_candidature === 'auto_acceptation')
+    return json({ ok: true, ignore: 'Auto-acceptation — notifications dédiées' });
   if (await dejaTraite(env, `candidatures:INSERT:${c.id}`))
     return json({ ok: true, ignore: 'Doublon' });
 
@@ -1621,6 +1676,11 @@ async function candidatureNouvelle(env, c) {
 
 /* ---- candidatures UPDATE (changement de statut) ---- */
 async function candidatureMaj(env, c, avant) {
+  /* Auto-acceptation (sql/68-72) : messages dédiés via file_notifications
+     + sms_queue — on ne double pas avec les messages standard. EXCEPTION :
+     accepte → refuse (désistement), traité plus bas comme les autres. */
+  if (c.type_candidature === 'auto_acceptation' && c.statut === 'accepte')
+    return json({ ok: true, ignore: 'Auto-acceptation — notifications dédiées' });
   if (!avant.statut || c.statut === avant.statut)
     return json({ ok: true, ignore: 'Pas de changement de statut' });
   if (await dejaTraite(env, `candidatures:UPDATE:${c.id}:${c.statut}`))
