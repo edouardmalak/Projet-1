@@ -86,30 +86,30 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
 
     <div class="carte">
       <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3v6c0 5-3.4 8.5-8 11-4.6-2.5-8-6-8-11V5l8-3z" stroke="#1A1403" stroke-width="2" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="#1A1403" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <h2>Connexion administrateur</h2>
+      <h2 data-fr="Connexion administrateur" data-en="Administrator sign-in">Connexion administrateur</h2>
       <span class="badge-admin">ADMIN · C-DIRECT</span>
-      <p class="sous" id="sous">Réservé à l'équipe C-Direct.</p>
+      <p class="sous" id="sous" data-fr="Réservé à l'équipe C-Direct." data-en="Reserved for the C-Direct team.">Réservé à l'équipe C-Direct.</p>
 
       <!-- formulaire -->
       <div id="z-form">
         <div class="champ">
-          <label>Courriel</label>
+          <label data-fr="Courriel" data-en="Email">Courriel</label>
           <input id="courriel" type="email" autocomplete="email" placeholder="admin@c-direct.ca">
         </div>
         <div class="champ rel">
-          <label>Mot de passe</label>
+          <label data-fr="Mot de passe" data-en="Password">Mot de passe</label>
           <input id="mdp" type="password" autocomplete="current-password" style="padding-right:74px">
-          <button class="oeil" type="button" id="oeil">afficher</button>
+          <button class="oeil" type="button" id="oeil" data-fr="afficher" data-en="show">afficher</button>
         </div>
-        <button class="btn" id="btn-conn">Accéder à la console</button>
+        <button class="btn" id="btn-conn" data-fr="Accéder à la console" data-en="Access the console">Accéder à la console</button>
         <div class="erreur" id="err"></div>
-        <p class="note"><a href="acces.html?mode=oubli">Mot de passe oublié&nbsp;?</a></p>
+        <p class="note"><a href="acces.html?mode=oubli" data-fr="Mot de passe oublié&amp;nbsp;?" data-en="Forgot password?">Mot de passe oublié&nbsp;?</a></p>
       </div>
 
       <!-- déjà connecté (non-admin) -->
       <div class="info" id="z-info"></div>
 
-      <p class="cgv">Cette page est destinée aux administrateurs. Les pharmacies et pharmacien(ne)s se connectent depuis l'<a href="acces.html?mode=conn">accès standard</a>.</p>
+      <p class="cgv" data-fr="Cette page est destinée aux administrateurs. Les pharmacies et pharmacien(ne)s se connectent depuis l'&lt;a href=&quot;acces.html?mode=conn&quot;&gt;accès standard&lt;/a&gt;." data-en="This page is for administrators. Pharmacies and pharmacists sign in from the &lt;a href=&quot;acces.html?mode=conn&quot;&gt;standard access&lt;/a&gt;.">Cette page est destinée aux administrateurs. Les pharmacies et pharmacien(ne)s se connectent depuis l'<a href="acces.html?mode=conn">accès standard</a>.</p>
     </div>
 
     <p class="pied">C-DIRECT // CONSOLE ADMIN · QUÉBEC</p>
@@ -123,19 +123,19 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
 const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 function erreur(msg){ $('err').textContent = msg; $('err').style.display = 'block'; }
-function messageErreur(e){
+function messageErreur(e){   /* T21 (batch1) : bilingue, même patron qu'acces.html */
   const m = (e && e.message || '').toLowerCase();
-  if(m.includes('invalid login')) return 'Courriel ou mot de passe invalide.';
-  if(m.includes('not confirmed')) return 'Courriel non confirmé — cliquez le lien reçu par courriel.';
-  if(m.includes('rate limit')) return 'Trop de tentatives — réessayez dans quelques minutes.';
-  return e && e.message ? e.message : 'Une erreur est survenue. Réessayez.';
+  if(m.includes('invalid login')) return cdT('Courriel ou mot de passe invalide.','Invalid email or password.');
+  if(m.includes('not confirmed')) return cdT('Courriel non confirmé — cliquez le lien reçu par courriel.','Email not confirmed — click the link you received by email.');
+  if(m.includes('rate limit')) return cdT('Trop de tentatives — réessayez dans quelques minutes.','Too many attempts — try again in a few minutes.');
+  return e && e.message ? e.message : cdT('Une erreur est survenue. Réessayez.','An error occurred. Try again.');
 }
 
 /* afficher / masquer le mot de passe */
 $('oeil').onclick = ()=>{
   const c = $('mdp'); const vis = c.type === 'text';
   c.type = vis ? 'password' : 'text';
-  $('oeil').textContent = vis ? 'afficher' : 'masquer';
+  $('oeil').textContent = vis ? cdT('afficher','show') : cdT('masquer','hide');
 };
 
 /* connexion */
@@ -143,15 +143,15 @@ async function connecter(){
   $('err').style.display = 'none';
   const email = $('courriel').value.trim();
   const password = $('mdp').value;
-  if(!email || !password){ erreur('Entrez votre courriel et votre mot de passe.'); return; }
-  const b = $('btn-conn'); b.disabled = true; b.textContent = 'Vérification…';
+  if(!email || !password){ erreur(cdT('Entrez votre courriel et votre mot de passe.','Enter your email and password.')); return; }
+  const b = $('btn-conn'); b.disabled = true; b.textContent = cdT('Vérification…','Checking…');
   const { error } = await sb.auth.signInWithPassword({ email, password });
-  if(error){ b.disabled = false; b.textContent = 'Accéder à la console'; erreur(messageErreur(error)); return; }
+  if(error){ b.disabled = false; b.textContent = cdT('Accéder à la console','Access the console'); erreur(messageErreur(error)); return; }
   const p = await cdProfil(true);
   if(!p || p.role !== 'admin'){
     await sb.auth.signOut();
-    b.disabled = false; b.textContent = 'Accéder à la console';
-    erreur("Ce compte n'est pas administrateur. Utilisez l'accès standard.");
+    b.disabled = false; b.textContent = cdT('Accéder à la console','Access the console');
+    erreur(cdT("Ce compte n'est pas administrateur. Utilisez l'accès standard.","This account is not an administrator. Use the standard access."));
     return;
   }
   location.replace('/admin.html');
@@ -168,11 +168,11 @@ $('mdp').addEventListener('keydown', e=>{ if(e.key === 'Enter') connecter(); });
   /* connecté avec un compte NON admin : proposer de changer */
   $('z-form').style.display = 'none';
   $('sous').textContent = '';
-  const nom = ((p && (p.prenom || p.courriel)) || 'ce compte').replace(/</g,'&lt;');
+  const nom = ((p && (p.prenom || p.courriel)) || cdT('ce compte','this account')).replace(/</g,'&lt;');
   $('z-info').style.display = 'block';
   $('z-info').innerHTML =
-    "Vous êtes connecté en tant que <b>" + nom + "</b>, qui n'est pas un compte administrateur." +
-    "<br><br><button class='btn' style='width:auto;padding:10px 18px' onclick='changerCompte()'>Se déconnecter et changer de compte</button>";
+    cdT("Vous êtes connecté en tant que <b>","You are signed in as <b>") + nom + cdT("</b>, qui n'est pas un compte administrateur.","</b>, which is not an administrator account.") +
+    "<br><br><button class='btn' style='width:auto;padding:10px 18px' onclick='changerCompte()'>" + cdT('Se déconnecter et changer de compte','Sign out and switch account') + "</button>";
   window.changerCompte = async ()=>{ await sb.auth.signOut(); location.reload(); };
 })();
 </script>
