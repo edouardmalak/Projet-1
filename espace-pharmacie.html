@@ -829,6 +829,11 @@ async function chargerCandidats(k, zone){
           const hd = f.hd.value || null, hf = f.hf.value || null;
           if((hd && !hf) || (!hd && hf)){ alert(cdT('Précisez le début ET la fin.','Specify both start AND end.')); return; }
           const tarif = parseFloat(f.tarif.value);
+          /* T24 (batch1) : bouton désactivé pendant l'appel — un double-clic
+             lançait deux mises à jour superposées (seul formulaire de la
+             page sans cette garde) */
+          const bEnvoi = f.querySelector('button[type="submit"]') || f.querySelector('button');
+          if(bEnvoi) bEnvoi.disabled = true;
           const { error: e } = await sb.from('candidatures').update({
             statut: 'contre_offre',
             tarif_propose: tarif,
@@ -837,6 +842,7 @@ async function chargerCandidats(k, zone){
               tarif: tarif, hd: hd||k.heure_debut, hf: hf||k.heure_fin,
               message: f.texte.value.trim()||null})
           }).eq('id', c.candidature_id);
+          if(bEnvoi) bEnvoi.disabled = false;
           if(e){ alert(cdT('Erreur : ','Error: ')+e.message); return; }
           chargerContrats();
         });
