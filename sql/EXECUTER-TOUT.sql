@@ -1,8 +1,9 @@
 -- ============================================================
--- C-DIRECT — TOUT LE SQL EN ATTENTE (à exécuter en une fois)
--- Copiez TOUT ce fichier, collez dans Supabase > SQL Editor,
--- puis cliquez Run. Sans danger : idempotent, ne supprime aucune donnée.
--- Regroupe sql/13 + sql/14 + sql/15.
+-- ⚠️ FICHIER HISTORIQUE — NE PAS UTILISER COMME BOOTSTRAP COMPLET
+-- [T25 batch1] Malgré son nom, ce fichier ne regroupe QUE les
+-- migrations sql/13 + sql/14 + sql/15 (déjà exécutées depuis
+-- longtemps). Le schéma complet vit dans les fichiers numérotés
+-- sql/01 à sql/76+, à exécuter dans l'ordre. Conservé comme trace.
 -- ============================================================
 
 -- ========== 13 : distance (code postal pharmacie) ==========

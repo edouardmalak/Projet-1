@@ -29,9 +29,10 @@ create table if not exists public.meteo_cache (
   -- horaire : { "AAAA-MM-JJ": [ {min, type, cm, wind, temp}, ... ], ... }
   -- type ∈ 'ice' | 'snow' | 'none' — voir functions/api/meteo.js
   horaire  jsonb not null,
-  -- alerte ECCC (verglas/blizzard officiel) — différé, toujours null pour
-  -- l'instant (endpoint public fiable non confirmé, voir A-FAIRE-CONSOLIDE.md).
-  -- classifyRisk() gère déjà le cas null sans erreur.
+  -- alerte ECCC (verglas/blizzard officiel). [T25 batch1 — commentaire
+  -- périmé corrigé] : livré le 2026-08-08 via functions/_lib/eccc-alertes.js
+  -- (CAP-XML du Datamart MSC), branché dans functions/api/meteo.js.
+  -- classifyRisk() gère toujours le cas null sans erreur.
   alerte   jsonb,
   maj_le   timestamptz not null default now()
 );

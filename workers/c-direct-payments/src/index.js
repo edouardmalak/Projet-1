@@ -486,15 +486,20 @@ async function routeSetupConfirm(request, env) {
    qu'appeler Stripe et écrire le résultat).
 
    PÉRIMÈTRE DE CETTE PASSE (le reste est noté, pas construit en douce) :
-   - Autorisation créée une fois à T-24h ; PAS de relance multi-paliers
-     (T-18h / carte de secours / SMS T-12h / escalade T-6h) — à construire
-     séparément (tâche #19 restante).
-   - Le palier "pending_locum_confirmation" (la pharmacie clique "je l'ai
-     envoyé", délai +60 min) n'est PAS câblé côté UI pharmacie — seule la
-     confirmation du PHARMACIEN (source de vérité unique, voir skill)
-     est implémentée ici.
-   - Le webhook account.updated n'existe pas encore : le statut
-     charges_enabled/payouts_enabled est vérifié en direct (GET) à
+   - Autorisation créée une fois à T-24h ; la relance multi-paliers
+     (T-18h / SMS T-12h / escalade T-6h) a depuis été construite —
+     sql/45, sql/46 et calculerProchainePhase() ci-dessous. Seule la
+     « carte de secours » reste non construite (voir bloc ÉCHELLE DE
+     RELANCE plus bas).
+   - [T25 batch1 — commentaire périmé corrigé] Le palier
+     "pending_locum_confirmation" ("j'ai envoyé", délai +60 min) EST
+     câblé côté UI pharmacie : espace-pharmacie.html appelle
+     POST /pharmacie/jai-envoye. La confirmation du PHARMACIEN reste la
+     seule source de vérité (voir skill).
+   - [T25 batch1] Le webhook Stripe existe désormais (/stripe/webhook,
+     T8a) et met account.updated en cache dans stripe_comptes ; le GET
+     direct à chaque tentative d'autorisation reste en place comme
+     vérification de dernière minute — le statut
      chaque tentative d'autorisation plutôt que mis en cache.
    - Palier "next business day 16:00" (pharmacies avec comptable) pas
      implémenté — tout le monde est sur le délai standard de 3h.

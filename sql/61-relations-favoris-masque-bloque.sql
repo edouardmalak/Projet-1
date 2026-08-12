@@ -417,6 +417,12 @@ grant execute on function public.lister_pharmaciens_deja_postules() to authentic
 --    comportement sur un chemin qui touche l'argent n'est pas le genre de
 --    chose à corriger en silence pendant une tâche de navigation/relations.
 --    Signalé à Robert dans le résumé de cette session — à traiter à part.
+--
+--    [T25 batch1 — mise à jour] RÉSOLU dès le lendemain : la migration
+--    sql/62-restaure-gardes-instant-booking.sql (exécutée le 2026-08-09)
+--    a restauré TOUTES les gardes (type_candidature='instantanee',
+--    confirmation_auto_favoris, favori state='trusted', est_bloque()).
+--    Ce bloc est conservé comme trace historique — ne pas re-signaler.
 -- ---------------------------------------------------------------------
 
 -- ---------------------------------------------------------------------
