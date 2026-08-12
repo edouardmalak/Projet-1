@@ -65,10 +65,14 @@ tbody tr.pour-vous:hover{background:rgba(18,169,110,.12)}
 
   <div class="carte">
     <div class="chargement" id="chargement" data-fr="Chargement du lot…" data-en="Loading batch…">Chargement du lot…</div>
+    <!-- T15 (batch1) : conteneur défilant — les colonnes nowrap débordaient
+         de l'écran à 360-390 px (design.css remet .carte en overflow:visible) -->
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
     <table id="tableau" style="display:none">
       <thead><tr><th data-fr="Référence" data-en="Reference">Référence</th><th data-fr="Date" data-en="Date">Date</th><th data-fr="Heures" data-en="Hours">Heures</th><th class="cache-mobile" data-fr="Ville" data-en="City">Ville</th><th data-fr="Tarif" data-en="Rate">Tarif</th><th></th></tr></thead>
       <tbody id="lignes"></tbody>
     </table>
+    </div>
   </div>
   <p class="legende" id="legende" style="display:none" data-fr="Les lignes <b>surlignées</b> correspondent à vos critères (distance, tarif, logiciel, disponibilités). Touchez une ligne pour ouvrir la fiche et postuler." data-en="<b>Highlighted</b> rows match your criteria (distance, rate, software, availability). Tap a row to open the details and apply.">Les lignes <b>surlignées</b> correspondent à vos critères (distance, tarif, logiciel, disponibilités). Touchez une ligne pour ouvrir la fiche et postuler.</p>
 </div>
