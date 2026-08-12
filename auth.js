@@ -894,7 +894,7 @@ window.cdEnteteConnecte = async function(){
     /* T13a (batch1) : ordre approuvé — liens de nav · ♥ · 🔔 · FR/EN · menu
        de compte. Le ⚙ autonome et le bouton « Aide » sont repliés dans le
        menu de compte (Paramètres et Aide & FAQ y vivent déjà). */
-    el.append(coeur, cloche, cdBoutonLangue(), compte);
+    el.append(coeur, cloche, cdIconeLien('/parametres.html', SVG_REGLAGE, 'Paramètres', 'Settings'), cdBoutonLangue(), compte);
     conteneur.appendChild(el);
 
     /* logo = accueil du rôle plutôt que la page publique, pour les deux
