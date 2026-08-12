@@ -242,6 +242,7 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
 
     <div class="carte">
       <div class="sec"><span class="pic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span><span data-fr="Mot de passe" data-en="Password">Mot de passe</span></div>
+      <div class="champ" id="champ-mdp0"><label data-fr="Mot de passe actuel" data-en="Current password">Mot de passe actuel</label><input id="mdp0" type="password" autocomplete="current-password"></div>
       <div class="champ"><label data-fr="Nouveau mot de passe" data-en="New password">Nouveau mot de passe</label><input id="mdp1" type="password" autocomplete="new-password"></div>
       <div class="champ"><label data-fr="Confirmer le nouveau mot de passe" data-en="Confirm new password">Confirmer le nouveau mot de passe</label><input id="mdp2" type="password" autocomplete="new-password"></div>
       <button class="btn" id="btn-save-mdp" type="button" data-fr="Mettre à jour le mot de passe" data-en="Update password">Mettre à jour le mot de passe</button>
@@ -442,15 +443,39 @@ if($('btn-save-confiance')) $('btn-save-confiance').onclick = async ()=>{
   msg('msg-confiance', cdT('Préférences enregistrées.','Preferences saved.'), true);
 };
 
+/* T7 (batch1) : re-authentification obligatoire avant de changer le mot de
+   passe — sinon toute session laissée ouverte permettait de verrouiller le
+   vrai propriétaire dehors. Comptes Google (sans mot de passe courriel) :
+   le champ « actuel » est masqué et la vérification sautée. */
+async function mdpAvecMotDePasseCourriel(){
+  try{
+    const { data } = await sb.auth.getSession();
+    const u = data && data.session && data.session.user;
+    const fournisseurs = (u && u.app_metadata && u.app_metadata.providers) || [];
+    return { u, aMdp: fournisseurs.includes('email') };
+  }catch(e){ return { u: null, aMdp: true }; }
+}
+(async ()=>{
+  const { aMdp } = await mdpAvecMotDePasseCourriel();
+  if(!aMdp) $('champ-mdp0').style.display = 'none';
+})();
+
 $('btn-save-mdp').onclick = async ()=>{
   const m1 = $('mdp1').value, m2 = $('mdp2').value;
   if(!m1 || m1.length < 8){ msg('msg-mdp', cdT('Le mot de passe doit contenir au moins 8 caractères.','Password must be at least 8 characters.'), false); return; }
   if(m1 !== m2){ msg('msg-mdp', cdT('Les deux mots de passe ne correspondent pas.','The two passwords do not match.'), false); return; }
   $('btn-save-mdp').disabled = true;
+  const { u, aMdp } = await mdpAvecMotDePasseCourriel();
+  if(aMdp){
+    const m0 = $('mdp0').value;
+    if(!m0){ $('btn-save-mdp').disabled = false; msg('msg-mdp', cdT('Entrez votre mot de passe actuel.','Enter your current password.'), false); return; }
+    const { error: eAuth } = await sb.auth.signInWithPassword({ email: u && u.email, password: m0 });
+    if(eAuth){ $('btn-save-mdp').disabled = false; msg('msg-mdp', cdT('Mot de passe actuel incorrect.','Current password is incorrect.'), false); return; }
+  }
   const { error } = await sb.auth.updateUser({ password: m1 });
   $('btn-save-mdp').disabled = false;
   if(error){ msg('msg-mdp', cdT('Erreur : ','Error: ') + error.message, false); return; }
-  $('mdp1').value = ''; $('mdp2').value = '';
+  $('mdp0').value = ''; $('mdp1').value = ''; $('mdp2').value = '';
   msg('msg-mdp', cdT('Mot de passe mis à jour.','Password updated.'), true);
 };
 
