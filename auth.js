@@ -60,6 +60,7 @@ window.cdExigerConnexion = async function(roles){
     // côté Supabase tant qu'on ne la ferme pas nous-mêmes — on le fait ici,
     // au point d'entrée commun à toutes les pages protégées.
     try{ localStorage.removeItem('cd-suite'); }catch(e){}
+    window.__cdSortieVolontaire = true;   /* T6 (batch1) : sortie voulue, pas « expirée » */
     await sb.auth.signOut();
     location.replace('/acces.html?mode=conn&desactive=1');
     return new Promise(()=>{});
@@ -87,6 +88,62 @@ window.cdReprendreSuite = function(role){
   try{ suite = localStorage.getItem('cd-suite'); localStorage.removeItem('cd-suite'); }catch(e){}
   location.replace(suite || cdAccueilPourRole(role));
 };
+
+/* ---- T6 (batch1) : session expirée — gestion GLOBALE ----
+   Avant : seule cdDiffuserContrat() gérait le 401 ; partout ailleurs,
+   l'usager voyait le texte brut « JWT expired » de Supabase. Ici, on
+   intercepte les réponses 401 de l'API de données (/rest/v1/ seulement —
+   jamais /auth/v1/, sinon un mauvais mot de passe déclencherait tout ça),
+   on tente UN rafraîchissement (même patron que cdDiffuserContrat), et si
+   la session est réellement périmée : message bilingue + retour à la
+   connexion en conservant la page visée (cd-suite). */
+(function cdInterceptionSessionExpiree(){
+  if(window.__cdIntercept401) return;
+  window.__cdIntercept401 = true;
+  let dejaTraite = false;
+
+  function expiree(){
+    if(dejaTraite) return;
+    dejaTraite = true;
+    try{ localStorage.setItem('cd-suite', location.pathname + location.search); }catch(e){}
+    const bandeau = document.createElement('div');
+    bandeau.textContent = cdT(
+      'Votre session a expiré — reconnectez-vous.',
+      'Your session has expired — please sign in again.');
+    bandeau.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#C0392B;color:#fff;'+
+      "text-align:center;padding:12px 16px;font-family:'Inter','Instrument Sans',sans-serif;font-size:14px;font-weight:600";
+    (document.body || document.documentElement).appendChild(bandeau);
+    setTimeout(()=>{ location.replace('/acces.html?mode=conn'); }, 1400);
+  }
+
+  /* Voie principale : GoTrue émet SIGNED_OUT quand le jeton de
+     rafraîchissement est lui-même périmé/révoqué (auto-refresh échoué).
+     Les déconnexions volontaires posent __cdSortieVolontaire avant
+     signOut() (cdDeconnexion, désactivation) et sont ignorées ici. */
+  try{
+    sb.auth.onAuthStateChange(function(evenement){
+      if(evenement === 'SIGNED_OUT' && !window.__cdSortieVolontaire) expiree();
+    });
+  }catch(e){}
+
+  /* Voie complémentaire : réponses 401 de l'API de données. */
+  const fetchOrigine = window.fetch;
+  window.fetch = function(entree, options){
+    const url = typeof entree === 'string' ? entree : (entree && entree.url) || '';
+    const estDonnees = url.indexOf('/rest/v1/') !== -1;
+    const r = fetchOrigine.apply(this, arguments);
+    if(!estDonnees) return r;
+    return r.then(function(rep){
+      if(rep.status !== 401 || dejaTraite) return rep;
+      /* un seul essai de rafraîchissement, comme cdDiffuserContrat */
+      return sb.auth.refreshSession().then(function(res){
+        const neuve = res && res.data && res.data.session;
+        if(!neuve) expiree();
+        return rep;
+      }).catch(function(){ expiree(); return rep; });
+    });
+  };
+})();
 
 /* ---- confirmation « contrat confirmé » (courriel bilingue + PDF) ----
    Appelle le Worker DIRECTEMENT après une acceptation (plus fiable que les
@@ -173,6 +230,7 @@ window.cdEnvoyerFacture = function(id){
 
 /* ---- déconnexion ---- */
 window.cdDeconnexion = async function(){
+  window.__cdSortieVolontaire = true;   /* T6 (batch1) : pas un cas « session expirée » */
   await sb.auth.signOut();
   _profil = null;
   location.href = '/index.html';
