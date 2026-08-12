@@ -813,6 +813,9 @@ function dessinerListeCal(list){
   JOURS_C.forEach(j=>{ const d=document.createElement('div'); d.className='jour-tete'; d.textContent=j; jtC.appendChild(d); });
   $('v-liste').onclick      = ()=> basculerVuePrincipale('liste');
   $('v-calendrier').onclick = ()=> basculerVuePrincipale('calendrier');
+  /* T11 (batch1) : ?vue=calendrier (bouton « Calendrier » de carte.html)
+     ouvre directement la vue calendrier au lieu de la liste */
+  if(new URLSearchParams(location.search).get('vue') === 'calendrier') basculerVuePrincipale('calendrier');
   /* Maps n'est pas une 3e vue en place (comme Liste/Calendrier) mais une
      page distincte (carte.html) qui réutilise la vue carte existante —
      dossier de refonte 2026-08-08, « Maps devient une bascule ». */

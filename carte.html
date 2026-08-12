@@ -82,7 +82,8 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;letter-s
        de refonte 2026-08-08, « Maps devient une bascule », pas une page isolée -->
   <div class="seg" style="margin-bottom:16px">
     <button type="button" onclick="location.href='/contrats.html'" data-fr="Liste" data-en="List">Liste</button>
-    <button type="button" onclick="location.href='/contrats.html'" data-fr="Calendrier" data-en="Calendar">Calendrier</button>
+    <!-- T11 (batch1) : ouvre contrats.html directement en vue calendrier (avant : même URL que Liste) -->
+    <button type="button" onclick="location.href='/contrats.html?vue=calendrier'" data-fr="Calendrier" data-en="Calendar">Calendrier</button>
     <button type="button" class="on" disabled>Maps</button>
   </div>
 

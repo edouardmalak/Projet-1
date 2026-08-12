@@ -417,7 +417,11 @@ function cdRacines(){
      2026-08-08 */
   const deCompte = [
     '/profil.html', '/evaluations.html', '/parametres.html', '/faq.html',
-    '/dispensaire.html', '/pharmacies-preferees.html', '/locums-confiance.html'
+    '/dispensaire.html', '/pharmacies-preferees.html', '/locums-confiance.html',
+    /* T11 (batch1) : carte.html est une sous-vue de Contrats avec sa propre
+       bascule Liste/Calendrier/Maps — pas de chevron par-dessus (double
+       affordance de retour) */
+    '/carte.html'
   ];
   return [...deMenu, ...deCompte].map(h=> h.replace(/#.*$/,'').replace(/\.html$/,''));
 }
