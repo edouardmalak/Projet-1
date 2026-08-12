@@ -165,6 +165,8 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
         <span data-fr="Activer l'auto-acceptation" data-en="Enable auto-acceptance">Activer l'auto-acceptation</span>
       </label>
       <p class="explic" data-fr="Les quarts correspondant à vos critères seront acceptés automatiquement et immédiatement. Votre calendrier fait foi de vos disponibilités." data-en="Shifts matching your criteria will be accepted automatically and immediately. Your calendar is the authoritative record of your availability.">Les quarts correspondant à vos critères seront acceptés automatiquement et immédiatement. Votre calendrier fait foi de vos disponibilités.</p>
+      <!-- T23a (batch1) : la porte « logiciel » du moteur (sql/70) était invisible ici -->
+      <p class="explic" data-fr="Seuls les quarts dont le logiciel de la pharmacie figure dans votre liste de logiciels maîtrisés (voir votre &lt;a href=&quot;/profil.html&quot; style=&quot;color:var(--vert-vif)&quot;&gt;profil&lt;/a&gt;) peuvent être acceptés automatiquement." data-en="Only shifts whose pharmacy software is in your known-software list (see your &lt;a href=&quot;/profil.html&quot; style=&quot;color:var(--vert-vif)&quot;&gt;profile&lt;/a&gt;) can be accepted automatically.">Seuls les quarts dont le logiciel de la pharmacie figure dans votre liste de logiciels maîtrisés (voir votre <a href="/profil.html" style="color:var(--vert-vif)">profil</a>) peuvent être acceptés automatiquement.</p>
       <div id="aa-champs" style="display:none">
         <div class="champ"><label data-fr="Distance maximale (km)" data-en="Maximum distance (km)">Distance maximale (km)</label><input id="aa_distance" type="number" min="1" step="1"></div>
         <div class="champ"><label data-fr="Heures maximales par quart" data-en="Maximum hours per shift">Heures maximales par quart</label><input id="aa_heures" type="number" min="1" step="0.5"></div>
@@ -190,6 +192,12 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
       <p class="explic" id="aa-mois" style="display:none;margin:8px 0 12px"></p>
       <button class="btn" id="btn-save-aa" type="button" data-fr="Enregistrer" data-en="Save">Enregistrer</button>
       <div class="msg" id="msg-aa"></div>
+      <!-- T23b (batch1) : transparence — pourquoi un quart n'a pas été auto-accepté
+           (mes_rejets_auto_acceptation, sql/72 — construite pour ça, jamais branchée) -->
+      <details id="aa-rejets" style="margin-top:14px">
+        <summary style="cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd)" data-fr="Rejets récents — pourquoi un quart n'a pas été accepté" data-en="Recent rejections — why a shift wasn't accepted">Rejets récents — pourquoi un quart n'a pas été accepté</summary>
+        <div id="aa-rejets-liste" style="margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd)"></div>
+      </details>
     </div>
 
     <div class="carte" id="carte-confiance-pharmacie" style="display:none">
@@ -875,6 +883,46 @@ async function chargerAutoAcceptation(){
     $('aa-mois').innerHTML = cdT('Auto-acceptation active pour : ','Auto-acceptance active for: ') + morceaux.join(' · ');
     $('aa-mois').style.display = '';
   }catch(e){}
+
+  /* T23b (batch1) : rejets récents du moteur — chargés une fois, à
+     l'ouverture du bloc repliable (jamais bloquant, RPC sql/72) */
+  const rejets = $('aa-rejets');
+  if(rejets && !rejets.dataset.branche){
+    rejets.dataset.branche = '1';
+    rejets.addEventListener('toggle', async ()=>{
+      if(!rejets.open || rejets.dataset.charge) return;
+      rejets.dataset.charge = '1';
+      const zone = $('aa-rejets-liste');
+      zone.textContent = cdT('Chargement…','Loading…');
+      try{
+        const { data, error } = await sb.rpc('mes_rejets_auto_acceptation', { p_limite: 20 });
+        if(error) throw error;
+        if(!data || !data.length){
+          zone.textContent = cdT('Aucune évaluation récente — le moteur n\'a encore rejeté aucun quart pour vous.',
+                                 'No recent evaluations — the engine hasn\'t rejected any shift for you yet.');
+          return;
+        }
+        const PORTES = {
+          a: cdT('fonction désactivée','feature disabled'), b: cdT('calendrier non confirmé','calendar not confirmed'),
+          c: cdT('jour exclu ou indisponible','excluded or unavailable day'), d: cdT('conflit d\'horaire','schedule conflict'),
+          e: cdT('distance trop grande','too far'), f: cdT('trop d\'heures','too many hours'),
+          g: cdT('taux trop bas','rate too low'), h: cdT('logiciel non maîtrisé','software not in your list'),
+          i: cdT('intégration Stripe incomplète','Stripe setup incomplete'), j: cdT('refroidissement Interac 72 h','Interac 72h cooldown'),
+          k: cdT('relation bloquée/masquée','blocked/hidden relationship')
+        };
+        zone.innerHTML = data.map(r=>{
+          const quand = r.evalue_le ? new Date(r.evalue_le).toLocaleDateString(cdLang()==='en'?'en-CA':'fr-CA') : '—';
+          const motif = r.resultat === 'accepted' ? cdT('accepté ✓','accepted ✓') : (PORTES[r.porte] || r.porte || '—');
+          return '<div style="padding:7px 0;border-bottom:1px solid var(--ligne,#E6E8E4)">' +
+            '<b style="color:var(--texte)">' + (r.numero_reference || '—') + '</b> · ' +
+            (r.date_contrat ? cdDate(r.date_contrat) : '—') + (r.ville ? ' · ' + r.ville : '') +
+            '<br>' + quand + ' — ' + motif + '</div>';
+        }).join('');
+      }catch(e){
+        zone.textContent = cdT('Liste indisponible pour le moment.','List unavailable for now.');
+      }
+    });
+  }
 }
 
 if($('aa_enabled')) $('aa_enabled').addEventListener('change', majChampsAA);
