@@ -361,7 +361,7 @@ function initOngletsEP(){
     if(!$('tarif_horaire').value) $('tarif_horaire').value = regles.tarif_horaire_minimum;
   }
 
-  $('date_contrat').min = new Date().toISOString().slice(0,10);
+  $('date_contrat').min = cdAujourdhui();   /* T5 (batch1) : date locale, pas UTC */
 
   /* publication */
   $('f').addEventListener('submit', async e=>{

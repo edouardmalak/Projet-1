@@ -329,7 +329,7 @@ async function chargerMandats(){
 
 function rendreMandats(){
   const tb = $('t-mandats');
-  const aujourdhui = new Date().toISOString().slice(0,10);
+  const aujourdhui = cdAujourdhui();   /* T5 (batch1) : date locale, pas UTC */
 
   /* onglets Disponible / Sauvegardé — contrats ouverts du réseau (mêmes
      données que la page Contrats disponibles) ; Sauvegardé = ceux marqués
@@ -641,7 +641,7 @@ function rendreCalendrier(){
   const premier = new Date(calAnnee, calMois, 1);
   const nbJours = new Date(calAnnee, calMois+1, 0).getDate();
   const decalage = premier.getDay(); /* 0=dim */
-  const ajd = new Date().toISOString().slice(0,10);
+  const ajd = cdAujourdhui();   /* T5 (batch1) : date locale, pas UTC */
 
   grille.innerHTML = '';
   for(let i=0;i<decalage;i++){ const c=document.createElement('div'); c.className='cal-jour vide'; grille.appendChild(c); }

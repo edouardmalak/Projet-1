@@ -1202,7 +1202,7 @@ async function chargerGarantiesEnDifficulte(){
       '">' + (r.palier || 'T-24h') + '</span>';
     tr.append(
       td(r.numero_reference),
-      td(r.date_contrat ? new Date(r.date_contrat).toLocaleDateString('fr-CA') : '—'),
+      td(r.date_contrat ? cdDate(r.date_contrat) : '—'),   /* T5 (batch1) : cdDate ancre à midi — pas de recul d'un jour */
       td(r.pharmacie_nom),
       td(r.pharmacien_nom),
       palierTd,

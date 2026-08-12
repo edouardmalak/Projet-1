@@ -953,6 +953,13 @@ window.cdTelAffiche = function(e164){
 };
 
 /* ---- formatage ---- */
+/* T5 (batch1) : date du jour LOCALE 'YYYY-MM-DD' — jamais toISOString(),
+   qui bascule au lendemain dès ~20 h (heure du Québec) parce qu'il rend
+   la date UTC. À utiliser pour tout « aujourd'hui » calendaire. */
+window.cdAujourdhui = function(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+};
 window.cdArgent = n => new Intl.NumberFormat('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' $';
 window.cdDate = d => new Date(d + (String(d).length===10 ? 'T12:00:00' : '')).toLocaleDateString('fr-CA',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
 window.cdHeure = h => String(h||'').slice(0,5).replace(':',' h ');

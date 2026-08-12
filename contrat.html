@@ -461,7 +461,7 @@ function msg(texte, type){
   /* ---- Phase 3 : marquer complété (l'une OU l'autre des parties) ----
      Contrat attribué + date passée + je suis la pharmacie propriétaire
      ou le pharmacien retenu. La base journalise QUI a déclenché.     */
-  const dateContratPassee = k.date_contrat <= new Date().toISOString().slice(0,10);
+  const dateContratPassee = k.date_contrat <= cdAujourdhui();   /* T5 (batch1) : date locale, pas UTC */
   const suisPartie = k.est_ma_pharmacie || k.ma_candidature_statut === 'accepte' || profil.role === 'admin';
   if((k.statut==='attribue' || k.statut==='complete') && suisPartie){
     const lm = $('lien-messagerie');
@@ -552,7 +552,7 @@ function msg(texte, type){
              de début dépassée ; une seule déclaration par contrat (sql/53). ---- */
           if(k.statut === 'attribue'){
             const maintenant = new Date();
-            const estAujourdhui = String(k.date_contrat).slice(0,10) === maintenant.toISOString().slice(0,10);
+            const estAujourdhui = String(k.date_contrat).slice(0,10) === cdAujourdhui();   /* T5 (batch1) : date locale */
             const quartCommence = estAujourdhui && maintenant.toTimeString().slice(0,5) > String(k.heure_debut).slice(0,5);
             if(quartCommence){
               const { data: dejaSignale } = await sb.from('demandes_retard').select('id')
