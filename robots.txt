@@ -1,0 +1,36 @@
+# C-Direct — robots.txt (T19, batch1)
+# Pages publiques indexables ; tout l'espace applicatif/admin est exclu.
+
+User-agent: *
+Allow: /$
+Allow: /index.html
+Allow: /faq.html
+Allow: /regles.html
+Allow: /conditions.html
+Allow: /confidentialite.html
+Allow: /acces.html
+Allow: /irremplacable.html
+Disallow: /admin
+Disallow: /espace-pharmacie.html
+Disallow: /contrats.html
+Disallow: /contrat.html
+Disallow: /c/
+Disallow: /mes-mandats.html
+Disallow: /messages.html
+Disallow: /finances.html
+Disallow: /parametres.html
+Disallow: /profil.html
+Disallow: /disponibilites.html
+Disallow: /calendrier-pharmacie.html
+Disallow: /pharmacies-preferees.html
+Disallow: /locums-confiance.html
+Disallow: /facture-vue.html
+Disallow: /evaluations.html
+Disallow: /dispensaire.html
+Disallow: /fiche-accueil.html
+Disallow: /carte.html
+Disallow: /attente.html
+Disallow: /nouveaux
+Disallow: /media/
+
+Sitemap: https://c-direct.ca/sitemap.xml
