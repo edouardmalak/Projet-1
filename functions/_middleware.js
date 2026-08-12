@@ -26,6 +26,7 @@ const PREFIXES_BLOQUES = [
   '/sql/',        // migrations : schéma + RLS + corps des fonctions
   '/workers/',    // code source des Workers (SMS, assistant)
   '/.git/',       // par précaution (Pages l'exclut déjà)
+  '/media/911/',  // documents internes (handoffs, specs, promo non publiée)
 ];
 
 const EXTENSIONS_BLOQUEES = [

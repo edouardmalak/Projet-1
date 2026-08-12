@@ -9,6 +9,7 @@ captures-concurrents/
 # Notes internes : le dépôt est servi publiquement par Cloudflare Pages,
 # donc tout fichier commité est téléchargeable. Ces documents restent locaux.
 C-Direct-actions-*.pdf
+media/911/promo/
 .fuse_hidden*
 
 # Cache local de Wrangler (contient l'ID de compte Cloudflare) — jamais commité
