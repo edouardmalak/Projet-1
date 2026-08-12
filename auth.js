@@ -278,7 +278,7 @@ const CD_MENUS = {
     ['/admin-verification.html', 'Vérification',     'Verification'],
     ['/admin-shifts.html',       'Contrats',         'Contracts'],
     ['/admin-articles.html',     'Dispensaire',       'Dispensary'],
-    ['/admin-messages.html',     'Clavardage',       'Messages'],
+    ['/admin-messages.html',     'Messages',         'Messages'],
     { g:'Compte', ge:'Account', items: [
       ['/evaluations.html',        'Évaluations',      'Reviews'],
       ['/profil.html',             'Profil',           'Profile'],
@@ -974,7 +974,7 @@ window.cdEnteteConnecte = async function(){
   return p;
 };
 
-/* ---- pastille "nouveaux messages" sur le lien Clavardage du menu ----
+/* ---- pastille "nouveaux messages" sur le lien Messages du menu ----
    sql/60. Un seul compteur (compter_messages_non_lus) couvre les fils
    pharmacie<->pharmacien ET le nouveau canal admin<->utilisateur — peu
    importe le rôle, un seul appel. Best-effort : jamais bloquant, jamais
