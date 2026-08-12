@@ -141,6 +141,13 @@ create trigger trg_aa_evenement_contrat
   for each row execute function public.aa_evenement_contrat();
 
 -- 3b) réglages pharmacien : activation ou modification pendant que c'est actif.
+-- [T27 batch1 — no-op délibéré, documenté] : quand un pharmacien RESSERRE
+-- ses filtres (ex. distance max réduite) alors qu'il est déjà activé, la
+-- réévaluation complète relancée ici ne peut produire aucun nouveau match
+-- (resserrer ne fait qu'exclure). C'est une petite dépense de calcul
+-- assumée : distinguer « resserré » de « élargi » champ par champ coûterait
+-- plus en complexité (et en risques de faux négatifs) que les quelques
+-- évaluations superflues toutes gérées par les portes du moteur (sql/70).
 create or replace function public.aa_evenement_reglages()
 returns trigger
 language plpgsql security definer set search_path = public
