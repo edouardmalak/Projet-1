@@ -109,39 +109,50 @@ table.m-tbl tr:last-child td{border-bottom:none}
 <link rel="stylesheet" href="/design.css">
 </head>
 <body>
+
+<!-- T3 (batch1) : en-tête partagé, identique aux autres pages connectées -->
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="/index.html">
+      <span class="mot-marque" style="white-space:nowrap">C<svg class="cro-tiret" viewBox="0 0 66.58 57.08" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" style="width:.48em;height:.41em;vertical-align:.145em;margin:0 .02em;flex:none"><path d="M0 33.70 L24.85 57.08 L66.58 8.84 L56.37 0 L23.85 37.60 L9.26 23.86 Z" fill="#C98A2B"/></svg>DIRECT</span>
+    </a>
+    <div class="droite"></div>
+  </div>
+</div>
+
 <div class="wrap">
-  <h1>Facture C-Direct</h1>
+  <h1 data-fr="Facture C-Direct" data-en="C-Direct invoice">Facture C-Direct</h1>
   <p class="sous" id="sous"><a href="#" id="lien-retour">← Retour</a></p>
 
-  <div class="chargement" id="chargement">Chargement de la facture…</div>
+  <div class="chargement" id="chargement" data-fr="Chargement de la facture…" data-en="Loading the invoice…">Chargement de la facture…</div>
 
   <div class="grille" id="grille" style="display:none">
     <!-- ============ STATUT + ACTIONS ============ -->
     <div class="panneau no-print">
-      <div class="sec">Statut</div>
+      <div class="sec" data-fr="Statut" data-en="Status">Statut</div>
       <span class="chip" id="chip">—</span>
       <div class="detail" id="detail"></div>
 
       <div id="zone-brouillon" style="display:none">
-        <div class="sec">Réviser le brouillon</div>
+        <div class="sec" data-fr="Réviser le brouillon" data-en="Review the draft">Réviser le brouillon</div>
         <div class="champ">
-          <label for="in-km">Kilométrage total aller-retour (km)</label>
+          <label for="in-km" data-fr="Kilométrage total aller-retour (km)" data-en="Total round-trip mileage (km)">Kilométrage total aller-retour (km)</label>
           <input id="in-km" type="number" step="0.1" min="0">
         </div>
-        <button class="btn gris" id="btn-km" type="button">Ajuster les km</button>
-        <p class="astuce">Ajustez si le trajet réel a différé (distance estimée à l'entente). Les autres montants viennent des règles du réseau.</p>
-        <button class="btn" id="btn-envoyer" type="button">Envoyer la facture à la pharmacie</button>
-        <p class="astuce">Statut → envoyée · échéance selon le délai de paiement du réseau.</p>
+        <button class="btn gris" id="btn-km" type="button" data-fr="Ajuster les km" data-en="Adjust km">Ajuster les km</button>
+        <p class="astuce" data-fr="Ajustez si le trajet réel a différé (distance estimée à l'entente). Les autres montants viennent des règles du réseau." data-en="Adjust if the actual trip differed (distance estimated at agreement). The other amounts come from the network rules.">Ajustez si le trajet réel a différé (distance estimée à l'entente). Les autres montants viennent des règles du réseau.</p>
+        <button class="btn" id="btn-envoyer" type="button" data-fr="Envoyer la facture à la pharmacie" data-en="Send the invoice to the pharmacy">Envoyer la facture à la pharmacie</button>
+        <p class="astuce" data-fr="Statut → envoyée · échéance selon le délai de paiement du réseau." data-en="Status → sent · due date follows the network payment terms.">Statut → envoyée · échéance selon le délai de paiement du réseau.</p>
       </div>
 
       <div id="zone-payer" style="display:none">
-        <div class="sec">Paiement</div>
-        <button class="btn" id="btn-payee" type="button">Marquer payée</button>
-        <p class="astuce" id="astuce-payer">Confirme que le virement Interac a été effectué / reçu.</p>
+        <div class="sec" data-fr="Paiement" data-en="Payment">Paiement</div>
+        <button class="btn" id="btn-payee" type="button" data-fr="Marquer payée" data-en="Mark as paid">Marquer payée</button>
+        <p class="astuce" id="astuce-payer" data-fr="Confirme que le virement Interac a été effectué / reçu." data-en="Confirms the Interac transfer was sent / received.">Confirme que le virement Interac a été effectué / reçu.</p>
       </div>
 
-      <div class="sec">Document</div>
-      <button class="btn gris" type="button" onclick="window.print()">Imprimer / Enregistrer en PDF</button>
+      <div class="sec" data-fr="Document" data-en="Document">Document</div>
+      <button class="btn gris" type="button" onclick="window.print()" data-fr="Imprimer / Enregistrer en PDF" data-en="Print / Save as PDF">Imprimer / Enregistrer en PDF</button>
       <div class="msg" id="msg"></div>
     </div>
 
@@ -241,7 +252,12 @@ const sb = window.sbClient;
 const $ = id => document.getElementById(id);
 const fmt = n => new Intl.NumberFormat('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0)+" $";
 const hhmm = h => { const H=Math.floor(h), M=Math.round((h-H)*60); return String(H).padStart(2,'0')+":"+String(M).padStart(2,'0'); };
-const CHIPS = {brouillon:'BROUILLON', envoyee:'ENVOYÉE', payee:'PAYÉE', en_retard:'EN RETARD'};
+const CHIPS = {
+  brouillon: cdT('BROUILLON','DRAFT'),
+  envoyee:   cdT('ENVOYÉE','SENT'),
+  payee:     cdT('PAYÉE','PAID'),
+  en_retard: cdT('EN RETARD','OVERDUE')
+};
 
 function msg(texte, type){
   const el = $('msg'); el.textContent = texte; el.className = 'msg '+type; el.style.display = 'block';
@@ -249,16 +265,17 @@ function msg(texte, type){
 
 (async function(){
   const profil = await cdExigerConnexion();
+  cdEnteteConnecte();   /* T3 (batch1) : en-tête partagé (menu, cœur/cloche, FR/EN, compte) */
   $('lien-retour').href = profil.role === 'pharmacie' ? '/espace-pharmacie.html'
                         : profil.role === 'admin' ? '/admin.html' : '/mes-mandats.html';
 
   const id = new URLSearchParams(location.search).get('id');
-  if(!id){ $('chargement').textContent = 'Référence de facture manquante (?id=…)'; return; }
+  if(!id){ $('chargement').textContent = cdT('Référence de facture manquante (?id=…)','Missing invoice reference (?id=…)'); return; }
 
   const { data, error } = await sb.rpc('get_factures');
-  if(error){ $('chargement').textContent = 'Erreur : ' + error.message; return; }
+  if(error){ $('chargement').textContent = cdT('Erreur : ','Error: ') + error.message; return; }
   const f = (data||[]).find(x => x.facture_id === id);
-  if(!f){ $('chargement').textContent = 'Facture introuvable ou non accessible avec votre compte.'; return; }
+  if(!f){ $('chargement').textContent = cdT('Facture introuvable ou non accessible avec votre compte.','Invoice not found or not accessible with your account.'); return; }
 
   $('chargement').style.display = 'none';
   $('grille').style.display = '';
@@ -274,10 +291,10 @@ function msg(texte, type){
   $('chip').className = 'chip ' + f.statut;
   $('chip').textContent = CHIPS[f.statut] || f.statut;
   const lignesDetail = [];
-  if(f.date_envoi)    lignesDetail.push('Envoyée le <b>'+new Date(f.date_envoi).toLocaleDateString('fr-CA')+'</b>');
-  if(f.date_echeance) lignesDetail.push('Échéance <b>'+f.date_echeance+'</b>');
-  if(f.date_paiement) lignesDetail.push('Payée le <b>'+new Date(f.date_paiement).toLocaleDateString('fr-CA')+'</b>');
-  if(f.type_facture === 'penalite_annulation') lignesDetail.push('<b>Pénalité d\'annulation</b> — protection du réseau');
+  if(f.date_envoi)    lignesDetail.push(cdT('Envoyée le ','Sent on ')+'<b>'+new Date(f.date_envoi).toLocaleDateString('fr-CA')+'</b>');
+  if(f.date_echeance) lignesDetail.push(cdT('Échéance ','Due ')+'<b>'+f.date_echeance+'</b>');
+  if(f.date_paiement) lignesDetail.push(cdT('Payée le ','Paid on ')+'<b>'+new Date(f.date_paiement).toLocaleDateString('fr-CA')+'</b>');
+  if(f.type_facture === 'penalite_annulation') lignesDetail.push('<b>'+cdT('Pénalité d\'annulation','Cancellation penalty')+'</b>'+cdT(' — protection du réseau',' — network protection'));
   $('detail').innerHTML = lignesDetail.join('<br>');
 
   /* ---- MANDAT : client ---- */
@@ -339,10 +356,15 @@ function msg(texte, type){
 
     zone.querySelectorAll('.btn-copier').forEach(btn=>{
       btn.addEventListener('click', ()=>{
+        const avant = btn.textContent;
         navigator.clipboard.writeText(btn.dataset.val).then(()=>{
-          const avant = btn.textContent;
-          btn.textContent = 'Copié ✓'; btn.classList.add('copie');
+          btn.textContent = cdT('Copié ✓','Copied ✓'); btn.classList.add('copie');
           setTimeout(()=>{ btn.textContent = avant; btn.classList.remove('copie'); }, 1800);
+        }).catch(()=>{
+          /* T3 (batch1) : accès presse-papiers refusé — erreur visible au lieu d'un clic muet */
+          btn.textContent = cdT('Copie impossible — copiez à la main','Copy failed — copy manually');
+          btn.style.background = 'var(--rouge)';
+          setTimeout(()=>{ btn.textContent = avant; btn.style.background = ''; }, 2500);
         });
       });
     });
@@ -410,15 +432,15 @@ function msg(texte, type){
       $('btn-km').disabled = true;
       const { error: e } = await sb.rpc('ajuster_km_facture', { p_facture: f.facture_id, p_km: parseFloat($('in-km').value)||0 });
       $('btn-km').disabled = false;
-      if(e){ msg('Erreur : '+e.message,'ko'); return; }
+      if(e){ msg(cdT('Erreur : ','Error: ')+e.message,'ko'); return; }
       f.km = parseFloat($('in-km').value)||0; lignes();
-      msg('Kilométrage ajusté ✓','ok');
+      msg(cdT('Kilométrage ajusté ✓','Mileage adjusted ✓'),'ok');
     };
     $('btn-envoyer').onclick = async ()=>{
-      if(!confirm('Envoyer la facture F-'+String(f.numero_facture).padStart(6,'0')+' à '+(f.nom_pharmacie||'la pharmacie')+' ? Elle ne sera plus modifiable.')) return;
+      if(!confirm(cdT('Envoyer la facture F-','Send invoice F-')+String(f.numero_facture).padStart(6,'0')+cdT(' à ',' to ')+(f.nom_pharmacie||cdT('la pharmacie','the pharmacy'))+cdT(' ? Elle ne sera plus modifiable.','? It will no longer be editable.'))) return;
       $('btn-envoyer').disabled = true;
       const { error: e } = await sb.rpc('envoyer_facture', { p_facture: f.facture_id });
-      if(e){ $('btn-envoyer').disabled = false; msg('Erreur : '+e.message,'ko'); return; }
+      if(e){ $('btn-envoyer').disabled = false; msg(cdT('Erreur : ','Error: ')+e.message,'ko'); return; }
       if(window.cdEnvoyerFacture) cdEnvoyerFacture(f.facture_id);   /* courriel PDF à la pharmacie */
       location.reload();
     };
@@ -427,12 +449,12 @@ function msg(texte, type){
   /* ---- actions : marquer payée (pharmacie, ou pharmacien qui confirme) ---- */
   if((f.statut === 'envoyee' || f.statut === 'en_retard') && (estPharmacie || estPharmacien)){
     $('zone-payer').style.display = '';
-    if(estPharmacien && !estPharmacie) $('astuce-payer').textContent = 'Confirme que vous avez bien reçu le paiement.';
+    if(estPharmacien && !estPharmacie) $('astuce-payer').textContent = cdT('Confirme que vous avez bien reçu le paiement.','Confirms you did receive the payment.');
     $('btn-payee').onclick = async ()=>{
-      if(!confirm('Marquer la facture comme PAYÉE ?')) return;
+      if(!confirm(cdT('Marquer la facture comme PAYÉE ?','Mark the invoice as PAID?'))) return;
       $('btn-payee').disabled = true;
       const { error: e } = await sb.rpc('marquer_facture_payee', { p_facture: f.facture_id });
-      if(e){ $('btn-payee').disabled = false; msg('Erreur : '+e.message,'ko'); return; }
+      if(e){ $('btn-payee').disabled = false; msg(cdT('Erreur : ','Error: ')+e.message,'ko'); return; }
       location.reload();
     };
   }
