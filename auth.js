@@ -1119,6 +1119,12 @@ window.cdT = function(fr, en){
     document.querySelectorAll('[data-fr-title]').forEach(el=>{
       const v = el.dataset[l==='en' ? 'enTitle' : 'frTitle']; if(v != null) el.title = v;
     });
+    /* T20 (batch1) : attributs content (meta description, og:*) —
+       data-fr-contenu / data-en-contenu. Le <title> passe déjà par le
+       marcheur [data-fr] générique ci-dessus. */
+    document.querySelectorAll('[data-fr-contenu]').forEach(el=>{
+      const v = el.dataset[l==='en' ? 'enContenu' : 'frContenu']; if(v != null) el.setAttribute('content', v);
+    });
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', poser);
   else poser();

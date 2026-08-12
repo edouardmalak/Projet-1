@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>C-Direct — Pharmacies & pharmaciens remplaçants, en direct</title>
-<meta name="description" content="C-Direct : le lien direct entre pharmacies et pharmaciens remplaçants au Québec. 0 % commission, 100 % de votre taux, facturation automatique, paiement Interac direct.">
+<title data-fr="C-Direct — Pharmacies &amp; pharmaciens remplaçants, en direct" data-en="C-Direct — Pharmacies &amp; locum pharmacists, direct">C-Direct — Pharmacies & pharmaciens remplaçants, en direct</title>
+<meta name="description" content="C-Direct : le lien direct entre pharmacies et pharmaciens remplaçants au Québec. 0 % commission, 100 % de votre taux, facturation automatique, paiement Interac direct." data-fr-contenu="C-Direct : le lien direct entre pharmacies et pharmaciens remplaçants au Québec. 0 % commission, 100 % de votre taux, facturation automatique, paiement Interac direct." data-en-contenu="C-Direct: the direct link between pharmacies and locum pharmacists in Quebec. 0% commission, 100% of your rate, automatic invoicing, direct Interac payment.">
 <meta property="og:title" content="C-Direct — Pharmacies & pharmaciens remplaçants, en direct">
 <meta property="og:description" content="0 % commission. 100 % de votre taux. Le lien direct entre pharmacies et pharmaciens remplaçants au Québec.">
 <meta property="og:type" content="website">
@@ -621,6 +621,10 @@ function setLang(l){
   $('fr').classList.toggle('on', l==='fr');
   $('en').classList.toggle('on', l==='en');
   document.querySelectorAll('[data-fr]').forEach(el=>{ el.innerHTML = el.dataset[l]; });
+  /* T20 (batch1) : meta description (attribut content) suit aussi la langue */
+  document.querySelectorAll('[data-fr-contenu]').forEach(el=>{
+    const v = el.dataset[l==='en' ? 'enContenu' : 'frContenu']; if(v != null) el.setAttribute('content', v);
+  });
 }
 $('fr').onclick = ()=>setLang('fr');
 $('en').onclick = ()=>setLang('en');
