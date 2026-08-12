@@ -23,9 +23,15 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    if (request.method === 'OPTIONS') return corsPreflight();
+    if (request.method === 'OPTIONS') return corsPreflight(request);
 
     try {
+      /* T8a (batch1) : webhook Stripe signé — pas de CORS (serveur→serveur),
+         la signature EST l'authentification. Répond avant tout le reste. */
+      if (request.method === 'POST' && url.pathname === '/stripe/webhook')
+        return await routeStripeWebhook(request, env);
+
+      const reponse = await (async () => {
       if (url.pathname === '/health')
         return json({
           ok: true,
@@ -59,9 +65,15 @@ export default {
         return await routeAdminExecuterCycle(request, env);
 
       return json({ erreur: 'Route inconnue' }, 404);
+      })();
+      /* T8c (batch1) : origine validée posée sur la réponse finale */
+      reponse.headers.set('Access-Control-Allow-Origin', origineAutorisee(request));
+      return reponse;
     } catch (e) {
       console.error('Erreur worker:', e.stack || e.message);
-      return json({ erreur: e.message || 'Erreur interne' }, e.status && e.status < 500 ? e.status : 500);
+      const reponse = json({ erreur: e.message || 'Erreur interne' }, e.status && e.status < 500 ? e.status : 500);
+      reponse.headers.set('Access-Control-Allow-Origin', origineAutorisee(request));
+      return reponse;
     }
   },
 
@@ -79,12 +91,32 @@ export default {
 /* =====================================================================
    OUTILS HTTP (mêmes conventions que le Worker c-direct-sms)
 ===================================================================== */
+/* T8c (batch1) : même liste d'origines que c-direct-chat — ce Worker est
+   le plus sensible des trois, plus de « * ». Les routes renvoient encore
+   l'en-tête générique via json() ; fetch() le REMPLACE par l'origine
+   validée avant de répondre (les Response construites ici ont des
+   en-têtes modifiables). */
+function origineOk(origine) {
+  if (!origine) return false;
+  try {
+    const h = new URL(origine).hostname;
+    return h === 'c-direct.ca' || h === 'www.c-direct.ca' ||
+           h === 'projet-1-1yi.pages.dev' || h.endsWith('.projet-1-1yi.pages.dev') ||
+           h === 'localhost';
+  } catch (e) { return false; }
+}
+function origineAutorisee(request) {
+  const origine = request.headers.get('Origin');
+  return origineOk(origine) ? origine : 'https://c-direct.ca';
+}
 const CORS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://c-direct.ca',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
-function corsPreflight() { return new Response(null, { status: 204, headers: CORS }); }
+function corsPreflight(request) {
+  return new Response(null, { status: 204, headers: { ...CORS, 'Access-Control-Allow-Origin': origineAutorisee(request) } });
+}
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
     status,
@@ -173,6 +205,102 @@ async function stripeApi(env, method, chemin, corps, { idempotencyKey, compteCon
     throw e;
   }
   return data;
+}
+
+/* =====================================================================
+   T8a (batch1) — WEBHOOK STRIPE CONNECT (signé, idempotent)
+   Vérification de signature selon https://docs.stripe.com/webhooks
+   (en-tête Stripe-Signature : HMAC-SHA256 de "{t}.{corps brut}" avec
+   STRIPE_WEBHOOK_SECRET, tolérance 5 min). Dédoublonnage par event.id
+   dans public.stripe_evenements (sql/74) — Stripe peut livrer deux fois.
+   Rôle VOLONTAIREMENT limité : mettre en cache account.updated dans
+   stripe_comptes.stripe_account_statut (colonne prévue depuis sql/42,
+   lue par le moteur d'auto-acceptation sql/70) et JOURNALISER les
+   évènements payment_intent.*. La machine à états reste pilotée par le
+   cron (inchangé, il sert de filet si un webhook se perd).
+===================================================================== */
+function egaliteConstante(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+async function verifierSignatureStripe(secret, enTete, corpsBrut) {
+  if (!secret || !enTete) return false;
+  let t = null; const v1 = [];
+  for (const partie of enTete.split(',')) {
+    const i = partie.indexOf('=');
+    if (i === -1) continue;
+    const cle = partie.slice(0, i).trim(), valeur = partie.slice(i + 1).trim();
+    if (cle === 't') t = valeur;
+    if (cle === 'v1') v1.push(valeur);
+  }
+  if (!t || !v1.length) return false;
+  if (Math.abs(Date.now() / 1000 - Number(t)) > 300) return false;   // anti-rejeu, 5 min
+  const cle = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', cle, new TextEncoder().encode(`${t}.${corpsBrut}`));
+  const hex = [...new Uint8Array(signature)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return v1.some((v) => egaliteConstante(v, hex));
+}
+
+/* Retourne true si l'évènement est NOUVEAU (inséré), false s'il a déjà
+   été traité (doublon Stripe) — Prefer: ignore-duplicates renvoie alors
+   une représentation vide. */
+async function evenementNouveau(env, evenement) {
+  const r = await fetch(`${env.SUPABASE_URL}/rest/v1/stripe_evenements?on_conflict=id`, {
+    method: 'POST',
+    headers: sbHeaders(env, { Prefer: 'resolution=ignore-duplicates,return=representation' }),
+    body: JSON.stringify([{ id: evenement.id, type: evenement.type, compte: evenement.account || null }]),
+  });
+  if (!r.ok) throw new Error(`Supabase INSERT stripe_evenements → ${r.status}: ${await r.text()}`);
+  const lignes = await r.json();
+  return Array.isArray(lignes) && lignes.length > 0;
+}
+
+async function routeStripeWebhook(request, env) {
+  const corpsBrut = await request.text();
+  const signatureOk = await verifierSignatureStripe(
+    env.STRIPE_WEBHOOK_SECRET, request.headers.get('Stripe-Signature'), corpsBrut
+  );
+  if (!signatureOk) return new Response('Signature invalide', { status: 400 });
+
+  let evenement;
+  try { evenement = JSON.parse(corpsBrut); } catch (e) { return new Response('JSON invalide', { status: 400 }); }
+  if (!evenement?.id || !evenement?.type) return new Response('Évènement invalide', { status: 400 });
+
+  if (!(await evenementNouveau(env, evenement))) {
+    return new Response(JSON.stringify({ ok: true, doublon: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  if (evenement.type === 'account.updated' && evenement.account) {
+    const compte = evenement.data?.object || {};
+    await fetch(`${env.SUPABASE_URL}/rest/v1/stripe_comptes?stripe_account_id=eq.${encodeURIComponent(evenement.account)}`, {
+      method: 'PATCH',
+      headers: sbHeaders(env, { Prefer: 'return=minimal' }),
+      body: JSON.stringify({
+        stripe_account_statut: {
+          charges_enabled: compte.charges_enabled === true,
+          payouts_enabled: compte.payouts_enabled === true,
+          requirements: compte.requirements || null,
+          maj_webhook: new Date().toISOString(),
+        },
+        updated_at: new Date().toISOString(),
+      }),
+    });
+  } else if (evenement.type && evenement.type.startsWith('payment_intent.')) {
+    const pi = evenement.data?.object || {};
+    const garantieId = pi.metadata?.garantie_id;
+    if (garantieId) {
+      await journaliser(env, garantieId, null, `webhook:${evenement.type}`,
+        `PI ${pi.id || '?'} statut=${pi.status || '?'} (évènement ${evenement.id})`);
+    }
+  }
+  /* Tout autre type : accepté et ignoré (200) — Stripe cesse de relivrer. */
+
+  return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 }
 
 /* =====================================================================
@@ -619,7 +747,49 @@ async function capturerGarantie(env, ligne) {
     await journaliser(env, garantie_id, null, 'captured', 'Délai dépassé sans confirmation — capture automatique');
     return { ok: true };
   } catch (e) {
-    await journaliser(env, garantie_id, null, 'captured', `ÉCHEC capture : ${String(e.message || e).slice(0, 500)}`);
+    /* T8b (batch1) : avant, l'échec n'était QUE journalisé — la ligne
+       restait dans lister_garanties_a_capturer et était retentée en
+       silence toutes les 15 min, sans que personne ne le sache. Désormais :
+       statut → capture_failed (état terminal distinct, sql/74 — la RPC ne
+       resélectionne plus la ligne), SMS à la pharmacie (même canal que
+       l'échec d'autorisation) et courriel admin (même mécanisme Web3Forms
+       que cdAlerteAdmin côté client). Une garantie en capture_failed exige
+       une intervention humaine : c'est un paiement dû non sécurisé. */
+    const erreurTexte = String(e.message || e).slice(0, 500);
+    await majGarantie(env, garantie_id, { statut: 'capture_failed', derniere_erreur: erreurTexte });
+    await journaliser(env, garantie_id, null, 'capture_failed', `ÉCHEC capture : ${erreurTexte}`);
+
+    let pharmacieId = null, reference = '';
+    try {
+      const [detail] = await sbSelect(
+        env,
+        `garanties_paiement?id=eq.${garantie_id}&select=candidature_id,candidatures(contrat_id,contrats(pharmacie_id,numero_reference))`
+      );
+      pharmacieId = detail?.candidatures?.contrats?.pharmacie_id || null;
+      reference = detail?.candidatures?.contrats?.numero_reference || '';
+    } catch (e2) { /* best-effort — l'alerte admin part quand même */ }
+
+    if (pharmacieId) {
+      await alerterPharmacieCarte(env, {
+        pharmacie_id: pharmacieId,
+        corps: `C-Direct URGENT : le prelevement de la garantie du quart ${reference} a echoue (carte refusee ou autorisation expiree). Le paiement du pharmacien n'est PAS securise. Contactez-nous ou reglez par Interac sans delai : https://c-direct.ca/espace-pharmacie.html`,
+      });
+    }
+    try {
+      await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8', Accept: 'application/json' },
+        body: JSON.stringify({
+          access_key: '6d62e4bb-5cdd-42e9-8c64-5e9a9cf465eb',
+          from_name: 'C-Direct — Worker paiements',
+          subject: '[C-Direct] ECHEC DE CAPTURE — intervention requise',
+          'Garantie': garantie_id,
+          'Contrat': reference || '(inconnu)',
+          'Erreur Stripe': erreurTexte,
+          'À faire': 'Vérifier la garantie dans Stripe et relancer le paiement (admin.html → garanties).',
+        }),
+      });
+    } catch (e3) { /* jamais bloquant */ }
     return { ok: false, erreur: e.message };
   }
 }
