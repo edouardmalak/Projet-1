@@ -306,7 +306,7 @@ window.cdMenuRole = function(role){
   // clé de comparaison pour « page active » — ignore l'ancre et .html
   const clePour = href => href.replace(/#.*$/,'').replace(/\.html$/,'');
 
-  function creerLien(href, fr, an){
+  function creerLien(href, fr, an, premier){
     /* Une entrée qui pointe vers une ancre (#…) désigne une SECTION d'une
        page déjà présente au menu : on ne la surligne jamais, sinon deux
        entrées s'allumeraient en même temps (ex. Accueil + Nouvelle demande,
@@ -317,6 +317,18 @@ window.cdMenuRole = function(role){
     a.href = href;
     a.textContent = en ? an : fr;
     a.setAttribute('aria-current', actif ? 'page' : 'false');
+    /* T13b (batch1) : la 1re entrée (« Trouver un contrat » / « Publier un
+       contrat ») est l'action principale — pastille pleine, distincte du
+       simple surlignage de page active. */
+    if(premier){
+      a.style.cssText = 'white-space:nowrap;text-decoration:none;font-size:11px;letter-spacing:.04em;'+
+        'text-transform:uppercase;padding:6px 12px;border-radius:99px;color:#fff;flex:none;display:block;'+
+        'background:var(--vert,#0B6E4F);font-weight:700;margin-right:4px'+
+        (actif ? ';outline:2px solid rgba(16,138,95,.35);outline-offset:1px' : '');
+      a.addEventListener('mouseenter', ()=> a.style.background='var(--vert-fonce,#084C37)');
+      a.addEventListener('mouseleave', ()=> a.style.background='var(--vert,#0B6E4F)');
+      return a;
+    }
     const couleur = actif ? 'var(--vert-vif,#0f8a5f)' : 'var(--sourd,#6b7772)';
     a.style.cssText = 'white-space:nowrap;text-decoration:none;font-size:11px;letter-spacing:.04em;'+
       'text-transform:uppercase;padding:6px 8px;border-radius:6px;color:'+couleur+';flex:none;display:block;'+
@@ -331,11 +343,13 @@ window.cdMenuRole = function(role){
   const fermetures = [];
   function toutFermer(){ fermetures.forEach(f=>f()); }
 
-  items.forEach(entree=>{
+  let groupePresent = false;
+  items.forEach((entree, indice)=>{
     if(Array.isArray(entree)){
-      strip.appendChild(creerLien(entree[0], entree[1], entree[2]));
+      strip.appendChild(creerLien(entree[0], entree[1], entree[2], indice === 0));
       return;
     }
+    groupePresent = true;
     // groupe déroulant
     const actifEnfant = entree.items.some(([href])=> href.indexOf('#')===-1 && ici === clePour(href));
     const enveloppe = document.createElement('span');
@@ -381,6 +395,24 @@ window.cdMenuRole = function(role){
 
   document.addEventListener('click', toutFermer);
   document.addEventListener('keydown', e=>{ if(e.key === 'Escape') toutFermer(); });
+
+  /* T13c (batch1) : point de rupture mobile — sous 900 px, la bande de
+     nav défile horizontalement (barre de défilement masquée) au lieu de
+     pousser ♥ / 🔔 / FR/EN / compte hors de l'écran. Les menus déroulants
+     (admin : groupe « Compte ») exigent overflow visible → la règle est
+     limitée aux bandes SANS groupe via la classe cd-menu-defile. */
+  if(!groupePresent) strip.classList.add('cd-menu-defile');
+  if(!document.getElementById('cd-style-menu-mobile')){
+    const style = document.createElement('style');
+    style.id = 'cd-style-menu-mobile';
+    style.textContent =
+      '@media(max-width:900px){' +
+      '#cd-menu.cd-menu-defile{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}' +
+      '#cd-menu.cd-menu-defile::-webkit-scrollbar{display:none}' +
+      '.topbar .in{gap:8px}' +
+      '}';
+    document.head.appendChild(style);
+  }
 
   const conteneur = document.querySelector('.topbar .droite') || document.querySelector('.topbar .in');
   if(conteneur){
@@ -772,7 +804,6 @@ window.cdOuvrirReservation = async function(opts){
 window.cdEnteteConnecte = async function(){
   const p = await cdProfil();
   if(!p) return null;
-  let gearNav = null, compteNav = null;   // placés dans la barre de nav, juste après « Messages »
   const conteneur = document.querySelector('.topbar .droite') ||
                     document.querySelector('.topbar .in') ||
                     document.querySelector('.topbar .wrap');
@@ -824,7 +855,9 @@ window.cdEnteteConnecte = async function(){
         ligneProfil,
         ['/dispensaire.html', 'Formations', 'Training'],
         ['/parametres.html',  'Paramètres', 'Settings'],
-        ['/faq.html',         'Aide & FAQ', 'Help & FAQ'],
+        /* T13a (batch1) : l'ancien bouton « Aide » de la barre est replié
+           ici — ouvre le même panneau (entrevue + nous écrire + FAQ). */
+        [null, 'Aide & FAQ', 'Help & FAQ', ()=> cdOuvrirAide(p.role)],
         ['---'],
         [null, 'Déconnexion', 'Log out', cdDeconnexion, true]
       ];
@@ -842,18 +875,17 @@ window.cdEnteteConnecte = async function(){
         ['/dispensaire.html', 'Dispensaire', 'Dispensary'],
         ['/evaluations.html', 'Évaluations', 'Reviews'],
         ['/parametres.html',  'Paramètres',  'Settings'],
-        ['/faq.html',         'Aide & FAQ',  'Help & FAQ'],
+        /* T13a (batch1) : bouton « Aide » replié ici (même panneau) */
+        [null, 'Aide & FAQ', 'Help & FAQ', ()=> cdOuvrirAide(p.role)],
         ['---'],
         [null, 'Déconnexion', 'Log out', cdDeconnexion, true]
       ];
     }
     const compte = cdMenuCompte(p, items, entete);
-    /* Barre du haut : « Aide », ♥, 🔔, FR/EN à droite ; le ⚙ Réglages et le
-       compte (RM) se rangent DANS la barre de nav, juste après « Messages »
-       (voir plus bas, après cdMenuRole). */
-    const gear = cdIconeLien('/parametres.html', SVG_REGLAGE, 'Paramètres', 'Settings');
-    gearNav = gear; compteNav = compte;
-    el.append(cdBoutonAide(p.role), coeur, cloche, cdBoutonLangue());
+    /* T13a (batch1) : ordre approuvé — liens de nav · ♥ · 🔔 · FR/EN · menu
+       de compte. Le ⚙ autonome et le bouton « Aide » sont repliés dans le
+       menu de compte (Paramètres et Aide & FAQ y vivent déjà). */
+    el.append(coeur, cloche, cdBoutonLangue(), compte);
     conteneur.appendChild(el);
 
     /* logo = accueil du rôle plutôt que la page publique, pour les deux
@@ -928,19 +960,6 @@ window.cdEnteteConnecte = async function(){
     });
   }
   if(p && p.role) cdMenuRole(p.role);
-  /* ⚙ Réglages + compte (RM) rangés dans la barre de nav, juste après le
-     dernier lien (« Messages ») — le reste du cluster (Aide, ♥, 🔔, FR/EN)
-     reste à l'extrême droite. */
-  if(gearNav && compteNav){
-    const menu = document.getElementById('cd-menu');
-    if(menu){
-      compteNav.style.marginLeft = '4px';
-      menu.append(gearNav, compteNav);
-    } else {
-      const el = document.getElementById('cd-entete-session');
-      if(el) el.append(gearNav, compteNav);
-    }
-  }
   if(p && p.role) cdBoutonRetour(p.role);
   if(p && p.role) cdBadgeMessagesNonLus(p.role);
   return p;
