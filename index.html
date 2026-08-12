@@ -42,7 +42,16 @@ nav.liens a:hover{color:var(--vert-fonce)}
 .btn-top:hover{background:#063826}
 .btn-top.ligne{background:#fff;color:var(--vert-fonce);border:2px solid var(--vert);padding:8px 18px}
 .btn-top.ligne:hover{background:var(--menthe)}
-@media(max-width:860px){nav.liens{display:none}}
+/* T14 (batch1) : sous 860 px, la nav n'est plus simplement supprimée —
+   un bouton hamburger l'ouvre en colonne sous la barre. */
+.burger{display:none;background:none;border:1px solid var(--ligne);border-radius:8px;width:40px;height:40px;cursor:pointer;flex:none;align-items:center;justify-content:center;color:var(--vert-fonce);font-size:20px;line-height:1}
+@media(max-width:860px){
+  nav.liens{display:none}
+  .burger{display:flex}
+  nav.liens.ouverte{display:flex;flex-direction:column;gap:0;position:absolute;top:64px;left:0;right:0;background:var(--blanc);border-bottom:1px solid var(--ligne);box-shadow:0 14px 30px -18px rgba(8,76,55,.25);padding:6px 0;z-index:30}
+  nav.liens.ouverte a{padding:13px 24px;border-bottom:1px solid var(--ligne);font-size:15px}
+  nav.liens.ouverte a:last-child{border-bottom:none}
+}
 
 /* hero */
 .hero{padding:64px 0 40px}
@@ -326,7 +335,7 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--ambre);outline-offs
       <span class="mot-marque" style="white-space:nowrap">C<svg class="cro-tiret" viewBox="0 0 66.58 57.08" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" style="width:.48em;height:.41em;vertical-align:.145em;margin:0 .02em;flex:none"><path d="M0 33.70 L24.85 57.08 L66.58 8.84 L56.37 0 L23.85 37.60 L9.26 23.86 Z" fill="#C98A2B"/></svg>Direct</span>
     </div>
     <span class="bienvenue-accueil" data-fr="Bienvenue" data-en="Welcome">Bienvenue</span>
-    <nav class="liens">
+    <nav class="liens" id="nav-liens">
       <a href="#pharmaciens" data-fr="Pharmaciens" data-en="Pharmacists">Pharmaciens</a>
       <a href="#pharmacies" data-fr="Pharmacies" data-en="Pharmacies">Pharmacies</a>
       <a href="#etapes" data-fr="Comment ça marche" data-en="How it works">Comment ça marche</a>
@@ -334,6 +343,8 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--ambre);outline-offs
       <a href="irremplacable.html" style="color:var(--ambre)" data-fr="Irremplaçable" data-en="Irreplaceable">Irremplaçable</a>
     </nav>
     <div class="droite">
+      <!-- T14 (batch1) : menu mobile -->
+      <button type="button" class="burger" id="burger" aria-label="Menu" aria-controls="nav-liens" aria-expanded="false">☰</button>
       <div class="lang" role="group" aria-label="Langue / Language">
         <button id="fr" class="on">FR</button>
         <button id="en">EN</button>
@@ -617,6 +628,25 @@ $('en').onclick = ()=>setLang('en');
 
 /* ---- CTA de rôle (héro et cartes) ---- */
 function allerAcces(r){ window.location.href = 'acces.html?mode=insc&role=' + r; }
+
+/* ---- T14 (batch1) : menu mobile (hamburger) ---- */
+$('burger').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const nav = $('nav-liens');
+  const ouvert = nav.classList.toggle('ouverte');
+  $('burger').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+});
+document.querySelectorAll('#nav-liens a').forEach(a=> a.addEventListener('click', ()=>{
+  $('nav-liens').classList.remove('ouverte');
+  $('burger').setAttribute('aria-expanded','false');
+}));
+document.addEventListener('click', (e)=>{
+  const nav = $('nav-liens');
+  if(nav.classList.contains('ouverte') && !nav.contains(e.target) && e.target !== $('burger')){
+    nav.classList.remove('ouverte');
+    $('burger').setAttribute('aria-expanded','false');
+  }
+});
 
 /* ---- porte cachée admin : 5 clics sur le logo, ou #admin ---- */
 let clics = 0, minuteur = null;
