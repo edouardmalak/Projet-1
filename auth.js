@@ -808,6 +808,15 @@ window.cdEnteteConnecte = async function(){
                     document.querySelector('.topbar .in') ||
                     document.querySelector('.topbar .wrap');
   if(conteneur && (p.role === 'pharmacien' || p.role === 'pharmacie')){
+    /* T17 (batch1) : interrupteur admin — regles_reseau.dispensaire_visible
+       (sql/76) retire « Formations »/« Dispensaire » des menus de compte.
+       Défaut : visible (si colonne absente, erreur, ou migration pas passée). */
+    let dispensaireVisible = true;
+    try{
+      const { data: rr } = await sb.from('regles_reseau').select('dispensaire_visible').eq('id',1).maybeSingle();
+      if(rr && rr.dispensaire_visible === false) dispensaireVisible = false;
+    }catch(e){}
+
     const el = document.createElement('span');
     el.id = 'cd-entete-session';
     el.style.cssText = 'display:inline-flex;align-items:center;gap:6px;flex:none';
@@ -853,7 +862,7 @@ window.cdEnteteConnecte = async function(){
       ligneProfil.append(libelleProfil, etoiles, favoris);
       items = [
         ligneProfil,
-        ['/dispensaire.html', 'Formations', 'Training'],
+        ...(dispensaireVisible ? [['/dispensaire.html', 'Formations', 'Training']] : []),
         ['/parametres.html',  'Paramètres', 'Settings'],
         /* T13a (batch1) : l'ancien bouton « Aide » de la barre est replié
            ici — ouvre le même panneau (entrevue + nous écrire + FAQ). */
@@ -872,7 +881,7 @@ window.cdEnteteConnecte = async function(){
       entete.appendChild(tag);
       items = [
         ['/profil.html',      'Profil',      'Profile'],
-        ['/dispensaire.html', 'Dispensaire', 'Dispensary'],
+        ...(dispensaireVisible ? [['/dispensaire.html', 'Dispensaire', 'Dispensary']] : []),
         ['/evaluations.html', 'Évaluations', 'Reviews'],
         ['/parametres.html',  'Paramètres',  'Settings'],
         /* T13a (batch1) : bouton « Aide » replié ici (même panneau) */

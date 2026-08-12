@@ -152,6 +152,13 @@ tbody tr:last-child td{border-bottom:none}
         <div class="champ"><label>Pénalité annulation &lt; 7 j (%)</label><input id="penalite_annulation_7j_pct" type="number" min="0" max="100" required></div>
         <div class="champ"><label>Pénalité annulation &lt; 48 h (%)</label><input id="penalite_annulation_48h_pct" type="number" min="0" max="100" required></div>
         <div class="champ"><label>Délai de paiement (jours)</label><input id="delai_paiement_jours" type="number" min="0" required></div>
+        <!-- T17 (batch1) : montre/retire « Formations » (pharmacien) et « Dispensaire »
+             (pharmacie) des menus de compte — admin-articles.html n'est pas touché -->
+        <div class="champ"><label>Dispensaire visible (menus usagers)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:8px 0">
+            <input id="dispensaire_visible" type="checkbox" style="width:18px;height:18px"> Afficher l'entrée Dispensaire / Formations
+          </label>
+        </div>
       </div>
       <button class="btn" type="submit" id="btn-regles">Enregistrer les règles</button>
       <div class="msg" id="msg-regles"></div>
@@ -422,11 +429,15 @@ function cdToast(texte, ok){
   /* ---- règles ---- */
   const { data: regles } = await sb.from('regles_reseau').select('*').eq('id',1).maybeSingle();
   if(regles) REGLES_CHAMPS.forEach(k=>{ $(k).value = regles[k]; });
+  /* T17 (batch1) : case à cocher (checked, pas value) — défaut visible si
+     la migration sql/76 n'est pas encore passée */
+  if(regles) $('dispensaire_visible').checked = regles.dispensaire_visible !== false;
 
   $('f-regles').addEventListener('submit', async e=>{
     e.preventDefault();
     const maj = {};
     REGLES_CHAMPS.forEach(k=>{ maj[k] = $(k).value; });
+    maj.dispensaire_visible = $('dispensaire_visible').checked;   /* T17 (batch1) */
     $('btn-regles').disabled = true;
     const { error } = await sb.from('regles_reseau').update(maj).eq('id',1);
     $('btn-regles').disabled = false;
