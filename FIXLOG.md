@@ -40,3 +40,23 @@ Un commit par tâche, message `fix(batch1): T<n> …`. Migrations sql/74-77 exé
 
 ## Skips
 Aucune tâche sautée. Deux éléments hors périmètre consignés par le mandat : badge mutuellement_favori sur contrats/contrat, seuil de maîtrise logiciels_niveaux.
+
+---
+
+# BATCH #1 CLOSED — 2026-08-12
+
+## Fait — vérifié en production le 12 août
+- Les 27 tâches T1–T27 : confirmées en ligne (/media/911/ → 404, robots.txt servi, Agenda entièrement anglais en mode EN, facture-vue avec l'en-tête partagé).
+- Étape manuelle FAITE : worker paiements déployé via `npx wrangler deploy` (version 77693be5-e87f-40f5-b1b0-a7a9a8436a33).
+- Étape manuelle FAITE : webhook Stripe enregistré — destination `c-direct-payments-worker` (we_1U3gGYReBKCY8Yl1MLRcYK30), portée Connected accounts, 9 évènements (account.updated + tous les payment_intent), STRIPE_WEBHOOK_SECRET posé. Endpoint vérifié en ligne : un POST non signé renvoie 400 « Signature invalide ».
+- sql/74–77 exécutés dans Supabase ; sql/77 a fermé la fuite anon rouverte par sql/73 ; verifier-acl confirme zéro fuite restante.
+
+## En attente — décisions du propriétaire (NE PAS implémenter sans réponse)
+- [ ] P-1. Badge « mutuellement favoris » sur contrats.html / contrat.html pendant la navigation (les données sont déjà renvoyées par get_contrats_ouverts / get_contrat_fiche). Oui / non ?
+- [ ] P-2. Porte logiciel de l'auto-acceptation — ajouter un seuil de maîtrise minimal optionnel (logiciels_niveaux) ou garder les niveaux cosmétiques ? Décision attendue.
+- [ ] P-3. Destination de la cloche — T2 a repointé le lien vers /messages.html ; le test de clic par le propriétaire n'est pas encore confirmé. Si un vrai centre de notifications est voulu plus tard : nouvel item de batch.
+
+## En attente — liste de lancement (planifié, pas maintenant)
+- [ ] L-1. Retirer / restreindre Cloudflare Access 2–3 semaines avant le lancement de septembre pour que les pages publiques soient indexables.
+- [ ] L-2. Après le premier vrai évènement de paiement : vérifier que « Event deliveries » de la destination Stripe montre un 200.
+- [ ] L-3. Règle permanente : exécuter sql/verifier-acl.sql après CHAQUE future migration.

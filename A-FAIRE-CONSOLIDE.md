@@ -206,3 +206,36 @@ nothing until it is switched on. Before flipping it on for real:
 - [ ] P6. Admin panel is French-only (whole-page convention) — the new
       Auto-acceptation section follows it. Fine for launch (admin = Robert);
       flag only if the admin console ever needs EN.
+
+## Batch #1 closed — 2026-08-12 (QA audit fixes: all 27 tasks live)
+
+Everything from the Aug-12 fix batch is DONE and verified in production
+(details per task in FIXLOG.md): /media/911/ leak closed, bell repointed,
+facture-vue rebuilt with the shared header, Agenda fully bilingual, local-date
+fixes, global session-expiry handling, password re-auth, payments worker
+hardened (signed Stripe webhook live, capture_failed alerts, CORS allowlist),
+dual-pricing wording made legal, mobile nav/overflow/touch-target fixes,
+Dispensaire admin toggle, SEO meta/OG/robots/sitemap, bilingual admin login,
+auto-accept transparency (software gate + "Rejets récents"), migration
+hygiene, sql/verifier-acl.sql standing check. Worker deployed
+(77693be5-e87f-40f5-b1b0-a7a9a8436a33); Stripe webhook registered
+(we_1U3gGYReBKCY8Yl1MLRcYK30, Connected accounts, 9 events) and verified.
+sql/74–77 executed; sql/77 closed the anon leak sql/73 had reopened.
+
+Owner decisions pending (do NOT implement without an answer):
+- [ ] P-1. "Mutuellement favoris" badge on contrats.html / contrat.html while
+      browsing (data already returned by get_contrats_ouverts /
+      get_contrat_fiche). Yes / no?
+- [ ] P-2. Auto-accept software gate: add an optional minimum proficiency
+      threshold (logiciels_niveaux) or keep levels cosmetic?
+- [ ] P-3. Bell destination: link now goes to /messages.html — click test not
+      yet confirmed by Robert. A real notifications centre would be a new
+      batch item.
+
+Launch checklist (scheduled, not now):
+- [ ] L-1. Remove/scope Cloudflare Access 2–3 weeks before the September
+      launch so public pages can be indexed.
+- [ ] L-2. After the first real payment event, check the Stripe destination's
+      Event deliveries shows a 200.
+- [ ] L-3. Standing rule: run sql/verifier-acl.sql after every future
+      migration.
