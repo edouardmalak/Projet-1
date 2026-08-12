@@ -725,7 +725,10 @@ window.cdEnteteConnecte = async function(){
       p.role === 'pharmacien' ? 'Pharmacies préférées' : 'Locums de confiance',
       p.role === 'pharmacien' ? 'Preferred pharmacies' : 'Trusted locums'
     );
-    const cloche = cdIconeLien('/dispensaire.html', SVG_CLOCHE, 'Alertes et nouvelles', 'Alerts and news');
+    /* T2 (batch1) : la pastille compte les messages non lus (sql/60) —
+       la cloche pointe donc vers l'écran qui les affiche (/messages.html),
+       pas vers le Dispensaire (bibliothèque d'articles). */
+    const cloche = cdIconeLien('/messages.html', SVG_CLOCHE, 'Alertes et messages', 'Alerts and messages');
     const pastilleCloche = cdPastilleSur(cloche);
 
     /* réputation + favoris reçus — chargés en différé plus bas ; les
