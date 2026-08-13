@@ -179,6 +179,52 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;letter-s
       <div class="entente"><small data-fr="Entente finale" data-en="Final agreement">Entente finale</small><b id="entente-termes">—</b></div>
     </div>
 
+    <div id="bloc-demandes" style="display:none">
+      <div class="sec" data-fr="Modification ou annulation" data-en="Modification or cancellation">Modification ou annulation</div>
+
+      <div id="dem-banniere" style="display:none;background:rgba(232,184,73,.07);border:1px solid rgba(232,184,73,.35);border-left:3px solid var(--jaune);border-radius:4px;padding:12px 14px;font-size:13.5px;margin-bottom:10px"></div>
+      <div id="dem-banniere-btns" style="display:none" class="deux-btn">
+        <button class="btn" type="button" id="btn-dem-accepter" style="margin-top:8px" data-fr="Accepter" data-en="Accept">Accepter</button>
+        <button class="btn-refus" type="button" id="btn-dem-refuser" style="margin-top:8px" data-fr="Refuser" data-en="Decline">Refuser</button>
+      </div>
+      <button class="btn-sec" type="button" id="btn-dem-retirer" style="display:none" data-fr="Retirer ma demande" data-en="Withdraw my request">Retirer ma demande</button>
+
+      <div id="dem-actions" style="display:none">
+        <div class="deux-btn">
+          <button class="btn-sec" type="button" id="btn-dem-modif" data-fr="Faire une demande de modification" data-en="Request a modification">Faire une demande de modification</button>
+          <button class="btn-sec" type="button" id="btn-dem-annul" data-fr="Faire une demande d'annulation" data-en="Request a cancellation">Faire une demande d'annulation</button>
+        </div>
+
+        <form class="f-offre" id="f-dem-modif">
+          <div class="titre" data-fr="Demande de modification" data-en="Modification request">Demande de modification</div>
+          <label class="off-toggle"><input type="checkbox" id="dm-c-date"><span data-fr="Changer la date" data-en="Change the date">Changer la date</span></label>
+          <div class="champ" id="dm-b-date" style="display:none"><input type="date" id="dm-date"></div>
+          <label class="off-toggle"><input type="checkbox" id="dm-c-horaire"><span data-fr="Changer l'horaire" data-en="Change the hours">Changer l'horaire</span></label>
+          <div class="deux-p" id="dm-b-horaire" style="display:none">
+            <div class="champ"><label data-fr="Début" data-en="Start">Début</label><input type="time" id="dm-hd"></div>
+            <div class="champ"><label data-fr="Fin" data-en="End">Fin</label><input type="time" id="dm-hf"></div>
+          </div>
+          <label class="off-toggle"><input type="checkbox" id="dm-c-tarif"><span data-fr="Changer le tarif horaire" data-en="Change the hourly rate">Changer le tarif horaire</span></label>
+          <div class="champ" id="dm-b-tarif" style="display:none"><input type="number" step="0.01" min="0" id="dm-tarif"></div>
+          <label class="off-toggle"><input type="checkbox" id="dm-c-pd"><span data-fr="Changer le per diem (repas)" data-en="Change the per diem (meals)">Changer le per diem (repas)</span></label>
+          <div class="champ" id="dm-b-pd" style="display:none"><select id="dm-pd" style="width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:10px 11px;font-size:14px;font-family:'IBM Plex Mono',monospace;background:#F4F8F5;color:var(--texte)"><option value="true" data-fr="Oui" data-en="Yes">Oui</option><option value="false" data-fr="Non" data-en="No">Non</option></select></div>
+          <label class="off-toggle"><input type="checkbox" id="dm-c-heb"><span data-fr="Changer l'hébergement" data-en="Change the accommodation">Changer l'hébergement</span></label>
+          <div class="champ" id="dm-b-heb" style="display:none"><select id="dm-heb" style="width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:10px 11px;font-size:14px;font-family:'IBM Plex Mono',monospace;background:#F4F8F5;color:var(--texte)"><option value="true" data-fr="Oui" data-en="Yes">Oui</option><option value="false" data-fr="Non" data-en="No">Non</option></select></div>
+          <div class="champ"><label data-fr="Motif (obligatoire)" data-en="Reason (required)">Motif (obligatoire)</label><textarea id="dm-motif" rows="2" required></textarea></div>
+          <button class="btn" type="submit" id="btn-dem-modif-envoyer" style="margin-top:6px" data-fr="Envoyer la demande" data-en="Send the request">Envoyer la demande</button>
+        </form>
+
+        <form class="f-offre" id="f-dem-annul">
+          <div class="titre" data-fr="Demande d'annulation" data-en="Cancellation request">Demande d'annulation</div>
+          <div class="off-original" style="margin-bottom:12px"><small data-fr="Comment ça marche" data-en="How it works">Comment ça marche</small><span style="font-size:13px;font-family:'Instrument Sans',sans-serif" data-fr="L'autre partie doit accepter votre demande. Si elle accepte, le contrat est annulé à l'amiable, SANS pénalité. Si elle refuse, le contrat reste en vigueur." data-en="The other party must accept your request. If they accept, the contract is cancelled by mutual agreement, with NO penalty. If they decline, the contract stays in force.">L'autre partie doit accepter votre demande. Si elle accepte, le contrat est annulé à l'amiable, SANS pénalité. Si elle refuse, le contrat reste en vigueur.</span></div>
+          <div class="champ"><label data-fr="Motif (obligatoire)" data-en="Reason (required)">Motif (obligatoire)</label><textarea id="da-motif" rows="2" required></textarea></div>
+          <button class="btn" type="submit" id="btn-dem-annul-envoyer" style="margin-top:6px" data-fr="Envoyer la demande" data-en="Send the request">Envoyer la demande</button>
+        </form>
+      </div>
+
+      <div class="indice-btn" id="dem-urgence" style="display:none"><span data-fr="Urgence ? " data-en="Emergency? ">Urgence ? </span><a href="#" id="lien-annuler-direct" style="color:var(--rouge)" data-fr="Annuler immédiatement" data-en="Cancel immediately">Annuler immédiatement</a><span data-fr=" — sans l'accord de l'autre partie, les règles habituelles s'appliquent." data-en=" — without the other party's agreement, the usual rules apply."> — sans l'accord de l'autre partie, les règles habituelles s'appliquent.</span></div>
+    </div>
+
     <div id="bloc-retard" style="display:none">
       <div class="champ"><label data-fr="Nouvelle heure de début estimée" data-en="New estimated start time">Nouvelle heure de début estimée</label><input type="time" id="retard-nouvelle-heure"></div>
       <div class="champ"><label data-fr="Motif (optionnel)" data-en="Reason (optional)">Motif (optionnel)</label><input type="text" id="retard-motif" maxlength="200"></div>
@@ -509,6 +555,193 @@ function msg(texte, type){
         (gagnante.prenom||'') + ' ' + (gagnante.nom||'');
       $('bloc-fil').style.display = '';
       $('fil-conteneur').appendChild(cdFilNegociation(gagnante.message));
+    }
+  }
+
+  /* ---- Demandes de modification / annulation (sql/79) — contrat CONFIRMÉ,
+     visible pour les DEUX parties (pharmacie propriétaire et pharmacien
+     retenu). L'annulation immédiate (sql/09) reste disponible en secours. ---- */
+  const estPartiePharmacie  = !!k.est_ma_pharmacie;
+  const estPartiePharmacien = k.ma_candidature_statut === 'accepte';
+  if(k.statut === 'attribue' && (estPartiePharmacie || estPartiePharmacien)){
+    $('bloc-demandes').style.display = '';
+    $('dem-urgence').style.display = '';
+
+    const LIBC = {date_contrat:cdT('Date','Date'), heure_debut:cdT('Heure de début','Start time'),
+                  heure_fin:cdT('Heure de fin','End time'), tarif_horaire:cdT('Tarif horaire','Hourly rate'),
+                  per_diem:cdT('Per diem (repas)','Per diem (meals)'), hebergement:cdT('Hébergement','Accommodation')};
+    const valTxt = (cle, v) => {
+      if(v == null) return '—';
+      if(cle === 'date_contrat') return cdDate(v);
+      if(cle === 'heure_debut' || cle === 'heure_fin') return cdHeure(v);
+      if(cle === 'tarif_horaire') return cdArgent(v) + '/h';
+      return (v === true || v === 'true') ? cdT('Oui','Yes') : cdT('Non','No');
+    };
+    const anciennes = {date_contrat:k.date_contrat, heure_debut:k.heure_debut, heure_fin:k.heure_fin, tarif_horaire:k.tarif_horaire};
+
+    /* annulation immédiate (mêmes règles et mêmes RPC qu'avant) */
+    $('lien-annuler-direct').onclick = async (ev)=>{
+      ev.preventDefault();
+      if(estPartiePharmacie){
+        const p7  = reglesReseau ? reglesReseau.penalite_annulation_7j_pct  : 50;
+        const p48 = reglesReseau ? reglesReseau.penalite_annulation_48h_pct : 100;
+        if(!confirm(cdT(
+          'ANNULER le contrat ' + k.numero_reference + ' (attribué) ?\n\n' +
+          'Règle du réseau — protection d\'annulation :\n' +
+          '· moins de 7 jours avant le début : pénalité de ' + p7 + ' % des heures × tarif convenus\n' +
+          '· moins de 48 heures avant le début : ' + p48 + ' %\n\n' +
+          'Si l\'annulation tombe dans une fenêtre de pénalité, la facture est générée et envoyée AUTOMATIQUEMENT au pharmacien. Aucune pénalité hors de ces fenêtres.\n\nContinuer ?',
+          'CANCEL contract ' + k.numero_reference + ' (awarded)?\n\n' +
+          'Network rule — cancellation protection:\n' +
+          '· under 7 days before the start: penalty of ' + p7 + ' % of hours × agreed rate\n' +
+          '· under 48 hours before the start: ' + p48 + ' %\n\n' +
+          'If the cancellation falls in a penalty window, the invoice is generated and sent AUTOMATICALLY to the pharmacist. No penalty outside these windows.\n\nContinue?'))) return;
+        const { data: dA, error: eA } = await sb.rpc('annuler_contrat_pharmacie', { p_contrat: k.id });
+        if(eA){ msg(cdT('Erreur : ','Error: ') + eA.message, 'ko'); return; }
+        const pct = dA ? (dA.penalite_pct || 0) : 0;
+        cdAlerteAdmin('Annulation pharmacie — ' + k.numero_reference,
+          (profil.nom_pharmacie||profil.courriel) + ' a annulé ' + k.numero_reference +
+          (pct > 0 ? ' — pénalité ' + pct + ' %, facture envoyée automatiquement au pharmacien.' : ' — aucune pénalité.'),
+          { ref: k.numero_reference });
+        location.reload();
+      } else {
+        if(!confirm(cdT('Annuler votre remplacement ' + k.numero_reference + ' ?\n\n' +
+          'Le contrat sera REMIS EN LIGNE pour les autres pharmaciens et votre candidature sera close. ' +
+          'L\'annulation est journalisée et visible par l\'administrateur.',
+          'Cancel your replacement ' + k.numero_reference + '?\n\n' +
+          'The contract will be RE-POSTED for other pharmacists and your application will be closed. ' +
+          'The cancellation is logged and visible to the administrator.'))) return;
+        const { error: eA } = await sb.rpc('annuler_contrat_pharmacien', { p_contrat: k.id });
+        if(eA){ msg(cdT('Erreur : ','Error: ') + eA.message, 'ko'); return; }
+        cdAlerteAdmin('Annulation pharmacien — ' + k.numero_reference,
+          (profil.prenom||profil.courriel) + ' a annulé son remplacement ' + k.numero_reference + ' — contrat remis en ligne.',
+          { ref: k.numero_reference });
+        location.reload();
+      }
+    };
+
+    /* demande en attente ? (RLS : seules les parties la voient) */
+    let demande = null;
+    try{
+      const { data: dRows } = await sb.from('demandes_contrat').select('*')
+        .eq('contrat_id', k.id).eq('statut','en_attente').limit(1);
+      demande = (dRows && dRows[0]) || null;
+    }catch(e){ /* défensif : ne bloque jamais la fiche */ }
+
+    const libType = t => t === 'annulation' ? cdT('demande d\'annulation','cancellation request')
+                                            : cdT('demande de modification','modification request');
+
+    if(demande){
+      const estMienne = demande.auteur_id === profil.id;
+      const b = $('dem-banniere');
+      const lignes = [];
+      lignes.push('<b style="color:var(--jaune)">' +
+        (estMienne
+          ? cdT('Votre ' + libType(demande.type_demande) + ' est en attente de l\'autre partie.',
+                'Your ' + libType(demande.type_demande) + ' is awaiting the other party.')
+          : cdT('Vous avez reçu une ' + libType(demande.type_demande) + '.',
+                'You received a ' + libType(demande.type_demande) + '.')) + '</b>');
+      if(demande.type_demande === 'modification' && demande.champs){
+        Object.keys(LIBC).forEach(cle=>{
+          if(demande.champs[cle] === undefined) return;
+          const av = anciennes[cle] != null ? valTxt(cle, anciennes[cle]) + ' → ' : '';
+          lignes.push(LIBC[cle] + ' : ' + av + '<b>' + valTxt(cle, demande.champs[cle]) + '</b>');
+        });
+      }
+      lignes.push(cdT('Motif : ','Reason: ') + '« ' + demande.motif + ' »');
+      b.innerHTML = lignes.join('<br>');
+      b.style.display = '';
+
+      if(estMienne){
+        $('btn-dem-retirer').style.display = '';
+        $('btn-dem-retirer').onclick = async ()=>{
+          if(!confirm(cdT('Retirer votre demande ? Le contrat reste inchangé.','Withdraw your request? The contract stays unchanged.'))) return;
+          $('btn-dem-retirer').disabled = true;
+          const { error: eR } = await sb.rpc('retirer_demande_contrat', { p_demande: demande.id });
+          if(eR){ $('btn-dem-retirer').disabled = false; msg(cdT('Erreur : ','Error: ') + eR.message, 'ko'); return; }
+          cdAlerteAdmin('Demande retirée — ' + k.numero_reference,
+            (profil.prenom||profil.nom_pharmacie||profil.courriel) + ' a retiré sa ' + libType(demande.type_demande) + ' sur ' + k.numero_reference + '.',
+            { ref: k.numero_reference });
+          location.reload();
+        };
+      } else {
+        $('dem-banniere-btns').style.display = '';
+        const repondre = async (accepter)=>{
+          const texteC = accepter
+            ? (demande.type_demande === 'annulation'
+                ? (demande.par === 'pharmacien'
+                    ? cdT('Accepter l\'annulation ? Le contrat sera REMIS EN LIGNE pour les autres pharmaciens — aucune pénalité.',
+                          'Accept the cancellation? The contract will be RE-POSTED for other pharmacists — no penalty.')
+                    : cdT('Accepter l\'annulation ? Le contrat sera annulé à l\'amiable — aucune pénalité.',
+                          'Accept the cancellation? The contract will be cancelled by mutual agreement — no penalty.'))
+                : cdT('Accepter la modification ? Les termes du contrat seront mis à jour immédiatement.',
+                      'Accept the modification? The contract terms will be updated immediately.'))
+            : cdT('Refuser la demande ? Le contrat reste inchangé.','Decline the request? The contract stays unchanged.');
+          if(!confirm(texteC)) return;
+          let motifR = null;
+          if(!accepter){
+            motifR = prompt(cdT('Commentaire pour l\'autre partie (optionnel) :','Comment for the other party (optional):')) || null;
+          }
+          $('btn-dem-accepter').disabled = $('btn-dem-refuser').disabled = true;
+          const { error: eRep } = await sb.rpc('repondre_demande_contrat', { p_demande: demande.id, p_accepter: accepter, p_motif: motifR });
+          if(eRep){ $('btn-dem-accepter').disabled = $('btn-dem-refuser').disabled = false; msg(cdT('Erreur : ','Error: ') + eRep.message, 'ko'); return; }
+          cdAlerteAdmin((accepter ? 'Demande acceptée — ' : 'Demande refusée — ') + k.numero_reference,
+            (profil.prenom||profil.nom_pharmacie||profil.courriel) + ' a ' + (accepter ? 'accepté' : 'refusé') + ' la ' + libType(demande.type_demande) + ' sur ' + k.numero_reference + '.',
+            { ref: k.numero_reference });
+          location.reload();
+        };
+        $('btn-dem-accepter').onclick = ()=> repondre(true);
+        $('btn-dem-refuser').onclick  = ()=> repondre(false);
+      }
+    } else {
+      $('dem-actions').style.display = '';
+      $('btn-dem-modif').onclick = ()=>{ $('f-dem-modif').classList.toggle('on'); $('f-dem-annul').classList.remove('on'); };
+      $('btn-dem-annul').onclick = ()=>{ $('f-dem-annul').classList.toggle('on'); $('f-dem-modif').classList.remove('on'); };
+
+      /* pré-remplissage avec les valeurs actuelles */
+      $('dm-date').value  = String(k.date_contrat).slice(0,10);
+      $('dm-hd').value    = String(k.heure_debut).slice(0,5);
+      $('dm-hf').value    = String(k.heure_fin).slice(0,5);
+      $('dm-tarif').value = k.tarif_horaire;
+      [['dm-c-date','dm-b-date'],['dm-c-horaire','dm-b-horaire'],['dm-c-tarif','dm-b-tarif'],['dm-c-pd','dm-b-pd'],['dm-c-heb','dm-b-heb']].forEach(([c,bl])=>{
+        $(c).addEventListener('change', ()=>{ $(bl).style.display = $(c).checked ? '' : 'none'; });
+      });
+
+      $('f-dem-modif').addEventListener('submit', async ev=>{
+        ev.preventDefault();
+        const champs = {};
+        if($('dm-c-date').checked && $('dm-date').value) champs.date_contrat = $('dm-date').value;
+        if($('dm-c-horaire').checked){
+          if($('dm-hd').value) champs.heure_debut = $('dm-hd').value;
+          if($('dm-hf').value) champs.heure_fin = $('dm-hf').value;
+        }
+        if($('dm-c-tarif').checked && $('dm-tarif').value) champs.tarif_horaire = parseFloat($('dm-tarif').value);
+        if($('dm-c-pd').checked)  champs.per_diem    = $('dm-pd').value === 'true';
+        if($('dm-c-heb').checked) champs.hebergement = $('dm-heb').value === 'true';
+        const motifM = $('dm-motif').value.trim();
+        if(!Object.keys(champs).length){ msg(cdT('Cochez au moins un élément à modifier.','Tick at least one element to change.'), 'ko'); return; }
+        if(!motifM){ msg(cdT('Le motif est obligatoire.','The reason is required.'), 'ko'); return; }
+        $('btn-dem-modif-envoyer').disabled = true;
+        const { error: eC } = await sb.rpc('creer_demande_contrat', { p_contrat: k.id, p_type: 'modification', p_motif: motifM, p_champs: champs });
+        if(eC){ $('btn-dem-modif-envoyer').disabled = false; msg(cdT('Erreur : ','Error: ') + eC.message, 'ko'); return; }
+        cdAlerteAdmin('Demande de modification — ' + k.numero_reference,
+          (profil.prenom||profil.nom_pharmacie||profil.courriel) + ' demande une modification sur ' + k.numero_reference + ' — « ' + motifM + ' ».',
+          { ref: k.numero_reference });
+        location.reload();
+      });
+
+      $('f-dem-annul').addEventListener('submit', async ev=>{
+        ev.preventDefault();
+        const motifA = $('da-motif').value.trim();
+        if(!motifA){ msg(cdT('Le motif est obligatoire.','The reason is required.'), 'ko'); return; }
+        $('btn-dem-annul-envoyer').disabled = true;
+        const { error: eC } = await sb.rpc('creer_demande_contrat', { p_contrat: k.id, p_type: 'annulation', p_motif: motifA });
+        if(eC){ $('btn-dem-annul-envoyer').disabled = false; msg(cdT('Erreur : ','Error: ') + eC.message, 'ko'); return; }
+        cdAlerteAdmin('Demande d\'annulation — ' + k.numero_reference,
+          (profil.prenom||profil.nom_pharmacie||profil.courriel) + ' demande l\'annulation de ' + k.numero_reference + ' — « ' + motifA + ' ».',
+          { ref: k.numero_reference });
+        location.reload();
+      });
     }
   }
 
