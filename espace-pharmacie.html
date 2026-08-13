@@ -703,10 +703,12 @@ async function chargerCandidats(k, zone){
         actions.appendChild(bC);
       }
 
-      /* annulation par la pharmacie — protection du réseau */
+      /* contrat confirmé : la demande de modification/annulation (accord des
+         deux parties, sql/79) remplace l'annulation directe — l'annulation
+         immédiate reste disponible sur la fiche du contrat (« Urgence ? »). */
       const bX = document.createElement('button');
-      bX.className='btn-mini rouge'; bX.textContent=cdT('Annuler le contrat','Cancel contract');
-      bX.onclick = ()=> annulerContrat(k, bX);
+      bX.className='btn-mini rouge'; bX.textContent=cdT('Demande de modification / annulation','Request modification / cancellation');
+      bX.onclick = ()=>{ location.href = '/c/' + encodeURIComponent(k.numero_reference); };
       actions.appendChild(bX);
 
       zone.appendChild(actions);
