@@ -436,9 +436,12 @@ function rendreMandats(){
       act.appendChild(b);
     }
     if(m.statut === 'attribue'){
+      /* mandat confirmé : la demande de modification/annulation (accord des
+         deux parties, sql/79) remplace l'annulation directe — l'annulation
+         immédiate reste disponible sur la fiche du contrat (« Urgence ? »). */
       const b = document.createElement('button');
-      b.className='btn-mini rouge'; b.style.marginLeft='6px'; b.textContent=cdT('Annuler','Cancel');
-      b.onclick = ()=> annulerMandat(m, b);
+      b.className='btn-mini rouge'; b.style.marginLeft='6px'; b.textContent=cdT('Demande de modification / annulation','Request modification / cancellation');
+      b.onclick = ()=>{ location.href = '/c/' + encodeURIComponent(m.numero_reference); };
       act.appendChild(b);
     }
 
