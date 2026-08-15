@@ -165,6 +165,9 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
      signature étaient rognés par overflow:hidden. */
   .cnx-cadre{order:2;padding:0 16px 22px;height:auto}
   .cnx-photo{min-height:290px;display:flex;align-items:flex-end}
+  /* Carte courte : le survol du texte tombe sur le ciel clair. On assombrit
+     davantage pour garder l'ambre et le récit lisibles. */
+  .cnx-photo::after{background:linear-gradient(to top,rgba(13,43,36,.94) 0%,rgba(13,43,36,.80) 50%,rgba(13,43,36,.50) 100%)}
   .cnx-photo-texte{position:relative;padding:22px 20px 20px}
   .cnx-titre{font-size:26px}
   .cnx-recit{font-size:14.5px;max-width:none}
