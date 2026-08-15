@@ -160,7 +160,12 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
 @media(max-width:900px){
   .cnx-split{grid-template-columns:1fr;min-height:0}
   .cnx-porte{order:1;padding:30px 20px 26px}
-  .cnx-cadre{order:2;padding:0 16px 22px;height:236px}
+  /* Hauteur libre : le bloc de texte repasse en flux normal et la carte
+     grandit avec son contenu. Avec une hauteur fixe, le récit et la
+     signature étaient rognés par overflow:hidden. */
+  .cnx-cadre{order:2;padding:0 16px 22px;height:auto}
+  .cnx-photo{min-height:290px;display:flex;align-items:flex-end}
+  .cnx-photo-texte{position:relative;padding:22px 20px 20px}
   .cnx-titre{font-size:26px}
   .cnx-recit{font-size:14.5px;max-width:none}
   .cnx-logo{margin-bottom:26px}
