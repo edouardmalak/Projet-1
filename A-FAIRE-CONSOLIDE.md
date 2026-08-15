@@ -20,16 +20,34 @@ Deux correctifs de sécurité/logique poussés le 2026-08-09 attendent d'être *
 
 ---
 
-## 1. Right now — Stripe live mode
+## 1. Right now — Stripe live mode (full runbook, updated 2026-08-15)
 
-You just activated your live Stripe account (correctly chose not to copy sandbox data over). The app itself hasn't moved to live keys yet — it's still running on test keys, on purpose, until you're ready. Four steps left:
+Robert confirmed 2026-08-15 that Stripe verification is done. The app still runs on test keys. Follow these steps **in order**. Nothing on the site needs to change except ONE line (step 3) — everything else is dashboard clicks and two secrets.
 
-1. 🧑 **Confirm Stripe's live verification is actually finished** — not just that you're "in" live mode. In the Stripe dashboard (live mode), check that your account shows `charges_enabled` and `payouts_enabled` as true. If Stripe is still asking for business info or bank details, that's not done yet.
-2. 🧑 **Swap the live secret key into the Worker.** Cloudflare → Workers & Pages → `c-direct-payments` → Settings → Variables and Secrets → edit `STRIPE_SECRET_KEY` → paste the **live** key (starts `sk_live_...`) → Save. Then, from your own terminal: `cd workers/c-direct-payments && git pull && npx wrangler deploy` (this Worker does not auto-deploy from git push — you have to run this yourself, same as before).
-3. 🧑 **Every pharmacist redoes Stripe Connect onboarding for real.** Test-mode connected accounts don't carry over — Stripe treats live mode as a completely separate space. Each pharmacien needs to go through onboarding again from `profil.html` once live keys are in.
-4. 🧑 **Every pharmacy re-enters a real card.** Same reason — test cards don't exist in live mode.
+**Never paste `sk_live_...` or `whsec_...` into chat, email, or any file in this folder — the repo is publicly downloadable.** The publishable key `pk_live_...` is the only key that is safe to share (it's public by design).
 
-Tell me when you want to do #2 and I'll walk through it with you or make any code changes needed first.
+1. 🧑 **Double-check verification really finished (2 min).** Open https://dashboard.stripe.com — if there is NO orange/red banner asking for business info or bank details on the home page, you're good. Also check Balances → Payouts shows your bank account. (The "Thank you for providing additional information" email means Stripe received your info; the absence of a banner means they accepted it.)
+2. 🧑 **Put the live secret key in the Worker (5 min).**
+   a. Stripe → click **Developers** (bottom left) → **API keys**. Make sure the page does NOT say "Test mode" / sandbox at the top — you want the real account "9269 0031 Québec Inc".
+   b. Copy the **Publishable key** (`pk_live_...`) — paste this one to Claude in chat (safe), it's needed for step 3.
+   c. Click **Reveal live key** on the **Secret key** (`sk_live_...`) and copy it. Stripe may only show it once — keep the tab open until step 2d is done.
+   d. New browser tab: Cloudflare dashboard → **Workers & Pages** → **c-direct-payments** → **Settings** → **Variables and Secrets** → `STRIPE_SECRET_KEY` → **Edit** → paste the `sk_live_...` value → **Save/Deploy**. Saving a secret redeploys the Worker by itself — no terminal needed (the current code is already deployed; `/health` verified OK 2026-08-15).
+   e. Verify: open https://c-direct-payments.edouardmalak.workers.dev/health — it must still show `"stripe_key_configured":true`.
+3. 🤖 **Swap the publishable key in the site (1 line).** `parametres.html` line ~387 currently has `pk_test_51Tz4YU...`. Paste the `pk_live_...` from step 2b to Claude in chat and it gets swapped + pushed (auto-deploys). This is the only site-code change in the whole switch.
+4. 🧑 **Make sure the webhook exists in LIVE mode (5 min).** The destination registered 2026-08-12 (`we_1U3gGYReBKCY8Yl1MLRcYK30`, "Connected accounts", 9 events) was created on the main account — confirm it's in live mode: Stripe → **Developers** → **Webhooks / Event destinations**, with test/sandbox mode OFF. 
+   - If it's listed there in live mode: click it, **Reveal signing secret** (`whsec_...`), and make sure the Worker has THAT value: Cloudflare → c-direct-payments → Settings → Variables and Secrets → `STRIPE_WEBHOOK_SECRET` → Edit → paste → Save.
+   - If it's NOT listed in live mode: **Add destination** → tick **"Listen to events on Connected accounts"** → events: `account.updated` + all `payment_intent.*` (same 9 as before) → endpoint URL `https://c-direct-payments.edouardmalak.workers.dev/stripe/webhook` → create → copy the `whsec_...` signing secret → paste into the same Cloudflare secret as above.
+   - Either way the 15-min cron keeps covering everything if a webhook is missed, so this can't break payments — it's belt and suspenders.
+5. 🧑 **Connect live settings (one-time, 5 min).** Stripe → **Settings** → **Connect**: live mode is a separate space, so if Stripe shows a "complete your platform profile" questionnaire, answer it (marketplace for services, connected accounts are service providers in Canada, direct charges). Without it Stripe can block creating live connected accounts.
+6. 🧑 **Small-amount tests with your real card, in this order:**
+   - **Test A — $1 sanity check (no site involved, 3 min).** Stripe dashboard (live) → **Payments** → **Create payment** → CA$1.00, enter your card manually → confirm it succeeds → open the payment → **Refund** it. Proves the live account can charge cards. Costs only the non-refunded 30¢ fixed fee.
+   - **Test B — save a card on the site ($0).** Log in on c-direct.ca as the pharmacy test account → Paramètres → onglet Paiements → enter your real card. Proves `pk_live` (site) + `sk_live` (Worker) + SetupIntent work together in live mode. No charge — saving a card costs nothing.
+   - **Test C — full circuit, small amount (~$41).** Onboard yourself as a locum from `profil.html` (live Express onboarding — real SIN and bank, it's your own). Create a contract with 1 hour at the minimum rate so the total is tiny (the $39 fee is baked into the price, so the smallest possible hold is ≈ $41). Let the T-24h authorization fire, approve the timesheet, and deliberately DON'T confirm receipt — the deadline capture fires and real money moves: Stripe fee ~$1.50 leaves, ~$39 comes back to C-Direct as application fee, ~$1 lands in your locum bank. You're all three parties, so the net cost is only the Stripe fee. Then do the mirror test on a second contract: confirm *reçu, montant exact* → the hold is CANCELLED at $0 charged.
+   - **After the first live event: check the webhook destination's Event deliveries shows 200** (existing L-2 item).
+7. 🧑 **Every pharmacist redoes Stripe Connect onboarding for real.** Test-mode connected accounts don't carry over — live mode is a completely separate space. Each pharmacien goes through onboarding again from `profil.html` once live keys are in.
+8. 🧑 **Every pharmacy re-enters a real card.** Same reason — test cards don't exist in live mode.
+
+Later, optional (decided when Instant Payouts become a promise, not before): Stripe → Settings → Connect → Payouts → "Allow debit cards?" → Yes — in Canada instant payouts only work to a debit card, and this switch is dashboard-only.
 
 ---
 
