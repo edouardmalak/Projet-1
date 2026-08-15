@@ -129,7 +129,9 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
 .cnx-porte .carte h2{text-align:left;font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(26px,2.4vw,33px);letter-spacing:.02em;line-height:1.06}
 .cnx-porte .carte .sous{text-align:left;font-family:'Instrument Sans',sans-serif;font-size:15px;margin-top:8px}
 .cnx-porte .statut{margin-bottom:24px}
-.cnx-porte .pied{margin-top:32px;padding-top:18px;border-top:1px solid var(--ligne);text-align:left}
+/* apple-dark.css impose .pied en !important (fond #080B0A) : on neutralise
+   uniquement à l'intérieur de .cnx-porte, les autres pages ne bougent pas. */
+.cnx-porte .pied{margin-top:32px;padding-top:18px;text-align:left;background:transparent !important;border-top:1px solid var(--ligne) !important;color:var(--sourd) !important}
 
 .cnx-cadre{padding:clamp(14px,1.8vw,24px);display:flex}
 .cnx-photo{position:relative;overflow:hidden;flex:1;border-radius:clamp(18px,2vw,28px);background:#0D2B24}
