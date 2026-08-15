@@ -304,3 +304,32 @@ Launch checklist (scheduled, not now):
       not a toggle. It only guards Robert's own admin console today, so it is
       deliberately NOT in this checklist. Ask for 2-3 design options if it is
       ever wanted.
+
+## Open items — updated 2026-08-15 (refonte page de connexion)
+
+- [ ] **Remplacer la photo de la page de connexion** — `media/fond-marie-eve.jpg`.
+      La photo actuellement en ligne n'est PAS au Québec : vallée alpine, sommets
+      enneigés en été, vignes en terrasses, chalets — vraisemblablement la vallée
+      du Rhône en Valais (Suisse). Elle est affichée à 30 cm du texte « Fait au
+      Québec, par un pharmacien », et la légende annonce « Marie-Ève —
+      pharmacienne remplaçante » sur un paysage sans personne. Robert confirme
+      en détenir les droits ; le problème est la crédibilité, pas la licence.
+      Elle est aussi trop petite : 800 × 533, donc étirée ~1,7× sur un écran
+      1440 px et visiblement floue.
+      À fournir : une vraie scène québécoise, idéalement une pharmacienne ou un
+      village rural, **1600 px de large minimum**, droits détenus.
+      Remplacer le fichier au même chemin et pousser — aucun code à toucher.
+      Décidé le 2026-08-15 : on garde la photo actuelle en attendant.
+
+- [ ] **Message d'erreur de connexion en anglais sur la page française** —
+      un échec de connexion affiche le texte brut de Supabase, p. ex.
+      « missing email or phone », même en français. Bogue PRÉEXISTANT, sans
+      rapport avec la refonte (le code d'erreur n'a pas été modifié).
+      Correctif : traduire les codes d'erreur Supabase via `cdT()` dans
+      `acces.html` avant le lancement.
+
+- [ ] **Tutoiement / vouvoiement incohérent** — la nouvelle page de connexion
+      tutoie (« Connecte-toi à ton espace ») alors que le reste du site vouvoie
+      (18 occurrences de « vous/votre » dans `index.html` + `acces.html`, zéro
+      tutoiement). Laissé tel quel : le brief demandait de ne pas toucher aux
+      textes. Trancher avant le lancement, puis appliquer dans les deux langues.
