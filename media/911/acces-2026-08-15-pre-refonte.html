@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-fr="C-Direct — Accès sécurisé" data-en="C-Direct — Secure access">C-Direct — Accès sécurisé</title>
+<meta name="description" content="Accès sécurisé C-Direct — pharmacies et pharmaciens remplaçants au Québec. Vérification OPQ. 0 % commission." data-fr-contenu="Accès sécurisé C-Direct — pharmacies et pharmaciens remplaçants au Québec. Vérification OPQ. 0 % commission." data-en-contenu="C-Direct secure access — pharmacies and locum pharmacists in Quebec. OPQ verification. 0% commission.">
+<meta property="og:title" content="C-Direct — Accès sécurisé">
+<meta property="og:description" content="Connexion et inscription — pharmacies et pharmaciens remplaçants au Québec.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_CA">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#0D2B24">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--fond:#FAFBF9;--panneau:#FFFFFF;--panneau2:#F1F6F2;--ligne:#D5E3DB;--ligne2:#C3D6CB;--vert:#0B6E4F;--vert-vif:#0E8A62;--texte:#1B2622;--sourd:#5A6B63;--jaune:#C97B12;--rouge:#C0392B}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--fond);color:var(--texte);font-family:'Instrument Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;
+background-image:linear-gradient(rgba(18,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(18,169,110,.035) 1px,transparent 1px);background-size:44px 44px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+/* ---------- barre supérieure ---------- */
+.topbar{border-bottom:1px solid var(--ligne);background:rgba(255,255,255,.88);backdrop-filter:blur(4px)}
+.topbar .in{max-width:1100px;margin:0 auto;padding:0 22px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--texte);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em}
+.croix{width:28px;height:28px;display:grid;place-items:center;background:var(--vert);border-radius:5px;flex:none}
+.topbar .droite{display:flex;align-items:center;gap:14px}
+.retour{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sourd);text-decoration:none;letter-spacing:.06em}
+.retour:hover{color:var(--vert-vif)}
+
+/* ---------- zone centrale ---------- */
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 18px 30px}
+.colonne{width:100%;max-width:420px}
+
+/* bandeau statut */
+.statut{display:flex;justify-content:space-between;gap:8px;margin-bottom:14px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:var(--sourd);text-transform:uppercase}
+.statut span{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.statut i{width:6px;height:6px;border-radius:50%;background:var(--vert-vif);box-shadow:0 0 6px var(--vert-vif);animation:pulse 2.4s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* ---------- carte ---------- */
+.carte{background:var(--panneau);border:1px solid var(--ligne);border-radius:8px;padding:30px 28px 22px;position:relative;animation:pose .3s ease}
+@keyframes pose{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.carte::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--vert),transparent)}
+.carte .logo{width:44px;height:44px;border-radius:6px;background:var(--vert);display:grid;place-items:center;margin:0 auto 16px;cursor:default}
+.carte h2{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:19px;letter-spacing:.14em;text-align:center;text-transform:uppercase}
+.carte .sous{text-align:center;color:var(--sourd);font-size:13px;margin-top:6px;font-family:'IBM Plex Mono',monospace}
+
+/* étape 0 : entrée */
+.entree-espace{margin-top:22px}
+.btn{width:100%;background:var(--vert);color:#FFFFFF;border:none;border-radius:5px;padding:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:background .1s ease}
+.btn:hover{background:var(--vert-vif)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.55;cursor:default}
+.ou{display:flex;align-items:center;gap:12px;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:11px;margin:14px 0;text-transform:uppercase;letter-spacing:.12em}
+.ou::before,.ou::after{content:"";flex:1;height:1px;background:var(--ligne)}
+.btn-google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--panneau2);border:1px solid var(--ligne2);border-radius:5px;padding:12px;min-height:44px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12.5px;letter-spacing:.04em;color:var(--texte);cursor:pointer;transition:border-color .1s ease}
+.btn-google:hover{border-color:var(--vert)}
+.btn-apple{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#000;border:1px solid #000;border-radius:5px;padding:12px;min-height:44px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12.5px;letter-spacing:.04em;color:#fff;cursor:pointer;transition:opacity .1s ease;margin-top:9px}
+.btn-apple:hover{opacity:.86}
+.btn-apple:disabled{opacity:.55;cursor:default}
+.note{font-size:12.5px;color:var(--sourd);text-align:center;margin-top:16px}
+.note button,.note a{color:var(--vert-vif);font-weight:600;cursor:pointer;background:none;border:none;font-size:12.5px;font-family:'Instrument Sans',sans-serif;text-decoration:underline;text-underline-offset:3px}
+.cgv{margin-top:16px;padding-top:12px;border-top:1px solid var(--ligne);font-size:11px;color:var(--sourd);text-align:center;line-height:1.6}
+.cgv a{color:var(--vert-vif);text-decoration:underline;text-underline-offset:2px}
+
+/* étape 1 : rôle */
+.role-btn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--panneau2);border:1px solid var(--ligne2);border-radius:5px;padding:13px 16px;cursor:pointer;margin-bottom:10px;font-family:'Instrument Sans',sans-serif;color:var(--texte);transition:border-color .1s ease,background .1s ease}
+.role-btn:hover{border-color:var(--vert);background:#EDF4EF}
+.role-btn .ico{width:38px;height:38px;border-radius:5px;background:rgba(18,169,110,.12);border:1px solid var(--ligne2);display:grid;place-items:center;flex:none}
+.role-btn b{display:block;font-size:14.5px}
+.role-btn small{display:block;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:2px;letter-spacing:.04em}
+.role-btn .fleche{margin-left:auto;color:var(--vert-vif);font-family:'IBM Plex Mono',monospace;font-weight:700}
+.retour-carte{display:block;margin:6px auto 0;background:none;border:none;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:11.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.retour-carte:hover{color:var(--texte)}
+
+/* étape 2 : formulaire */
+.role-actuel{display:flex;align-items:center;gap:8px;background:rgba(18,169,110,.08);border:1px solid var(--ligne2);border-left:3px solid var(--vert);border-radius:4px;padding:8px 12px;margin-bottom:16px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.04em;color:var(--sourd)}
+.role-actuel b{color:var(--vert-vif)}
+.role-actuel button{margin-left:auto;background:none;border:none;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.role-actuel button:hover{color:var(--texte)}
+.champ{margin-bottom:12px}
+.champ label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--sourd);margin-bottom:5px}
+.champ input,.champ select{width:100%;border:1px solid var(--ligne2);border-radius:4px;padding:11px 12px;font-size:14px;font-family:'IBM Plex Mono',monospace;background:#F4F8F5;color:var(--texte);transition:border-color .1s ease}
+.champ input:focus,.champ select:focus{outline:none;border-color:var(--vert);box-shadow:0 0 0 2px rgba(18,169,110,.18)}
+.champ input::placeholder{color:#3D4F47}
+.deux{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.erreur{display:none;background:rgba(229,72,77,.08);color:var(--rouge);border:1px solid rgba(229,72,77,.35);border-left:3px solid var(--rouge);border-radius:4px;padding:9px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:10px}
+.succes{display:none;text-align:center;background:rgba(18,169,110,.07);border:1px solid var(--ligne2);border-left:3px solid var(--vert);border-radius:5px;padding:20px;font-size:13.5px}
+.succes b{color:var(--vert-vif);font-family:'IBM Plex Mono',monospace;letter-spacing:.06em}
+.succes a{color:var(--vert-vif)}
+.oeil{position:absolute;right:2px;bottom:0;background:none;border:none;cursor:pointer;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 8px;min-width:44px;min-height:44px;text-transform:uppercase;letter-spacing:.06em}
+.oeil:hover{color:var(--texte)}
+.rel{position:relative}
+
+/* consentement */
+.consent{display:flex;align-items:flex-start;gap:10px;background:var(--panneau2);border:1px solid var(--ligne2);border-radius:4px;padding:11px 12px;margin-bottom:12px;cursor:pointer;font-size:12.5px;line-height:1.55;color:var(--sourd)}
+.consent input{width:16px;height:16px;margin-top:2px;accent-color:var(--vert);flex:none;cursor:pointer}
+.consent a{color:var(--vert-vif);text-decoration:underline;text-underline-offset:2px}
+
+.zone{display:none}
+.zone.on{display:block;animation:glisse .18s ease}
+@keyframes glisse{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* pied de carte */
+.pied{margin-top:14px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#3D4F47;text-transform:uppercase}
+
+@media(max-width:520px){.carte{padding:24px 18px 18px}.statut{flex-wrap:wrap;justify-content:flex-start}}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/design.css">
+<link rel="stylesheet" href="/apple-dark.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <a class="brand" href="index.html">
+      <span class="mot-marque" style="white-space:nowrap">C<svg class="cro-tiret" viewBox="0 0 66.58 57.08" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" style="width:.48em;height:.41em;vertical-align:.145em;margin:0 .02em;flex:none"><path d="M0 33.70 L24.85 57.08 L66.58 8.84 L56.37 0 L23.85 37.60 L9.26 23.86 Z" fill="#C98A2B"/></svg>DIRECT</span>
+    </a>
+    <div class="droite">
+      <a class="retour" href="index.html" data-fr="← RETOUR AU SITE" data-en="← BACK TO SITE">← RETOUR AU SITE</a>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="colonne">
+
+    <div class="statut">
+      <span><i></i><b data-fr="RÉSEAU VÉRIFIÉ OPQ" data-en="OPQ-VERIFIED NETWORK">RÉSEAU VÉRIFIÉ OPQ</b></span>
+      <span><i></i><b data-fr="0 % COMMISSION" data-en="0% COMMISSION">0 % COMMISSION</b></span>
+      <span><i></i><b data-fr="CONNEXION CHIFFRÉE" data-en="ENCRYPTED CONNECTION">CONNEXION CHIFFRÉE</b></span>
+    </div>
+
+    <div class="carte">
+      <div class="logo" id="logo"><svg width="20" height="20" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><g transform="translate(1.5,2.43) scale(0.19526)"><path d="M0 33.70 L24.85 57.08 L66.58 8.84 L56.37 0 L23.85 37.60 L9.26 23.86 Z" fill="#C98A2B"/></g></svg></div>
+      <h2 id="titre">Créer un compte</h2>
+      <p class="sous" id="sous-titre">Gratuit. Vérifié. Sécurisé.</p>
+
+      <!-- Étape 0 : entrée -->
+      <div class="zone entree-espace" id="z-entree">
+        <button class="btn-google" id="btn-google" type="button">
+          <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.2 5.2C37 39.1 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+          <span data-fr="Continuer avec Google" data-en="Continue with Google">Continuer avec Google</span>
+        </button>
+        <button class="btn-apple" id="btn-apple" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.71-1.517 0-1.9-.88-3.63-.88-1.698 0-2.302.91-3.67.91-1.377 0-2.332-1.26-3.428-2.8-1.287-1.82-2.323-4.63-2.323-7.28 0-4.28 2.797-6.55 5.552-6.55 1.448 0 2.675.95 3.6.95.865 0 2.222-1.01 3.902-1.01.613 0 2.886.06 4.374 2.19-.13.09-2.383 1.37-2.383 4.4 0 3.75 3.19 4.75 3.222 4.76z"/></svg>
+          <span data-fr="Continuer avec Apple" data-en="Continue with Apple">Continuer avec Apple</span>
+        </button>
+        <div class="ou"><span data-fr="Ou" data-en="Or">Ou</span></div>
+        <button class="btn" id="btn-courriel">S'inscrire par courriel</button>
+        <p class="note" id="bascule-insc"><span data-fr="Déjà un compte&nbsp;?" data-en="Already have an account?">Déjà un compte&nbsp;?</span> <button class="vers-conn" data-fr="Connexion" data-en="Sign in">Connexion</button></p>
+        <p class="note" id="bascule-conn" style="display:none"><span data-fr="Pas de compte&nbsp;?" data-en="No account?">Pas de compte&nbsp;?</span> <button class="vers-insc" data-fr="Inscrivez-vous — c'est gratuit" data-en="Sign up — it's free">Inscrivez-vous — c'est gratuit</button></p>
+        <p class="cgv" data-fr="En continuant, vous acceptez nos <a href=&quot;conditions.html&quot;>Conditions d'utilisation</a> et notre <a href=&quot;confidentialite.html&quot;>Politique de confidentialité</a>." data-en="By continuing, you accept our <a href=&quot;conditions.html&quot;>Terms of Use</a> and our <a href=&quot;confidentialite.html&quot;>Privacy Policy</a>.">En continuant, vous acceptez nos <a href="conditions.html">Conditions d'utilisation</a> et notre <a href="confidentialite.html">Politique de confidentialité</a>.</p>
+        <div class="erreur" id="err-entree"></div>
+      </div>
+
+      <!-- Étape 1 : choix du profil (inscription / complétion Google) — les 3 choix
+           (Pharmacien(ne) / ATP / Une pharmacie) sont proposés en une seule étape. -->
+      <div class="zone" id="z-role" style="margin-top:22px">
+        <button class="role-btn" id="r-pharmacien">
+          <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#0B6E4F" stroke-width="2"/><path d="M4 20c0-3.3 3.6-5 8-5s8 1.7 8 5" stroke="#0B6E4F" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span><b data-fr="Pharmacien(ne)" data-en="Pharmacist">Pharmacien(ne)</b><small data-fr="RECHERCHE DE REMPLACEMENTS" data-en="LOOKING FOR SHIFTS">RECHERCHE DE REMPLACEMENTS</small></span>
+          <span class="fleche">&gt;</span>
+        </button>
+        <button class="role-btn" id="r-atp">
+          <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#0B6E4F" stroke-width="2"/><path d="M4 20c0-3.3 3.6-5 8-5s8 1.7 8 5" stroke="#0B6E4F" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span><b data-fr="ATP — assistant(e) technique" data-en="Pharmacy technician (ATP)">ATP — assistant(e) technique</b><small data-fr="RECHERCHE DE REMPLACEMENTS" data-en="LOOKING FOR SHIFTS">RECHERCHE DE REMPLACEMENTS</small></span>
+          <span class="fleche">&gt;</span>
+        </button>
+        <button class="role-btn" id="r-pharmacie">
+          <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 9l1.5-5h13L20 9" stroke="#0B6E4F" stroke-width="2" stroke-linejoin="round"/><path d="M5 9v11h14V9" stroke="#0B6E4F" stroke-width="2" stroke-linejoin="round"/><path d="M10 20v-6h4v6" stroke="#0B6E4F" stroke-width="2" stroke-linejoin="round"/></svg></span>
+          <span><b data-fr="Une pharmacie" data-en="A pharmacy">Une pharmacie</b><small data-fr="RECHERCHE D'UN REMPLAÇANT" data-en="LOOKING FOR A LOCUM">RECHERCHE D'UN REMPLAÇANT</small></span>
+          <span class="fleche">&gt;</span>
+        </button>
+        <button class="retour-carte" id="retour-entree" data-fr="← Retour" data-en="← Back">← Retour</button>
+      </div>
+
+      <!-- Rappel du rôle choisi -->
+      <div class="role-actuel" id="role-actuel" style="display:none">
+        <span data-fr="PROFIL&nbsp;:" data-en="PROFILE:">PROFIL&nbsp;:</span>&nbsp;<b id="role-nom"></b>
+        <button id="chg-role" data-fr="changer" data-en="change">changer</button>
+      </div>
+
+      <!-- CONNEXION -->
+      <div class="zone" id="z-connexion">
+        <div class="champ">
+          <label data-fr="Courriel" data-en="Email">Courriel</label>
+          <input id="c-courriel" type="email" autocomplete="email">
+        </div>
+        <div class="champ rel">
+          <label data-fr="Mot de passe" data-en="Password">Mot de passe</label>
+          <input id="c-mdp" type="password" autocomplete="current-password" style="padding-right:74px">
+          <button class="oeil" data-cible="c-mdp" type="button" data-fr="afficher" data-en="show">afficher</button>
+        </div>
+        <button class="btn" id="btn-connexion" data-fr="Se connecter" data-en="Sign in">Se connecter</button>
+        <div class="erreur" id="err-conn"></div>
+        <p class="note" id="note-renvoi" style="display:none"><button id="btn-renvoi" type="button" data-fr="Renvoyer le courriel de confirmation" data-en="Resend confirmation email">Renvoyer le courriel de confirmation</button></p>
+        <p class="note"><button id="lien-oubli" data-fr="Mot de passe oublié&nbsp;?" data-en="Forgot password?">Mot de passe oublié&nbsp;?</button></p>
+        <p class="note"><span data-fr="Pas de compte&nbsp;?" data-en="No account?">Pas de compte&nbsp;?</span> <button class="vers-insc" data-fr="Inscrivez-vous — c'est gratuit" data-en="Sign up — it's free">Inscrivez-vous — c'est gratuit</button></p>
+      </div>
+
+      <!-- INSCRIPTION (courriel + mot de passe) -->
+      <div class="zone" id="z-inscription">
+        <form id="f-inscription">
+          <div class="deux">
+            <div class="champ"><label data-fr="Prénom" data-en="First name">Prénom</label><input id="i-prenom" autocomplete="given-name" required></div>
+            <div class="champ"><label data-fr="Nom" data-en="Last name">Nom</label><input id="i-nom" autocomplete="family-name" required></div>
+          </div>
+          <div class="champ"><label data-fr="Courriel" data-en="Email">Courriel</label><input id="i-courriel" type="email" autocomplete="email" required></div>
+          <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input id="i-tel" type="tel" required placeholder="514-555-0123"></div>
+          <div class="champ" id="champ-experience" style="display:none">
+            <label data-fr="Années d'expérience (ATP — 1 an minimum)" data-en="Years of experience (pharmacy tech — 1 year minimum)">Années d'expérience (ATP — 1 an minimum)</label>
+            <input id="i-experience" type="number" min="0" step="1" inputmode="numeric" placeholder="2">
+          </div>
+          <div class="champ rel">
+            <label data-fr="Mot de passe (8 caractères min.)" data-en="Password (8 characters min.)">Mot de passe (8 caractères min.)</label>
+            <input id="i-mdp" type="password" autocomplete="new-password" minlength="8" required style="padding-right:74px">
+            <button class="oeil" data-cible="i-mdp" type="button" data-fr="afficher" data-en="show">afficher</button>
+          </div>
+          <label class="consent">
+            <input type="checkbox" id="i-consent" required>
+            <span data-fr="J'accepte la <a href=&quot;confidentialite.html&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;>politique de confidentialité</a> et le traitement de mes renseignements personnels" data-en="I accept the <a href=&quot;confidentialite.html&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;>privacy policy</a> and the processing of my personal information">J'accepte la <a href="confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a> et le traitement de mes renseignements personnels</span>
+          </label>
+          <button class="btn" type="submit" id="btn-inscription" data-fr="Créer mon compte" data-en="Create my account">Créer mon compte</button>
+          <div class="erreur" id="err-insc"></div>
+        </form>
+        <p class="note"><span data-fr="Déjà un compte&nbsp;?" data-en="Already have an account?">Déjà un compte&nbsp;?</span> <button class="vers-conn" data-fr="Connectez-vous" data-en="Sign in">Connectez-vous</button></p>
+      </div>
+
+      <!-- MOT DE PASSE OUBLIÉ -->
+      <div class="zone" id="z-oubli">
+        <div class="champ">
+          <label data-fr="Courriel du compte" data-en="Account email">Courriel du compte</label>
+          <input id="o-courriel" type="email" autocomplete="email">
+        </div>
+        <button class="btn" id="btn-oubli" data-fr="Envoyer le lien de réinitialisation" data-en="Send reset link">Envoyer le lien de réinitialisation</button>
+        <div class="erreur" id="err-oubli"></div>
+        <p class="note"><button class="vers-conn" data-fr="← Retour à la connexion" data-en="← Back to sign in">← Retour à la connexion</button></p>
+      </div>
+
+      <!-- NOUVEAU MOT DE PASSE (après lien reçu) -->
+      <div class="zone" id="z-reset">
+        <div class="champ rel">
+          <label data-fr="Nouveau mot de passe (8 caractères min.)" data-en="New password (8 characters min.)">Nouveau mot de passe (8 caractères min.)</label>
+          <input id="rz-mdp" type="password" autocomplete="new-password" minlength="8" style="padding-right:74px">
+          <button class="oeil" data-cible="rz-mdp" type="button" data-fr="afficher" data-en="show">afficher</button>
+        </div>
+        <button class="btn" id="btn-reset" data-fr="Enregistrer le mot de passe" data-en="Save password">Enregistrer le mot de passe</button>
+        <div class="erreur" id="err-reset"></div>
+      </div>
+
+      <!-- COMPLÉTER LE PROFIL (comptes Google) -->
+      <div class="zone" id="z-completer">
+        <form id="f-completer">
+          <div class="deux">
+            <div class="champ"><label data-fr="Prénom" data-en="First name">Prénom</label><input id="g-prenom" autocomplete="given-name" required></div>
+            <div class="champ"><label data-fr="Nom" data-en="Last name">Nom</label><input id="g-nom" autocomplete="family-name" required></div>
+          </div>
+          <div class="champ"><label data-fr="Téléphone" data-en="Phone">Téléphone</label><input id="g-tel" type="tel" required placeholder="514-555-0123"></div>
+          <div class="champ" id="champ-experience-g" style="display:none">
+            <label data-fr="Années d'expérience (ATP — 1 an minimum)" data-en="Years of experience (pharmacy tech — 1 year minimum)">Années d'expérience (ATP — 1 an minimum)</label>
+            <input id="g-experience" type="number" min="0" step="1" inputmode="numeric" placeholder="2">
+          </div>
+          <label class="consent">
+            <input type="checkbox" id="g-consent" required>
+            <span data-fr="J'accepte la <a href=&quot;confidentialite.html&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;>politique de confidentialité</a> et le traitement de mes renseignements personnels" data-en="I accept the <a href=&quot;confidentialite.html&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;>privacy policy</a> and the processing of my personal information">J'accepte la <a href="confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a> et le traitement de mes renseignements personnels</span>
+          </label>
+          <button class="btn" type="submit" id="btn-completer" data-fr="Continuer" data-en="Continue">Continuer</button>
+          <div class="erreur" id="err-completer"></div>
+        </form>
+      </div>
+
+      <!-- SUCCÈS -->
+      <div class="succes" id="z-succes">
+        <b id="succes-titre"></b><br><br>
+        <span id="succes-texte"></span>
+      </div>
+    </div>
+
+    <p class="pied" data-fr="C-DIRECT // ACCÈS SÉCURISÉ · QUÉBEC" data-en="C-DIRECT // SECURE ACCESS · QUEBEC">C-DIRECT // ACCÈS SÉCURISÉ · QUÉBEC</p>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js?v=20260723b"></script>
+<script src="auth.js?v=20260812a"></script>
+<script src="outils.js"></script>
+<script>
+const sb = window.sbClient;
+const $ = id => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+
+let mode = params.get('mode') || 'insc';   /* insc | conn | oubli | reset | completer | suite */
+let role = ['pharmacien','pharmacie'].includes(params.get('role')) ? params.get('role') : null;
+let profession = ['pharmacien','atp'].includes(params.get('profession')) ? params.get('profession') : null;
+let etape = 'entree';
+/* mode==='conn' démarre aussi sur l'écran d'entrée (bouton Google inclus) :
+   la connexion Google doit être proposée aux comptes déjà inscrits, pas
+   seulement à l'inscription. */
+/* profil « complet » = rôle connu, et pour un(e) pharmacien(ne) la
+   profession (Pharmacien(ne) vs ATP) connue aussi — les 3 choix sont
+   proposés en une seule étape (z-role) plutôt qu'en 2 étapes séparées. */
+function profilComplet(){ return role === 'pharmacie' || (role === 'pharmacien' && !!profession); }
+
+const NOM_ROLE = cdLang()==='en'
+  ? { pharmacien:'LOCUM PHARMACIST', pharmacie:'PHARMACY' }
+  : { pharmacien:'PHARMACIEN(NE) REMPLAÇANT(E)', pharmacie:'PHARMACIE' };
+/* étiquette affichée pour un rôle pharmacien : distingue Pharmacien(ne)/ATP
+   (sql/50 — profession est une sous-dimension du rôle, pas un rôle séparé) */
+function libelleRole(r, p){
+  if(r === 'pharmacien') return p === 'atp' ? cdT('ATP REMPLAÇANT(E)','LOCUM PHARMACY TECH') : NOM_ROLE.pharmacien;
+  return NOM_ROLE[r] || r;
+}
+
+/* ---------- rendu ---------- */
+function cacherTout(){
+  ['z-entree','z-role','z-connexion','z-inscription','z-oubli','z-reset','z-completer'].forEach(z=>$(z).classList.remove('on'));
+  $('z-succes').style.display='none';
+  $('role-actuel').style.display='none';
+  document.querySelectorAll('.erreur').forEach(e=>e.style.display='none');
+}
+function montrer(zone){ cacherTout(); if(zone) $(zone).classList.add('on'); }
+
+function render(){
+  if(mode==='reset'){
+    $('titre').textContent=cdT('Nouveau mot de passe','New password');
+    $('sous-titre').textContent=cdT('Choisissez votre nouveau mot de passe.','Choose your new password.');
+    montrer('z-reset'); return;
+  }
+  if(mode==='oubli'){
+    $('titre').textContent=cdT('Mot de passe oublié','Forgot password');
+    $('sous-titre').textContent=cdT('Recevez un lien de réinitialisation par courriel.','Get a reset link by email.');
+    montrer('z-oubli'); return;
+  }
+  if(mode==='completer'){
+    $('titre').textContent=cdT('Compléter votre profil','Complete your profile');
+    if(!profilComplet()){
+      $('sous-titre').textContent=cdT('Identifiez votre profil :','Identify your profile:');
+      montrer('z-role');
+    }else{
+      $('sous-titre').textContent=cdT('Une dernière étape.','One last step.');
+      montrer('z-completer');
+      $('role-actuel').style.display='flex';
+      $('role-nom').textContent=libelleRole(role, profession);
+      $('champ-experience-g').style.display = (profession==='atp') ? '' : 'none';
+    }
+    return;
+  }
+  if(mode==='conn'){
+    $('titre').textContent=cdT('Accès sécurisé','Secure access');
+    if(etape==='entree'){
+      $('sous-titre').textContent=cdT('Identifiez-vous pour accéder à votre espace.','Sign in to access your space.');
+      $('btn-courriel').textContent=cdT('Se connecter par courriel','Sign in with email');
+      $('bascule-insc').style.display='none'; $('bascule-conn').style.display='';
+      montrer('z-entree');
+    }else{
+      $('sous-titre').textContent=cdT('Courriel + mot de passe.','Email + password.');
+      montrer('z-connexion');
+    }
+    return;
+  }
+  /* inscription */
+  $('titre').textContent=cdT('Créer un compte','Create an account');
+  if(etape==='entree'){
+    $('sous-titre').textContent=cdT('Gratuit. Vérifié. Sécurisé.','Free. Verified. Secure.');
+    $('btn-courriel').textContent=cdT("S'inscrire par courriel","Sign up with email");
+    $('bascule-insc').style.display=''; $('bascule-conn').style.display='none';
+    montrer('z-entree');
+  }else if(etape==='role' || !profilComplet()){
+    $('sous-titre').textContent=cdT('Identifiez votre profil :','Identify your profile:');
+    montrer('z-role');
+  }else{
+    $('sous-titre').textContent=cdT('Vos renseignements de base.','Your basic information.');
+    montrer('z-inscription');
+    $('role-actuel').style.display='flex';
+    $('role-nom').textContent=libelleRole(role, profession);
+    $('champ-experience').style.display = (profession==='atp') ? '' : 'none';
+  }
+}
+
+function succes(titre, texte){
+  cacherTout();
+  $('titre').textContent='C-Direct';
+  $('sous-titre').textContent='';
+  $('succes-titre').textContent=titre;
+  $('succes-texte').innerHTML=texte;
+  $('z-succes').style.display='block';
+}
+function erreur(id, msg){ $(id).textContent=msg; $(id).style.display='block'; }
+
+function messageErreur(e){
+  const m = (e && e.message || '').toLowerCase();
+  if(m.includes('invalid login')) return cdT('Courriel ou mot de passe invalide.','Invalid email or password.');
+  if(m.includes('not confirmed')) return cdT('Courriel non confirmé — cliquez le lien reçu par courriel (vérifiez vos indésirables).','Email not confirmed — click the link sent to your inbox (check your spam).');
+  if(m.includes('already registered')) return cdT('Un compte existe déjà avec ce courriel. Connectez-vous.','An account already exists with this email. Sign in.');
+  if(m.includes('at least')) return cdT('Mot de passe trop court (8 caractères minimum).','Password too short (8 characters minimum).');
+  if(m.includes('rate limit')) return cdT('Trop de tentatives — réessayez dans quelques minutes.','Too many attempts — try again in a few minutes.');
+  return e && e.message ? e.message : cdT('Une erreur est survenue. Réessayez.','An error occurred. Try again.');
+}
+
+/* ---------- navigation ---------- */
+$('btn-courriel').onclick = ()=>{ etape = (mode==='conn') ? 'form' : (profilComplet() ? 'form' : 'role'); render(); };
+$('retour-entree').onclick= ()=>{ if(mode==='completer'){return;} etape='entree'; render(); };
+$('r-pharmacien').onclick = ()=>{ role='pharmacien'; profession='pharmacien'; etape='form'; render(); };
+$('r-atp').onclick        = ()=>{ role='pharmacien'; profession='atp'; etape='form'; render(); };
+$('r-pharmacie').onclick  = ()=>{ role='pharmacie'; profession=null; etape='form'; render(); };
+$('chg-role').onclick     = ()=>{ role=null; profession=null; etape='role'; render(); };
+document.querySelectorAll('.vers-insc').forEach(b=> b.onclick = ()=>{ mode='insc'; etape='entree'; render(); });
+document.querySelectorAll('.vers-conn').forEach(b=> b.onclick = ()=>{ mode='conn'; etape='entree'; render(); });
+$('lien-oubli').onclick = ()=>{ mode='oubli'; $('o-courriel').value=$('c-courriel').value; render(); };
+
+/* afficher / masquer les mots de passe */
+document.querySelectorAll('.oeil').forEach(o=>{
+  o.onclick = ()=>{
+    const c = $(o.dataset.cible);
+    const visible = c.type==='text';
+    c.type = visible ? 'password' : 'text';
+    o.textContent = visible ? cdT('afficher','show') : cdT('masquer','hide');
+  };
+});
+
+/* format téléphone : 514-555-0123 */
+document.querySelectorAll('input[type=tel]').forEach(el=>{
+  el.addEventListener('input', ()=>{
+    const d = el.value.replace(/\D/g,'').slice(0,10);
+    el.value = d.length>6 ? d.slice(0,3)+'-'+d.slice(3,6)+'-'+d.slice(6)
+             : d.length>3 ? d.slice(0,3)+'-'+d.slice(3) : d;
+  });
+});
+
+/* ---------- Google OAuth ----------
+   skipBrowserRedirect : on récupère l'URL d'autorisation NOUS-MÊMES pour
+   pouvoir afficher un message propre si le fournisseur Google n'est pas
+   activé côté Supabase (sinon l'usager tombe sur une page JSON brute). */
+$('btn-google').onclick = async ()=>{
+  const b = $('btn-google'); b.disabled = true;
+  const { data, error } = await sb.auth.signInWithOAuth({
+    provider:'google',
+    options:{ redirectTo: location.origin + location.pathname + '?mode=suite', skipBrowserRedirect:true }
+  });
+  if(error || !(data && data.url)){
+    b.disabled = false;
+    erreur('err-insc', cdT(
+      "La connexion Google n’est pas encore activée. Utilisez le courriel + mot de passe, ou réessayez plus tard.",
+      "Google sign-in isn’t enabled yet. Please use email + password, or try again later."));
+    return;
+  }
+  location.href = data.url;   /* redirection vers Google */
+};
+
+/* ---------- Apple OAuth (même schéma que Google ci-dessus) ----------
+   Garde en plus, AVANT tout appel réseau : Supabase construit toujours
+   une URL d'autorisation valide côté client, même si le fournisseur Apple
+   n'est pas activé côté serveur — le check error/data.url ci-dessous ne
+   se déclenche donc jamais pour ce cas précis, et l'usager qui cliquerait
+   quand même finirait sur une page JSON brute renvoyée par Supabase.
+   window.CD_APPLE_ENABLED (supabase-config.js) coupe court avant ça. */
+$('btn-apple').onclick = async ()=>{
+  if(!window.CD_APPLE_ENABLED){
+    erreur('err-entree', cdT(
+      "La connexion Apple n'est pas encore activée. Utilisez le courriel + mot de passe, ou réessayez plus tard.",
+      "Apple sign-in isn't enabled yet. Please use email + password, or try again later."));
+    return;
+  }
+  const b = $('btn-apple'); b.disabled = true;
+  const { data, error } = await sb.auth.signInWithOAuth({
+    provider:'apple',
+    options:{ redirectTo: location.origin + location.pathname + '?mode=suite', skipBrowserRedirect:true }
+  });
+  if(error || !(data && data.url)){
+    b.disabled = false;
+    erreur('err-entree', cdT(
+      "La connexion Apple n'est pas encore activée. Utilisez le courriel + mot de passe, ou réessayez plus tard.",
+      "Apple sign-in isn't enabled yet. Please use email + password, or try again later."));
+    return;
+  }
+  location.href = data.url;   /* redirection vers Apple */
+};
+
+/* Retour OAuth en erreur : Supabase renvoie #error=…&error_description=… */
+(function(){
+  const h = new URLSearchParams((location.hash||'').replace(/^#/,''));
+  const err = h.get('error_description') || h.get('error');
+  if(err){
+    try{ history.replaceState(null,'',location.pathname + location.search); }catch(e){}
+    setTimeout(()=>{ try{ erreur('err-conn', decodeURIComponent(err.replace(/\+/g,' '))); }catch(e){} }, 300);
+  }
+})();
+
+/* Renvoyé ici par auth.js (cdExigerConnexion) après désactivation volontaire
+   du compte (parametres.html → desactiver_mon_compte()) : message explicite
+   au lieu d'un simple retour silencieux à l'écran de connexion. */
+if(params.get('desactive') === '1'){
+  setTimeout(()=>{ try{ erreur('err-entree', cdT(
+    'Ce compte a été désactivé. Contactez le soutien C-Direct pour le réactiver.',
+    'This account has been deactivated. Contact C-Direct support to reactivate it.'
+  )); }catch(e){} }, 300);
+}
+
+/* ---------- connexion ---------- */
+$('btn-connexion').onclick = async ()=>{
+  const b=$('btn-connexion'); b.disabled=true;
+  const { error } = await sb.auth.signInWithPassword({
+    email:$('c-courriel').value.trim(), password:$('c-mdp').value
+  });
+  b.disabled=false;
+  if(error){
+    erreur('err-conn', messageErreur(error));
+    /* courriel non confirmé → proposer le renvoi du lien */
+    if((error.message||'').toLowerCase().includes('not confirmed')) $('note-renvoi').style.display='';
+    return;
+  }
+  await apresConnexion();
+};
+$('c-mdp').addEventListener('keydown', e=>{ if(e.key==='Enter') $('btn-connexion').click(); });
+
+/* ---------- renvoyer le courriel de confirmation ----------
+   Même redirect que l'inscription : doit être dans la liste blanche
+   Supabase (Authentication → URL Configuration → Redirect URLs). */
+window.renvoyerConfirmation = async function(courriel, bouton){
+  courriel = (courriel||'').trim();
+  if(!courriel){ erreur('err-conn',cdT('Entrez votre courriel ci-dessus, puis réessayez.','Enter your email above, then try again.')); return; }
+  if(bouton) bouton.disabled = true;
+  const { error } = await sb.auth.resend({
+    type:'signup',
+    email: courriel,
+    options:{ emailRedirectTo: location.origin + location.pathname + '?mode=conn' }
+  });
+  if(bouton) bouton.disabled = false;
+  if(error){ erreur('err-conn', messageErreur(error)); return; }
+  succes(cdT('COURRIEL RENVOYÉ.','EMAIL RESENT.'),
+    cdT("Un nouveau lien de confirmation vient d'être envoyé à <b>"+courriel.replace(/</g,'&lt;')+"</b> (vérifiez vos indésirables). Le lien précédent n'est plus valide.",
+        "A new confirmation link has just been sent to <b>"+courriel.replace(/</g,'&lt;')+"</b> (check your spam). The previous link is no longer valid."));
+};
+$('btn-renvoi').onclick = ()=> renvoyerConfirmation($('c-courriel').value, $('btn-renvoi'));
+
+/* ---------- inscription ---------- */
+$('f-inscription').addEventListener('submit', async e=>{
+  e.preventDefault();
+  if(!profilComplet()){ etape='role'; render(); return; }
+  const tel = cdE164($('i-tel').value);
+  if(!tel){ erreur('err-insc',cdT('Téléphone invalide — 10 chiffres requis.','Invalid phone — 10 digits required.')); return; }
+  let experience = '';
+  if(profession === 'atp'){
+    const ex = parseInt($('i-experience').value, 10);
+    if(isNaN(ex) || ex < 1){
+      erreur('err-insc', cdT("Pour vous inscrire comme ATP, un minimum de 1 an d'expérience est requis.",
+                             "To register as a pharmacy tech, at least 1 year of experience is required."));
+      return;
+    }
+    experience = String(ex);
+  }
+  if(!$('i-consent').checked){ erreur('err-insc',cdT('Le consentement est requis.','Consent is required.')); return; }
+  const b=$('btn-inscription'); b.disabled=true; b.textContent=cdT('Création…','Creating…');
+  const { data, error } = await sb.auth.signUp({
+    email: $('i-courriel').value.trim(),
+    password: $('i-mdp').value,
+    options:{
+      emailRedirectTo: location.origin + location.pathname + '?mode=conn',
+      data:{
+        role, profession, nom:$('i-nom').value.trim(), prenom:$('i-prenom').value.trim(),
+        telephone: tel, annees_experience: experience,
+        consentement:'true', consentement_date:new Date().toISOString()
+      }
+    }
+  });
+  b.disabled=false; b.textContent=cdT('Créer mon compte','Create my account');
+  if(error){ erreur('err-insc', messageErreur(error)); return; }
+  if(data.session){ await apresConnexion(); return; }
+  const courrielInscrit = $('i-courriel').value.trim().replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+  /* Anti-énumération Supabase : si ce courriel a déjà un compte JAMAIS
+     confirmé, signUp() ne renvoie PAS d'erreur — il renvoie un utilisateur
+     « fantôme » avec identities:[] et session:null (un nouveau courriel de
+     confirmation est envoyé automatiquement). Sans cette vérification,
+     l'écran affichait "COMPTE CRÉÉ" pour un doublon, ce qui est trompeur
+     et déclenchait une fausse alerte admin "Nouvelle inscription". */
+  const estDoublonNonConfirme = !!(data && data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0);
+
+  if(estDoublonNonConfirme){
+    const boutonRenvoi = "<button style='background:none;border:none;color:var(--vert-vif);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-size:13px' onclick=\"renvoyerConfirmation('" + courrielInscrit + "', this)\">" + cdT('Renvoyer le courriel','Resend email') + "</button>";
+    succes(cdT('COURRIEL DÉJÀ INSCRIT.','EMAIL ALREADY REGISTERED.'),
+      cdT("Un compte existe déjà pour <b>" + courrielInscrit + "</b>, mais il n'a jamais été confirmé.<br><br>" +
+          "Un nouveau courriel de confirmation vient de lui être envoyé (vérifiez vos indésirables) — cliquez le lien pour l'activer, puis connectez-vous normalement.<br><br>" +
+          "Rien reçu après quelques minutes&nbsp;? " + boutonRenvoi,
+          "An account already exists for <b>" + courrielInscrit + "</b>, but it was never confirmed.<br><br>" +
+          "A new confirmation email has just been sent to it (check your spam) — click the link to activate it, then sign in normally.<br><br>" +
+          "Nothing after a few minutes? " + boutonRenvoi));
+    return;
+  }
+
+  cdAlerteAdmin(
+    cdT('Nouvelle inscription — à valider', 'New sign-up — pending approval'),
+    cdT((role||'?') + ' : ' + $('i-prenom').value + ' ' + $('i-nom').value + ' <' + $('i-courriel').value.trim() + '> — à valider dans la console admin.',
+        (role||'?') + ': ' + $('i-prenom').value + ' ' + $('i-nom').value + ' <' + $('i-courriel').value.trim() + '> — approve in the admin console.'));
+  const boutonRenvoi2 = "<button style='background:none;border:none;color:var(--vert-vif);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-size:13px' onclick=\"renvoyerConfirmation('" + courrielInscrit + "', this)\">" + cdT('Renvoyer le courriel','Resend email') + "</button>";
+  succes(cdT('COMPTE CRÉÉ.','ACCOUNT CREATED.'),
+    cdT("Un courriel de confirmation vient de vous être envoyé (vérifiez vos indésirables).<br><br>" +
+        "Cliquez le lien pour confirmer votre courriel. Votre compte sera ensuite <b>activé après vérification par l'équipe</b> (inscription OPQ pour les pharmacien(ne)s, établissement pour les pharmacies).<br><br>" +
+        "Rien reçu après quelques minutes&nbsp;? " + boutonRenvoi2,
+        "A confirmation email has just been sent to you (check your spam).<br><br>" +
+        "Click the link to confirm your email. Your account will then be <b>activated after verification by the team</b> (OPQ registration for pharmacists, establishment for pharmacies).<br><br>" +
+        "Nothing after a few minutes? " + boutonRenvoi2));
+});
+
+/* ---------- mot de passe oublié ---------- */
+$('btn-oubli').onclick = async ()=>{
+  const c=$('o-courriel').value.trim();
+  if(!c){ erreur('err-oubli',cdT('Entrez votre courriel.','Enter your email.')); return; }
+  const b=$('btn-oubli'); b.disabled=true;
+  const { error } = await sb.auth.resetPasswordForEmail(c, {
+    redirectTo: location.origin + location.pathname + '?mode=reset'
+  });
+  b.disabled=false;
+  if(error){ erreur('err-oubli', messageErreur(error)); return; }
+  succes(cdT('COURRIEL ENVOYÉ.','EMAIL SENT.'),
+    cdT("Si un compte existe pour <b>"+c.replace(/</g,'&lt;')+"</b>, un lien de réinitialisation vient d'être envoyé.",
+        "If an account exists for <b>"+c.replace(/</g,'&lt;')+"</b>, a reset link has just been sent."));
+};
+
+/* ---------- nouveau mot de passe ---------- */
+$('btn-reset').onclick = async ()=>{
+  const mdp=$('rz-mdp').value;
+  if(mdp.length<8){ erreur('err-reset',cdT('8 caractères minimum.','8 characters minimum.')); return; }
+  const b=$('btn-reset'); b.disabled=true;
+  const { error } = await sb.auth.updateUser({ password: mdp });
+  b.disabled=false;
+  if(error){ erreur('err-reset', messageErreur(error)); return; }
+  await apresConnexion();
+};
+
+/* ---------- compléter le profil (Google) ---------- */
+$('f-completer').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const tel = cdE164($('g-tel').value);
+  if(!tel){ erreur('err-completer',cdT('Téléphone invalide — 10 chiffres requis.','Invalid phone — 10 digits required.')); return; }
+  let experienceG = null;
+  if(profession === 'atp'){
+    const ex = parseInt($('g-experience').value, 10);
+    if(isNaN(ex) || ex < 1){
+      erreur('err-completer', cdT("Pour vous inscrire comme ATP, un minimum de 1 an d'expérience est requis.",
+                                  "To register as a pharmacy tech, at least 1 year of experience is required."));
+      return;
+    }
+    experienceG = ex;
+  }
+  if(!$('g-consent').checked){ erreur('err-completer',cdT('Le consentement est requis.','Consent is required.')); return; }
+  if(!profilComplet()){ etape='role'; render(); return; }
+  const s = await cdSession();
+  if(!s){ mode='conn'; etape='form'; render(); return; }
+  const b=$('btn-completer'); b.disabled=true;
+  const maj = {
+    prenom:$('g-prenom').value.trim(), nom:$('g-nom').value.trim(),
+    telephone: tel, consentement_date:new Date().toISOString(), courriel:s.user.email
+  };
+  if(experienceG != null) maj.annees_experience = experienceG;
+  const actuel = await cdProfil(true);
+  if(!actuel || !actuel.role) maj.role = role;
+  if(!actuel || !actuel.profession) maj.profession = profession;
+  let error;
+  if(actuel){
+    ({ error } = await sb.from('profiles').update(maj).eq('id', s.user.id));
+  }else{
+    maj.id = s.user.id; maj.role = role; maj.profession = profession;
+    ({ error } = await sb.from('profiles').insert(maj));
+  }
+  b.disabled=false;
+  if(error){ erreur('err-completer', messageErreur(error)); return; }
+  cdAlerteAdmin(
+    cdT('Nouvelle inscription (Google) — à valider', 'New sign-up (Google) — pending approval'),
+    cdT((role||'?') + ' : ' + $('g-prenom').value + ' ' + $('g-nom').value + ' <' + (s.user.email||'') + '> — à valider dans la console admin.',
+        (role||'?') + ': ' + $('g-prenom').value + ' ' + $('g-nom').value + ' <' + (s.user.email||'') + '> — approve in the admin console.'));
+  const p = await cdProfil(true);
+  cdReprendreSuite(p.role);
+});
+
+/* ---------- après connexion : profil complet ? puis reprendre l'URL visée ---------- */
+async function apresConnexion(){
+  const p = await cdProfil(true);
+  if(!p || !p.role || !p.consentement_date){
+    mode='completer';
+    role = p && p.role ? p.role : null;
+    const s = await cdSession();
+    const meta = s && s.user.user_metadata || {};
+    if(meta.full_name){
+      const morceaux = meta.full_name.split(' ');
+      $('g-prenom').value = morceaux[0]||''; $('g-nom').value = morceaux.slice(1).join(' ');
+    }
+    render(); return;
+  }
+  cdReprendreSuite(p.role);
+}
+
+/* ---------- amorçage ---------- */
+(async function(){
+  /* lien de réinitialisation : Supabase émet PASSWORD_RECOVERY */
+  sb.auth.onAuthStateChange((evt)=>{ if(evt==='PASSWORD_RECOVERY'){ mode='reset'; render(); } });
+
+  const s = await cdSession();
+  if(mode==='reset'){ render(); return; }
+  if(s){
+    /* Déjà connecté ET on demande explicitement la page d'accès
+       (mode conn/insc) : proposer de continuer ou de changer de
+       compte au lieu de rediriger en silence — sinon on croit se
+       connecter avec un autre compte alors que la session (partagée
+       entre toutes les fenêtres du navigateur) reste la même. */
+    if(mode==='conn' || mode==='insc'){
+      const p = await cdProfil();
+      if(p && p.role && p.consentement_date){
+        const stylBtn = "background:none;border:none;color:var(--vert-vif);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-size:13px";
+        succes(cdT('DÉJÀ CONNECTÉ.','ALREADY SIGNED IN.'),
+          cdT("Cette fenêtre est connectée en tant que <b>" + ((p.prenom||p.courriel||'').replace(/</g,'&lt;')) + "</b> (" + (libelleRole(p.role, p.profession)||p.role) + ").<br><br>" +
+              "<button style='"+stylBtn+"' onclick='cdAllerEspace()'>Continuer vers mon espace</button>" +
+              " &nbsp;·&nbsp; " +
+              "<button style='"+stylBtn+"' onclick='cdChangerCompte()'>Changer de compte (déconnexion)</button>" +
+              "<br><br><span style='font-size:12px;color:var(--sourd)'>Pour utiliser DEUX comptes en même temps (ex. pharmacie + pharmacien), ouvrez l'un des deux dans une fenêtre privée — la session est partagée entre toutes les fenêtres normales du navigateur.</span>",
+              "This window is signed in as <b>" + ((p.prenom||p.courriel||'').replace(/</g,'&lt;')) + "</b> (" + (libelleRole(p.role, p.profession)||p.role) + ").<br><br>" +
+              "<button style='"+stylBtn+"' onclick='cdAllerEspace()'>Continue to my space</button>" +
+              " &nbsp;·&nbsp; " +
+              "<button style='"+stylBtn+"' onclick='cdChangerCompte()'>Switch account (sign out)</button>" +
+              "<br><br><span style='font-size:12px;color:var(--sourd)'>To use TWO accounts at once (e.g. pharmacy + pharmacist), open one of them in a private window — the session is shared across all normal browser windows.</span>"));
+        window.cdAllerEspace = ()=> cdReprendreSuite(p.role);
+        window.cdChangerCompte = async ()=>{ await sb.auth.signOut(); location.href = '/acces.html?mode=conn'; };
+        return;
+      }
+    }
+    /* retour OAuth ou profil incomplet */
+    await apresConnexion();
+    return;
+  }
+  if(mode==='suite' || mode==='completer'){ mode='conn'; etape='form'; }
+  render();
+})();
+</script>
+</body>
+</html>
