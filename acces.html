@@ -119,9 +119,18 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
    ce qui ré-éclaire la carte existante SANS modifier apple-dark.css. */
 .cnx-main{padding:0;display:block}
 .cnx-split{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 56px)}
-.cnx-porte{--fond:#FAFAF7;--panneau:transparent;--panneau2:#FFFDF8;--ligne:#E4E2DA;--ligne2:#DAD8CF;--texte:#10201B;--sourd:#5B6862;--vert:#0B6E4F;--vert-vif:#0E8A62;
+.cnx-porte{--fond:#FAFAF7;--panneau:transparent;--panneau2:#FFFDF8;--ligne:#E4E2DA;--ligne2:#DAD8CF;--texte:#10201B;--sourd:#5B6862;--vert:#0B6E4F;--vert-vif:#0E8A62;--rouge:#C0392B;--jaune:#B8760F;
   background:#FAFAF7;color:#10201B;display:flex;align-items:center;justify-content:center;padding:clamp(28px,4vw,56px)}
 .cnx-porte-inner{width:100%;max-width:430px}
+/* apple-dark.css habille les champs pour un fond sombre (fond blanc 5 %,
+   bordure blanche 14 %, en !important) : invisibles sur la colonne ivoire.
+   On les rhabille UNIQUEMENT dans .cnx-porte. */
+.cnx-porte input:not([type=checkbox]):not([type=radio]),.cnx-porte select,.cnx-porte textarea{
+  background:#FFFFFF !important;border:1px solid var(--ligne2) !important;color:var(--texte) !important;border-radius:10px}
+.cnx-porte input:not([type=checkbox]):not([type=radio]):focus,.cnx-porte select:focus,.cnx-porte textarea:focus{
+  border-color:var(--vert) !important;box-shadow:0 0 0 3px rgba(11,110,79,.15) !important;outline:none}
+.cnx-porte input::placeholder,.cnx-porte textarea::placeholder{color:#98A29C !important}
+.cnx-porte input[type=checkbox]{background:#FFFFFF !important;border:1px solid var(--ligne2) !important;accent-color:var(--vert);width:16px;height:16px}
 .cnx-logo{width:clamp(168px,15vw,205px);height:auto;display:block;margin:0 0 clamp(30px,5vh,46px)}
 .cnx-porte .carte{background:transparent;border:none;border-radius:0;padding:0;box-shadow:none;animation:none}
 .cnx-porte .carte::before{display:none}
