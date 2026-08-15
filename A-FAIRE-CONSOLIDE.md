@@ -25,7 +25,13 @@ Deux correctifs de sécurité/logique poussés le 2026-08-09 attendent d'être *
 Robert confirmed 2026-08-15 that Stripe verification is done. Follow these steps **in order**. Nothing on the site needs to change except ONE line (step 3) — everything else is dashboard clicks and two secrets.
 
 > ✅ **ÉTAT 2026-08-15 — les deux clés sont en mode live.** Step 3 done (site sends `pk_live_…`, commit `9cbca86`); step 2 done (Robert pasted `sk_live_…` into the Cloudflare secret). `/health` re-checked after the save: `stripe_key_configured:true` **and** `supabase_configured:true`, so no other secret was overwritten.
-> **Still unproven:** nothing has actually charged a live card yet, and `/health` cannot tell a live key from a test one. **Next action = Test B in step 6** (save a real card in Paramètres → Paiements, $0). If it saves cleanly, both halves are confirmed live. If it errors with *"No such setupintent"* or a test/live mismatch, one side didn't take.
+> **Live key CONFIRMED working 2026-08-15:** the Paiements tab returned *"No such customer: 'cus_UzTijgEyhLkHVN'"* — Stripe answered the Worker, which only happens if the live key authenticated. A wrong key gives an auth error instead.
+>
+> **Two follow-ups this created, both handled in code but NOT yet applied:**
+> 1. 🧑 **Run `sql/80-purge-artefacts-stripe-sandbox.sql` in Supabase** — clears the sandbox `stripe_customer_id` / `stripe_account_id` still stored in `stripe_comptes` (that's the "No such customer" cause) and closes old sandbox `garanties_paiement` rows so the 15-min cron stops trying to capture test PaymentIntents with a live key. Idempotent. Until it runs, the card form cannot load.
+> 2. 🧑 **Redeploy the payments Worker** — `cdirect.quebec` was missing from its CORS allowlist (commit `2efce6d` adds it), which is why the tab first showed *"Failed to fetch"* on that domain. Needs `npx wrangler deploy` from `workers/c-direct-payments` unless Workers Builds auto-deploys it.
+>
+> **Then = Test B in step 6** (save a real card, $0). Clean save on both `c-direct.ca` and `cdirect.quebec` = fully live.
 
 **Never paste `sk_live_...` or `whsec_...` into chat, email, or any file in this folder — the repo is publicly downloadable.** The publishable key `pk_live_...` is the only key that is safe to share (it's public by design).
 
