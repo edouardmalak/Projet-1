@@ -101,6 +101,7 @@ function origineOk(origine) {
   try {
     const h = new URL(origine).hostname;
     return h === 'c-direct.ca' || h === 'www.c-direct.ca' ||
+           h === 'cdirect.quebec' || h === 'www.cdirect.quebec' ||
            h === 'projet-1-1yi.pages.dev' || h.endsWith('.projet-1-1yi.pages.dev') ||
            h === 'localhost';
   } catch (e) { return false; }
