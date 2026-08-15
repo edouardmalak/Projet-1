@@ -24,12 +24,13 @@ Deux correctifs de sécurité/logique poussés le 2026-08-09 attendent d'être *
 
 Robert confirmed 2026-08-15 that Stripe verification is done. Follow these steps **in order**. Nothing on the site needs to change except ONE line (step 3) — everything else is dashboard clicks and two secrets.
 
-> ⚠️ **ÉTAT ACTUEL 2026-08-15 — moitié basculé, à terminer.** Step 3 is **DONE** (site now sends `pk_live_…`, commit `9cbca86`), but step 2 is **NOT done** — the Worker still holds the sandbox `sk_test_…`. In this half-state the **Paramètres → Paiements tab cannot save a card**: the browser will show an error like *"No such setupintent"* or *"test/live mode mismatch"*. That is expected and harmless (site is still behind Cloudflare Access, no real users), and it disappears the moment step 2d is done. **Do step 2 next.**
+> ✅ **ÉTAT 2026-08-15 — les deux clés sont en mode live.** Step 3 done (site sends `pk_live_…`, commit `9cbca86`); step 2 done (Robert pasted `sk_live_…` into the Cloudflare secret). `/health` re-checked after the save: `stripe_key_configured:true` **and** `supabase_configured:true`, so no other secret was overwritten.
+> **Still unproven:** nothing has actually charged a live card yet, and `/health` cannot tell a live key from a test one. **Next action = Test B in step 6** (save a real card in Paramètres → Paiements, $0). If it saves cleanly, both halves are confirmed live. If it errors with *"No such setupintent"* or a test/live mismatch, one side didn't take.
 
 **Never paste `sk_live_...` or `whsec_...` into chat, email, or any file in this folder — the repo is publicly downloadable.** The publishable key `pk_live_...` is the only key that is safe to share (it's public by design).
 
 1. 🧑 **Double-check verification really finished (2 min).** Open https://dashboard.stripe.com — if there is NO orange/red banner asking for business info or bank details on the home page, you're good. Also check Balances → Payouts shows your bank account. (The "Thank you for providing additional information" email means Stripe received your info; the absence of a banner means they accepted it.)
-2. 🧑 **← VOUS ÊTES ICI. Put the live secret key in the Worker (5 min).**
+2. ✅ **DONE 2026-08-15. Put the live secret key in the Worker (5 min).**
    a. Stripe → click **Developers** (bottom left) → **API keys**. Make sure the page does NOT say "Test mode" / sandbox at the top — you want the real account "9269 0031 Québec Inc".
    b. Copy the **Publishable key** (`pk_live_...`) — paste this one to Claude in chat (safe), it's needed for step 3. ✅ **DONE 2026-08-15.**
    c. Click **Reveal live key** on the **Secret key** (`sk_live_...`) and copy it. Stripe may only show it once — keep the tab open until step 2d is done.
