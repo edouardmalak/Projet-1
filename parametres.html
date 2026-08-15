@@ -695,10 +695,14 @@ async function chargerStatutPaiement(){
       : 'Aucun compte de paiement configuré — nécessaire pour être payé de vos mandats.';
   }
   if(profil.role === 'pharmacie' && $('carte-statut')){
-    const { data } = await sb.from('stripe_comptes').select('stripe_customer_id').eq('profil_id', profil.id).maybeSingle();
-    $('carte-statut').textContent = (data && data.stripe_customer_id)
-      ? 'Une carte est enregistrée.'
-      : 'Aucune carte enregistrée pour l’instant.';
+    /* 2026-08-15 : on lit stripe_payment_method_id, PAS stripe_customer_id.
+       Le customer est créé dès l'ouverture de l'onglet (SetupIntent), donc
+       l'ancien test affichait « Une carte est enregistrée » à toute
+       pharmacie ayant simplement visité la page, sans aucune carte. */
+    const { data } = await sb.from('stripe_comptes').select('stripe_payment_method_id').eq('profil_id', profil.id).maybeSingle();
+    $('carte-statut').textContent = (data && data.stripe_payment_method_id)
+      ? cdT('Une carte est enregistrée.','A card is saved.')
+      : cdT('Aucune carte enregistrée pour l’instant.','No card saved yet.');
     initialiserFormulaireCarte();
   }
 }
