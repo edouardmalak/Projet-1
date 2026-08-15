@@ -134,21 +134,29 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
   border-color:var(--vert) !important;box-shadow:0 0 0 3px rgba(11,110,79,.15) !important;outline:none}
 .cnx-porte input::placeholder,.cnx-porte textarea::placeholder{color:#98A29C !important}
 .cnx-porte input[type=checkbox]{background:#FFFFFF !important;border:1px solid var(--ligne2) !important;accent-color:var(--vert);width:16px;height:16px}
-.cnx-logo{width:clamp(168px,15vw,205px);height:auto;display:block;margin:0 0 16px}
+.cnx-logo{width:clamp(168px,15vw,205px);height:auto;display:block;margin:0 0 14px}
 /* Signature de marque sous le logotype : C-Direct → Pharmaciens
-   irremplaçables. → titre de l'écran, rien entre les trois. */
-.cnx-tagline{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--vert);margin:0 0 clamp(22px,3.5vh,30px)}
+   irremplaçables. → titre de l'écran, rien entre les trois.
+   Le filet ambre reprend le crochet du logotype (élément graphique, pas
+   du texte — l'ambre reste interdit en corps de texte). */
+.cnx-tagline{position:relative;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--vert);margin:0 0 24px;padding-bottom:18px}
+.cnx-tagline::after{content:"";position:absolute;left:0;bottom:0;width:46px;height:3px;background:#C98A2B}
 .cnx-porte .carte{background:transparent;border:none;border-radius:0;padding:0;box-shadow:none;animation:none}
 .cnx-porte .carte::before{display:none}
 .cnx-porte .carte .logo{display:none}
-.cnx-porte .carte h2{text-align:left;font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(26px,2.4vw,33px);letter-spacing:.02em;line-height:1.06}
+.cnx-porte .carte h2{text-align:left;font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(30px,3.4vw,44px);letter-spacing:.02em;line-height:1.02}
 .cnx-porte .carte .sous{text-align:left;font-family:'Instrument Sans',sans-serif;font-size:15px;margin-top:8px}
 .cnx-porte .carte .sous:empty{display:none}
-.cnx-porte .statut{margin:26px 0 0}
-/* Respiration constante entre le sous-titre et l'écran affiché (étape 2 du
+/* Points de confiance en liste verticale : plus lisibles qu'une bande de
+   petites capitales, et ils tiennent sans se couper à 375 px. */
+.cnx-porte .statut{display:block;margin:26px 0 0}
+.cnx-porte .statut span{display:flex;margin-bottom:7px}
+.cnx-porte .statut span:last-child{margin-bottom:0}
+/* Respiration constante entre le titre et l'écran affiché (étape 2 du
    brief : hiérarchie logo → titre → formulaire, rien qui se touche). */
-.cnx-porte .zone.on{margin-top:26px}
+.cnx-porte .zone.on{margin-top:32px}
+.cnx-porte .btn{min-height:54px}
 /* apple-dark.css impose .pied en !important (fond #080B0A) : on neutralise
    uniquement à l'intérieur de .cnx-porte, les autres pages ne bougent pas. */
 .cnx-porte .pied{margin-top:32px;padding-top:18px;text-align:left;background:transparent !important;border-top:1px solid var(--ligne) !important;color:var(--sourd) !important}
