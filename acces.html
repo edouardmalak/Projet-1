@@ -120,7 +120,10 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
 .cnx-main{padding:0;display:block}
 .cnx-split{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 56px)}
 .cnx-porte{--fond:#FAFAF7;--panneau:transparent;--panneau2:#FFFDF8;--ligne:#E4E2DA;--ligne2:#DAD8CF;--texte:#10201B;--sourd:#5B6862;--vert:#0B6E4F;--vert-vif:#0E8A62;--rouge:#C0392B;--jaune:#B8760F;
-  background:#FAFAF7;color:#10201B;display:flex;align-items:center;justify-content:center;padding:clamp(28px,4vw,56px)}
+  background:#FAFAF7;color:#10201B;display:flex;align-items:center;justify-content:center;padding:clamp(28px,4vw,56px);
+  /* apple-dark.css met html{color-scheme:dark} : les cases a cocher natives
+     sont alors dessinees en noir par le navigateur. On repasse en clair ici. */
+  color-scheme:light}
 .cnx-porte-inner{width:100%;max-width:430px}
 /* apple-dark.css habille les champs pour un fond sombre (fond blanc 5 %,
    bordure blanche 14 %, en !important) : invisibles sur la colonne ivoire.
