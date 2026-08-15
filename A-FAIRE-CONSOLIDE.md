@@ -76,6 +76,16 @@ Later, optional (decided when Instant Payouts become a promise, not before): Str
 
 ---
 
+## 2bis. Trous du rail de paiement trouvés le 2026-08-15 (rapport C3 → `ETAT-RAIL-PAIEMENT.md`)
+
+Trois écarts entre l'architecture prévue et ce qui tourne réellement. Aucun ne bloque la vérification d'identité Stripe ni les tests d'argent réel — mais le premier doit être réglé **avant d'ouvrir à de vraies pharmacies**.
+
+- [ ] 🤖 **P1 — Le refroidissement 72 h sur le courriel Interac n'est PAS appliqué.** ⚠️ Sécurité. C'est la protection qui empêche un compte pharmacien compromis de rediriger vers l'attaquant tous les paiements qui lui sont dus — et un virement Interac est **irréversible**. Cause exacte : `sql/75` a déprécié la table `verification_interac`, la porte j du moteur d'auto-acceptation (`sql/70`) la lit encore, mais **plus rien ne l'écrit** — la porte lit donc une table morte et laisse tout passer. Correctif prévu de longue date : repointer la porte j vers `profiles.courriel_interac_cooldown`, puis supprimer la table. Déjà noté dans `sql/75` et FIXLOG T10 comme « passe moteur future » — cette entrée existe pour qu'il ne se perde pas. **À faire avant l'ouverture au public.**
+- [ ] 🤖 **P2 — Le palier « 16 h le jour ouvrable suivant » n'existe pas.** Les pharmacies ayant un comptable sont censées avoir cette échéance plus longue ; en réalité **tout le monde est sur le délai standard de 3 h** (`workers/c-direct-payments/src/index.js` le dit explicitement en commentaire). Conséquence concrète : un quart du dimanche ne peut pas être payé par un comptable qui travaille en semaine → la garantie sera capturée alors que la pharmacie n'a rien fait de mal. Sans impact tant que c'est Robert qui teste ; à régler avant d'accueillir des groupes de pharmacies.
+- [ ] 💤 **P3 — Une seule carte par pharmacie.** L'échelle de relance prévoit un palier « essayer la 2e carte » qui n'a aucune 2e carte à essayer. Déjà listé en section 6 comme différé volontaire — rappelé ici parce que le rapport C3 l'a reconfirmé en lisant le code.
+
+---
+
 ## 3. Built, just needs a switch flipped (all optional until you do)
 
 - 🧑 **Google Calendar sync** (`disponibilites.html`) — code is done and push-only as of today, but `window.CD_GOOGLE_CLIENT_ID` in `supabase-config.js` is still blank. Steps (unchanged from before):
