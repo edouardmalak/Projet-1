@@ -104,7 +104,7 @@ Site + payments are essentially done, so this can start whenever you're ready:
 
 ## 5. Housekeeping (not blocking, cheap to knock out)
 
-- 🧑 **Admin 2FA** — turn on two-factor for the admin account(s), both the Supabase dashboard login and the app's own admin login.
+- 🧑 **Admin 2FA** — moved to the launch checklist as **L-4** (Robert's call 2026-08-15: do it at the end, just before launch). Full step-by-step is there.
 - 🧑 **Supabase auth emails** — password reset / signup confirmation still use Supabase's built-in email sender, which is rate-limited. Worth wiring a custom SMTP (you already have a working Resend account/domain from the confirmed-contract emails) before real signup volume hits.
 - 🧑 **Supabase backups** — confirm daily backups are actually turned on (Project → Database → Backups) and note the retention window.
 - 🧑 **Twilio low-balance alert** — set one up so broadcast SMS never silently fail on an empty balance.
@@ -266,3 +266,30 @@ Launch checklist (scheduled, not now):
       Event deliveries shows a 200.
 - [ ] L-3. Standing rule: run sql/verifier-acl.sql after every future
       migration.
+- [ ] L-4. 🧑 **Turn on 2FA on the five accounts that control everything.**
+      Decided 2026-08-15 to do this last, right before launch. None of it is
+      code — five dashboards, ~20 min total. Use the **Passwords** app already
+      on the Mac to hold the codes. Do them ONE AT A TIME, finishing each
+      before starting the next.
+      1. **Google** (`edouardmalak@gmail.com`) — https://myaccount.google.com/signinoptions/twosv
+         → 2-Step Verification → add **Authenticator**, not just SMS (SIM-swap).
+         Do this FIRST: it is the recovery address for the other four.
+      2. **Supabase** — https://supabase.com/dashboard/account/security →
+         Multi-factor authentication → Add authenticator app. Biggest one:
+         this account reads the whole database, `stripe_comptes` included.
+      3. **Cloudflare** — https://dash.cloudflare.com/profile/authentication →
+         Two-Factor Authentication. Cannot reveal STRIPE_SECRET_KEY but can
+         REPLACE it and redeploy the site.
+      4. **GitHub** — https://github.com/settings/security → Enable 2FA.
+         Pushes deploy straight to the live site.
+      5. **Stripe** — https://dashboard.stripe.com/settings/user → confirm
+         two-step auth is on; if SMS-only, add an authenticator app.
+      6. **Save all five sets of recovery codes** into the Passwords app under
+         the matching login. Skipping this = locked out of your own launch if
+         the phone is lost. This is the step people regret.
+      NOTE: the app's OWN admin login cannot have 2FA — verified 2026-08-15,
+      there is no MFA code anywhere in the repo (no `auth.mfa`, no enrollment
+      or challenge screens). Supabase supports it, but it is a feature build,
+      not a toggle. It only guards Robert's own admin console today, so it is
+      deliberately NOT in this checklist. Ask for 2-3 design options if it is
+      ever wanted.
