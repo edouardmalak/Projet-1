@@ -22,18 +22,20 @@ Deux correctifs de sécurité/logique poussés le 2026-08-09 attendent d'être *
 
 ## 1. Right now — Stripe live mode (full runbook, updated 2026-08-15)
 
-Robert confirmed 2026-08-15 that Stripe verification is done. The app still runs on test keys. Follow these steps **in order**. Nothing on the site needs to change except ONE line (step 3) — everything else is dashboard clicks and two secrets.
+Robert confirmed 2026-08-15 that Stripe verification is done. Follow these steps **in order**. Nothing on the site needs to change except ONE line (step 3) — everything else is dashboard clicks and two secrets.
+
+> ⚠️ **ÉTAT ACTUEL 2026-08-15 — moitié basculé, à terminer.** Step 3 is **DONE** (site now sends `pk_live_…`, commit `9cbca86`), but step 2 is **NOT done** — the Worker still holds the sandbox `sk_test_…`. In this half-state the **Paramètres → Paiements tab cannot save a card**: the browser will show an error like *"No such setupintent"* or *"test/live mode mismatch"*. That is expected and harmless (site is still behind Cloudflare Access, no real users), and it disappears the moment step 2d is done. **Do step 2 next.**
 
 **Never paste `sk_live_...` or `whsec_...` into chat, email, or any file in this folder — the repo is publicly downloadable.** The publishable key `pk_live_...` is the only key that is safe to share (it's public by design).
 
 1. 🧑 **Double-check verification really finished (2 min).** Open https://dashboard.stripe.com — if there is NO orange/red banner asking for business info or bank details on the home page, you're good. Also check Balances → Payouts shows your bank account. (The "Thank you for providing additional information" email means Stripe received your info; the absence of a banner means they accepted it.)
-2. 🧑 **Put the live secret key in the Worker (5 min).**
+2. 🧑 **← VOUS ÊTES ICI. Put the live secret key in the Worker (5 min).**
    a. Stripe → click **Developers** (bottom left) → **API keys**. Make sure the page does NOT say "Test mode" / sandbox at the top — you want the real account "9269 0031 Québec Inc".
-   b. Copy the **Publishable key** (`pk_live_...`) — paste this one to Claude in chat (safe), it's needed for step 3.
+   b. Copy the **Publishable key** (`pk_live_...`) — paste this one to Claude in chat (safe), it's needed for step 3. ✅ **DONE 2026-08-15.**
    c. Click **Reveal live key** on the **Secret key** (`sk_live_...`) and copy it. Stripe may only show it once — keep the tab open until step 2d is done.
    d. New browser tab: Cloudflare dashboard → **Workers & Pages** → **c-direct-payments** → **Settings** → **Variables and Secrets** → `STRIPE_SECRET_KEY` → **Edit** → paste the `sk_live_...` value → **Save/Deploy**. Saving a secret redeploys the Worker by itself — no terminal needed (the current code is already deployed; `/health` verified OK 2026-08-15).
-   e. Verify: open https://c-direct-payments.edouardmalak.workers.dev/health — it must still show `"stripe_key_configured":true`.
-3. 🤖 **Swap the publishable key in the site (1 line).** `parametres.html` line ~387 currently has `pk_test_51Tz4YU...`. Paste the `pk_live_...` from step 2b to Claude in chat and it gets swapped + pushed (auto-deploys). This is the only site-code change in the whole switch.
+   e. Verify: open https://c-direct-payments.edouardmalak.workers.dev/health — it must still show `"stripe_key_configured":true`. (This only proves a key is present, not that it's the live one — the real proof is Test B in step 6 succeeding.)
+3. ✅ **DONE 2026-08-15 (commit `9cbca86`).** Publishable key swapped in `parametres.html` line 387: `pk_test_51Tz4YU…` (sandbox account) → `pk_live_51Tz4YO…`. The `51Tz4YO` portion matches `acct_1Tz4YOReBKCY8Yl1` = "9269 0031 Québec Inc", so the key is confirmed to belong to the real live account. `parametres.html` is the only page that loads Stripe.js and the only file that held a key — nothing else touched. **Undo:** `cd "Projet 1" && git revert 9cbca86 && git push`
 4. 🧑 **Make sure the webhook exists in LIVE mode (5 min).** The destination registered 2026-08-12 (`we_1U3gGYReBKCY8Yl1MLRcYK30`, "Connected accounts", 9 events) was created on the main account — confirm it's in live mode: Stripe → **Developers** → **Webhooks / Event destinations**, with test/sandbox mode OFF. 
    - If it's listed there in live mode: click it, **Reveal signing secret** (`whsec_...`), and make sure the Worker has THAT value: Cloudflare → c-direct-payments → Settings → Variables and Secrets → `STRIPE_WEBHOOK_SECRET` → Edit → paste → Save.
    - If it's NOT listed in live mode: **Add destination** → tick **"Listen to events on Connected accounts"** → events: `account.updated` + all `payment_intent.*` (same 9 as before) → endpoint URL `https://c-direct-payments.edouardmalak.workers.dev/stripe/webhook` → create → copy the `whsec_...` signing secret → paste into the same Cloudflare secret as above.
