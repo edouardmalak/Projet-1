@@ -134,13 +134,17 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
   border-color:var(--vert) !important;box-shadow:0 0 0 3px rgba(11,110,79,.15) !important;outline:none}
 .cnx-porte input::placeholder,.cnx-porte textarea::placeholder{color:#98A29C !important}
 .cnx-porte input[type=checkbox]{background:#FFFFFF !important;border:1px solid var(--ligne2) !important;accent-color:var(--vert);width:16px;height:16px}
-.cnx-logo{width:clamp(168px,15vw,205px);height:auto;display:block;margin:0 0 clamp(30px,5vh,46px)}
+.cnx-logo{width:clamp(168px,15vw,205px);height:auto;display:block;margin:0 0 16px}
+/* Signature de marque sous le logotype : C-Direct → Pharmaciens
+   irremplaçables. → titre de l'écran, rien entre les trois. */
+.cnx-tagline{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--vert);margin:0 0 clamp(22px,3.5vh,30px)}
 .cnx-porte .carte{background:transparent;border:none;border-radius:0;padding:0;box-shadow:none;animation:none}
 .cnx-porte .carte::before{display:none}
 .cnx-porte .carte .logo{display:none}
 .cnx-porte .carte h2{text-align:left;font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(26px,2.4vw,33px);letter-spacing:.02em;line-height:1.06}
 .cnx-porte .carte .sous{text-align:left;font-family:'Instrument Sans',sans-serif;font-size:15px;margin-top:8px}
-.cnx-porte .statut{margin-bottom:24px}
+.cnx-porte .statut{margin:26px 0 0}
 /* Respiration constante entre le sous-titre et l'écran affiché (étape 2 du
    brief : hiérarchie logo → titre → formulaire, rien qui se touche). */
 .cnx-porte .zone.on{margin-top:26px}
@@ -200,14 +204,9 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
    <div class="cnx-porte-inner">
 
     <img class="cnx-logo" src="/logo-primary.svg" width="433" height="110" alt="C-Direct" data-fr-title="C-Direct" data-en-title="C-Direct">
+    <p class="cnx-tagline" data-fr="Pharmaciens irremplaçables." data-en="Irreplaceable pharmacists.">Pharmaciens irremplaçables.</p>
 
   <div class="colonne">
-
-    <div class="statut">
-      <span><i></i><b data-fr="RÉSEAU VÉRIFIÉ OPQ" data-en="OPQ-VERIFIED NETWORK">RÉSEAU VÉRIFIÉ OPQ</b></span>
-      <span><i></i><b data-fr="0 % COMMISSION" data-en="0% COMMISSION">0 % COMMISSION</b></span>
-      <span><i></i><b data-fr="CONNEXION CHIFFRÉE" data-en="ENCRYPTED CONNECTION">CONNEXION CHIFFRÉE</b></span>
-    </div>
 
     <div class="carte">
       <div class="logo" id="logo"><svg width="20" height="20" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><g transform="translate(1.5,2.43) scale(0.19526)"><path d="M0 33.70 L24.85 57.08 L66.58 8.84 L56.37 0 L23.85 37.60 L9.26 23.86 Z" fill="#C98A2B"/></g></svg></div>
@@ -353,6 +352,12 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
         <b id="succes-titre"></b><br><br>
         <span id="succes-texte"></span>
       </div>
+    </div>
+
+    <div class="statut">
+      <span><i></i><b data-fr="RÉSEAU VÉRIFIÉ OPQ" data-en="OPQ-VERIFIED NETWORK">RÉSEAU VÉRIFIÉ OPQ</b></span>
+      <span><i></i><b data-fr="0 % COMMISSION" data-en="0% COMMISSION">0 % COMMISSION</b></span>
+      <span><i></i><b data-fr="CONNEXION CHIFFRÉE" data-en="ENCRYPTED CONNECTION">CONNEXION CHIFFRÉE</b></span>
     </div>
 
     <p class="pied" data-fr="C-DIRECT // ACCÈS SÉCURISÉ · QUÉBEC" data-en="C-DIRECT // SECURE ACCESS · QUEBEC">C-DIRECT // ACCÈS SÉCURISÉ · QUÉBEC</p>
