@@ -111,8 +111,48 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
 .pied{margin-top:14px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#3D4F47;text-transform:uppercase}
 
 @media(max-width:520px){.carte{padding:24px 18px 18px}.statut{flex-wrap:wrap;justify-content:flex-start}}
+
+/* ===== REFONTE CONNEXION (2026-08-15) — enveloppe « porte + photo » =====
+   Toutes les classes ajoutées sont préfixées cnx- : aucune collision avec
+   .carte (95 usages sur le site), .champ (149) ou .role (9).
+   La colonne de gauche redéfinit les variables de couleur sur .cnx-porte,
+   ce qui ré-éclaire la carte existante SANS modifier apple-dark.css. */
+.cnx-main{padding:0;display:block}
+.cnx-split{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 56px)}
+.cnx-porte{--fond:#FAFAF7;--panneau:transparent;--panneau2:#FFFDF8;--ligne:#E4E2DA;--ligne2:#DAD8CF;--texte:#10201B;--sourd:#5B6862;--vert:#0B6E4F;--vert-vif:#0E8A62;
+  background:#FAFAF7;color:#10201B;display:flex;align-items:center;justify-content:center;padding:clamp(28px,4vw,56px)}
+.cnx-porte-inner{width:100%;max-width:430px}
+.cnx-logo{width:clamp(168px,15vw,205px);height:auto;display:block;margin:0 0 clamp(30px,5vh,46px)}
+.cnx-porte .carte{background:transparent;border:none;border-radius:0;padding:0;box-shadow:none;animation:none}
+.cnx-porte .carte::before{display:none}
+.cnx-porte .carte .logo{display:none}
+.cnx-porte .carte h2{text-align:left;font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(26px,2.4vw,33px);letter-spacing:.02em;line-height:1.06}
+.cnx-porte .carte .sous{text-align:left;font-family:'Instrument Sans',sans-serif;font-size:15px;margin-top:8px}
+.cnx-porte .statut{margin-bottom:24px}
+.cnx-porte .pied{margin-top:32px;padding-top:18px;border-top:1px solid var(--ligne);text-align:left}
+
+.cnx-cadre{padding:clamp(14px,1.8vw,24px);display:flex}
+.cnx-photo{position:relative;overflow:hidden;flex:1;border-radius:clamp(18px,2vw,28px);background:#0D2B24}
+.cnx-photo-img{position:absolute;inset:0;width:calc(100% + 26px);height:calc(100% + 26px);left:-13px;top:-13px;object-fit:cover;object-position:32% center;animation:cnx-derive 9s cubic-bezier(.16,.85,.24,1) forwards}
+.cnx-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(13,43,36,.92) 0%,rgba(13,43,36,.55) 38%,rgba(13,43,36,.12) 70%,transparent 100%)}
+.cnx-photo-texte{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:clamp(24px,3vw,42px)}
+.cnx-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:#E7B054;margin-bottom:10px}
+.cnx-titre{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(28px,3vw,44px);line-height:1.04;letter-spacing:.01em;color:#FAFAF7}
+.cnx-recit{font-size:clamp(14.5px,1.1vw,16.5px);line-height:1.55;color:rgba(250,250,247,.86);margin-top:12px;max-width:34ch}
+.cnx-signature{display:flex;align-items:center;gap:9px;margin-top:20px;font-size:13px;color:rgba(250,250,247,.72)}
+.cnx-mini-logo{width:74px;height:auto;flex:none}
+@keyframes cnx-derive{from{transform:scale(1.018) translate(4px,3px)}to{transform:scale(1) translate(0,0)}}
+@media(prefers-reduced-motion:reduce){.cnx-photo-img{animation:none}}
+@media(max-width:900px){
+  .cnx-split{grid-template-columns:1fr;min-height:0}
+  .cnx-porte{order:1;padding:30px 20px 26px}
+  .cnx-cadre{order:2;padding:0 16px 22px;height:236px}
+  .cnx-titre{font-size:26px}
+  .cnx-recit{font-size:14.5px;max-width:none}
+  .cnx-logo{margin-bottom:26px}
+}
 </style>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/design.css">
 <link rel="stylesheet" href="/apple-dark.css">
 </head>
@@ -129,7 +169,13 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
   </div>
 </div>
 
-<main>
+<main class="cnx-main">
+ <div class="cnx-split">
+  <div class="cnx-porte">
+   <div class="cnx-porte-inner">
+
+    <img class="cnx-logo" src="/logo-primary.svg" width="433" height="110" alt="C-Direct" data-fr-title="C-Direct" data-en-title="C-Direct">
+
   <div class="colonne">
 
     <div class="statut">
@@ -286,6 +332,23 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
 
     <p class="pied" data-fr="C-DIRECT // ACCÈS SÉCURISÉ · QUÉBEC" data-en="C-DIRECT // SECURE ACCESS · QUEBEC">C-DIRECT // ACCÈS SÉCURISÉ · QUÉBEC</p>
   </div>
+
+   </div>
+  </div>
+
+  <aside class="cnx-cadre" aria-labelledby="cnx-histoire-titre">
+    <div class="cnx-photo">
+      <img class="cnx-photo-img" src="/media/fond-marie-eve.jpg" alt="" width="800" height="533">
+      <div class="cnx-photo-texte">
+        <p class="cnx-eyebrow" data-fr="Marie-Ève — pharmacienne remplaçante" data-en="Marie-Ève — locum pharmacist">Marie-Ève — pharmacienne remplaçante</p>
+        <h1 class="cnx-titre" id="cnx-histoire-titre" data-fr="Une heure et demie de route." data-en="An hour and a half of road.">Une heure et demie de route.</h1>
+        <p class="cnx-recit" data-fr="Sans elle, le village passait la fin de semaine sans pharmacien." data-en="Without her, the village would have gone the weekend with no pharmacist.">Sans elle, le village passait la fin de semaine sans pharmacien.</p>
+        <p class="cnx-signature"><img class="cnx-mini-logo" src="/logo-inverse.svg" width="433" height="110" alt=""><span data-fr="Pharmaciens irremplaçables." data-en="Irreplaceable pharmacists.">Pharmaciens irremplaçables.</span></p>
+      </div>
+    </div>
+  </aside>
+
+ </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -354,9 +417,9 @@ function render(){
     return;
   }
   if(mode==='conn'){
-    $('titre').textContent=cdT('Accès sécurisé','Secure access');
+    $('titre').textContent=cdT("Commencer l'aventure.",'Start the adventure.');
     if(etape==='entree'){
-      $('sous-titre').textContent=cdT('Identifiez-vous pour accéder à votre espace.','Sign in to access your space.');
+      $('sous-titre').textContent=cdT("Connecte-toi à ton espace C-Direct.",'Sign in to your C-Direct account.');
       $('btn-courriel').textContent=cdT('Se connecter par courriel','Sign in with email');
       $('bascule-insc').style.display='none'; $('bascule-conn').style.display='';
       montrer('z-entree');
