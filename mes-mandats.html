@@ -70,11 +70,30 @@ tbody tr:last-child td{border-bottom:none}
 .btn-lot:disabled{opacity:.55;cursor:default}
 .vide{text-align:center;color:var(--sourd);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:16px 0}
 .grille-mandats{display:grid;grid-template-columns:540px 1fr;gap:20px;align-items:start;margin-bottom:20px}
+/* min-width:0 sur les deux colonnes, à TOUTES les largeurs : un élément de
+   grille a min-width:auto par défaut et refuse de passer sous la largeur
+   min-content de son contenu. Le tableau des mandats imposait ainsi 1318 px
+   à la 2ᵉ colonne, et la page débordait de 436 px même à 1440 px. Avec
+   min-width:0, les .table-scroll internes reprennent leur rôle et le tableau
+   défile dans son cadre au lieu de pousser la page. */
+.col-calendrier,.col-remplacements{min-width:0}
 .col-calendrier{position:sticky;top:16px}
 .col-calendrier .carte, .col-remplacements .carte{margin-bottom:0}
 @media(max-width:860px){
-  .grille-mandats{grid-template-columns:1fr}
+  /* Phase 1.5 (16/08/2026) : minmax(0,1fr) et non 1fr. Un élément de grille
+     a min-width:auto par défaut — il refuse donc de devenir plus étroit que
+     son contenu. Le calendrier imposait une piste de 1316 px et la page
+     débordait de 926 px à 390 px, alors que la colonne unique était bien
+     appliquée. minmax(0,1fr) autorise la piste à passer sous la largeur
+     min-content ; les .table-scroll internes reprennent alors leur rôle. */
+  .grille-mandats{grid-template-columns:minmax(0,1fr)}
   .col-calendrier{position:static}
+  /* Ligne d'ajout d'un revenu externe (date / description / montant / km /
+     Ajouter) : 5 colonnes posées en style inline, qui ne se replient jamais.
+     737 px de contenu dans 294 px — dernier poste de débordement de la page.
+     Sur téléphone, un formulaire s'empile. !important est requis parce que
+     grid-template-columns est déclaré en style inline sur l'élément. */
+  .deux-ext{grid-template-columns:minmax(0,1fr) !important}
 }
 .onglets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
 .onglet{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:99px;padding:7px 14px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
@@ -87,8 +106,14 @@ tbody tr:last-child td{border-bottom:none}
 .bnav:hover{border-color:var(--vert)}
 .bauj{background:transparent;border:1px solid var(--ligne2);color:var(--sourd);border-radius:5px;padding:0 11px;height:30px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;cursor:pointer}
 .bauj:hover{border-color:var(--vert);color:var(--vert-vif)}
-.cal-noms{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:7px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);text-align:center;padding:6px 0}
-.cal-grille{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+/* Phase 1.5 (16/08/2026) : minmax(0,1fr) et non 1fr. Les cellules du
+   calendrier ont un contenu qui ne peut pas se replier, ce qui donnait à
+   chaque colonne une largeur min-content de 172 px — soit 1248 px pour les
+   7 jours, à TOUTES les largeurs d'écran, y compris dans la colonne de
+   540 px du bureau. C'était la vraie cause du débordement de mes-mandats
+   (+926 px à 390 px, mais aussi +436 px à 1440 px). */
+.cal-noms{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;margin-bottom:7px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--sourd);text-align:center;padding:6px 0}
+.cal-grille{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
 .cal-jour{aspect-ratio:1/1;min-height:92px;border:1px solid var(--ligne);border-radius:7px;padding:8px 9px;font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:var(--texte);position:relative;background:var(--panneau2)}
 .cal-jour.vide{border-color:transparent;background:transparent}
 .cal-jour.dot::after{content:"";position:absolute;bottom:8px;left:9px;width:10px;height:10px;border-radius:50%}
