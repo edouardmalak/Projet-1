@@ -1,3 +1,5 @@
+@import url("/tokens.css");
+
 /* =====================================================================
    C-DIRECT · DESIGN.CSS — système de design unifié (v2, « balance »)
    Chargé APRÈS le <style> de chaque page : il raffine sans tout casser.
@@ -10,20 +12,24 @@
    v3 : mêmes bases (vert Sapin conservé, équité de marque), fond plus
    chaud (Lin), texte plus doux (Encre/Pierre), + un accent chaud
    (Argile) réservé aux touches signature (bandes plateaux, confirmations). */
+/* Phase 1 (16/08/2026) : ces variables pointent maintenant vers les jetons
+   de tokens.css. Le second argument de var() est la valeur littérale
+   d'origine — si tokens.css ne charge pas, le rendu reste identique.
+   Aucune valeur n'a changé : voir AUDIT.md §10, décision D4. */
 :root{
-  --fond:#FAFBF9;       /* Lin */
-  --panneau:#FFFFFF;
-  --panneau2:#F5F6F4;
-  --ligne:#E6E8E4;
-  --ligne2:#D8DBD6;
-  --vert:#0B6E4F;       /* Sapin */
-  --vert-vif:#0D8A61;
-  --texte:#1B2622;      /* Encre */
-  --sourd:#5A6B63;      /* Pierre */
-  --jaune:#B07207;
-  --rouge:#C0392B;      /* Alerte */
-  --menthe:#EDF4EF;
-  --argile:#C97A4A;     /* Argile — accent chaud, usage parcimonieux */
+  --fond:      var(--cd-papier,     #FAFBF9);   /* Lin */
+  --panneau:   var(--cd-surface,    #FFFFFF);
+  --panneau2:  var(--cd-surface-2,  #F5F6F4);
+  --ligne:     var(--cd-filet,      #E6E8E4);
+  --ligne2:    var(--cd-filet-2,    #D8DBD6);
+  --vert:      var(--cd-vert-foret, #0B6E4F);   /* Sapin */
+  --vert-vif:  var(--cd-vert-clair, #0D8A61);
+  --texte:     var(--cd-encre,      #1B2622);   /* Encre */
+  --sourd:     var(--cd-encre-2,    #5A6B63);   /* Pierre */
+  --jaune:     var(--cd-ambre,      #B07207);
+  --rouge:     var(--cd-danger,     #C0392B);   /* Alerte */
+  --menthe:    var(--cd-menthe,     #EDF4EF);
+  --argile:    var(--cd-argile,     #C97A4A);   /* Argile — accent chaud, usage parcimonieux */
 }
 
 /* ---------- typographie ---------- */
