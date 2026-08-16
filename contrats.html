@@ -169,6 +169,68 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
 }
 @media(max-width:720px){
   .table-scroll{overflow-x:auto;min-width:0}
+
+/* ---------- Phase 3 · carte de contrat (brief §3.1) ----------
+   « La carte de contrat est une étiquette » : structure champ/valeur,
+   alignée à gauche, filets plutôt qu'ombres, rayons courts, chiffres
+   tabulaires. Le taux est le seul élément autorisé à être grand. */
+.cartes-contrats{display:none}
+@media(max-width:860px){
+  .table-scroll{display:none}
+  .cartes-contrats{display:flex;flex-direction:column;gap:10px}
+}
+.c-carte{
+  border:1px solid var(--ligne);border-radius:6px;background:var(--panneau);
+  padding:12px 14px;cursor:pointer;position:relative;
+  transition:border-color 120ms ease-out;
+}
+.c-carte:active{border-color:var(--vert)}
+.c-carte:focus-visible{outline:2px solid var(--vert);outline-offset:2px}
+/* ligne 1 — date et heures en registre « étiquette », badge à droite */
+.c-tete{display:flex;align-items:flex-start;gap:8px;justify-content:space-between}
+.c-quand{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--sourd);line-height:1.2;
+  font-variant-numeric:tabular-nums;
+}
+/* ligne 2 — bannière + ville. L'adresse et le nom de succursale ne sont
+   JAMAIS révélés avant confirmation (brief §3.1). */
+.c-lieu{font-family:'Inter',sans-serif;font-weight:600;font-size:17px;color:var(--texte);margin-top:6px;line-height:1.25}
+/* ligne 3 — contexte de travail, séparé par des points médians */
+.c-meta{font-family:'Inter',sans-serif;font-size:13px;color:var(--sourd);margin-top:3px;line-height:1.45}
+/* filet ambre : seul usage décoratif de l'ambre, rappel du crochet du logo */
+.c-filet{width:40px;height:2px;background:var(--jaune);margin:12px 0 6px;border-radius:1px}
+.c-taux{
+  font-family:'Inter',sans-serif;font-weight:700;font-size:32px;line-height:1;
+  color:var(--texte);font-variant-numeric:tabular-nums;letter-spacing:-.02em;
+}
+.c-sous-taux{font-family:'Inter',sans-serif;font-size:13px;color:var(--sourd);margin-top:4px;font-variant-numeric:tabular-nums}
+/* bouton pleine largeur, 48 px — la carte entière est cliquable ET le
+   bouton est présent (brief §3.1, règle mobile) */
+.c-action{
+  display:block;width:100%;min-height:48px;margin-top:12px;
+  border:1px solid var(--vert);border-radius:6px;background:var(--vert);color:#fff;
+  font-family:'Inter',sans-serif;font-weight:600;font-size:15px;cursor:pointer;
+  transition:background 120ms ease-out;
+}
+.c-action:active{background:var(--vert-vif)}
+.c-coeur{
+  position:absolute;top:8px;right:8px;width:44px;height:44px;
+  display:grid;place-items:center;background:none;border:none;cursor:pointer;color:var(--ligne2);
+}
+.c-coeur.on{color:var(--jaune)}
+/* badges — remplissage teinté + bordure, texte encre : l'ambre pur ne
+   passe pas le contraste en petit texte (2,94:1), voir AUDIT.md §7.1 */
+.c-badge{
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:3px 7px;border-radius:4px;white-space:nowrap;
+  border:1px solid;flex:none;
+}
+.c-badge.dispo{background:var(--menthe);border-color:var(--vert);color:var(--vert)}
+.c-badge.postule{background:#FBF6EE;border-color:#9E6D22;color:#9E6D22}
+.c-badge.instant{background:#FBF6EE;border-color:#9E6D22;color:#9E6D22;margin-left:4px}
+.c-indispo{border-left:3px solid var(--rouge)}
+
 .cache-mobile{display:none}
   td,th{padding:11px 10px}
 }
@@ -273,6 +335,11 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
         <tbody id="lignes"></tbody>
       </table>
       </div>
+      <!-- Phase 3 (16/08/2026) : vue en cartes, affichée sous 860 px à la
+           place du tableau. Même boucle de données, aucun filtrage dupliqué.
+           Raison d'être : à 390 px le tableau reléguait la colonne TARIF hors
+           écran — le locum ne voyait aucun taux sur son téléphone. -->
+      <div id="cartes-c" class="cartes-contrats"></div>
       <div class="vide" id="vide" style="display:none">
         <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ligne2)" stroke-width="1.6" style="margin-bottom:12px"><circle cx="12" cy="12" r="9"/><path d="M8.5 15c1-1 5-1 7 0" stroke-linecap="round"/><circle cx="9" cy="10" r="1" fill="var(--ligne2)" stroke="none"/><circle cx="15" cy="10" r="1" fill="var(--ligne2)" stroke="none"/></svg>
         <b data-fr="AUCUN CONTRAT DISPONIBLE" data-en="NO CONTRACT AVAILABLE">AUCUN CONTRAT DISPONIBLE</b>
@@ -564,6 +631,7 @@ const AA_BADGE_STYLE = 'font-family:\'IBM Plex Mono\',monospace;font-size:10px;f
 
 function dessinerTableau(list){
   const tb = $('lignes'); tb.innerHTML='';
+  const cartes = $('cartes-c'); if(cartes) cartes.innerHTML='';
   if(!list.length){
     $('tableau').style.display='none'; $('vide').style.display='block';
     $('vide').querySelector('b').textContent = contrats.length ? cdT('AUCUN RÉSULTAT','NO RESULTS') : cdT('AUCUN CONTRAT DISPONIBLE','NO CONTRACT AVAILABLE');
@@ -670,6 +738,89 @@ function dessinerTableau(list){
       statutTd
     );
     tb.appendChild(tr);
+
+    /* ---- Phase 3 : même contrat, rendu en carte pour les petits écrans ----
+       Aucune requête ni filtrage supplémentaire : on réutilise k, déjà filtré
+       et enrichi plus haut. Ordre de lecture identique en FR et EN. */
+    const ca = document.createElement('article');
+    ca.className = 'c-carte' + (estIndisponible(k.date_contrat) ? ' c-indispo' : '');
+    ca.tabIndex = 0;
+    const allerAuContrat = ()=>{ location.href = '/c/' + encodeURIComponent(k.numero_reference); };
+    ca.onclick = allerAuContrat;
+    ca.onkeydown = (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); allerAuContrat(); } };
+
+    /* 1 — quand + statut */
+    const tete = document.createElement('div'); tete.className='c-tete';
+    const quand = document.createElement('div'); quand.className='c-quand';
+    quand.textContent = cdDate(k.date_contrat) + ' · ' + cdHeure(k.heure_debut) + ' – ' + cdHeure(k.heure_fin);
+    const badges = document.createElement('div');
+    badges.style.cssText = 'display:flex;align-items:center;flex:none';
+    const b1 = document.createElement('span');
+    b1.className = 'c-badge ' + (k.deja_postule ? 'postule' : 'dispo');
+    b1.textContent = k.deja_postule ? cdT('Quart demandé','Shift requested') : cdT('Disponible','Available');
+    badges.appendChild(b1);
+    if(aaEligible(k)){
+      const b2 = document.createElement('span');
+      b2.className = 'c-badge instant';
+      b2.textContent = cdT('Instantané','Instant');
+      badges.appendChild(b2);
+    }
+    tete.append(quand, badges);
+    ca.appendChild(tete);
+
+    /* 2 — bannière + ville. Jamais le nom de succursale ni l'adresse. */
+    const lieu = document.createElement('div'); lieu.className='c-lieu';
+    lieu.textContent = [k.banniere, k.ville].filter(Boolean).join(' · ') || (k.ville || '—');
+    ca.appendChild(lieu);
+
+    /* 3 — contexte : distance, logiciel, volume, ATP, seul, robot */
+    const meta = [];
+    if(k._distanceKm != null) meta.push(k._distanceKm + ' km');
+    if(k.logiciel) meta.push(k.logiciel);
+    const rxv = resoudreRxVolume(k);
+    if(rxv != null) meta.push('≈' + rxv + ' Rx');
+    if(k.atp_presente) meta.push('ATP');
+    if(k.seul_pharmacien) meta.push(cdT('Seul(e)','Solo'));
+    if(k.has_automation) meta.push(cdT('Robot','Robot'));
+    if(meta.length){
+      const m = document.createElement('div'); m.className='c-meta';
+      m.textContent = meta.join(' · ');
+      ca.appendChild(m);
+    }
+
+    /* 4 — filet ambre puis le bloc taux, seul élément autorisé à être grand */
+    const filet = document.createElement('div'); filet.className='c-filet';
+    ca.appendChild(filet);
+    const taux = document.createElement('div'); taux.className='c-taux';
+    taux.textContent = cdArgent(aaEligible(k) ? aaTarifAvecPrime(k) : k.tarif_horaire) + '/h';
+    ca.appendChild(taux);
+    const sous = [];
+    if(k._est) sous.push('≈ ' + cdArgent(k._est.total).replace(',00','') + ' ' + cdT('pour le quart','for the shift'));
+    if(k.hebergement_offerte) sous.push(cdT('Hébergement offert','Lodging offered'));
+    if(sous.length){
+      const st = document.createElement('div'); st.className='c-sous-taux';
+      st.textContent = sous.join(' · ');
+      ca.appendChild(st);
+    }
+
+    /* 5 — bouton pleine largeur, en plus de la carte cliquable */
+    const act = document.createElement('button');
+    act.type='button'; act.className='c-action';
+    act.textContent = cdT('Voir le contrat','View contract');
+    act.onclick = (e)=>{ e.stopPropagation(); allerAuContrat(); };
+    ca.appendChild(act);
+
+    /* cœur de sauvegarde — même état et même bascule que le tableau */
+    if(!k.deja_postule){
+      const cc = document.createElement('button');
+      cc.type='button';
+      cc.className = 'c-coeur' + (estFavori(k.numero_reference) ? ' on' : '');
+      cc.innerHTML = CD_ICONE_SAUV;
+      cc.title = cdTitreSauv(estFavori(k.numero_reference));
+      cc.onclick = (e)=>{ e.stopPropagation(); toggleFavori(k.numero_reference); cc.classList.toggle('on'); cc.title = cdTitreSauv(cc.classList.contains('on')); majCompteurSauv(); if(favOnly) dessiner(); };
+      ca.appendChild(cc);
+    }
+    cartes.appendChild(ca);
   });
   $('sous').textContent = list.length + ' ' + cdT('contrat'+(list.length>1?'s':''),'contract'+(list.length>1?'s':'')) +
     (list.length!==contrats.length ? ' / ' + contrats.length : '') + ' · ' + cdT('0 % commission','0% commission');
