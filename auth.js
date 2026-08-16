@@ -410,6 +410,26 @@ window.cdMenuRole = function(role){
       '#cd-menu.cd-menu-defile{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}' +
       '#cd-menu.cd-menu-defile::-webkit-scrollbar{display:none}' +
       '.topbar .in{gap:8px}' +
+      '}' +
+      /* Phase 1.5 (16/08/2026) — plancher mobile.
+         T13c avait réglé #cd-menu, mais pas son voisin #cd-entete-session :
+         301 px fixes (3 icônes + FR/EN + bouton compte) dans une boîte de
+         235 px à 375 px, avec overflow:visible — le surplus débordait dans
+         la PAGE et créait une barre de défilement horizontale sur TOUTES
+         les pages applicatives (mesuré : +43 px à 375 px, +28 px à 390 px,
+         0 dès 430 px).
+         On ne peut pas mettre overflow:auto sur .droite : elle contient les
+         panneaux déroulants en position:absolute, qui seraient rognés —
+         c'est exactement l'avertissement du commentaire T13c ci-dessus.
+         Correctif retenu : sous 430 px (tous les téléphones en portrait),
+         le prénom affiché est réduit à une largeur nulle. max-width:0 et
+         non display:none, pour que le texte reste dans l'arbre
+         d'accessibilité et continue d'être annoncé par les lecteurs
+         d'écran. Les initiales, le chevron et toutes les destinations
+         restent inchangés. !important est requis : la largeur d'origine
+         est posée en style inline. Gain mesuré : ~51 px. */
+      '@media(max-width:430px){' +
+      '#cd-entete-session .cd-nom-affiche{max-width:0 !important}' +
       '}';
     document.head.appendChild(style);
   }
@@ -559,6 +579,7 @@ function cdMenuCompte(p, items, entete){
   initiales.style.cssText = 'width:26px;height:26px;border-radius:50%;background:var(--vert,#0B6E4F);color:#fff;'+
     "display:grid;place-items:center;font-family:'Inter',sans-serif;font-weight:700;font-size:11px;flex:none";
   const nomTxt = document.createElement('span');
+  nomTxt.className = 'cd-nom-affiche';   /* crochet CSS — voir la règle max-width:430px plus bas */
   nomTxt.textContent = p.role === 'pharmacie' ? (p.nom_pharmacie || p.ville || '') : (p.prenom || '');
   nomTxt.style.cssText = "font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;max-width:110px;"+
     'overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
