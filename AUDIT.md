@@ -395,3 +395,64 @@ Conformément aux Parties 0.1 et 8 :
 12. **`locums-confiance.html` exige une session** et redirige vers la connexion. Une page d'argumentaire destinée à convaincre des pharmacies est inatteignable pour un visiteur non connecté. Idem `fiche-accueil.html` et `dispensaire.html`. À confirmer : intentionnel ou régression ?
 13. `acces.html` : 16 champs de formulaire sous 16 px — iOS zoome automatiquement à la mise au point, sur la page de connexion.
 14. 16 des 33 éléments interactifs d'`index.html` mesurent moins de 48 px de haut à 390 px.
+
+---
+
+## 13. Écrans applicatifs — mesures du 16 août (session locum ouverte)
+
+### 13.1 Le constat central : le taux horaire est invisible sur téléphone
+
+Sur `contrats.html` à 390 px, les colonnes visibles sont **RÉFÉRENCE**, **DATE**, et un fragment de **HEURES**. Les colonnes **TARIF**, **VILLE**, **LOGICIEL** et **STATUT** sont hors écran à droite.
+
+La Partie 1 du brief dit, au sujet du pharmacien locum :
+
+> « Ce qu'il doit lire sans réfléchir : **le taux horaire**, la date, la distance, le logiciel, la charge de travail, quand il est payé. **S'il doit ouvrir une fiche pour connaître le taux, le design a échoué.** »
+
+Le locum est décrit debout derrière un comptoir, téléphone en main, 30 secondes. **Sur ce téléphone, il ne voit aucun taux.** Ce n'est pas un défaut introduit par la refonte : c'est l'état actuel, mesuré.
+
+S'y ajoutent, avant le premier contrat : 6 filtres empilés sur ~130 px de hauteur, un bouton « Réinitialiser », et deux rangées d'onglets. La mascotte recouvre partiellement la 5ᵉ ligne.
+
+### 13.2 Débordement horizontal — toutes les pages applicatives
+
+| Page | Débordement à 390 px | Cibles < 48 px | Champs < 16 px | Tableaux |
+|---|---|---|---|---|
+| `mes-mandats.html` | **+926 px** | 84 / 85 | 6 | 5 |
+| `contrats.html` | **+357 px** | 24 / 25 | 10 | 1 |
+| `messages.html` | +96 px | 18 / 19 | 1 | 0 |
+| `evaluations.html` | +96 px | 19 / 19 | 0 | 0 |
+| `contrat.html` | +69 px | 13 / 13 | 21 | 0 |
+| `pharmacies-preferees.html` | +68 px | 18 / 18 | 0 | 0 |
+| `parametres.html` | +28 px | 33 / 34 | **35** | 0 |
+| `finances.html` | +28 px | 17 / 18 | 2 | 1 |
+| `carte.html` | +28 px | 25 / 25 | 3 | 0 |
+| `profil.html` | +28 px | **77 / 77** | **96** | 0 |
+| `disponibilites.html` | +27 px | 25 / 26 | 3 | 0 |
+
+**Aucune page applicative ne tient dans 390 px.**
+
+### 13.3 Deux causes, dont une partagée
+
+**Cause 1 — la barre de navigation (~28 px sur TOUTES les pages).**
+Chaîne identifiée : `.topbar` → `.in` → `.droite` → `.cd-menu-defile`. Son `scrollWidth` vaut **418 px** dans un conteneur de 380–390 px, sur chaque page testée. C'est le plancher de 27–28 px constaté partout.
+
+**Un seul correctif partagé supprime le débordement sur 5 pages** (`finances`, `carte`, `parametres`, `profil`, `disponibilites`) et réduit d'autant les 6 autres.
+
+⚠️ **La barre de navigation est en zone interdite (Partie 0.3).** Je n'y touche pas sans autorisation explicite. Corriger le débordement modifie son comportement de repli, ce que la Partie 0.3 gèle.
+
+**Cause 2 — les tableaux.** Le reste du débordement vient des `<table>` non responsives : `contrats.html` (1 tableau, +357 px), `mes-mandats.html` (5 tableaux, +926 px).
+
+### 13.4 Conséquence pour le plan d'exécution
+
+Le brief place la passe mobile en **Phase 5**, après toute la refonte visuelle. Les mesures disent que c'est le mauvais ordre : le produit est aujourd'hui inutilisable sur le terminal de sa persona principale. Refaire l'apparence de cartes qu'on ne peut pas lire sur un téléphone revient à peindre une pièce dont le plancher est effondré.
+
+**Recommandation :** remonter le correctif de débordement (13.3, cause 1 + les deux tableaux) **avant** la Phase 2, en une phase courte « Phase 1.5 — plancher mobile ». Elle ne change aucune couleur ni police : uniquement le repli en largeur. Décision de Robert requise, notamment parce qu'elle touche une zone interdite.
+
+### 13.5 Bonne nouvelle : la carte du brief est constructible
+
+La Partie 3.1 impose une carte affichant bannière, ville, distance, logiciel, volume, taux et délai de paiement. Ces données existent déjà :
+
+- `banniere` — colonne `text` dans `sql/01-auth-profiles.sql`, 26 usages dans le code
+- `delai_paiement` — 4 usages
+- distance, logiciel, volume Rx, ATP — déjà affichés dans la ligne secondaire du tableau (`≈300 Rx · ATP · Seul(e)`, `≈ 1 460 $ · 188 km`)
+
+**La Phase 3 n'est donc pas bloquée par le modèle de données.** Elle reste néanmoins une réécriture structurelle tableau → cartes, pas un simple restylage — le brief la décrit comme « la phase la plus importante du projet », ce que ces mesures confirment.
