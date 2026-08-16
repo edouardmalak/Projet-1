@@ -168,7 +168,8 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
   .mini-mois{border-color:#ccc}
 }
 @media(max-width:720px){
-  .cache-mobile{display:none}
+  .table-scroll{overflow-x:auto;min-width:0}
+.cache-mobile{display:none}
   td,th{padding:11px 10px}
 }
 </style>
@@ -250,6 +251,12 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
   <div id="vue-liste">
     <div class="carte">
       <div class="chargement" id="chargement"><i></i><span data-fr="Interrogation du réseau…" data-en="Querying the network…">Interrogation du réseau…</span></div>
+      <!-- Phase 1.5 (16/08/2026) : cadre défilant autour du tableau. Sans lui,
+           le tableau (td en white-space:nowrap) poussait la PAGE entière et
+           créait une barre de défilement horizontale : +357 px à 390 px.
+           Même convention que .table-scroll dans mes-mandats.html. Le tableau
+           et son bascule display:none/JS sont inchangés. -->
+      <div class="table-scroll">
       <table id="tableau" style="display:none">
         <thead>
           <tr>
@@ -265,6 +272,7 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
         </thead>
         <tbody id="lignes"></tbody>
       </table>
+      </div>
       <div class="vide" id="vide" style="display:none">
         <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ligne2)" stroke-width="1.6" style="margin-bottom:12px"><circle cx="12" cy="12" r="9"/><path d="M8.5 15c1-1 5-1 7 0" stroke-linecap="round"/><circle cx="9" cy="10" r="1" fill="var(--ligne2)" stroke="none"/><circle cx="15" cy="10" r="1" fill="var(--ligne2)" stroke="none"/></svg>
         <b data-fr="AUCUN CONTRAT DISPONIBLE" data-en="NO CONTRACT AVAILABLE">AUCUN CONTRAT DISPONIBLE</b>
