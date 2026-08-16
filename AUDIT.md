@@ -398,6 +398,54 @@ Conformément aux Parties 0.1 et 8 :
 
 ---
 
+## 12 bis. Travaux réalisés le 16 août — état à la reprise
+
+### Livré et poussé
+
+| Phase | Commit | Contenu |
+|---|---|---|
+| 1 · T1 | `e55d5e6` | `tokens.css` — jetons §2.4-2.6 aux valeurs actuelles réelles (D4), préfixe `--cd-` |
+| 1 · T2 | `715a99e` | `design.css` importe les jetons, `:root` exprimé via `var(--cd-*, littéral)` |
+| 1 · T3 | `9e60e7d` | `_headers` : `no-cache` sur `tokens.css` |
+| 1.5 · T1 | `f3168b6` | `auth.js` : prénom replié sous 430 px → fin du débordement de la topbar |
+| 1.5 · T2 | `f83c76b` | `mes-mandats` : `min-width:0` sur les colonnes, `minmax(0,1fr)`, formulaire empilé |
+| 1.5 · T3 | `f590a1c` | `contrats` : cadre défilant `.table-scroll` |
+| 3 · T1 | `4723b0f` | Carte de contrat sous 860 px — bloc taux, filet ambre, bouton 48 px |
+| 3 · T2 | `18a59b1` | Sortie des règles de carte de `@media(max-width:720px)` |
+
+Points de retour : `refonte-phase-0-avant`, `refonte-phase-1-avant`, `refonte-phase-1.5-avant`.
+
+### Débordement horizontal — avant / après
+
+| Page | 375 px | 390 px | 768 px | 1440 px |
+|---|---|---|---|---|
+| `contrats` | +357 → **0** | +357 → **0** | +394 → **0** | 0 |
+| `mes-mandats` | +941 → **5** | +926 → **3** | +548 → **0** | +436 → **0** |
+| `finances`, `carte`, `parametres`, `profil`, `disponibilites` | +43 → **0** | +28 → **0** | 0 | 0 |
+
+### Décisions appliquées (recommandations validées par Robert)
+
+- **Portée réduite** : Phases 1.5 et 3 livrées avant lancement ; Phases 2, 4 et 6 reportées après septembre. La couche de jetons étant en place, la recolorisation devient un changement d'une ligne par jeton.
+- **Anton conservé, Archivo abandonnée.** Anton en affichage uniquement, jamais en texte d'interface. Donne les trois familles du brief — Anton / Inter / IBM Plex Mono — en supprimant Archivo, Bricolage Grotesque et Instrument Sans.
+- **Badges à remplissage teinté** : fond `#FBF6EE`, bordure et texte `#9E6D22` (4,5:1). L'ambre pur `#C98A2B` mesure 2,94:1 et ne peut pas porter de texte.
+- **Exemption barre de navigation** : repli et débordement sous 768 px uniquement ; destinations, ordre et libellés inchangés.
+
+### Reste à faire — bloqué sur Robert
+
+1. **320 px déborde de 44 px sur toutes les pages.** `.in` consomme 44 px de padding et le bloc de contrôles fait 247 px. Exige un menu hamburger — hors de l'exemption accordée.
+2. **`banniere` est vide en base.** La carte §3.1 est construite pour afficher « Jean Coutu · Boucherville » et se replie sur la ville seule. Vérifier si l'inscription pharmacie collecte ce champ.
+3. **Jeu de test non représentatif** : 9 contrats identiques (140 $/h, 188 km, même ville). Le comportement de la carte avec une bannière longue, un taux manquant ou une ligne de contexte courte n'est pas vérifié.
+4. **Compte de test pharmacie** absent — `espace-pharmacie`, `calendrier-pharmacie`, `facture-vue`, `fiche-accueil` jamais mesurées.
+5. **Contradictions §7 non tranchées** : 7.2 (vert du logo nettement plus sombre), 7.4 (zone interdite nommant un fichier inexistant), 7.5 (trois en-têtes, pas deux).
+
+### Reste à faire — faisable sans Robert
+
+- **Bloc de filtres de `contrats.html`** : 6 filtres empilés occupent ~250 px avant la première carte, si bien que 2,5 cartes tiennent dans 390 × 844 au lieu des 3 exigées par §3.1. Dernier écart connu à la conformité de la Phase 3.
+- **Champs sous 16 px** : `profil` (96), `parametres` (35), `contrat` (21), `contrats` (10) — iOS zoome à la mise au point. Relève de la Phase 5, reportée.
+- **Cibles tactiles sous 48 px** : quasi universelles sur les pages applicatives. Phase 5, reportée.
+
+---
+
 ## 13. Écrans applicatifs — mesures du 16 août (session locum ouverte)
 
 ### 13.1 Le constat central : le taux horaire est invisible sur téléphone
