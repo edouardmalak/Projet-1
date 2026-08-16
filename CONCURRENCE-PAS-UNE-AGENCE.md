@@ -20,7 +20,7 @@ Run by Jean-Simon Collard, WordPress/WooCommerce, French-only, live since roughl
 
 ---
 
-## 1. Pricing vs their Gold plan — 🧑 OPEN DECISION, no number picked
+## 1. Pricing vs their Gold plan — 🧑 OPEN, leaning $195
 
 ### The facts
 
@@ -46,24 +46,88 @@ Run by Jean-Simon Collard, WordPress/WooCommerce, French-only, live since roughl
 
 Both options undercut them at every single volume. The whole difference between A and B is **$4/month per capped pharmacy** ($48/year) — and it only applies to pharmacies that book six or more shifts in a month.
 
-**Option A — $195, "five shifts a month, the rest are free."**
+**Option A — $195, "five shifts a month, the rest are free." ← LEADING OPTION (2026-08-16, not final)**
 Clean sentence a pharmacist can repeat to another pharmacist without checking a table. The cap is a consequence of the rule rather than a number we invented. Undercuts them by $4.99/month.
 
 **Option B — $199, "never more than $199 a month."**
 Mirrors their price point exactly, which makes the comparison instant — but it also lands $0.99 under theirs, which reads as a deliberate needle rather than a fair price, and invites them to answer with $189. The sixth shift costs $4 and everything after is free, which is harder to explain than A.
 
+**Robert's reasoning for leaning A (2026-08-16):** the $4/month difference is noise. $199 against their $199.99 reads as a needle and invites a $189 reply; "five shifts then free" reads as a policy. **Recorded as the leading option, not locked.**
+
 ### Before you lock either one
 
-1. **Does the cap change the posted price?** Per the `c-direct-payments` architecture, the $39 isn't billed separately at month end — it's inside the all-in figure the pharmacy sees (`card_price = (locum_rate + cdirect_fee + 0.30) / (1 - 0.029)`, or `locum_rate + fee` on the Interac rail). So once a pharmacy crosses the cap, the price shown on the booking screen has to *drop* for the rest of the month. That's a real display and quoting change, not just a billing rule. Worth confirming against the payment architecture before committing.
+1. **The cap changes the price mid-month.** This is the thing that actually decides whether to cap at all — worked out in full in section 2 below. Short version: it's buildable and not legally awkward, provided the fee is frozen when the booking is made.
 2. **Per what, exactly?** Per pharmacy, per *calendar* month, presumably — but a pharmacy group with five branches will ask whether the cap is per branch or per group. Answer it before they ask.
 3. **Free shifts aren't free to us.** Each one still runs the T-24h card authorization (that's $0 at Stripe unless captured) and still carries the chargeback and processing exposure we already absorb on Express accounts. Low, not zero.
 4. **Their $449.99 job poster has no C-Direct equivalent.** Permanent-position postings are a separate product decision, not part of this cap.
 
-**Status: open.** Nothing is coded, nothing is published, no number is committed. Tell me A, B, or a different figure.
+**Status: open, leaning A.** Nothing is coded, nothing is published, no number is committed.
 
 ---
 
-## 2. Shareable read-only availability link — 🤖 not built, design agreed
+## 2. What the cap actually requires — the mid-month price change
+
+Because the $39 is baked into the all-in figure the pharmacy sees, capping it means the booking-screen price has to change partway through a month. Here is what that concretely touches. I read the code rather than reasoning from the architecture doc.
+
+### Where the all-in price is computed today
+
+Three places, and the fee is a hardcoded constant in two of them:
+
+| Where | What | Note |
+|---|---|---|
+| `fsa-qc.js` ~line 111 | `window.cdPrixDual(montantLocum)` — `const FRAIS_CDIRECT = 39` | Pure synchronous function. Takes **only a number**. No pharmacy context, no DB access. |
+| `espace-pharmacie.html` ~line 924 | `majPrixDual()` calls it live **as the pharmacy types** the shift hours | This is the screen where the price appears |
+| `workers/c-direct-payments/src/index.js` line 509 | `FRAIS_CDIRECT_DOLLARS = 39`, used by `calculerMontantCarte()` | The authoritative one — what actually gets authorized |
+
+And in the database, `garanties_paiement` stores `montant_locum_cents` and `montant_carte_cents`. **No column anywhere stores the C-Direct fee.** It only ever exists as the difference between those two numbers:
+
+```js
+const fraisApplicationCents = montantCarteCents - montantLocumCents;
+```
+
+**One piece of good news falls out of that.** Because `application_fee_amount` is *derived* rather than hardcoded, a $0-fee shift needs no special Stripe handling at all: the application fee simply narrows to the Stripe cost, the locum still nets exactly `montantLocum`, and C-Direct nets $0 — not a negative. The Stripe side of a free shift already works.
+
+### What the pharmacy sees on its 6th booking
+
+The price block updates live while they type. For it to show the capped price, `cdPrixDual` has to know the pharmacy's month-to-date count — which it structurally cannot today, being a synchronous function of one number. The fix is to read the count once on page load and pass the fee in, changing the signature of a helper used in two files. Small, but it is a shared helper, so it's a both-sides change.
+
+Then the number has to agree in three places at once: the live estimate, the **contract** (`contrat.html` states amounts), and the authorization placed at T-24h. If those three disagree, a pharmacy signs one number and gets held for another.
+
+### The ordering trap — why the fee must be frozen at booking
+
+Authorizations fire at T-24h, i.e. in **shift-date order**. Bookings happen in **booking order**. These are not the same sequence: a pharmacy can book the 28th before the 3rd.
+
+So if the count is evaluated when the authorization fires, a shift that was the 3rd booking can turn out to be the 6th shift of the month, and the price quoted at booking was wrong. **The only stable design is to decide the fee when the booking is made and store it** — a new `frais_cdirect_cents` column on the candidature/garantie, plus `calculerMontantCarte(montantLocum, frais)` taking the fee as a parameter instead of reading the constant.
+
+That also fixes the contract problem for free: the contract and the authorization both carry the same frozen number.
+
+### Cancellation — the answer is "never revise, in either direction"
+
+Your scenario: 6 shifts booked, #6 free, then #3 is cancelled. The pharmacy has now consumed 5 shifts and paid $156 instead of $195. Do we claw back the $39?
+
+**No — and not because we're being generous. Because we can't.** Clawing back means raising the amount of an authorization that has already been placed, and **Stripe cannot increase an uncaptured PaymentIntent.** You would have to cancel it and re-authorize at the higher amount, which means a second hold on the pharmacy's card, a fresh `capture_before` window, and a real chance of the card failing at that moment — leaving the locum unguaranteed. That directly violates constraint 3 of the payment architecture (funds secured with no manual action from the owner). And if the shift already settled by Interac, the PaymentIntent was cancelled at $0 and there is simply nothing left to adjust.
+
+**So the rule is: the fee is fixed when the booking is made and never revised afterwards.** The leak is real but bounded — a pharmacy can never cost more than the cap in a month, and exploiting it deliberately means booking real locums and cancelling on them, which runs into the cancellation policy and their own reputation long before it's worth $39.
+
+### The Interac rail — one thing to confirm first
+
+On the card rail the fee rides inside the captured amount, so the cap is a change to a number that's already being computed. On the **Interac rail** the pharmacy pays `montantLocum + $39` directly to the locum and the PaymentIntent is cancelled at $0 on confirmation. Searching the payments Worker and the SQL migrations, **I did not find the mechanism that moves that $39 from the locum to C-Direct** — it may live somewhere I didn't read, or be invoiced separately.
+
+Worth resolving before designing the cap, because it changes the work: if the Interac fee is settled by a separate monthly invoice, the cap on that rail is trivial (invoice `min(39n, 195)`) and this whole mid-month quoting problem exists **only on the card rail**.
+
+### Verdict — not expensive, not legally awkward
+
+You asked me to say plainly if this turned out to be a reason not to cap. **It isn't.**
+
+- **Cost:** one SQL migration (new column), one Worker change, one shared helper signature, one screen, one contract line. Roughly half a day. The one operational wrinkle: `c-direct-payments` is the Worker that does **not** auto-deploy — you'd run `npx wrangler deploy` yourself after pulling.
+- **Legally:** freezing the fee at booking means the quoted price, the signed contract and the authorized amount are the same number, which removes the only genuine exposure (being charged something other than what you were quoted). The Quebec *Consumer Protection Act* concern is largely moot here anyway — pharmacies are businesses, not consumers. This is not surcharging: it stays two all-in prices with no fee line item, exactly as the architecture requires.
+- **The real cost is comprehension, not code.** Two pharmacies booking the identical shift will see different prices, and dual pricing already asks them to hold two numbers in their head.
+
+**If that last point bothers you, there's a third option that avoids the machinery entirely:** keep every shift at $39 and settle the cap as a **monthly rebate** — refund the excess at month end (Stripe supports refunding an application fee on the card rail). The quoting, the contract and the authorization are all untouched, and you keep the marketing claim. The cost is that pharmacies pay full price up front and get money back later, which is far less persuasive at the moment of booking than seeing $0 on the screen.
+
+---
+
+## 3. Shareable read-only availability link — 🤖 not built, design agreed
 
 ### Why it matters
 
@@ -85,16 +149,17 @@ Read-only public calendar. A visitor sees **availability only**: which days are 
 
 The visitor identifies themselves (name and pharmacy, minimum) **before** any rate is displayed. Keeps the link's low friction while making rate disclosure a deliberate, logged act rather than a side effect of holding a URL. Build after A is live and we've seen how the links actually get shared.
 
-### Hard constraint on where this lives
+### Where this lives — decided 2026-08-16
 
-Per your rule of **2026-08-06**, `disponibilites.html` is off-limits — the pharmacist's Google-synced calendar is not to be touched without your explicit go-ahead. So:
+Per your rule of **2026-08-06**, `disponibilites.html` is off-limits — the pharmacist's Google-synced calendar is not to be touched without your explicit go-ahead. **Decision: we are not spending an exception on it.**
 
 - The share page is a **new file** (e.g. `dispo-partage.html`). It reads availability; it never becomes part of the calendar page.
-- The share **toggle** has to live somewhere the locum can reach, and the obvious home is the calendar page. That means an edit to `disponibilites.html`. I will show you the exact before/after lines and wait for your approval before touching it — or we put the toggle in `parametres.html` instead and leave the calendar entirely alone. **Your call.**
+- The share **toggle** goes in **`parametres.html`**, alongside the other per-account switches. `disponibilites.html` is not modified at all — not one line.
+- Trade-off accepted knowingly: the toggle isn't sitting on the screen where the locum is thinking about their availability, so it's less discoverable. If that proves to be a problem after launch, the fix is a link *from* settings, or a revisit of the calendar page as its own decision — not a quiet edit smuggled into this feature.
 
 ---
 
-## 3. Google Calendar sync — 🧑 one value away from working
+## 4. Google Calendar sync — 🧑 one value away from working
 
 ### Status
 
@@ -201,11 +266,13 @@ Google Auth Platform → **Verification center**. You'll need:
 
 ---
 
-## Open decisions, all yours
+## Open decisions
 
-1. 🧑 **Pricing** — Option A ($195, five shifts then free), Option B ($199 hard cap), or another number. Nothing is coded either way.
-2. 🧑 **Share-link toggle placement** — accept an approved edit to `disponibilites.html`, or keep the calendar untouched and put the toggle in `parametres.html`.
-3. 🧑 **Google Client ID** — steps 1–9 above, then send me the ID (never the secret).
+1. 🧑 **Pricing** — leaning Option A ($195, five shifts then free); Option B ($199 hard cap) or another number still possible. Nothing is coded either way. Section 2 says the mechanics aren't a reason to avoid capping.
+2. 🧑 **Interac-rail fee collection** — confirm how the $39 reaches C-Direct on that rail (section 2, "The Interac rail"). It decides how much of the cap work is actually needed.
+3. 🧑 **Google Client ID** — steps 1–9 in section 4, then send me the ID (never the secret).
+
+**Settled 2026-08-16:** share-link toggle goes in `parametres.html`; `disponibilites.html` stays untouched. Design A first (no rate shown to an unidentified visitor), design C later.
 
 ## Sources
 
