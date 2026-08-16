@@ -1,0 +1,154 @@
+/* =====================================================================
+   C-DIRECT · TOKENS.CSS — couche de jetons (Phase 1 de la refonte)
+   Créé le 16 août 2026.
+
+   RÈGLE DE CETTE PHASE : zéro changement visuel.
+   Chaque jeton porte la valeur RÉELLEMENT calculée par le site
+   aujourd'hui — pas la valeur cible du brief. La recolorisation vers
+   la palette du logo se fera en Phase 2, visiblement et séparément.
+   (Décision D4 de Robert, 16 août — voir AUDIT.md §10.)
+
+   PRÉFIXE `--cd-` : volontaire. Les pages déclarent déjà --vert,
+   --ligne, --texte… Un préfixe distinct garantit qu'aucun jeton ne
+   peut entrer en collision avec l'existant tant que le branchement
+   n'est pas fait explicitement.
+
+   ORDRE DE CHARGEMENT : ce fichier doit être chargé AVANT design.css.
+   ===================================================================== */
+
+:root{
+
+  /* ---------------------------------------------------------------
+     1. COULEURS  (brief §2.4)
+
+     Colonne « cible Phase 2 » = ce que le brief demande à terme.
+     Colonne active = ce que le site calcule aujourd'hui.
+     Vérifié dans le navigateur sur pharmacies.html le 16/08/2026.
+     --------------------------------------------------------------- */
+
+  /* Marque, actions principales, statut confirmé.
+     Source : design.css --vert  ·  cible Phase 2 : #0D2B24 (vert du logo) */
+  --cd-vert-foret:   #0B6E4F;
+
+  /* Vert clair — liens, survols. Source : design.css --vert-vif.
+     N'existe pas au brief ; conservé parce que 28 usages en dépendent.
+     ATTENTION : 4.35:1 sur blanc — échoue AA en texte normal. */
+  --cd-vert-clair:   #0D8A61;
+
+  /* Accent, urgence, crochet. Source : design.css --jaune.
+     cible Phase 2 : #C98A2B (or du logo).
+     NE JAMAIS utiliser en fond de bouton primaire (brief §2.4).
+     NE JAMAIS utiliser en texte sous 16px sur fond clair (brief §5). */
+  --cd-ambre:        #B07207;
+
+  /* Encre — tout le texte principal.
+     Source : design.css --texte  ·  cible Phase 2 : #101410 */
+  --cd-encre:        #1B2622;
+
+  /* Encre secondaire — étiquettes de champ, métadonnées.
+     Source : design.css --sourd  ·  cible Phase 2 : #5A625A */
+  --cd-encre-2:      #5A6B63;
+
+  /* Papier — fond de page.
+     Source : design.css --fond  ·  cible Phase 2 : #FAFAF8 */
+  --cd-papier:       #FAFBF9;
+
+  /* Surface — cartes, champs, modales. Identique au brief. */
+  --cd-surface:      #FFFFFF;
+
+  /* Surface secondaire — bandes, en-têtes de tableau.
+     Source : design.css --panneau2. Pas de jeton équivalent au brief. */
+  --cd-surface-2:    #F5F6F4;
+
+  /* Filet — toutes les bordures et séparateurs.
+     Source : design.css --ligne  ·  cible Phase 2 : #DEDDD6
+     NOTE : 31 pages déclarent --ligne:#D5E3DB dans leur <style> inline.
+     C'est du code mort — design.css charge après et impose #E6E8E4. */
+  --cd-filet:        #E6E8E4;
+
+  /* Filet appuyé — survols, bordures actives. Source : design.css --ligne2. */
+  --cd-filet-2:      #D8DBD6;
+
+  /* Alerte — erreurs, annulations, blocage.
+     Source : design.css --rouge  ·  cible Phase 2 : #B42318 */
+  --cd-danger:       #C0392B;
+
+  /* Menthe — fonds teintés de confirmation. Source : design.css --menthe. */
+  --cd-menthe:       #EDF4EF;
+
+  /* Argile — accent chaud, usage parcimonieux. Source : design.css --argile. */
+  --cd-argile:       #C97A4A;
+
+
+  /* ---------------------------------------------------------------
+     2. TYPOGRAPHIE  (brief §2.5)
+
+     Les FAMILLES ne sont volontairement PAS déclarées ici.
+     Le brief demande Archivo pour les titres : elle n'est chargée
+     nulle part dans le projet, et aucune police n'est auto-hébergée
+     (33 pages sur 35 appellent Google Fonts, pas de dossier /fonts/).
+     Déclarer Archivo maintenant provoquerait un repli silencieux et
+     donc un changement visuel. À traiter en tâche dédiée.
+     --------------------------------------------------------------- */
+
+  /* Échelle de type — valeurs du brief. Aucun sélecteur ne les utilise
+     encore, donc aucun effet visuel. Le branchement se fait en Phase 2. */
+  --cd-t-taux:       36px;   /* bloc taux, tabular-nums, interligne 1.0  */
+  --cd-t-h1:         26px;   /* interligne 1.2                          */
+  --cd-t-h2:         19px;   /* interligne 1.3                          */
+  --cd-t-corps:      15px;   /* interligne 1.55                         */
+  --cd-t-petit:      13px;   /* interligne 1.45                         */
+  --cd-t-champ:      11px;   /* capitales, letter-spacing 0.08em        */
+
+  --cd-lh-taux:      1.0;
+  --cd-lh-h1:        1.2;
+  --cd-lh-h2:        1.3;
+  --cd-lh-corps:     1.55;
+  --cd-lh-petit:     1.45;
+  --cd-lh-champ:     1.2;
+
+  --cd-ls-titre:     -0.02em;   /* tracking serré des titres */
+  --cd-ls-champ:     0.08em;    /* étiquettes en capitales   */
+
+
+  /* ---------------------------------------------------------------
+     3. ESPACEMENT, COINS, ÉLÉVATION  (brief §2.6)
+     --------------------------------------------------------------- */
+
+  --cd-e1:  4px;
+  --cd-e2:  8px;
+  --cd-e3:  12px;
+  --cd-e4:  16px;
+  --cd-e5:  24px;
+  --cd-e6:  40px;
+
+  --cd-r-s: 4px;
+  --cd-r-m: 6px;
+  --cd-r-l: 10px;    /* plafond absolu — aucun rayon ne doit le dépasser */
+
+  --cd-filet-1: 1px solid var(--cd-filet);
+
+  /* Une seule ombre dans tout le système, réservée aux modales et
+     feuilles mobiles. Partout ailleurs : des bordures. */
+  --cd-ombre-sheet: 0 -2px 0 rgba(16,20,16,0.06), 0 8px 24px rgba(16,20,16,0.12);
+
+
+  /* ---------------------------------------------------------------
+     4. MOUVEMENT  (brief §2.7)
+     --------------------------------------------------------------- */
+
+  --cd-duree-etat:   120ms;   /* survol, focus, actif        */
+  --cd-duree-sheet:  200ms;   /* feuille mobile / modale     */
+  --cd-duree-crochet: 400ms;  /* tracé du crochet à la confirmation */
+  --cd-ease:         ease-out;
+}
+
+/* Respect de prefers-reduced-motion : tout tombe à zéro.
+   Le crochet apparaîtra directement au lieu de se tracer. */
+@media (prefers-reduced-motion: reduce){
+  :root{
+    --cd-duree-etat:    0ms;
+    --cd-duree-sheet:   0ms;
+    --cd-duree-crochet: 0ms;
+  }
+}
