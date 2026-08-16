@@ -168,7 +168,13 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
   .mini-mois{border-color:#ccc}
 }
 @media(max-width:720px){
-  .table-scroll{overflow-x:auto;min-width:0}
+  }
+/* ===== Fin de @media(max-width:720px). Les règles ci-dessous doivent vivre
+   HORS de cette requête : elles portent leur propre point de rupture à
+   860 px. Imbriquées, elles étaient combinées avec 720 px, si bien qu'entre
+   721 et 860 px le tableau ET les cartes s'affichaient en même temps, et que
+   le cadre défilant du tableau ne s'appliquait plus (+394 px à 768 px). ===== */
+.table-scroll{overflow-x:auto;min-width:0}
 
 /* ---------- Phase 3 · carte de contrat (brief §3.1) ----------
    « La carte de contrat est une étiquette » : structure champ/valeur,
@@ -231,6 +237,8 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
 .c-badge.instant{background:#FBF6EE;border-color:#9E6D22;color:#9E6D22;margin-left:4px}
 .c-indispo{border-left:3px solid var(--rouge)}
 
+/* Reprise de @media(max-width:720px) pour les deux règles d'origine. */
+@media(max-width:720px){
 .cache-mobile{display:none}
   td,th{padding:11px 10px}
 }
