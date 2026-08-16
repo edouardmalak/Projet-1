@@ -13,6 +13,8 @@
   Cache-Control: no-cache
 /design.css
   Cache-Control: no-cache
+/tokens.css
+  Cache-Control: no-cache
 /fiche.js
   Cache-Control: no-cache
 /outils.js
