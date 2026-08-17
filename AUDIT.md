@@ -412,6 +412,7 @@ Conformément aux Parties 0.1 et 8 :
 | 1.5 · T3 | `f590a1c` | `contrats` : cadre défilant `.table-scroll` |
 | 3 · T1 | `4723b0f` | Carte de contrat sous 860 px — bloc taux, filet ambre, bouton 48 px |
 | 3 · T2 | `18a59b1` | Sortie des règles de carte de `@media(max-width:720px)` |
+| 3 · T3 | `41ec7b2` | Bandeau de filtres repliable sous 560 px + compteur de filtres actifs |
 
 Points de retour : `refonte-phase-0-avant`, `refonte-phase-1-avant`, `refonte-phase-1.5-avant`.
 
@@ -429,6 +430,7 @@ Points de retour : `refonte-phase-0-avant`, `refonte-phase-1-avant`, `refonte-ph
 - **Anton conservé, Archivo abandonnée.** Anton en affichage uniquement, jamais en texte d'interface. Donne les trois familles du brief — Anton / Inter / IBM Plex Mono — en supprimant Archivo, Bricolage Grotesque et Instrument Sans.
 - **Badges à remplissage teinté** : fond `#FBF6EE`, bordure et texte `#9E6D22` (4,5:1). L'ambre pur `#C98A2B` mesure 2,94:1 et ne peut pas porter de texte.
 - **Exemption barre de navigation** : repli et débordement sous 768 px uniquement ; destinations, ordre et libellés inchangés.
+- **Cible « 3 cartes » de la §3.1 : reportée après lancement.** Décision de Robert, 16 août. La carte de contrat garde ses 237 px. Son gain — rendre le taux horaire lisible sur téléphone, le constat central de la §13.1 — disparaîtrait en la comprimant à ≤ 170 px. On accepte **2 cartes entières** au lancement plutôt que d'annuler ce gain. Aucun chiffrage n'a été demandé ni produit.
 
 ### Reste à faire — bloqué sur Robert
 
@@ -440,9 +442,42 @@ Points de retour : `refonte-phase-0-avant`, `refonte-phase-1-avant`, `refonte-ph
 
 ### Reste à faire — faisable sans Robert
 
-- **Bloc de filtres de `contrats.html`** : 6 filtres empilés occupent ~250 px avant la première carte, si bien que 2,5 cartes tiennent dans 390 × 844 au lieu des 3 exigées par §3.1. Dernier écart connu à la conformité de la Phase 3.
+- ~~**Bloc de filtres de `contrats.html`**~~ — **fait (Phase 3 · T3).** Voir la correction de mesure ci-dessous.
 - **Champs sous 16 px** : `profil` (96), `parametres` (35), `contrat` (21), `contrats` (10) — iOS zoome à la mise au point. Relève de la Phase 5, reportée.
 - **Cibles tactiles sous 48 px** : quasi universelles sur les pages applicatives. Phase 5, reportée.
+
+### Correction de mesure — bloc de filtres (16 août, session de reprise)
+
+Les chiffres écrits plus haut lors de la première passe étaient faux. Mesures reprises dans un cadre réel de 390 × 844, session locum ouverte, 9 contrats :
+
+| | Écrit d'abord | **Mesuré** |
+|---|---|---|
+| Hauteur du bloc de filtres | ~250 px | **164 px** (4 rangées) |
+| Hauteur totale au-dessus de la première carte | non mesurée | **448 px** |
+| Cartes entières visibles | 2,5 | **1** (+ 63 % de la deuxième) |
+
+**Piège rencontré :** l'onglet servait une copie en cache de `contrats.html` (débordement +357 px, zéro carte — l'état d'avant la Phase 3) alors que le fichier sur disque était à jour. Toujours forcer un rechargement matériel avant de mesurer.
+
+**Le bloc de filtres n'était pas le verrou.** La cible « 3 cartes » de la §3.1 demande 237 × 3 + 10 × 2 = **731 px**, donc une première carte à **≤ 113 px**. Plancher mesuré en retirant *à la fois* les filtres **et** les deux rangées d'onglets : **172 px**, soit encore 2 cartes entières. Le facteur limitant est la **hauteur de carte** (237 px), pas les filtres : il faudrait descendre la carte à ≤ 170 px. Reporté après lancement par décision de Robert (voir « Décisions appliquées »).
+
+**Ce que T3 livre réellement**, bouton de repli 44 px inclus :
+
+| Largeur | Avant | Après |
+|---|---|---|
+| 375 px | 1 carte entière | **2 cartes entières** (2ᵉ finit à 842 px) |
+| 390 px | 1 entière + 63 % | **2 entières** + 11 % |
+| 560 px | 2 entières | 2 entières + 34 % |
+| 768 px | 2 entières | **inchangé** (bouton masqué, filtres 79 px) |
+| 1440 px | tableau, 9 lignes | **inchangé** |
+
+Première carte : **448 px → 320 px**. Le repli s'arrête à 560 px parce qu'au-delà le bandeau ne fait plus que 2 rangées (79 px) — mesuré : 4 rangées jusqu'à 430 px, 3 rangées de 440 à 560 px, 2 rangées à partir de 580 px.
+
+**Deux pièges d'implémentation, consignés pour la suite :**
+
+1. La page pose `style="display:flex"` **en ligne** sur `#filtres` (script, ligne 1032). Toute règle `display:none` en CSS est ignorée. Le repli passe donc par `max-height`, et la ligne 1032 n'a pas été touchée.
+2. `f-jsem` n'a **pas d'option vide** : sa valeur au repos est `1` (Lundi). Une première version du compteur de filtres actifs affichait donc « 1 » sur une page vierge. Le compteur suit maintenant la logique réelle de `dessiner()` : le bloc date compte pour 1 au plus, et seulement s'il retire vraiment des contrats.
+
+Le débordement de 44 px à 320 px est inchangé — il reste suspendu à la décision hamburger.
 
 ---
 
