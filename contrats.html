@@ -237,6 +237,35 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
 .c-badge.instant{background:#FBF6EE;border-color:#9E6D22;color:#9E6D22;margin-left:4px}
 .c-indispo{border-left:3px solid var(--rouge)}
 
+/* ---------- Phase 3 · bandeau de filtres repliable (téléphones) ----------
+   Mesuré à 390 px : les 6 filtres + « Réinitialiser » forment 4 rangées et
+   164 px, repoussant la première carte à 448 px — une seule carte entière
+   tenait dans 844 px. Replié : première carte à 320 px, deux cartes entières.
+   Le repli s'arrête à 560 px ; au-delà le bandeau ne fait que 2 rangées
+   (79 px) et n'a pas besoin d'être caché — 768 px et 1440 px sont inchangés.
+   ATTENTION : le script pose `style="display:flex"` EN LIGNE sur #filtres.
+   On replie donc par max-height, JAMAIS par display, qui serait ignoré.
+   Ces règles doivent rester HORS de toute media query (cf. correctif du
+   16/08 : des règles imbriquées dans @media(max-width:720px) se combinaient
+   silencieusement avec ce point de rupture). */
+.filtres-bascule{display:none}
+@media(max-width:560px){
+  .filtres-bascule.pret{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    width:100%;min-height:44px;margin-bottom:8px;
+    background:transparent;border:1px solid var(--ligne2);border-radius:4px;
+    padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--sourd);cursor:pointer;
+  }
+  .filtres-bascule:focus-visible{outline:2px solid var(--vert);outline-offset:2px}
+  .filtres-bascule .fb-etat{font-size:13px;line-height:1}
+  .filtres-bascule .fb-compte{
+    background:var(--menthe);border:1px solid var(--vert);color:var(--vert);
+    border-radius:4px;padding:1px 6px;font-size:10.5px;margin-left:7px;
+  }
+  #filtres.replie{max-height:0;overflow:hidden;margin-bottom:0}
+}
+
 /* Reprise de @media(max-width:720px) pour les deux règles d'origine. */
 @media(max-width:720px){
 .cache-mobile{display:none}
@@ -280,6 +309,15 @@ tr.indispo-ligne td:first-child{box-shadow:inset 3px 0 0 var(--rouge)}
     <button id="v-sauvegardes" type="button"><span data-fr="Sauvegardés" data-en="Saved">Sauvegardés</span><span class="cpt-sauv" id="n-sauv"></span></button>
   </div>
 
+  <!-- Phase 3 (16/08/2026) : sur téléphone les 6 filtres occupent 4 rangées
+       (164 px à 390 px) et repoussent la première carte à 448 px. Ce bouton
+       les replie. Le compteur signale les filtres actifs, pour qu'un filtre
+       replié ne masque jamais des contrats en silence. -->
+  <button class="filtres-bascule no-print" id="filtres-bascule" type="button"
+          aria-expanded="false" aria-controls="filtres">
+    <span><span data-fr="Filtres" data-en="Filters">Filtres</span><span class="fb-compte" id="fb-compte" hidden></span></span>
+    <span class="fb-etat" id="fb-etat" aria-hidden="true">&#9662;</span>
+  </button>
   <div class="filtres no-print" id="filtres">
     <select class="filtre-champ" id="f-ville" style="flex:1 1 130px"><option value="">Ville</option></select>
     <select class="filtre-champ" id="f-tarif" style="flex:1 1 120px"><option value="">Tarif</option></select>
@@ -1099,6 +1137,45 @@ function cdVCard(){
   const a = document.createElement('a'); a.href = url; a.download = 'C-Direct.vcf';
   document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
+
+/* ===== Bandeau de filtres repliable — téléphones (≤560 px) =================
+   On replie par max-height et jamais par display : la page pose déjà
+   `style="display:flex"` en ligne sur #filtres, qui gagnerait sur le CSS. */
+(function(){
+  const bloc = document.getElementById('filtres');
+  const btn  = document.getElementById('filtres-bascule');
+  if(!bloc || !btn) return;
+  const cpt = document.getElementById('fb-compte'), etat = document.getElementById('fb-etat');
+  const val = id => { const e = document.getElementById(id); return e ? (e.value||'') : ''; };
+  function majCompte(){
+    /* Un « filtre actif » = un filtre qui retire réellement des contrats, pour
+       coller à dessiner(). Le bloc date compte pour 1 au plus. Attention :
+       f-jsem n'a pas d'option vide et vaut donc « 1 » (Lundi) au repos — le
+       compter comme les autres donnait 1 filtre actif sur une page vierge. */
+    let n = ['f-ville','f-tarif','f-logiciel','f-dist'].filter(id => val(id) !== '').length;
+    if(val('f-tri') !== 'compat') n++;
+    const mode = val('f-mode-date');
+    if((mode === 'jour' && val('f-jour') !== '') ||
+       (mode === 'mois' && val('f-mois') !== '') ||
+        mode === 'jsem') n++;
+    cpt.textContent = n; cpt.hidden = n === 0;
+  }
+  function replier(v){
+    bloc.classList.toggle('replie', v);
+    btn.setAttribute('aria-expanded', String(!v));
+    etat.textContent = v ? '▾' : '▴';
+  }
+  replier(true);
+  btn.addEventListener('click', ()=> replier(!bloc.classList.contains('replie')));
+  bloc.addEventListener('change', majCompte);
+  bloc.addEventListener('input',  majCompte);
+  bloc.addEventListener('click',  ()=> setTimeout(majCompte, 0)); // couvre « Réinitialiser »
+  const mo = new MutationObserver(()=> btn.classList.toggle('pret',
+                                    getComputedStyle(bloc).display !== 'none'));
+  mo.observe(bloc, {attributes:true, attributeFilter:['style']});
+  btn.classList.toggle('pret', getComputedStyle(bloc).display !== 'none');
+  majCompte();
+})();
 </script>
 </body>
 </html>
