@@ -769,9 +769,15 @@ async function capturerGarantie(env, ligne) {
   const statutDepart = ligne.statut || 'authorized';
   try {
     const [compte] = await sbSelect(env, `stripe_comptes?profil_id=eq.${pharmacien_id}&select=stripe_account_id`);
+    /* sql/87 — clé d'idempotence sur la capture. Sans elle, deux cycles qui
+       se chevauchaient capturaient une fois, puis le second recevait
+       « already captured », le prenait pour un échec, passait la garantie en
+       capture_failed et alertait la pharmacie par SMS — pour un paiement qui
+       avait réussi. La clé est dérivée de la garantie, donc stable d'un cycle
+       à l'autre : Stripe renvoie la même capture au lieu d'en refaire une. */
     await stripeApi(
       env, 'POST', `payment_intents/${stripe_payment_intent_id}/capture`, {},
-      { compteConnecte: compte.stripe_account_id }
+      { compteConnecte: compte.stripe_account_id, idempotencyKey: `${garantie_id}:capturer` }
     );
     await majGarantie(env, garantie_id, { statut: 'captured' });
     await journaliser(env, garantie_id, statutDepart, 'captured', 'Délai dépassé sans confirmation — capture automatique');
