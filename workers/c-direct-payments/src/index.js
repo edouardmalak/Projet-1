@@ -760,6 +760,13 @@ async function autoriserCandidature(env, ligne) {
 
 async function capturerGarantie(env, ligne) {
   const { garantie_id, stripe_payment_intent_id, pharmacien_id } = ligne;
+  /* sql/83 : lister_garanties_a_capturer renvoie désormais le statut de
+     départ. Avant, la capture était journalisée avec ancien_statut = null,
+     et toute concaténation « ancien -> nouveau » valait NULL : la ligne
+     existait mais restait invisible dans les relevés, précisément dans la
+     table qui sert de preuve en cas de contestation de carte. Repli sur
+     'authorized' si la migration n'est pas encore passée. */
+  const statutDepart = ligne.statut || 'authorized';
   try {
     const [compte] = await sbSelect(env, `stripe_comptes?profil_id=eq.${pharmacien_id}&select=stripe_account_id`);
     await stripeApi(
@@ -767,7 +774,7 @@ async function capturerGarantie(env, ligne) {
       { compteConnecte: compte.stripe_account_id }
     );
     await majGarantie(env, garantie_id, { statut: 'captured' });
-    await journaliser(env, garantie_id, null, 'captured', 'Délai dépassé sans confirmation — capture automatique');
+    await journaliser(env, garantie_id, statutDepart, 'captured', 'Délai dépassé sans confirmation — capture automatique');
     return { ok: true };
   } catch (e) {
     /* T8b (batch1) : avant, l'échec n'était QUE journalisé — la ligne
@@ -780,7 +787,7 @@ async function capturerGarantie(env, ligne) {
        une intervention humaine : c'est un paiement dû non sécurisé. */
     const erreurTexte = String(e.message || e).slice(0, 500);
     await majGarantie(env, garantie_id, { statut: 'capture_failed', derniere_erreur: erreurTexte });
-    await journaliser(env, garantie_id, null, 'capture_failed', `ÉCHEC capture : ${erreurTexte}`);
+    await journaliser(env, garantie_id, statutDepart, 'capture_failed', `ÉCHEC capture : ${erreurTexte}`);
 
     let pharmacieId = null, reference = '';
     try {
