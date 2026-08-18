@@ -681,6 +681,30 @@ async function autoriserCandidature(env, ligne) {
       throw new Error(`Compte pharmacien pas encore actif (charges_enabled=${compte.charges_enabled}, payouts_enabled=${compte.payouts_enabled})${detail ? ' — ' + detail : ''}`);
     }
 
+    /* sql/90 — à T-24h on sait déjà si ce pharmacien pourra être payé
+       instantanément : docs.stripe.com/connect/instant-payouts dit qu'un
+       compte externe admissible porte `instant` dans available_payout_methods.
+       Au Canada cela veut dire une carte de débit ; un compte bancaire ne
+       suffit pas. On met le résultat en cache pour pouvoir l'avertir AVANT
+       le quart plutôt qu'au moment de le payer. Jamais bloquant. */
+    try {
+      const comptesExternes = await stripeApi(
+        env, 'GET', `accounts/${comptePharmacien.stripe_account_id}/external_accounts?limit=10`,
+        null, { compteConnecte: comptePharmacien.stripe_account_id }
+      );
+      const pret = (comptesExternes.data || []).some(
+        (ce) => Array.isArray(ce.available_payout_methods) && ce.available_payout_methods.includes('instant')
+      );
+      await fetch(`${env.SUPABASE_URL}/rest/v1/stripe_comptes?profil_id=eq.${pharmacien_id}`, {
+        method: 'PATCH',
+        headers: sbHeaders(env, { Prefer: 'return=minimal' }),
+        body: JSON.stringify({
+          paiement_instantane_pret: pret,
+          paiement_instantane_verifie_le: new Date().toISOString(),
+        }),
+      });
+    } catch (e) { /* information de confort : ne doit jamais bloquer une autorisation */ }
+
     // Clone à usage unique de la carte plateforme vers le compte connecté.
     const clone = await stripeApi(
       env, 'POST', 'payment_methods',
@@ -758,6 +782,49 @@ async function autoriserCandidature(env, ligne) {
   }
 }
 
+/* sql/90 — VIREMENT INSTANTANÉ au pharmacien, tenté après chaque capture.
+   docs.stripe.com/connect/instant-payouts. Trois choses à savoir :
+
+   1. Au CANADA l'instantané ne va QUE vers une carte de débit ; un compte
+      bancaire n'est pas admissible (contrairement aux US/GB/EU).
+   2. `instant_available.net_available` n'apparaît que pour les comptes
+      externes réellement admissibles — c'est donc le test d'admissibilité
+      lui-même, fourni par l'API. Pas besoin de deviner.
+   3. Un nouveau compte connecté n'est pas admissible tout de suite (montée
+      en charge Stripe), et il existe un plafond quotidien par plateforme.
+
+   D'où la règle : un échec ici n'est JAMAIS un échec de paiement. L'argent
+   est déjà capturé et appartient au pharmacien ; Stripe le versera au
+   calendrier normal. On journalise et on continue. Cette fonction n'émet
+   donc aucune exception. */
+async function verserInstantanement(env, garantieId, compteConnecte) {
+  try {
+    const solde = await stripeApi(
+      env, 'GET', 'balance?expand[]=instant_available.net_available', null,
+      { compteConnecte }
+    );
+    const cad = (solde.instant_available || []).find((b) => b.currency === 'cad');
+    const dest = cad?.net_available?.[0];
+
+    if (!dest || !(dest.amount > 0)) {
+      return { methode: 'standard', erreur: 'aucun solde instantane disponible (carte de debit absente ou compte pas encore admissible)' };
+    }
+    // Plancher Stripe au Canada : 0,60 $. En dessous, l'appel echouerait.
+    if (dest.amount < 60) {
+      return { methode: 'standard', erreur: `montant ${dest.amount} cents sous le minimum instantane de 60 cents` };
+    }
+
+    const versement = await stripeApi(
+      env, 'POST', 'payouts',
+      { amount: dest.amount, currency: 'cad', method: 'instant', destination: dest.destination },
+      { compteConnecte, idempotencyKey: `${garantieId}:payout-instant` }
+    );
+    return { methode: 'instant', payout_id: versement.id, montant: dest.amount };
+  } catch (e) {
+    return { methode: 'standard', erreur: String(e.message || e).slice(0, 300) };
+  }
+}
+
 async function capturerGarantie(env, ligne) {
   const { garantie_id, stripe_payment_intent_id, pharmacien_id } = ligne;
   /* sql/83 : lister_garanties_a_capturer renvoie désormais le statut de
@@ -800,7 +867,24 @@ async function capturerGarantie(env, ligne) {
     );
     await majGarantie(env, garantie_id, { statut: 'captured' });
     await journaliser(env, garantie_id, statutDepart, 'captured', 'Délai dépassé sans confirmation — capture automatique');
-    return { ok: true };
+
+    /* sql/90 — le pharmacien est payé tout de suite si son compte le permet.
+       Volontairement APRÈS le passage à « captured » : l'argent lui est déjà
+       acquis, le virement n'est qu'une question de vitesse. */
+    const versement = await verserInstantanement(env, garantie_id, compte.stripe_account_id);
+    await majGarantie(env, garantie_id, {
+      payout_id: versement.payout_id || null,
+      payout_methode: versement.methode,
+      payout_montant_cents: versement.montant || null,
+      payout_erreur: versement.erreur || null,
+      payout_le: new Date().toISOString(),
+    });
+    await journaliser(env, garantie_id, 'captured', 'captured',
+      versement.methode === 'instant'
+        ? `Virement INSTANTANÉ ${versement.payout_id} — ${versement.montant} cents`
+        : `Virement standard (instantané impossible : ${versement.erreur})`);
+
+    return { ok: true, versement: versement.methode };
   } catch (e) {
     /* T8b (batch1) : avant, l'échec n'était QUE journalisé — la ligne
        restait dans lister_garanties_a_capturer et était retentée en
