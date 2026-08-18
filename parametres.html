@@ -963,10 +963,24 @@ if($('btn-save-aa')) $('btn-save-aa').onclick = async ()=>{
 
   if(profil.role === 'pharmacien' || profil.role === 'pharmacie'){
     $('tab-paiements').style.display = '';
-    if(profil.role === 'pharmacien'){ $('carte-paiement-pharmacien').style.display=''; $('carte-interac').style.display=''; }
+    /* sql/84 — interrupteur Interac. Éteint : on n'affiche PAS la carte du
+       courriel d'autodépôt au pharmacien, et on ne charge pas son statut.
+       Inutile de lui faire vérifier une adresse pour un rail qu'on n'offre
+       plus. Repli sur « éteint » si l'appel échoue. */
+    let interacActif = false;
+    try{
+      const { data: reglages } = await sb.rpc('reglages_paiement');
+      const r = Array.isArray(reglages) ? reglages[0] : reglages;
+      interacActif = !!(r && r.interac_actif);
+    }catch(e){ interacActif = false; }
+
+    if(profil.role === 'pharmacien'){
+      $('carte-paiement-pharmacien').style.display='';
+      if(interacActif) $('carte-interac').style.display='';
+    }
     if(profil.role === 'pharmacie'){ $('carte-garantie-pharmacie').style.display=''; }
     chargerStatutPaiement();
-    chargerStatutInterac();
+    if(interacActif) chargerStatutInterac();
   }
 
   $('langue').value = profil.langue || 'fr';

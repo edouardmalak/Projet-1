@@ -321,10 +321,21 @@ function msg(texte, type){
      (skill § Fraud controls). Si le courriel n'est pas vérifié ou est
      en délai de sécurité (72h après un changement), on bascule sur un
      message carte de garantie — jamais une adresse pas encore sûre. */
+  /* sql/84 — interrupteur Interac. Quand il est ÉTEINT, la pharmacie ne
+     reçoit aucune instruction de virement : le mandat est couvert par la
+     carte de garantie. Lecture unique ; en cas d'échec on retombe sur
+     « éteint », pour ne jamais afficher une adresse Interac par accident. */
+  let interacActif = false;
+  try {
+    const { data: reglages } = await sb.rpc('reglages_paiement');
+    const r = Array.isArray(reglages) ? reglages[0] : reglages;
+    interacActif = !!(r && r.interac_actif);
+  } catch(e){ interacActif = false; }
+
   (function construirePayerBox(){
     const zone = $('payer-box-contenu');
     const enCooldown = f.pharmacien_courriel_interac_cooldown && new Date(f.pharmacien_courriel_interac_cooldown) > new Date();
-    const interacPret = f.pharmacien_courriel_interac_verifie && f.pharmacien_courriel_interac && !enCooldown;
+    const interacPret = interacActif && f.pharmacien_courriel_interac_verifie && f.pharmacien_courriel_interac && !enCooldown;
 
     const identite = '<div class="identite">Ce mandat concerne <b>'+ (nomPharmacien.replace(/</g,'&lt;')) +
       '</b>, pharmacien(ne) — N° OPQ ' + (f.pharmacien_opq || '—') + '.</div>';
@@ -332,7 +343,10 @@ function msg(texte, type){
     if(!interacPret){
       zone.innerHTML = identite +
         '<div class="avert">' +
-        (enCooldown
+        (!interacActif
+          ? cdT('Le virement Interac n\'est pas offert pour le moment.',
+                'Interac transfer is not offered at this time.')
+          : enCooldown
           ? 'Ce pharmacien a changé son adresse Interac récemment — par sécurité, elle n\'est active qu\'à partir du ' +
             new Date(f.pharmacien_courriel_interac_cooldown).toLocaleString('fr-CA') + '.'
           : 'Ce pharmacien n\'a pas encore vérifié d\'adresse Interac.') +

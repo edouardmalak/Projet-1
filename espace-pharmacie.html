@@ -193,11 +193,13 @@ h1{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-s
       </div>
       <div id="prix-dual" style="display:none;margin:-2px 0 12px;padding:10px 12px;background:#F4F8F5;border:1px solid var(--ligne2);border-radius:5px;font-family:'IBM Plex Mono',monospace;font-size:12.5px">
         <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--vert-vif);margin-bottom:6px;font-weight:700">Ce que vous paierez (estimation de base)</div>
-        <div style="display:flex;justify-content:space-between"><span>Virement Interac</span><b id="prix-interac">—</b></div>
-        <div style="display:flex;justify-content:space-between;margin-top:3px"><span>Carte (si la garantie est capturée)</span><b id="prix-carte">—</b></div>
+        <div style="display:flex;justify-content:space-between" id="ligne-prix-interac"><span>Virement Interac</span><b id="prix-interac">—</b></div>
+        <div style="display:flex;justify-content:space-between;margin-top:3px"><span id="libelle-prix-carte">Carte (si la garantie est capturée)</span><span id="libelle-prix-carte-seul" style="display:none" data-fr="Prix tout inclus" data-en="All-in price">Prix tout inclus</span><b id="prix-carte">—</b></div>
         <!-- T9 (batch1) : deux prix tout compris, AUCUN détail de frais — tarification
              double (dual pricing), jamais de « surcharge » détaillée (architecture verrouillée). -->
-        <div style="margin-top:6px;color:var(--sourd);font-size:10.5px" data-fr="Deux prix tout compris — le pharmacien reçoit le même montant net, peu importe l'option. Indemnités de déplacement non incluses ici (dépendent du pharmacien retenu)." data-en="Two all-in prices — the pharmacist receives the same net amount either way. Travel allowances not included here (they depend on the pharmacist selected).">Deux prix tout compris — le pharmacien reçoit le même montant net, peu importe l'option. Indemnités de déplacement non incluses ici (dépendent du pharmacien retenu).</div>
+        <div id="note-prix-dual" style="margin-top:6px;color:var(--sourd);font-size:10.5px" data-fr="Deux prix tout compris — le pharmacien reçoit le même montant net, peu importe l'option. Indemnités de déplacement non incluses ici (dépendent du pharmacien retenu)." data-en="Two all-in prices — the pharmacist receives the same net amount either way. Travel allowances not included here (they depend on the pharmacist selected).">Deux prix tout compris — le pharmacien reçoit le même montant net, peu importe l'option. Indemnités de déplacement non incluses ici (dépendent du pharmacien retenu).</div>
+        <!-- sql/84 : affiché à la place du précédent quand Interac est éteint — un seul prix, tout inclus. -->
+        <div id="note-prix-carte-seul" style="display:none;margin-top:6px;color:var(--sourd);font-size:10.5px" data-fr="Prix tout compris — le pharmacien reçoit son montant net au complet. Indemnités de déplacement non incluses ici (dépendent du pharmacien retenu)." data-en="All-in price — the pharmacist receives their full net amount. Travel allowances not included here (they depend on the pharmacist selected).">Prix tout compris — le pharmacien reçoit son montant net au complet. Indemnités de déplacement non incluses ici (dépendent du pharmacien retenu).</div>
       </div>
       <div class="indice" style="margin:-6px 0 4px" data-fr="Rx/jour, conditions et services requis viennent de votre &lt;a href=&quot;/profil.html&quot; style=&quot;color:var(--vert-vif)&quot;&gt;profil&lt;/a&gt; — modifiables là-bas, une seule fois." data-en="Rx/day, conditions and required services come from your &lt;a href=&quot;/profil.html&quot; style=&quot;color:var(--vert-vif)&quot;&gt;profile&lt;/a&gt; — editable there, once.">Rx/jour, conditions et services requis viennent de votre <a href="/profil.html" style="color:var(--vert-vif)">profil</a> — modifiables là-bas, une seule fois.</div>
       <div class="champ">
@@ -933,6 +935,25 @@ function majPrixDual(){
   $('prix-carte').textContent = cdArgent(prix.carte);
   zone.style.display = '';
 }
+
+/* sql/84 — interrupteur Interac, lecture unique au chargement. Éteint :
+   la ligne « Virement Interac » disparaît du bloc de prix et il ne reste
+   qu'un seul montant tout inclus (carte). Repli sur « éteint » si l'appel
+   échoue — mieux vaut ne pas annoncer un rail qu'on n'offre plus. */
+async function appliquerInterrupteurInterac(){
+  let actif = false;
+  try{
+    const { data } = await sb.rpc('reglages_paiement');
+    const r = Array.isArray(data) ? data[0] : data;
+    actif = !!(r && r.interac_actif);
+  }catch(e){ actif = false; }
+  if(actif) return;
+  const masquer = ['ligne-prix-interac','libelle-prix-carte','note-prix-dual'];
+  const montrer = ['libelle-prix-carte-seul','note-prix-carte-seul'];
+  masquer.forEach(id=>{ const el = $(id); if(el) el.style.display = 'none'; });
+  montrer.forEach(id=>{ const el = $(id); if(el) el.style.display = ''; });
+}
+appliquerInterrupteurInterac();
 
 /* Batch 2 — #6 : prix « comblé instantanément » — lecture unique de
    auto_acceptation_infos_publiques() ; si la fonctionnalité est éteinte
