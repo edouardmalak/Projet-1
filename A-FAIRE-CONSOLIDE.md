@@ -396,3 +396,35 @@ Launch checklist (scheduled, not now):
       Le compteur de références repart à **CD-100001**. Irréversible : le point
       de restauration git `restore-2026-08-18-avant-flush-tests` ne couvre que
       les fichiers, pas les données.
+
+## Bogues repérés pendant le test de paiement du 2026-08-18
+
+- [ ] **L'heure des quarts est interprétée en UTC, pas en heure du Québec** —
+      la base tourne en UTC (`TimeZone=UTC`) et les quarts sont stockés en
+      `date_contrat` (date) + `heure_debut` (heure nue). L'expression
+      `(k.date_contrat + k.heure_debut)::timestamptz` utilisée par
+      `lister_candidatures_a_autoriser` résout donc en UTC : un quart publié
+      pour **8 h du matin à Montréal est vu par le système comme 8 h UTC,
+      c'est-à-dire 4 h du matin heure locale**. Conséquence : la fenêtre T-24 h
+      et l'échelle de relance (T-18h / T-12h / T-6h) sont décalées de 4 heures
+      (5 en hiver) par rapport au vrai début du quart. Un quart tôt le matin
+      peut sortir de la fenêtre et ne jamais être autorisé.
+      Correctif : stocker le début de quart en `timestamptz` construit avec
+      `at time zone 'America/Montreal'`, ou convertir dans les fonctions qui
+      comparent à `now()`. **À trancher avant le lancement** — touche au
+      paiement, donc à faire avec un test de bout en bout.
+
+- [ ] **La capture automatique a un second déclencheur, facile à oublier** —
+      `lister_garanties_a_capturer()` capture aussi dès que
+      `capture_before <= now() + 6 heures`, indépendamment de toute échéance de
+      confirmation. C'est un filet volontaire (ne jamais laisser un pharmacien
+      impayé parce que l'autorisation expire), mais ça veut dire qu'**une
+      autorisation de test laissée en place finit par débiter la carte pour de
+      vrai**, environ 7 jours plus tard. À garder en tête à chaque test.
+
+- [ ] **Cosmétique — le journal des garanties perd la ligne « captured »** —
+      `capturerGarantie()` appelle `journaliser(env, id, null, 'captured', …)`
+      avec `ancien_statut = null`. Toute concaténation du type
+      `ancien_statut || '->' || nouveau_statut` devient donc NULL et la ligne
+      disparaît des relevés. Le journal contient bien la ligne, seul l'affichage
+      la masque. Passer `'authorized'` (ou le statut réel) plutôt que `null`.

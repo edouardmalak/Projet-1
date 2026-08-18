@@ -4,9 +4,21 @@ Réponse à l'item **C3** (« Report the real state of the Stripe payment rail: 
 
 ---
 
+> **MISE À JOUR — 18 août 2026 : le rail a bougé de l'argent réel.**
+> Le blocage de la section 6 est levé (compte connecté `acct_1U5dBvDn37SeUr1A`,
+> `charges_enabled` et `payouts_enabled` à vrai). Sur le contrat **CD-100001**
+> (0,19 $/h × 1 h, frais de plateforme à 0 $), l'autorisation a été créée
+> automatiquement par le cron pour **exactement 50 ¢**
+> (`pi_3U5mOgDn37SeUr1A3oaGuYiD`), puis **capturée**. Les points 1 et 3 de la
+> section 5 (« pas encore testé ») sont donc faits. Restent non testées :
+> l'annulation réelle et la livraison d'un webhook.
+> Les frais C-Direct ne sont plus en dur : ils vivent dans
+> `parametres_plateforme` (sql/82), réglables dans Administration, et sont
+> **à 0 $ pour la phase de test — à remettre à 39 $ avant le lancement**.
+
 ## 1. En une phrase
 
-Le rail est **construit au complet et fonctionne en mode réel**, mais **aucun dollar n'a encore circulé** : il manque la vérification d'identité de Robert chez Stripe, sans laquelle aucun pharmacien ne peut recevoir de paiement.
+Le rail est **construit au complet, fonctionne en mode réel, et a été exercé de bout en bout avec de l'argent réel le 18 août 2026** — autorisation puis capture, tous deux vérifiés.
 
 ---
 
