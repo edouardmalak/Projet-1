@@ -10,6 +10,12 @@ name = "c-direct-chat"
 main = "src/index.js"
 compatibility_date = "2026-07-01"
 
+# Télémétrie Wrangler désactivée pour ce projet (2026-08-18). Elle est déjà
+# coupée globalement sur la machine de Robert ; on la fixe aussi ici pour que
+# le réglage suive le dépôt et s'applique à toute machine qui déploierait ce
+# Worker. Voir github.com/cloudflare/workers-sdk → packages/wrangler/telemetry.md
+send_metrics = false
+
 [vars]
 # Valeurs publiques (les mêmes que le site — la sécurité vient de la RLS)
 SUPABASE_URL = "https://fenlujjozanerbzyypjt.supabase.co"
