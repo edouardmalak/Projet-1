@@ -769,6 +769,25 @@ async function capturerGarantie(env, ligne) {
   const statutDepart = ligne.statut || 'authorized';
   try {
     const [compte] = await sbSelect(env, `stripe_comptes?profil_id=eq.${pharmacien_id}&select=stripe_account_id`);
+    /* sql/89 — capture PARTIELLE quand le pointage donne moins d'heures que
+       le contrat. docs.stripe.com/api/payment_intents/capture :
+       « amount_to_capture ... must be less than or equal to the original
+       amount ». On peut donc capturer moins, jamais plus.
+       application_fee_amount DOIT être redonné en même temps, sinon les
+       frais resteraient calculés sur le gros montant et le pharmacien
+       recevrait moins que son dû. Si montant_final_cents est vide (aucun
+       pointage), on capture tout, comme avant. */
+    const [montants] = await sbSelect(
+      env,
+      `garanties_paiement?id=eq.${garantie_id}&select=montant_final_cents,montant_locum_final_cents`
+    );
+    const corpsCapture = {};
+    if (montants?.montant_final_cents && montants?.montant_locum_final_cents != null) {
+      corpsCapture.amount_to_capture = montants.montant_final_cents;
+      corpsCapture.application_fee_amount =
+        montants.montant_final_cents - montants.montant_locum_final_cents;
+    }
+
     /* sql/87 — clé d'idempotence sur la capture. Sans elle, deux cycles qui
        se chevauchaient capturaient une fois, puis le second recevait
        « already captured », le prenait pour un échec, passait la garantie en
@@ -776,7 +795,7 @@ async function capturerGarantie(env, ligne) {
        avait réussi. La clé est dérivée de la garantie, donc stable d'un cycle
        à l'autre : Stripe renvoie la même capture au lieu d'en refaire une. */
     await stripeApi(
-      env, 'POST', `payment_intents/${stripe_payment_intent_id}/capture`, {},
+      env, 'POST', `payment_intents/${stripe_payment_intent_id}/capture`, corpsCapture,
       { compteConnecte: compte.stripe_account_id, idempotencyKey: `${garantie_id}:capturer` }
     );
     await majGarantie(env, garantie_id, { statut: 'captured' });
@@ -852,6 +871,26 @@ async function executerCycleGaranties(env) {
     const echeance = new Date(new Date(ligne.date_envoi).getTime() + 3 * 3600 * 1000).toISOString();
     await majGarantie(env, ligne.garantie_id, { echeance_confirmation: echeance });
     resultat.echeances_fixees++;
+  }
+
+  /* sql/89 — deux phases ajoutées AVANT la capture, dans cet ordre précis :
+     1. les départs oubliés sont pointés automatiquement (fin prévue + 2 h),
+        ce qui rend leur garantie capturable ;
+     2. les avenants d'heures sans réponse depuis 3 h sont clos au montant
+        DU CONTRAT — le pharmacien est payé, la pharmacie n'est jamais
+        débitée au-delà de ce qu'elle avait accepté.
+     Les deux tournent AVANT lister_garanties_a_capturer pour que ce qu'elles
+     débloquent soit capturé dans le MÊME cycle, pas 15 minutes plus tard. */
+  for (const [nom, cle] of [['pointer_departs_oublies', 'departs_auto'],
+                            ['traiter_avenants_expires', 'avenants_expires']]) {
+    try {
+      const n = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/${nom}`, {
+        method: 'POST', headers: sbHeaders(env), body: JSON.stringify({}),
+      }).then((r) => r.json());
+      resultat[cle] = typeof n === 'number' ? n : 0;
+    } catch (e) {
+      resultat[cle] = `erreur: ${e.message}`;
+    }
   }
 
   const aCapturer = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/lister_garanties_a_capturer`, {
