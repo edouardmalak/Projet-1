@@ -433,3 +433,40 @@ Migration `sql/83-corrections-garanties.sql` exécutée, Worker redéployé.
       en cas de contestation de carte. La RPC renvoie maintenant le statut de
       départ et le Worker le transmet, pour `captured` comme pour
       `capture_failed`.
+
+## Construit le 2026-08-18 — soir (sql/85 à 89)
+
+- [x] **Machine à états appliquée PAR LA BASE** (sql/85) — table des
+      transitions légales + déclencheur. Atteindre `confirmed_exact` (l'état
+      qui annule la garantie) exige de nommer QUI a confirmé, et la base
+      vérifie que c'est le pharmacien du mandat. Une pharmacie ne peut plus
+      libérer sa propre garantie, même si le code le tentait.
+- [x] **Suite de 11 assertions** (sql/86) — non destructive, se termine par
+      ROLLBACK, relançable en production à tout moment.
+- [x] **Verrou SKIP LOCKED + idempotence sur la capture** (sql/87) — la
+      capture n'avait AUCUNE clé d'idempotence : deux cycles simultanés
+      capturaient une fois, puis le second lisait « already captured » comme
+      un échec, passait en capture_failed et alertait la pharmacie par SMS
+      pour un paiement réussi.
+- [x] **Pointage arrivée/départ** (sql/88) — tout en RPC, donc l'app Flutter
+      appellera les mêmes fonctions. Position vérifiée puis JETÉE : la table
+      ne peut stocker ni coordonnée ni image (Loi 25).
+- [x] **Avenants d'heures et financement** (sql/89) — baisse financée seule
+      par capture partielle, hausse soumise à l'accord de la pharmacie avec
+      délai de 3 h, départ oublié pointé automatiquement à fin prévue + 2 h.
+
+- [ ] **Position exacte des pharmacies** — la base n'a AUCUNE coordonnée de
+      pharmacie, seulement le centroïde de RTA (3 premiers caractères du code
+      postal), qui couvre plusieurs kilomètres en ville et beaucoup plus en
+      région. La vérification de présence est donc de l'ordre du quartier.
+      Colonnes `profiles.latitude/longitude` ajoutées et vides : un bouton
+      « enregistrer la position de ma pharmacie », pressé sur place depuis
+      l'appareil du propriétaire, ferait passer la précision de kilomètres à
+      mètres. Aucun service de géocodage, aucune dépendance.
+
+- [ ] **Une hausse d'heures approuvée n'est PAS couverte par la garantie** —
+      Stripe interdit d'augmenter une autorisation déjà posée
+      (docs.stripe.com/api/payment_intents/capture : « must be less than or
+      equal to the original amount »). Le surplus est enregistré dans
+      `supplement_du_cents` et doit être réglé à part. À décider : facturation
+      séparée, ou autorisation avec marge dès le départ.
