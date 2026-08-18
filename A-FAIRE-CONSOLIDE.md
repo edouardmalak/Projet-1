@@ -49,7 +49,9 @@ Robert confirmed 2026-08-15 that Stripe verification is done. Follow these steps
 >
 > The guide's remaining *"Create a non-recurring product"* task is a generic checklist item and is **not** a gate — C-Direct needs no Stripe Product, because shift amounts are computed per shift `(locum_rate + 39 + 0.30) / (1 - 0.029)` and the $39 is taken as `application_fee_amount` on the direct charge, not sold as a catalogue item. Do not create one.
 >
-> **Remaining before any real money can move:** the **pharmacien** row still has `stripe_account_id` = null (sql/80 cleared the sandbox account). No connected account = no T-24h hold can be created, and it cannot be created until the platform profile gate above is lifted. That blocks step 6's Test C and the mirror test.
+> ✅ **LIVE CONNECT ONBOARDING DONE — verified in Supabase 2026-08-17 (webhook timestamp 2026-08-18T03:32Z).** Robert completed the Stripe-hosted onboarding from « Configurer mes paiements ». `stripe_comptes` now shows: **pharmacien** (edouardmalak+pharmacien@gmail.com) → `stripe_account_id` = `acct_1U5dBvDn37SeUr1A`, `charges_enabled: true`, `payouts_enabled: true`, requirements all empty, `disabled_reason: null`; **pharmacie** (edouardmalak+pharmacie@gmail.com) → `cus_V4tWbFpKNE7Cgl` + `pm_1U4kByReBKCY8Yl1iYCqSbEm` (card on file since 2026-08-15). Both sides of the T-24h hold are in place — **nothing blocks step 6's Test C and the mirror test anymore.**
+>
+> Note for launch (not a blocker): Robert found the corporate onboarding long. Locum onboarding is the shorter *individual* flow, and the plan already defers it to first shift acceptance rather than signup — watch drop-off there after launch.
 
 **Never paste `sk_live_...` or `whsec_...` into chat, email, or any file in this folder — the repo is publicly downloadable.** The publishable key `pk_live_...` is the only key that is safe to share (it's public by design).
 
