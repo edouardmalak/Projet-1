@@ -357,3 +357,42 @@ Launch checklist (scheduled, not now):
       (18 occurrences de « vous/votre » dans `index.html` + `acces.html`, zéro
       tutoiement). Laissé tel quel : le brief demandait de ne pas toucher aux
       textes. Trancher avant le lancement, puis appliquer dans les deux langues.
+
+## Open items — updated 2026-08-18 (vidage des tests + frais de plateforme)
+
+- [ ] **REMETTRE LE PLANCHER TARIFAIRE À 120 $/h** — abaissé à **0,01 $/h** le
+      2026-08-18 pour pouvoir publier un quart d'essai à 0,19 $/h et tester le
+      prélèvement carte à 50 ¢. Tant que ce n'est pas remis, n'importe quelle
+      pharmacie peut publier un quart à n'importe quel prix.
+      Administration → Règles du réseau → Tarif horaire minimum → `120` →
+      Enregistrer. (Ou en SQL : `update public.regles_reseau set
+      tarif_horaire_minimum = 120 where id = 1;`)
+
+- [ ] **REMETTRE LES FRAIS DE PLATEFORME À 39 $ AVANT LE LANCEMENT** — posés à
+      **0 $** le 2026-08-18 pour la phase de test (sql/82). À 0 $, C-Direct ne
+      facture rien : la pharmacie ne paie que le montant du pharmacien plus les
+      frais de carte. Administration → Frais de plateforme → `39` → Enregistrer.
+      Aucun redéploiement nécessaire : le Worker relit la valeur en base à
+      chaque autorisation.
+
+- [ ] **`fsa-qc.js` affiche encore 39 $ en dur** — `window.cdPrixDual()` garde
+      `const FRAIS_CDIRECT = 39` alors que le montant réellement prélevé vient
+      maintenant de la base. Volontairement PAS touché le 2026-08-18 : cette
+      fonction n'est appelée nulle part aujourd'hui (double tarification pas
+      encore branchée sur un écran). À rebrancher sur `public.frais_plateforme()`
+      le jour où l'écran de réservation affichera les deux prix — sinon le site
+      annoncera un prix et en prélèvera un autre.
+
+- [ ] **Le Worker `c-direct-payments` ne se déploie PAS depuis GitHub** —
+      confirmé au tableau de bord Cloudflare le 2026-08-18 : les 6 dernières
+      versions sont toutes « Manually deployed / Wrangler ». Après TOUT
+      changement dans `workers/c-direct-payments/src/index.js`, il faut lancer
+      `npx wrangler deploy` depuis le dossier du Worker. Les deux autres Workers
+      (`c-direct-sms`, `c-direct-chat`) se déploient bien automatiquement.
+
+- [ ] **Base vidée le 2026-08-18 (sql/81)** — 97 contrats, 41 candidatures,
+      5 garanties, 813 SMS journalisés et 175 SMS en file effacés. Comptes,
+      carte de garantie, compte connecté Stripe et calendriers conservés.
+      Le compteur de références repart à **CD-100001**. Irréversible : le point
+      de restauration git `restore-2026-08-18-avant-flush-tests` ne couvre que
+      les fichiers, pas les données.
