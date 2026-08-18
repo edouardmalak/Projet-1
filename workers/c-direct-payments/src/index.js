@@ -506,18 +506,35 @@ async function routeSetupConfirm(request, env) {
      implémenté — tout le monde est sur le délai standard de 3h.
 ===================================================================== */
 
+// Valeur de repli SEULEMENT (voir fraisCdirect ci-dessous) : le vrai
+// montant vit en base, dans parametres_plateforme, réglable par l'admin
+// (sql/82). Cette constante ne sert que si la table est injoignable.
 const FRAIS_CDIRECT_DOLLARS = 39;
 const FRAIS_STRIPE_POURCENT = 0.029;
 const FRAIS_STRIPE_FIXE_DOLLARS = 0.30;
+
+/* Frais C-Direct en vigueur, lus en base à chaque autorisation (sql/82).
+   Réglables depuis Administration → « Frais de plateforme » — mis à 0 $
+   pendant la phase de test. En cas d'échec de lecture on retombe sur la
+   constante plutôt que de facturer 0 $ par accident. */
+async function fraisCdirect(env) {
+  try {
+    const [p] = await sbSelect(env, 'parametres_plateforme?id=eq.1&select=frais_cdirect_dollars');
+    const v = Number(p?.frais_cdirect_dollars);
+    return Number.isFinite(v) && v >= 0 ? v : FRAIS_CDIRECT_DOLLARS;
+  } catch (e) {
+    return FRAIS_CDIRECT_DOLLARS;
+  }
+}
 
 // card_price = (locum_rate + cdirect_fee + 0.30) / (1 - 0.029) — voir skill
 // c-direct-payments § Pricing. Le fee Stripe est payé par la PLATEFORME (pas
 // le compte connecté) parce que controller.fees.payer='application' a été
 // forcé à la création du compte Express (tâche #18) ; l'application_fee_amount
 // doit donc couvrir le fee C-Direct ET le fee Stripe pour que le pharmacien
-// reçoive exactement montant_locum et que C-Direct nette bien 39 $.
-function calculerMontantCarte(montantLocum) {
-  return (montantLocum + FRAIS_CDIRECT_DOLLARS + FRAIS_STRIPE_FIXE_DOLLARS) / (1 - FRAIS_STRIPE_POURCENT);
+// reçoive exactement montant_locum et que C-Direct nette bien ses frais.
+function calculerMontantCarte(montantLocum, frais = FRAIS_CDIRECT_DOLLARS) {
+  return (montantLocum + frais + FRAIS_STRIPE_FIXE_DOLLARS) / (1 - FRAIS_STRIPE_POURCENT);
 }
 
 async function estAdmin(env, profilId) {
@@ -671,7 +688,7 @@ async function autoriserCandidature(env, ligne) {
       { compteConnecte: comptePharmacien.stripe_account_id }
     );
 
-    const montantCarte = calculerMontantCarte(montant_locum);
+    const montantCarte = calculerMontantCarte(montant_locum, await fraisCdirect(env));
     const montantCarteCents = Math.round(montantCarte * 100);
     const montantLocumCents = Math.round(montant_locum * 100);
     const fraisApplicationCents = montantCarteCents - montantLocumCents;

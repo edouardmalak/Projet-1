@@ -165,6 +165,34 @@ tbody tr:last-child td{border-bottom:none}
     </form>
   </div>
 
+  <!-- FRAIS DE PLATEFORME (sql/82) — source unique des frais C-Direct par
+       quart. Le Worker de paiement lit cette valeur à chaque autorisation. -->
+  <div class="carte">
+    <div class="sec">Frais de plateforme<small>frais C-Direct facturés par quart</small></div>
+    <form id="f-frais">
+      <div class="grille-regles">
+        <div class="champ"><label>Frais C-Direct par quart ($)</label><input id="frais_cdirect" type="number" step="0.01" min="0" required></div>
+      </div>
+      <div style="font-size:12.5px;color:var(--sourd);margin:-4px 0 12px">
+        Appliqué aux quarts autorisés <b>après</b> l'enregistrement — jamais rétroactif.
+        À <b>0 $</b>, la pharmacie ne paie que le montant du pharmacien plus les frais de carte.
+      </div>
+      <div id="frais-confirm-zone" style="display:none;border:1px solid rgba(229,72,77,.5);background:rgba(229,72,77,.06);border-radius:4px;padding:12px;margin-bottom:12px">
+        <div style="font-size:12.5px;color:var(--rouge);margin-bottom:8px">Frais supérieurs à 100&nbsp;$ par quart — tapez <b id="frais-confirm-attendu">CONFIRMER …</b> pour enregistrer.</div>
+        <input id="frais_confirm_txt" type="text" autocomplete="off" style="width:100%;border:1px solid rgba(229,72,77,.5);border-radius:4px;padding:10px 11px;font-family:'IBM Plex Mono',monospace;font-size:13px">
+      </div>
+      <button class="btn" type="submit" id="btn-frais">Enregistrer les frais</button>
+      <div class="msg" id="msg-frais"></div>
+    </form>
+    <div class="sec" style="margin-top:20px">Historique des changements<small id="n-frais-hist">qui / quand / ancien → nouveau</small></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Quand</th><th>Admin</th><th>Ancien → nouveau</th></tr></thead>
+        <tbody id="t-frais-hist"><tr><td colspan="3" class="vide">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Batch 2 — #8 : AUTO-ACCEPTATION (réglages plateforme) -->
   <div class="carte">
     <div class="sec">Auto-acceptation<small>remplissage instantané — réglages plateforme</small></div>
@@ -443,6 +471,68 @@ function cdToast(texte, ok){
     $('btn-regles').disabled = false;
     if(error){ msg('msg-regles', error.message, false); return; }
     msg('msg-regles','Règles du réseau enregistrées ✓', true);
+  });
+
+  /* ---- Frais de plateforme (sql/82) ----
+     Lecture directe de la table (RLS : admin seulement), écriture
+     UNIQUEMENT via la RPC modifier_frais_plateforme() — le backend exige
+     p_confirmer_frais_eleve=true au-dessus de 100 $ par quart. */
+  async function chargerFrais(){
+    const { data } = await sb.from('parametres_plateforme').select('frais_cdirect_dollars').eq('id',1).maybeSingle();
+    if(data) $('frais_cdirect').value = data.frais_cdirect_dollars;
+  }
+  async function chargerFraisHistorique(){
+    const tb = $('t-frais-hist');
+    const { data, error } = await sb.from('parametres_plateforme_history')
+      .select('modifie_le,modifie_par,ancienne_valeur,nouvelle_valeur')
+      .order('modifie_le', { ascending:false }).limit(100);
+    if(error){ tb.innerHTML = '<tr><td colspan="3" class="vide">'+error.message+'</td></tr>'; return; }
+    if(!data || !data.length){ tb.innerHTML = '<tr><td colspan="3" class="vide">Aucun changement pour l\'instant.</td></tr>'; $('n-frais-hist').textContent = 'aucun changement'; return; }
+    const ids = [...new Set(data.map(h=>h.modifie_par).filter(Boolean))];
+    const noms = new Map();
+    if(ids.length){
+      const { data: ps } = await sb.from('profiles').select('id,prenom,nom,courriel').in('id', ids);
+      (ps||[]).forEach(p=> noms.set(p.id, ((p.prenom||'')+' '+(p.nom||'')).trim() || p.courriel || p.id));
+    }
+    $('n-frais-hist').textContent = data.length + ' changement' + (data.length>1?'s':'');
+    tb.innerHTML = data.map(h=>
+      '<tr><td>'+new Date(h.modifie_le).toLocaleString('fr-CA')+'</td>'
+      +'<td>'+(noms.get(h.modifie_par) || '—')+'</td>'
+      +'<td>'+(h.ancienne_valeur ?? '—')+' $ → '+(h.nouvelle_valeur ?? '—')+' $</td></tr>').join('');
+  }
+  chargerFrais();
+  chargerFraisHistorique();
+
+  $('f-frais').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const frais = parseFloat($('frais_cdirect').value);
+    if(isNaN(frais) || frais < 0){ msg('msg-frais','Montant invalide.', false); return; }
+    const params = { p_frais: frais };
+    if(frais > 100){
+      const attendu = 'CONFIRMER ' + String(frais);
+      if($('frais-confirm-zone').style.display === 'none'){
+        $('frais-confirm-attendu').textContent = attendu;
+        $('frais_confirm_txt').value = '';
+        $('frais-confirm-zone').style.display = '';
+        $('frais_confirm_txt').focus();
+        msg('msg-frais','Frais > 100 $ : tapez la confirmation ci-dessus, puis enregistrez de nouveau.', false);
+        return;
+      }
+      if($('frais_confirm_txt').value.trim() !== attendu){
+        msg('msg-frais','Texte de confirmation incorrect — tapez exactement : ' + attendu, false);
+        return;
+      }
+      params.p_confirmer_frais_eleve = true;
+    } else {
+      $('frais-confirm-zone').style.display = 'none';
+    }
+    $('btn-frais').disabled = true;
+    const { error } = await sb.rpc('modifier_frais_plateforme', params);
+    $('btn-frais').disabled = false;
+    if(error){ msg('msg-frais','Erreur : '+error.message, false); return; }
+    $('frais-confirm-zone').style.display = 'none';
+    msg('msg-frais','Frais de plateforme enregistrés ✓ — appliqués aux prochaines autorisations.', true);
+    chargerFraisHistorique();
   });
 
   /* ---- Batch 2 — #8 : auto-acceptation (réglages plateforme) ----
