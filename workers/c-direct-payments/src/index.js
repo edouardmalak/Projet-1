@@ -903,7 +903,12 @@ async function routeConfirmerPaiement(request, env) {
     await journaliser(env, garantie.id, garantie.statut, 'confirmed_exact', `Annulation Stripe : ${e.message}`);
   }
 
-  await majGarantie(env, garantie.id, { statut: 'confirmed_exact' });
+  /* sql/85 — confirme_par est désormais EXIGÉ par la base pour atteindre
+     confirmed_exact, et doit être le pharmacien du mandat. C'est ce qui
+     rend impossible, au niveau de la base, qu'une pharmacie libère sa
+     propre garantie. u.id est déjà vérifié égal à candidature.pharmacien_id
+     plus haut dans cette route. */
+  await majGarantie(env, garantie.id, { statut: 'confirmed_exact', confirme_par: u.id });
   await journaliser(env, garantie.id, garantie.statut, 'confirmed_exact', 'Confirmé par le pharmacien : reçu, montant exact');
   return json({ ok: true, statut: 'confirmed_exact' });
 }
