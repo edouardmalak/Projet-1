@@ -23,7 +23,8 @@ A clean static layer is necessary but **not sufficient** to declare Phase 1 PASS
 | Task | What | Result |
 |---|---|---|
 | 1.1 static | RLS + policy definitions across all 47 tables | **PASS** (see §2) |
-| 1.1 empirical | Adversarial run of the access matrix | **PENDING** — script ready, needs §7 |
+| 1.1 empirical — **anon layer** | 47 tables + 9 RPCs probed live, no session | **PASS — 0 leaks** (see §2b) |
+| 1.1 empirical — cross-user layer | Locum A↔B, Pharmacy P↔Q | **PENDING** — needs 4 test accounts (§7) |
 | 1.2 | Storage bucket audit | **PASS with 1 item to confirm live** (§3) |
 | 1.3 | Public-asset sweep (/media/911/ class) | **FAIL → FIXED & VERIFIED 19 Aug** (§4) |
 | 1.4 | Secret hygiene, full git history (423 commits) | **PASS** (§5) |
@@ -112,6 +113,57 @@ Per-table inventory (RLS = enabled; Pol = policy count; Cmds = commands covered)
 | Any | four-state relations of another pair | DENIED | scoped ✓ | PENDING |
 
 "Static read ✓" = the policy definition scopes it correctly. "PENDING" = not yet proven against live data. The script tests every cell.
+
+---
+
+## 2b. Task 1.1 — EMPIRICAL anon layer (run live, 19 Aug 2026)
+
+Run against production (`fenlujjozanerbzyypjt.supabase.co`) with **no session**, using only the public publishable key — i.e. exactly what any stranger on the internet can do. Read-only; nothing was written. This is the layer that needs no test accounts, and it covers the exact class of both prior incidents.
+
+**Result: 0 leaks / 47 tables.**
+
+| Outcome | Count | Detail |
+|---|---|---|
+| DENIED (401, fail-closed) | 44 | Query aborts on `permission denied for function est_admin` — anon can't even evaluate the policy |
+| Returned data to anon | **1** | `meteo_cache` only — the weather cache, public by design, no PII |
+| 200 but 0 rows (RLS filtered) | 2 | `fsa_centroides` (policy = `auth.role() = 'authenticated'`), `articles` → see observation below |
+
+The API schema root (`/rest/v1/`) also returns **401** to anon — the OpenAPI document is not exposed, so an attacker cannot enumerate the table list.
+
+### RPC probes — historical leaks re-tested live
+
+| Function | Prior incident | Anon result | Verdict |
+|---|---|---|---|
+| `get_contrats_ouverts` | sql/73 leak | 401 permission denied | ✅ CLOSED |
+| `get_contrat_fiche(p_ref)` | sql/73 leak | 401 permission denied | ✅ CLOSED |
+| `aa_horaire_libre` | sql/70 gap | 401 permission denied | ✅ CLOSED |
+| `get_stats_pharmacien` | sql/63 leak | 401 permission denied | ✅ CLOSED |
+| `get_note_profil` | sql/63 leak | 401 permission denied | ✅ CLOSED |
+| `supprimer_mon_compte` | destructive | 401 permission denied | ✅ DENIED |
+| `frais_plateforme` | anon by design | 200 → `0` | ⚠ see finding |
+| `reglages_paiement` | anon by design | 200 → `{frais_cdirect_dollars: 0, interac_actif: false}` | ⚠ see finding |
+
+**The sql/63 and sql/73 fixes are confirmed effective in production, not just in the migration files.** That was the single highest-severity item in this codebase's history.
+
+### 🔴 FINDING P0 (business, not security) — platform fee is 0 in production
+
+`frais_plateforme()` returns **0** and `reglages_paiement()` confirms `frais_cdirect_dollars: 0` on the **live** database right now.
+
+`sql/82` seeds the row at `values (1, 0)` with `on conflict do nothing`, so 0 is the seeded default and it has never been raised. Combined with the 18 Aug live payment test, the fee has simply never been set to 39.
+
+**Impact: if the site launched today, every shift would be billed $0 in platform fees.** This is not an RLS issue and it does not block Phase 1 — but it is launch-blocking and it is now confirmed with production evidence rather than inference. It belongs on the Bloc 5 pre-launch checklist as a verified-with-evidence item.
+
+Fix is a value change in the admin settings (or one UPDATE on `parametres_plateforme`), not code. **Not actioned — payment-adjacent and outside Phase 1 scope.**
+
+### Observation — the dispensaire is invisible to logged-out visitors
+
+`articles` policy is `publie = true or public.est_admin()`. Because anon lacks EXECUTE on `est_admin()`, the whole predicate errors and anon gets 401 — so **published articles are unreadable by logged-out visitors and search engines**, even though `publie = true` reads as intended-public.
+
+Fail-closed, so not a security problem. But if the dispensaire is meant to be a public/SEO surface, it does not currently work that way. This interacts directly with the Bloc 5 item "décision dispensaire : visible ou caché au lancement". Flagged for that decision — **not changed** (the fix is a policy restructure, not granting anon rights to `est_admin`, and it is a product call).
+
+### Still pending in this layer
+
+Cross-user tests (Locum A reading Locum B, Pharmacy P reading Pharmacy Q, forbidden UPDATE/DELETE) require the four test accounts. The table list also still needs regenerating from the live schema via `list_public_tables()` — it returned 404, confirming the helper SQL has not been run yet. The 47 tables above come from the migrations; the live-schema regeneration guards against a table created outside those files.
 
 ---
 
