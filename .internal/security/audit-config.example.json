@@ -1,0 +1,39 @@
+{
+  "_comment": "Copy to audit-config.json (gitignored) and fill in. Create these four users on the LIVE project first. Row ids below are concrete targets the attackers try to reach.",
+
+  "locumA":   { "email": "audit.locumA@example.com",   "password": "REPLACE_ME" },
+  "locumB":   { "email": "audit.locumB@example.com",   "password": "REPLACE_ME" },
+  "pharmacyP":{ "email": "audit.pharmP@example.com",   "password": "REPLACE_ME" },
+  "pharmacyQ":{ "email": "audit.pharmQ@example.com",   "password": "REPLACE_ME" },
+
+  "public_tables": ["meteo_cache", "fsa_centroides", "articles"],
+
+  "locumB_owned": [
+    ["profiles", "id", "LOCUM_B_UUID"],
+    ["disponibilites", "pharmacien_id", "LOCUM_B_UUID"],
+    ["messages", "expediteur_id", "LOCUM_B_UUID"],
+    ["candidatures", "pharmacien_id", "LOCUM_B_UUID"],
+    ["stripe_comptes", "profil_id", "LOCUM_B_UUID"],
+    ["verification_interac", "profil_id", "LOCUM_B_UUID"]
+  ],
+
+  "pharmacyQ_owned": [
+    ["contrats", "pharmacie_id", "PHARMACY_Q_UUID"],
+    ["factures", "pharmacie_id", "PHARMACY_Q_UUID"],
+    ["locum_pharmacy_relations", "pharmacie_id", "PHARMACY_Q_UUID"],
+    ["exclusions", "pharmacie_id", "PHARMACY_Q_UUID"]
+  ],
+
+  "locumA_forbidden_updates": [
+    ["profiles", "id", "LOCUM_B_UUID", { "nom": "HACKED" }],
+    ["contrats", "id", "SOME_CONTRACT_UUID", { "statut": "annule" }]
+  ],
+
+  "protected_rpcs": [
+    ["get_contrats_ouverts", {}],
+    ["get_contrat_fiche", { "p_ref": "CD-100001" }],
+    ["aa_horaire_libre", { "p_locum": "LOCUM_B_UUID", "p_shift": "SOME_SHIFT_UUID" }],
+    ["frais_plateforme", {}],
+    ["reglages_paiement", {}]
+  ]
+}
