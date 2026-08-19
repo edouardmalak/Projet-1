@@ -1,0 +1,18 @@
+name: Security asset guard
+# Fails the build if an internal/sensitive file would ship publicly
+# (the /media/911/ class of leak). Runs on every push and PR to main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  asset-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run asset guard
+        run: node .github/scripts/asset-guard.mjs
