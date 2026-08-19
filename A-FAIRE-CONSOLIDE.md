@@ -470,3 +470,50 @@ Migration `sql/83-corrections-garanties.sql` exécutée, Worker redéployé.
       equal to the original amount »). Le surplus est enregistré dans
       `supplement_du_cents` et doit être réglé à part. À décider : facturation
       séparée, ou autorisation avec marge dès le départ.
+
+## 🧑 DÉCISION EN SUSPENS — le virement instantané ne couvre PAS Desjardins
+
+Vérifié le 2026-08-18 sur la liste officielle de Stripe
+(docs.stripe.com/payouts/instant-payouts-banks, Canada). Stripe écrit noir sur
+blanc : « **Only the listed institutions support Instant Payouts.** »
+
+**Toute la liste canadienne tient en 10 institutions :**
+
+| Toutes les cartes de débit | Certaines cartes seulement |
+|---|---|
+| Tangerine | CIBC |
+| Banque Scotia | RBC |
+| ATB Financial | TD |
+| ICICI Bank Canada | Servus Credit Union |
+| Windsor Family Credit Union | |
+
+**Desjardins n'y est pas. Ni la Banque Nationale, ni BMO, ni la Laurentienne.**
+Recherché sous toutes les variantes (Caisse, Desj, Fédération, Mouvement,
+Québec, Banque) — aucun résultat. ATB et Servus sont albertaines, Windsor
+Family est ontarienne.
+
+Pour un marché de pharmaciens **québécois**, c'est un trou sérieux : Desjardins
+représente environ la moitié du marché de détail au Québec. Un pharmacien qui
+fait affaire avec une caisse **ne peut PAS recevoir de virement instantané**, et
+aucun contournement n'existe chez Stripe. Rappel : au Canada l'instantané ne va
+qu'à une **carte de débit**, jamais à un compte bancaire.
+
+**L'ironie à garder en tête :** Interac atteignait TOUTES les banques
+canadiennes, Desjardins compris, en ~30 minutes. Il a été éteint (sql/84) en
+partie sur l'idée que carte + virement instantané serait strictement meilleur.
+Ce n'est vrai que pour les pharmaciens des bonnes institutions.
+
+**Aucune urgence technique :** `verserInstantanement()` tente l'instantané,
+retombe sur le versement standard et journalise la raison. Un pharmacien
+Desjardins est payé au calendrier normal, rien ne casse. Et Interac dort
+derrière un interrupteur admin, code intact — le rallumer est un clic.
+
+**Options :** (a) inviter les pharmaciens à ajouter une carte Tangerine ou
+Scotia, (b) rallumer Interac pour les pharmaciens Desjardins, (c) assumer deux
+vitesses et le dire clairement, (d) d'abord mesurer où les pharmaciens font
+réellement affaire.
+
+**Recommandation :** ne pas mettre « toujours instantané » en titre. Mettre
+**paiement garanti** — c'est universel, et c'est précisément ce que le
+concurrent refuse par écrit. Afficher à chaque pharmacien si SA carte est
+admissible, grâce au cache `paiement_instantane_pret` rempli dès T-24h.
