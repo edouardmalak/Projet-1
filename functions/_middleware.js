@@ -26,7 +26,7 @@ const PREFIXES_BLOQUES = [
   '/sql/',        // migrations : schéma + RLS + corps des fonctions
   '/workers/',    // code source des Workers (SMS, assistant)
   '/.git/',       // par précaution (Pages l'exclut déjà)
-  '/media/911/',  // documents internes (handoffs, specs, promo non publiée)
+  '/.internal/',  // sources internes (refonte, specs, promo) — dossier en point : Cloudflare Pages ne le déploie jamais ; bloqué ici en défense en profondeur
 ];
 
 const EXTENSIONS_BLOQUEES = [
