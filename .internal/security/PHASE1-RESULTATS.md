@@ -35,7 +35,7 @@ No leak of the sql/73 class (anon-executable SECURITY DEFINER RPC) survives in t
 
 ## 2. Task 1.1 — Table RLS + policy inventory (static)
 
-**Table list source:** the 93 committed migrations (`sql/*.sql`). The *authoritative* list must come from the live schema — the empirical run regenerates it via `list_public_tables()` so a table created outside these files can't be skipped. From the migrations, **47 base tables**, **all with `ENABLE ROW LEVEL SECURITY`**. Zero tables created without RLS.
+**Table list source:** the 93 committed migrations (`sql/*.sql`) — **and verified against the live schema on 19 Aug 2026** (§2c). **47 base tables**, **all with `ENABLE ROW LEVEL SECURITY`**. Zero tables created without RLS.
 
 Owner-scoping spot-checked on the highest-sensitivity tables and confirmed correct:
 
@@ -163,7 +163,27 @@ Fail-closed, so not a security problem. But if the dispensaire is meant to be a 
 
 ### Still pending in this layer
 
-Cross-user tests (Locum A reading Locum B, Pharmacy P reading Pharmacy Q, forbidden UPDATE/DELETE) require the four test accounts. The table list also still needs regenerating from the live schema via `list_public_tables()` — it returned 404, confirming the helper SQL has not been run yet. The 47 tables above come from the migrations; the live-schema regeneration guards against a table created outside those files.
+Cross-user tests (Locum A reading Locum B, Pharmacy P reading Pharmacy Q, forbidden UPDATE/DELETE) require the four test accounts.
+
+---
+
+## 2c. Live-schema verification — no shadow tables (19 Aug 2026)
+
+The handoff requires the table list to come from the running database, never from memory or docs, so a table created outside the migration files cannot be silently skipped. Robert ran a `pg_class` enumeration against production and the output was diffed against the tested list:
+
+| Check | Result |
+|---|---|
+| Tables in live `public` schema | 47 |
+| Tables covered by the anon sweep | 47 |
+| In live but never tested (**coverage gap**) | **0** |
+| Tested but absent from live (stale) | **0** |
+
+**Exact match.** Two conclusions:
+
+1. **The anon sweep in §2b covered 100% of the live schema**, not merely 100% of what the migrations describe. The "0 leaks" result is therefore complete, not partial.
+2. **No shadow tables exist.** Every table in production was created through a committed, reviewable migration — nothing was added by hand in the dashboard. This matters beyond Phase 1: it means the Phase 2 migration gate (RLS + deny-by-default in the same migration, CI grep on `TO anon`) is sufficient to govern the whole schema. If hand-made tables existed, that gate would have blind spots.
+
+This also removes the need for the `list_public_tables()` helper — a plain read-only query in the SQL Editor did the job without adding a new SECURITY DEFINER function to the database. The helper file remains in `.internal/security/` unused; the standing enumeration method is the query, which is strictly less attack surface.
 
 ---
 
