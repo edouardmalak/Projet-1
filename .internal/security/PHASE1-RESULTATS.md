@@ -25,7 +25,7 @@ A clean static layer is necessary but **not sufficient** to declare Phase 1 PASS
 | 1.1 static | RLS + policy definitions across all 47 tables | **PASS** (see §2) |
 | 1.1 empirical — **anon layer** | 47 tables + 9 RPCs probed live, no session | **PASS — 0 leaks** (see §2b) |
 | 1.1 empirical — cross-user layer | Locum A↔B, Pharmacy P↔Q | **PENDING** — needs 4 test accounts (§7) |
-| 1.2 | Storage bucket audit | **PASS with 1 item to confirm live** (§3) |
+| 1.2 | Storage bucket audit | **1 MEDIUM finding — fix identified** (§3) |
 | 1.3 | Public-asset sweep (/media/911/ class) | **FAIL → FIXED & VERIFIED 19 Aug** (§4) |
 | 1.4 | Secret hygiene, full git history (423 commits) | **PASS** (§5) |
 
@@ -194,7 +194,32 @@ One bucket: **`avatars`**, `public = true` (sql/65).
 - **Read:** public — by design, so a pharmacy/admin can render a locum's optional photo. Acceptable per the handoff's "a public avatar may be acceptable — decide and document." **Decision to record:** professional headshots the user opted to upload; nothing sensitive. → keep public.
 - **Write / update / delete:** owner-scoped — first path segment must equal `auth.uid()`. A user can only write their own folder. ✓
 - **Path guessability:** paths are `<uuid>/photo.<ext>`. UUIDs aren't sequential, so URL-guessing another user's object is impractical. ✓ (No need to switch to UUID names — already effectively UUID-scoped.)
-- **⚠ Confirm live (bucket-level, not in the migration):** the handoff wants uploads "constrained by content-type and size." The RLS policy constrains the *path* but not MIME type or file size. Check in Supabase → Storage → avatars → settings that an allowed-MIME-types list and a max file size are set. If unset, an authenticated user could upload a large or non-image file into their own folder. Low severity (own folder, public-read image bucket), but it's the one open item here.
+### 🟠 FINDING (Medium) — upload validation is client-side only
+
+**Confirmed live 19 Aug 2026** (dashboard): bucket `avatars` has **File size limit: Unset (50 MB)** and **Allowed MIME types: Any**. Policies: 4 (matches sql/65).
+
+The app's protections all run in the browser and are trivially bypassable:
+
+| Control | Where | Bypassable? |
+|---|---|---|
+| `accept="image/png,image/jpeg,image/webp"` | `profil.html:149` — file-picker hint | Yes — drag-drop, DevTools, or direct API call |
+| `if (f.size > 2*1024*1024)` reject | `profil.html` — JS check | Yes — client-side only |
+| `contentType: f.type` | `profil.html:361` | Attacker-controlled by definition |
+| Path must start with own uid | RLS policy (sql/65) | **No** — genuine server-side control ✓ |
+
+So any authenticated user can upload **any file type, up to 50 MB, with a content type of their choosing**, into a **public-read** bucket — and an unlimited number of files, since the policy pins only the first path segment (`<uid>/…`), not the filename `photo.<ext>` the app happens to use.
+
+**Impact:** not a confidentiality breach (no cross-user read is possible). The risks are (a) hosting malware or phishing pages on infrastructure associated with C-Direct, (b) stored XSS on the storage origin via SVG-with-script or `text/html` — a different origin from `cdirect.quebec`, so app sessions are not directly reachable, but the brand and the origin are, and (c) uncapped storage cost from unlimited 50 MB writes.
+
+This is precisely handoff **Task 2.3**: "validate content-type server-side, cap size, never serve user uploads from a path that allows HTML execution."
+
+**Fix (dashboard, no code):** set file size limit to **2 MB** and allowed MIME types to `image/png,image/jpeg,image/webp`.
+
+- 2 MB, not 5 MB as first suggested — it matches the limit `profil.html` already promises the user, so the server enforces the UI's own contract. (An earlier 5 MB suggestion was made before reading the upload code; it would have allowed files the UI claims to reject.)
+- **SVG deliberately excluded.** `image/svg+xml` is an image format that can carry executable script — the one image type that is dangerous in a public bucket.
+- Restricting to these three types also closes the "path that allows HTML execution" bullet, since HTML can no longer be stored at all.
+
+Existing avatars are unaffected; the constraint applies to future uploads. **Status: awaiting Robert's dashboard change.**
 
 ---
 
