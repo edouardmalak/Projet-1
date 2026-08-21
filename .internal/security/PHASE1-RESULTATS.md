@@ -24,7 +24,7 @@ A clean static layer is necessary but **not sufficient** to declare Phase 1 PASS
 |---|---|---|
 | 1.1 static | RLS + policy definitions across all 47 tables | **PASS** (see §2) |
 | 1.1 empirical — **anon layer** | 47 tables + 9 RPCs probed live, no session | **PASS — 0 leaks** (see §2b) |
-| 1.1 empirical — cross-user layer | Locum A↔B, Pharmacy P↔Q | **PENDING** — needs 4 test accounts (§7) |
+| 1.1 empirical — cross-user layer | Locum A↔B, Pharmacy P↔Q | **BLOCKED** — auth flow broken, see §2d |
 | 1.2 | Storage bucket audit | **1 MEDIUM finding — fix identified** (§3) |
 | 1.3 | Public-asset sweep (/media/911/ class) | **FAIL → FIXED & VERIFIED 19 Aug** (§4) |
 | 1.4 | Secret hygiene, full git history (423 commits) | **PASS** (§5) |
@@ -164,6 +164,57 @@ Fail-closed, so not a security problem. But if the dispensaire is meant to be a 
 ### Still pending in this layer
 
 Cross-user tests (Locum A reading Locum B, Pharmacy P reading Pharmacy Q, forbidden UPDATE/DELETE) require the four test accounts.
+
+---
+
+## 2d. 🔴 FINDING P0 — password reset is broken on the live domain
+
+Discovered 21 Aug 2026 while trying to obtain a test session. **Not found by code review — the code is correct. It only surfaced by actually running the flow.**
+
+### Symptom
+Requesting a password reset from `cdirect.quebec` sends the email, but clicking the link returns the user to the site homepage with no reset form. The account stays locked out.
+
+### Root cause
+Supabase → Authentication → URL Configuration:
+
+- **Site URL:** `https://c-direct.ca`
+- **Redirect URL allowlist:** `https://projet-1-1yi.pages.dev/**`, `https://c-direct.ca/**`, `https://www.c-direct.ca/**`
+
+**`cdirect.quebec` is absent from the allowlist** — yet that is the domain users actually land on.
+
+`acces.html` correctly calls:
+
+```js
+sb.auth.resetPasswordForEmail(c, { redirectTo: location.origin + location.pathname + '?mode=reset' })
+```
+
+which on the live domain evaluates to `https://cdirect.quebec/acces?mode=reset`. Supabase checks that against the allowlist, does not find it, **silently discards it**, and falls back to the Site URL — the homepage. The recovery token arrives in the fragment of a page that has no `PASSWORD_RECOVERY` handler (`acces.html` has one; `index.html` does not), so nothing happens.
+
+The application code needs no change. `acces.html` builds the right URL, and line 806 handles the recovery event correctly.
+
+### Impact
+**Any real user who forgets their password cannot recover their account.** Launch-blocking. The same allowlist governs every auth redirect — email confirmation, magic links, OAuth callbacks — so anything relying on `redirectTo` from `cdirect.quebec` is affected.
+
+### Fix
+Add to the Redirect URL allowlist:
+
+```
+https://cdirect.quebec/**
+https://www.cdirect.quebec/**
+```
+
+**Status: attempted, unverified.** Robert reported the problem persisting; the dashboard session expired before it could be confirmed the entry was saved. Re-verify, then test the flow end to end.
+
+### Underlying inconsistency to settle
+The Site URL is `c-direct.ca` but live traffic resolves to `cdirect.quebec`. Because Site URL is the fallback for *every* auth email, it should be whichever domain users are actually meant to be on. Decide the canonical domain before launch and align Site URL, the allowlist, and the redirect between the two domains.
+
+### Why the cross-user test is blocked
+The remaining matrix cells (Locum A ↔ Locum B, Pharmacy P ↔ Pharmacy Q, forbidden UPDATE/DELETE) need authenticated sessions. Four test accounts were created, but:
+
+- `locumA` — confirmed, but the password is unknown and reset is broken by the above
+- `locumB`, `pharmP`, `pharmQ` — created, confirmation emails sent but never opened, so sign-in is refused
+
+Static analysis shows every relevant policy is correctly owner-scoped on `auth.uid()` (§2), and the anon layer passes completely (§2b). What remains unproven is the *behaviour* of those policies against live data. **Resume once the auth flow is fixed.**
 
 ---
 
@@ -313,12 +364,32 @@ Then the matrix cells flip from PENDING to PASS/FAIL and Phase 1 is truly closed
 
 ---
 
-## 9. ⛔ STOP — Gate 1
+## 9. ⛔ STOP — Gate 1 — status at pause (21 Aug 2026)
 
-Per the plan, I stop here for your review before any Block 2 (auto-accept) work. Decisions I need from you:
+Robert paused Phase 1 here. Block 2 (auto-accept) has NOT started and does not start until the items below are settled.
 
-1. **`/media/911/`** — move (recommended), remove, or keep-as-is? (§4)
-2. **Empirical run** — provide the four test users + choose run path (a) or (b)? (§7)
-3. **Avatar bucket** — confirm MIME/size limits are set in the dashboard, or tell me to leave it. (§3)
+### Closed during this gate
 
-Nothing else proceeds until you say so.
+| Item | Outcome |
+|---|---|
+| `/media/911/` internal docs shipping publicly | ✅ Fixed — moved to `.internal/`, middleware updated, CI guard added (§4) |
+| Live-schema drift check | ✅ 47/47 exact match, no shadow tables (§2c) |
+| Anonymous access, every table + RPC | ✅ 0 leaks (§2b) |
+| Secret scan, 423 commits | ✅ Clean (§5) |
+
+### Open — action required
+
+| # | Item | Owner | Severity |
+|---|---|---|---|
+| 1 | **Platform fee = 0 in production.** Every shift would bill $0. Set to 39 before launch. | Robert (payment-adjacent, out of audit scope) | 🔴 Launch-blocking |
+| 2 | **Password reset broken** on `cdirect.quebec` — add the two redirect URLs, then verify end to end (§2d) | Robert (dashboard) | 🔴 Launch-blocking |
+| 3 | **Canonical domain** — `c-direct.ca` vs `cdirect.quebec`; align Site URL + allowlist (§2d) | Robert (decision) | 🟠 |
+| 4 | **Avatar bucket** — run `sql/91` (drafted, not yet applied): removes anon listing, adds 2 MB + 3 image types (§3) | Claude, on Robert's go-ahead | 🟠 Medium |
+| 5 | **Cross-user matrix** — blocked until a test session can be obtained (§2d) | Resume after #2 | — |
+| 6 | **Dispensaire invisible** to logged-out visitors and search engines — product decision (§2b) | Robert (decision) | 🟡 |
+
+### To resume
+
+Once #2 is fixed: log in as each of the four test accounts in a **normal** (non-Incognito) browser window, and the cross-user matrix can be completed in minutes. Then Phase 1 closes and Gate 1 can be signed off.
+
+**Note on tooling:** Chrome's Incognito windows are sealed from the automation tools — a session created there is invisible. Test logins must happen in a normal window.
