@@ -390,6 +390,12 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:44px 
  </div>
 </main>
 
+<!-- Le fragment d'URL doit etre lu AVANT que supabase-js ne demarre : avec
+     detectSessionInUrl (actif par defaut), la librairie consomme puis EFFACE
+     le #... des son initialisation. Un lien de courriel perime arrive
+     justement sous cette forme (#error_code=otp_expired) ; sans cette
+     capture, l'erreur disparait avant qu'on puisse l'afficher. -->
+<script>window.CD_HASH_ARRIVEE = location.hash || '';</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js?v=20260723b"></script>
 <script src="auth.js?v=20260812a"></script>
@@ -810,7 +816,7 @@ async function apresConnexion(){
      redirection, ce qui permet de proposer la bonne suite (nouveau lien de
      réinitialisation vs retour à la connexion, où le bouton « Renvoyer le
      courriel » existe déjà). */
-  const errHash = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+  const errHash = new URLSearchParams((window.CD_HASH_ARRIVEE || location.hash || '').replace(/^#/, ''));
   const errCode = errHash.get('error_code');
   if (errCode) {
     /* on nettoie l'URL pour qu'un rafraîchissement ne réaffiche pas l'erreur */
