@@ -802,6 +802,38 @@ async function apresConnexion(){
 
 /* ---------- amorçage ---------- */
 (async function(){
+  /* LIEN DE COURRIEL PÉRIMÉ OU DÉJÀ UTILISÉ.
+     Supabase ne renvoie pas l'erreur dans la query mais dans le FRAGMENT
+     (#error=…&error_code=otp_expired&error_description=…). Sans ce bloc,
+     l'usager atterrit sur un formulaire muet : un lien périmé devient alors
+     indistinguable d'une panne du site. Le paramètre ?mode= survit à la
+     redirection, ce qui permet de proposer la bonne suite (nouveau lien de
+     réinitialisation vs retour à la connexion, où le bouton « Renvoyer le
+     courriel » existe déjà). */
+  const errHash = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+  const errCode = errHash.get('error_code');
+  if (errCode) {
+    /* on nettoie l'URL pour qu'un rafraîchissement ne réaffiche pas l'erreur */
+    history.replaceState(null, '', location.pathname + location.search);
+    const expire = errCode === 'otp_expired';
+    const suiteReset = (mode === 'reset' || mode === 'oubli');
+    const cible = suiteReset ? '?mode=oubli' : '?mode=conn';
+    const libelle = suiteReset
+      ? cdT('Demander un nouveau lien', 'Request a new link')
+      : cdT('Retour à la connexion', 'Back to sign in');
+    succes(
+      expire ? cdT('LIEN EXPIRÉ.', 'LINK EXPIRED.')
+             : cdT('LIEN INVALIDE.', 'INVALID LINK.'),
+      (expire
+        ? cdT("Ce lien a déjà servi ou il est trop vieux. Les liens envoyés par courriel sont à usage unique et expirent rapidement — c'est voulu, pour votre sécurité. Rien n'est brisé&nbsp;: demandez-en simplement un nouveau.",
+              'This link was already used, or it is too old. Emailed links are single-use and expire quickly — that is deliberate, for your security. Nothing is broken: simply request a new one.')
+        : cdT("Ce lien n'est pas valide. Demandez-en un nouveau.",
+              'This link is not valid. Please request a new one.'))
+      + '<br><br><button class="btn" onclick="location.href=\'' + cible + '\'">' + libelle + '</button>'
+    );
+    return;
+  }
+
   /* lien de réinitialisation : Supabase émet PASSWORD_RECOVERY */
   sb.auth.onAuthStateChange((evt)=>{ if(evt==='PASSWORD_RECOVERY'){ mode='reset'; render(); } });
 
