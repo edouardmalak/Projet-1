@@ -517,3 +517,80 @@ réellement affaire.
 **paiement garanti** — c'est universel, et c'est précisément ce que le
 concurrent refuse par écrit. Afficher à chaque pharmacien si SA carte est
 admissible, grâce au cache `paiement_instantane_pret` rempli dès T-24h.
+
+---
+
+## 🔒 Audit de sécurité — Bloc 1 / Phase 1 — mis en pause au Gate 1 (2026-08-21)
+
+Rapport complet : `.internal/security/PHASE1-RESULTATS.md` (dans le dépôt, jamais déployé).
+Le Bloc 2 (auto-acceptation) NE DÉMARRE PAS tant que ces points ne sont pas réglés.
+
+### 🔴 Bloquant pour le lancement
+
+1. 🧑 **Les frais de plateforme sont à 0 EN PRODUCTION.** Vérifié en direct le
+   2026-08-19 : `frais_plateforme()` renvoie `0` et `reglages_paiement()` confirme
+   `frais_cdirect_dollars: 0`. `sql/82` sème la valeur à 0 (`on conflict do nothing`)
+   et personne ne l'a jamais remontée. **Si le site lançait aujourd'hui, chaque quart
+   serait facturé 0 $.** À remettre à **39** avant le lancement (réglage admin ou un
+   simple UPDATE sur `parametres_plateforme`). Hors périmètre de l'audit : touche au
+   paiement, donc laissé à Robert.
+
+2. 🧑 **La réinitialisation de mot de passe est CASSÉE sur `cdirect.quebec`.**
+   Le domaine est absent de la liste blanche des URL de redirection Supabase
+   (seuls `c-direct.ca`, `www.c-direct.ca` et `pages.dev` y figurent). Supabase
+   ignore alors silencieusement `redirectTo` et retombe sur le Site URL : le jeton
+   de récupération atterrit sur l'accueil, qui ne le traite pas. **Tout usager réel
+   qui oublie son mot de passe reste bloqué dehors.**
+   Le code d'`acces.html` est correct — c'est de la configuration.
+   → Ajouter dans Supabase → Authentication → URL Configuration → Redirect URLs :
+   `https://cdirect.quebec/**` et `https://www.cdirect.quebec/**`, puis **tester le
+   flux de bout en bout**. (Tentative faite le 2026-08-21, non confirmée : la session
+   du tableau de bord a expiré avant vérification.)
+
+### 🟠 À trancher / à appliquer
+
+3. 🧑 **Domaine canonique : `c-direct.ca` ou `cdirect.quebec` ?** Le Site URL dit
+   `c-direct.ca` mais le trafic atterrit sur `cdirect.quebec`. Ce Site URL sert de
+   repli à TOUS les courriels d'authentification. À aligner avant le lancement.
+
+4. 🤖 **`sql/91` — durcissement du bucket `avatars`** (rédigé, EN ATTENTE, non appliqué,
+   déposé en `.internal/security/91-avatars-durcissement.sql.EN-ATTENTE`). Deux correctifs :
+   · **listage anonyme** : vérifié en direct le 2026-08-19, `POST /storage/v1/object/list/avatars`
+     répond **200 sans aucune session**. Le bucket est vide aujourd'hui, mais dès qu'un locum
+     dépose une photo, n'importe qui peut énumérer les noms de dossiers = les UUID des usagers.
+   · **téléversements non validés côté serveur** : le bucket accepte « Any » jusqu'à 50 Mo,
+     alors que `profil.html` promet 3 types d'images et 2 Mo — ces contrôles sont dans le
+     navigateur donc contournables. Correctif : 2 Mo + `image/png,image/jpeg,image/webp`
+     (SVG volontairement exclu : peut porter du script).
+   → À appliquer APRÈS un téléversement de photo réussi, pour prouver avant/après que
+   l'affichage des avatars n'est pas cassé.
+
+5. 🧑 **Décision dispensaire — il est invisible aux visiteurs déconnectés.** La politique
+   `articles` est `publie = true or est_admin()` ; comme `anon` ne peut pas exécuter
+   `est_admin()`, tout le prédicat échoue et un visiteur non connecté reçoit 401. Les
+   articles publiés ne sont donc lisibles ni par le public ni par Google. Sûr (fermé par
+   défaut) mais probablement pas l'intention si le dispensaire doit servir au référencement.
+   Se règle en même temps que la décision « dispensaire visible ou caché au lancement ».
+
+### ⏸️ Bloqué — reprend dès que le point 2 est réglé
+
+6. **Matrice croisée de l'audit** (Locum A lit Locum B, Pharmacie P lit Pharmacie Q,
+   UPDATE/DELETE interdits). 4 comptes de test créés le 2026-08-21 :
+   `edouardmalak+locumA/locumB/pharmP/pharmQ@gmail.com`.
+   · `locumA` : courriel confirmé, mot de passe inconnu — réinitialisation cassée (point 2)
+   · les 3 autres : liens de confirmation jamais ouverts, connexion refusée
+   → Une fois le point 2 réglé : ouvrir les 4 sessions dans une fenêtre Chrome **normale**
+   (jamais en navigation privée : les outils n'y ont aucun accès), et la matrice se termine
+   en quelques minutes. Phase 1 se clôt alors et le Gate 1 peut être signé.
+
+### ✅ Réglé pendant ce gate (pour mémoire, aucune action)
+
+- `/media/911/` (handoff de refonte, 845 Ko) était **servi publiquement** → déplacé dans
+  `.internal/`, dossier en point que Cloudflare Pages ne déploie jamais + garde CI qui fait
+  échouer le build si un document interne réatterrit à un chemin public. Commit `c4674cc`.
+- **Accès anonyme : 47 tables sur 47, ZÉRO fuite.** Liste des tables vérifiée contre le schéma
+  live (correspondance exacte, aucune table fantôme créée à la main hors migration).
+- **Les fuites historiques `sql/63` et `sql/73` sont confirmées FERMÉES en production**
+  (`get_contrats_ouverts`, `get_contrat_fiche`, `aa_horaire_libre`, `get_stats_pharmacien`,
+  `get_note_profil` : 401 pour un appelant anonyme).
+- **Aucun secret n'a jamais été commité** sur les 423 commits de l'historique.
