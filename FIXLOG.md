@@ -102,10 +102,22 @@ expirent (~1 h pour la récupération, ~24 h pour la confirmation). Les courriel
 dataient de la veille. Rien n'était cassé — mais le message d'erreur brut, en anglais, sur
 une page d'accueil sans explication, est indistinguable d'une panne pour un usager.
 
-**À considérer avant le lancement.** Afficher un message lisible et bilingue quand
-`error_code=otp_expired` apparaît dans l'URL, avec un bouton « Renvoyer le lien ». Sinon
-chaque usager qui clique un vieux courriel croira que le site est brisé.
-(Non corrigé — hors périmètre de l'audit, à décider.)
+**CORRIGÉ le 2026-08-22** (`acces.html`, commits `efe7739` + `fd54244`). Écran
+« LIEN EXPIRÉ » bilingue, avec la bonne suite selon `?mode=` : « Demander un nouveau lien »
+pour une réinitialisation, « Retour à la connexion » pour une confirmation (le bouton
+« Renvoyer le courriel » y existe déjà). L'URL est nettoyée pour qu'un rafraîchissement ne
+réaffiche pas l'erreur.
+
+**Piège rencontré, à retenir.** Le premier correctif ne se déclenchait jamais : `supabase-js`,
+avec `detectSessionInUrl` actif par défaut, **consomme et efface le fragment `#…` dès son
+initialisation** — `location.hash` était donc déjà vide quand l'amorçage le lisait. Le fichier
+déployé contenait bel et bien le correctif et l'écran ne s'affichait pas pour autant. Solution :
+capturer `window.CD_HASH_ARRIVEE = location.hash` dans une ligne du `<head>` placée AVANT le
+script CDN de Supabase. Toute lecture future du fragment sur une page qui charge Supabase doit
+faire pareil.
+
+**Vérifié en production**, cache contourné, sur les quatre chemins : FR + `mode=reset`,
+EN + `mode=conn`, et les pages normales `mode=conn` / `mode=oubli` inchangées, sans erreur console.
 
 ## 3. 🟡 Confirmation de compte : la session n'est pas conservée
 
@@ -115,10 +127,22 @@ avec un jeton valide — mais l'usager n'est pas connecté pour autant.
 **Cause.** L'accueil ne charge pas le client Supabase, donc personne ne consomme le jeton
 présent dans le fragment d'URL. Il est simplement perdu.
 
-**Conséquence.** Après avoir confirmé son courriel, l'usager doit se connecter à nouveau,
-alors que Supabase venait de lui délivrer une session. Ce n'est pas une faille — juste une
-étape inutile au tout premier contact avec le produit.
-(Non corrigé — décision produit.)
+**VERDICT APRÈS VÉRIFICATION : CE N'EST PAS UN BOGUE.** Le code faisait déjà ce qu'il fallait.
+`signUp()` (acces.html:668) ET le bouton « Renvoyer le courriel » (acces.html:636) passent tous
+deux `emailRedirectTo: location.origin + location.pathname + '?mode=conn'` — il y a même un
+commentaire à la ligne 627 rappelant que cette URL doit figurer dans la liste blanche Supabase.
+
+Deux causes se cumulaient, aucune imputable au code :
+1. Les comptes de test datent des 20-21 août, **avant** l'ajout de `cdirect.quebec` à la liste
+   blanche. Supabase rejetait donc `emailRedirectTo` et retombait sur le Site URL (l'accueil) —
+   exactement la même cause racine que la panne n°1.
+2. Le courriel cliqué était un **renvoi depuis le tableau de bord Supabase**, qui utilise
+   toujours le Site URL et ignore le réglage de l'application. Un usager réel ne déclenche
+   jamais ce chemin.
+
+Depuis la correction de la liste blanche, une inscription normale aboutit bien sur
+`/acces?mode=conn`. **Aucun changement de code n'était requis** — et en écrire un aurait ajouté
+du code inutile pour un problème inexistant.
 
 ## 4. Note d'outillage
 
