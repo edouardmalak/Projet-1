@@ -24,7 +24,8 @@ A clean static layer is necessary but **not sufficient** to declare Phase 1 PASS
 |---|---|---|
 | 1.1 static | RLS + policy definitions across all 47 tables | **PASS** (see §2) |
 | 1.1 empirical — **anon layer** | 47 tables + 9 RPCs probed live, no session | **PASS — 0 leaks** (see §2b) |
-| 1.1 empirical — cross-user layer | Locum A↔B, Pharmacy P↔Q | **BLOCKED** — auth flow broken, see §2d |
+| 1.1 empirical — cross-user layer | Authenticated locum vs. everyone else's data | **PASS** — 0 leaks (§2e) |
+| 1.1 empirical — pharmacy↔pharmacy | Pharmacy P ↔ Pharmacy Q | **PENDING** — 3 accounts still unconfirmed |
 | 1.2 | Storage bucket audit | **1 MEDIUM finding — fix identified** (§3) |
 | 1.3 | Public-asset sweep (/media/911/ class) | **FAIL → FIXED & VERIFIED 19 Aug** (§4) |
 | 1.4 | Secret hygiene, full git history (423 commits) | **PASS** (§5) |
@@ -167,6 +168,79 @@ Cross-user tests (Locum A reading Locum B, Pharmacy P reading Pharmacy Q, forbid
 
 ---
 
+## 2e. Task 1.1 — EMPIRICAL cross-user layer (run live, 21 Aug 2026) — **PASS**
+
+Run with a **real authenticated session** as `edouardmalak+locuma@gmail.com`
+(uid `9751e373-…0607092`), a freshly signed-up locum **pending admin approval** — i.e. the
+easiest attacker to be, since anyone can self-serve an account in two minutes. Robert
+performed the login; the tests ran inside the session his login created.
+
+At the time of the test the project had **9 real users** in `auth.users` (admin + 4 new test
+accounts + 4 older test accounts).
+
+### Results
+
+| # | Attempt | Expected | Observed | Verdict |
+|---|---|---|---|---|
+| 1 | Read **own** profile (control) | ALLOWED | 200, 1 row | ✅ PASS |
+| 2 | Read the **admin's** profile by uid (Edouard Malak) | DENIED | 200, **0 rows** | ✅ PASS |
+| 3 | **Unfiltered `SELECT * FROM profiles LIMIT 200`** | own row only | 200, **1 row total, 0 foreign** | ✅ **PASS** |
+| 4 | `contrats` unfiltered | no foreign rows | 200, 0 rows | ✅ PASS |
+| 5 | `candidatures` unfiltered | no foreign rows | 200, 0 rows | ✅ PASS |
+| 6 | `messages` unfiltered | no foreign rows | 200, 0 rows | ✅ PASS |
+| 7 | `factures` unfiltered | no foreign rows | 200, 0 rows | ✅ PASS |
+| 8 | `garanties_paiement` unfiltered | no foreign rows | 200, 0 rows | ✅ PASS |
+| 9 | `stripe_comptes` unfiltered | no foreign rows | 200, 0 rows | ✅ PASS |
+| 10 | `sms_log` unfiltered | no foreign rows | 200, 0 rows | ✅ PASS |
+| 11 | **UPDATE another user's profile row** (`nom` → `AUDIT-TEST-SHOULD-FAIL` on locumB) | DENIED | 200, **0 rows changed** | ✅ **PASS** |
+
+**No data was modified.** Test 11 returned zero affected rows; the target row was left untouched.
+
+### Why tests 3 and 11 are the decisive ones
+
+Tests 4–10 returned zero rows, which is *consistent* with RLS working — but those tables may
+also be sparsely populated after the test-data flush, so on their own they do not distinguish
+"RLS blocked it" from "nothing there to see". They are supporting evidence, not proof.
+
+Tests 3 and 11 are proof, because they run against a table **known to be populated**:
+
+- **Test 3** — `profiles` certainly holds 9 rows (one per `auth.users` entry). An unfiltered
+  select returned exactly **1**: the caller's own. Every other user's name, email, phone and
+  OPQ licence was filtered out by the database, not by the interface. **This is the xPayrience
+  table** — the equivalent of the 414,000-record customer table that leaked — and it is
+  correctly isolated.
+- **Test 11** — the target row (locumB's profile) definitely exists, so "0 rows changed" can
+  only mean the write policy rejected it. Read isolation *and* write isolation are both
+  demonstrated on live data.
+
+### What this does and does not establish
+
+**Established:** an authenticated, unvetted account cannot read or write any other user's
+row, including the administrator's. Combined with §2b (anonymous access, 47/47 tables, 0
+leaks) and §2c (live schema fully covered), the two realistic mass-dump paths — no session,
+and a self-serve session — are both closed.
+
+**Not yet established:** pharmacy-to-pharmacy isolation (Pharmacy P reading Pharmacy Q's
+contracts, invoices and relations). Those two accounts remain unconfirmed. Static analysis
+shows the same `auth.uid()`-scoped predicates that just proved out empirically for the locum
+side, so the expectation is a pass — but it is untested. Complete it when the accounts work.
+
+### Inconclusive — retest when shift data exists
+
+`get_contrats_ouverts()` called by the **unapproved** locum returned **200 with 0 rows** — it
+executed rather than refusing (a refusal would be 401). With no open shifts in the database,
+this cannot distinguish "approval gates the read" from "there was nothing to return".
+
+Code review (§ below) shows `est_approuve()` is checked only in the `contrats_insert` and
+`candidatures_insert` policies — never on reads, and not inside `get_contrats_ouverts()`. So
+the likely behaviour is that any signed-up account can browse the open-shift market before
+vetting. That is plausibly deliberate (showing value pre-approval), and the sensitive part is
+already protected: the function returns city, postal code and rate but **not** pharmacy name,
+address or id, so the "pharmacy identity hidden pre-confirmation" product rule is enforced at
+the data layer. **Retest once at least one shift is published, then confirm the intent.**
+
+---
+
 ## 2d. 🔴 FINDING P0 — password reset is broken on the live domain
 
 Discovered 21 Aug 2026 while trying to obtain a test session. **Not found by code review — the code is correct. It only surfaced by actually running the flow.**
@@ -203,7 +277,18 @@ https://cdirect.quebec/**
 https://www.cdirect.quebec/**
 ```
 
-**Status: attempted, unverified.** Robert reported the problem persisting; the dashboard session expired before it could be confirmed the entry was saved. Re-verify, then test the flow end to end.
+### ✅ RESOLVED — 21 August 2026
+
+Robert added `https://cdirect.quebec/**` to the Redirect URL allowlist (4 entries total; the
+`www.` variant was judged unnecessary since traffic does not use it). **Verified end to end:**
+a fresh reset email was requested, the link opened the real "Nouveau mot de passe" page, the
+password was set, and the session landed on `/attente` as an authenticated pending locum.
+
+Note during verification: the first retry returned `otp_expired` because an **older** email
+from before the fix was clicked. Recovery links are single-use and time-limited — always use
+the newest message. Worth remembering if a real user ever reports the same symptom.
+
+The unblocked login is what made the cross-user audit in §2e possible.
 
 ### Underlying inconsistency to settle
 The Site URL is `c-direct.ca` but live traffic resolves to `cdirect.quebec`. Because Site URL is the fallback for *every* auth email, it should be whichever domain users are actually meant to be on. Decide the canonical domain before launch and align Site URL, the allowlist, and the redirect between the two domains.
@@ -382,10 +467,10 @@ Robert paused Phase 1 here. Block 2 (auto-accept) has NOT started and does not s
 | # | Item | Owner | Severity |
 |---|---|---|---|
 | 1 | **Platform fee = 0 in production.** Every shift would bill $0. Set to 39 before launch. | Robert (payment-adjacent, out of audit scope) | 🔴 Launch-blocking |
-| 2 | **Password reset broken** on `cdirect.quebec` — add the two redirect URLs, then verify end to end (§2d) | Robert (dashboard) | 🔴 Launch-blocking |
+| 2 | ~~Password reset broken on `cdirect.quebec`~~ | — | ✅ **FIXED & VERIFIED 21 Aug** (§2d) |
 | 3 | **Canonical domain** — `c-direct.ca` vs `cdirect.quebec`; align Site URL + allowlist (§2d) | Robert (decision) | 🟠 |
 | 4 | **Avatar bucket** — run `sql/91` (drafted, not yet applied): removes anon listing, adds 2 MB + 3 image types (§3) | Claude, on Robert's go-ahead | 🟠 Medium |
-| 5 | **Cross-user matrix** — blocked until a test session can be obtained (§2d) | Resume after #2 | — |
+| 5 | **Cross-user matrix** — locum side ✅ PASS (§2e). Pharmacy↔pharmacy still pending: confirm the 3 remaining test accounts' emails | Robert (click 3 links) | 🟡 |
 | 6 | **Dispensaire invisible** to logged-out visitors and search engines — product decision (§2b) | Robert (decision) | 🟡 |
 
 ### To resume

@@ -535,17 +535,14 @@ Le Bloc 2 (auto-acceptation) NE DÉMARRE PAS tant que ces points ne sont pas ré
    simple UPDATE sur `parametres_plateforme`). Hors périmètre de l'audit : touche au
    paiement, donc laissé à Robert.
 
-2. 🧑 **La réinitialisation de mot de passe est CASSÉE sur `cdirect.quebec`.**
-   Le domaine est absent de la liste blanche des URL de redirection Supabase
-   (seuls `c-direct.ca`, `www.c-direct.ca` et `pages.dev` y figurent). Supabase
-   ignore alors silencieusement `redirectTo` et retombe sur le Site URL : le jeton
-   de récupération atterrit sur l'accueil, qui ne le traite pas. **Tout usager réel
-   qui oublie son mot de passe reste bloqué dehors.**
-   Le code d'`acces.html` est correct — c'est de la configuration.
-   → Ajouter dans Supabase → Authentication → URL Configuration → Redirect URLs :
-   `https://cdirect.quebec/**` et `https://www.cdirect.quebec/**`, puis **tester le
-   flux de bout en bout**. (Tentative faite le 2026-08-21, non confirmée : la session
-   du tableau de bord a expiré avant vérification.)
+2. ✅ **RÉGLÉ 2026-08-21 — la réinitialisation de mot de passe était CASSÉE sur `cdirect.quebec`.**
+   Le domaine manquait dans la liste blanche des URL de redirection Supabase : le jeton de
+   récupération atterrissait sur l'accueil, qui ne le traite pas. Tout usager ayant oublié son
+   mot de passe restait bloqué dehors. `https://cdirect.quebec/**` ajouté par Robert, puis
+   **vérifié de bout en bout** : courriel demandé, lien ouvert sur la vraie page « Nouveau mot
+   de passe », mot de passe changé, session ouverte. (Le code d'`acces.html` était correct —
+   c'était de la configuration.) À savoir : un lien de récupération est à usage unique et
+   expire ; un vieux courriel donne `otp_expired`. Toujours utiliser le plus récent.
 
 ### 🟠 À trancher / à appliquer
 
@@ -572,16 +569,35 @@ Le Bloc 2 (auto-acceptation) NE DÉMARRE PAS tant que ces points ne sont pas ré
    défaut) mais probablement pas l'intention si le dispensaire doit servir au référencement.
    Se règle en même temps que la décision « dispensaire visible ou caché au lancement ».
 
-### ⏸️ Bloqué — reprend dès que le point 2 est réglé
+### ⏸️ Reste à faire — côté pharmacie seulement
 
-6. **Matrice croisée de l'audit** (Locum A lit Locum B, Pharmacie P lit Pharmacie Q,
-   UPDATE/DELETE interdits). 4 comptes de test créés le 2026-08-21 :
-   `edouardmalak+locumA/locumB/pharmP/pharmQ@gmail.com`.
-   · `locumA` : courriel confirmé, mot de passe inconnu — réinitialisation cassée (point 2)
-   · les 3 autres : liens de confirmation jamais ouverts, connexion refusée
-   → Une fois le point 2 réglé : ouvrir les 4 sessions dans une fenêtre Chrome **normale**
-   (jamais en navigation privée : les outils n'y ont aucun accès), et la matrice se termine
-   en quelques minutes. Phase 1 se clôt alors et le Gate 1 peut être signé.
+6. ✅ **Matrice croisée — CÔTÉ LOCUM RÉUSSI (2026-08-21).** Testé en direct avec une vraie
+   session `edouardmalak+locumA` (locum inscrit, **non approuvé** — donc l'attaquant le plus
+   facile à devenir : n'importe qui crée un compte en deux minutes). Résultats :
+   · `SELECT *` non filtré sur `profiles` (9 usagers en base) -> **1 seule ligne, la sienne**.
+     Aucun nom, courriel, téléphone ni permis OPQ d'autrui. C'est LA table équivalente à celle
+     qui a fuité chez xPayrience — elle est correctement isolée.
+   · lecture du profil de l'ADMIN par uid -> **0 ligne**.
+   · `contrats`, `candidatures`, `messages`, `factures`, `garanties_paiement`,
+     `stripe_comptes`, `sms_log` non filtrés -> **0 ligne** partout.
+   · **écriture** sur le profil d'un autre usager (ligne qui existe bel et bien) ->
+     **0 ligne modifiée**. Aucune donnée touchée.
+   -> Les deux chemins réalistes de fuite massive (sans session, et avec un compte libre-service)
+   sont donc fermés, prouvés sur données réelles.
+
+7. 🧑 **Reste : isolation pharmacie ↔ pharmacie.** Les 3 autres comptes de test
+   (`locumB`, `pharmP`, `pharmQ`) n'ont jamais eu leur courriel de confirmation ouvert, donc la
+   connexion est refusée. Ouvrir les 3 liens dans Gmail, puis me le dire : le test se termine en
+   quelques minutes. Les politiques sont identiques à celles qui viennent de réussir côté locum,
+   donc on s'attend à un succès — mais ce n'est pas encore prouvé.
+
+8. **À retester quand un quart sera publié :** `get_contrats_ouverts()` appelé par un locum NON
+   approuvé répond 200 avec 0 ligne — impossible de distinguer « l'approbation bloque » de
+   « la base est vide ». Le code ne vérifie `est_approuve()` qu'à l'INSERT (publier un quart,
+   postuler), jamais en lecture. Un compte non vérifié peut donc probablement parcourir le
+   marché des quarts. C'est peut-être voulu (montrer la valeur avant approbation) et le
+   sensible est protégé : la fonction renvoie ville, code postal et tarif mais **jamais** le nom
+   ni l'adresse de la pharmacie. À confirmer comme décision produit.
 
 ### ✅ Réglé pendant ce gate (pour mémoire, aucune action)
 
