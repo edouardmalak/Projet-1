@@ -585,11 +585,22 @@ Le Bloc 2 (auto-acceptation) NE DÉMARRE PAS tant que ces points ne sont pas ré
    -> Les deux chemins réalistes de fuite massive (sans session, et avec un compte libre-service)
    sont donc fermés, prouvés sur données réelles.
 
-7. 🧑 **Reste : isolation pharmacie ↔ pharmacie.** Les 3 autres comptes de test
-   (`locumB`, `pharmP`, `pharmQ`) n'ont jamais eu leur courriel de confirmation ouvert, donc la
-   connexion est refusée. Ouvrir les 3 liens dans Gmail, puis me le dire : le test se termine en
-   quelques minutes. Les politiques sont identiques à celles qui viennent de réussir côté locum,
-   donc on s'attend à un succès — mais ce n'est pas encore prouvé.
+7. ✅ **CÔTÉ PHARMACIE RÉUSSI AUSSI (2026-08-22).** Compte `pharmP` confirmé par courriel puis
+   connecté. Résultats, session réelle rôle `pharmacie` :
+   · `SELECT *` non filtré sur `profiles` (9 usagers) -> **1 seule ligne, la sienne**
+   · profil de l'AUTRE pharmacie (`+pharmacie@`, compte de juillet avec vraies données) -> **0 ligne**
+   · `contrats`, `factures`, `locum_pharmacy_relations`, `garanties_paiement`,
+     `candidatures`, `messages` non filtrés -> **0 ligne** partout
+   · `get_contrat_fiche('CD-100001')` (contrat d'une autre partie) -> **0 ligne**
+   · **écriture** sur le profil de l'autre pharmacie -> **0 ligne modifiée**
+   -> **La tâche 1.1 est TERMINÉE.** Les trois profils d'attaquant réalistes ont été essayés
+   en production avec une vraie session — aucun n'obtient les données d'autrui :
+
+   | Attaquant | Lecture d'autrui | Écriture chez autrui |
+   |---|---|---|
+   | Aucune session (anonyme) | NON — 47 tables sur 47 | NON |
+   | Locum inscrit non approuvé | NON — 1 profil sur 9 | NON — 0 ligne modifiée |
+   | Pharmacie confirmée | NON — 1 profil sur 9 | NON — 0 ligne modifiée |
 
 8. **À retester quand un quart sera publié :** `get_contrats_ouverts()` appelé par un locum NON
    approuvé répond 200 avec 0 ligne — impossible de distinguer « l'approbation bloque » de

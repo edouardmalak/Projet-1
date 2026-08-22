@@ -25,7 +25,7 @@ A clean static layer is necessary but **not sufficient** to declare Phase 1 PASS
 | 1.1 static | RLS + policy definitions across all 47 tables | **PASS** (see §2) |
 | 1.1 empirical — **anon layer** | 47 tables + 9 RPCs probed live, no session | **PASS — 0 leaks** (see §2b) |
 | 1.1 empirical — cross-user layer | Authenticated locum vs. everyone else's data | **PASS** — 0 leaks (§2e) |
-| 1.1 empirical — pharmacy↔pharmacy | Pharmacy P ↔ Pharmacy Q | **PENDING** — 3 accounts still unconfirmed |
+| 1.1 empirical — pharmacy side | Pharmacy P vs. other pharmacies + all users | **PASS** — 0 leaks (§2f) |
 | 1.2 | Storage bucket audit | **1 MEDIUM finding — fix identified** (§3) |
 | 1.3 | Public-asset sweep (/media/911/ class) | **FAIL → FIXED & VERIFIED 19 Aug** (§4) |
 | 1.4 | Secret hygiene, full git history (423 commits) | **PASS** (§5) |
@@ -238,6 +238,51 @@ vetting. That is plausibly deliberate (showing value pre-approval), and the sens
 already protected: the function returns city, postal code and rate but **not** pharmacy name,
 address or id, so the "pharmacy identity hidden pre-confirmation" product rule is enforced at
 the data layer. **Retest once at least one shift is published, then confirm the intent.**
+
+---
+
+## 2f. Task 1.1 — EMPIRICAL pharmacy side (run live, 22 Aug 2026) — **PASS**
+
+Run with a real authenticated session as `edouardmalak+pharmp@gmail.com`
+(uid `58c7bd47-…797bca`, role `pharmacie`). Robert confirmed the account by email and set its
+password; the tests ran inside the session his login created.
+
+| # | Attempt | Expected | Observed | Verdict |
+|---|---|---|---|---|
+| 1 | **Unfiltered `SELECT * FROM profiles`** (9 users exist) | own row only | 200, **1 row, 0 foreign** | ✅ **PASS** |
+| 2 | Read the other pharmacy's profile by uid (`+pharmacie@`, a July account with real data) | DENIED | 200, **0 rows** | ✅ PASS |
+| 3 | `contrats` unfiltered | no foreign rows | 200, 0 rows | ✅ PASS |
+| 4 | `factures` unfiltered | no foreign rows | 200, 0 rows | ✅ PASS |
+| 5 | `locum_pharmacy_relations` unfiltered (the four-state relations table) | no foreign rows | 200, 0 rows | ✅ PASS |
+| 6 | `garanties_paiement` unfiltered | no foreign rows | 200, 0 rows | ✅ PASS |
+| 7 | `candidatures` unfiltered | no foreign rows | 200, 0 rows | ✅ PASS |
+| 8 | `messages` unfiltered | no foreign rows | 200, 0 rows | ✅ PASS |
+| 9 | `get_contrat_fiche('CD-100001')` — another party's contract by reference | DENIED | 200, 0 rows | ✅ PASS |
+| 10 | **UPDATE the other pharmacy's profile row** | DENIED | 200, **0 rows changed** | ✅ **PASS** |
+
+**No data was modified.** Test 10 affected zero rows.
+
+As on the locum side, tests 1 and 10 are the decisive ones because `profiles` is known to hold
+9 rows: an unfiltered read returned exactly one (its own), and a write against a row that
+certainly exists changed nothing. Read and write isolation are both demonstrated for the
+pharmacy role on live data.
+
+Test 9 is a useful targeted probe — `get_contrat_fiche` is one of the two RPCs that leaked to
+`anon` in the sql/73 incident. Called with a valid reference by a pharmacy that is not a party
+to that contract, it returns nothing.
+
+### Conclusion of the cross-user layer
+
+Both roles are now proven in production:
+
+| Attacker | Can read others' rows? | Can write others' rows? |
+|---|---|---|
+| No session at all (§2b) | ❌ No — 47/47 tables, 0 leaks | ❌ No |
+| Signed-up locum, unapproved (§2e) | ❌ No — 1 of 9 profiles | ❌ No — 0 rows changed |
+| Confirmed pharmacy (§2f) | ❌ No — 1 of 9 profiles | ❌ No — 0 rows changed |
+
+Every realistic mass-dump path against this database has been attempted with a live session
+and none produced another user's data. **Task 1.1 is complete.**
 
 ---
 
@@ -470,7 +515,7 @@ Robert paused Phase 1 here. Block 2 (auto-accept) has NOT started and does not s
 | 2 | ~~Password reset broken on `cdirect.quebec`~~ | — | ✅ **FIXED & VERIFIED 21 Aug** (§2d) |
 | 3 | **Canonical domain** — `c-direct.ca` vs `cdirect.quebec`; align Site URL + allowlist (§2d) | Robert (decision) | 🟠 |
 | 4 | **Avatar bucket** — run `sql/91` (drafted, not yet applied): removes anon listing, adds 2 MB + 3 image types (§3) | Claude, on Robert's go-ahead | 🟠 Medium |
-| 5 | **Cross-user matrix** — locum side ✅ PASS (§2e). Pharmacy↔pharmacy still pending: confirm the 3 remaining test accounts' emails | Robert (click 3 links) | 🟡 |
+| 5 | ~~Cross-user matrix~~ | — | ✅ **COMPLETE — both roles PASS** (§2e, §2f) |
 | 6 | **Dispensaire invisible** to logged-out visitors and search engines — product decision (§2b) | Robert (decision) | 🟡 |
 
 ### To resume
