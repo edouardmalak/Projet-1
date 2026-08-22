@@ -621,3 +621,31 @@ Le Bloc 2 (auto-acceptation) NE DÉMARRE PAS tant que ces points ne sont pas ré
   (`get_contrats_ouverts`, `get_contrat_fiche`, `aa_horaire_libre`, `get_stats_pharmacien`,
   `get_note_profil` : 401 pour un appelant anonyme).
 - **Aucun secret n'a jamais été commité** sur les 423 commits de l'historique.
+
+---
+
+## ⏸️ REPORTÉ — test bout en bout de la photo de profil (marqué le 2026-08-22)
+
+**Décidé par Robert : reporté, pas oublié.**
+
+Le bucket `avatars` est passé en PRIVÉ (sql/94) et `profil.html` affiche désormais la photo
+via une URL signée (1 h) au lieu d'une URL publique. Le bucket étant **vide**, ce chemin n'a
+jamais été parcouru en conditions réelles : le téléversement, l'enregistrement du CHEMIN dans
+`profiles.photo_url`, puis l'affichage signé après rechargement n'ont pas été testés ensemble.
+
+**Ce qui est déjà prouvé :** le bucket est bien privé (le chemin public répond `NoSuchBucket`
+alors que le bucket existe), les limites 2 Mo / png-jpeg-webp sont actives, et la politique de
+lecture réservée au propriétaire est en place.
+
+**Ce qui reste à faire (2 minutes) :**
+1. Se connecter, aller sur `/profil`
+2. Téléverser une photo, enregistrer
+3. Recharger la page : la photo doit toujours s'afficher
+
+**Risque si on l'oublie :** si l'URL signée échoue, la photo de profil ne s'affiche plus —
+gêne cosmétique, aucune conséquence de sécurité ni de paiement. À faire avant que de vrais
+locums déposent des photos.
+
+**Rappel utile :** `photo_url` contient désormais le CHEMIN (`<uid>/photo.jpg`) et non plus une
+URL. Les anciennes valeurs en URL complète restent reconnues — mais il n'y en a aucune, le
+bucket n'ayant jamais servi.
