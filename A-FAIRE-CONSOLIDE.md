@@ -649,3 +649,41 @@ locums déposent des photos.
 **Rappel utile :** `photo_url` contient désormais le CHEMIN (`<uid>/photo.jpg`) et non plus une
 URL. Les anciennes valeurs en URL complète restent reconnues — mais il n'y en a aucune, le
 bucket n'ayant jamais servi.
+
+---
+
+## ✅ Redirection de domaine CORRIGÉE — 2026-08-22
+
+**Le problème.** `c-direct.ca` redirigeait (301) vers `cdirect.quebec`. Le domaine canonique
+retenu cédait donc tout son trafic et son indexation Google à l'autre — l'inverse de
+l'intention, et contraire à l'équité de marque bâtie sur le `.ca`.
+
+**Ce qui a été fait (tableau de bord Cloudflare) :**
+
+1. Zone `c-direct.ca` → la règle « Redirect to cdirect.quebec (primary domain) » est
+   **DÉSACTIVÉE** (et non supprimée : réversible en un clic si besoin).
+2. Zone `cdirect.quebec` → nouvelle règle **« Redirect to c-direct.ca (primary domain) »**,
+   301, toutes requêtes, `concat("https://c-direct.ca", http.request.uri.path)`, chaîne de
+   requête préservée.
+
+**Pourquoi « toutes les requêtes » plutôt qu'un filtre de nom d'hôte :** la règle vit dans la
+zone `cdirect.quebec`, donc elle ne voit QUE le trafic de ce domaine — `cdirect.quebec` et
+`www.cdirect.quebec` sont couverts d'office, sans logique OU à se tromper. Les Workers
+tournent sur `*.workers.dev`, hors zone : rien d'autre n'est intercepté.
+
+**Ordre respecté volontairement :** désactiver l'ancienne règle AVANT de créer la nouvelle.
+L'inverse aurait créé une boucle de redirection infinie entre les deux domaines et rendu le
+site inaccessible.
+
+**Vérifié en production, cache contourné :**
+- `cdirect.quebec/faq` → `c-direct.ca/faq` (chemin conservé, bonne page)
+- `c-direct.ca/faq` → sert directement, plus aucune redirection
+- `c-direct.ca/nouveaux` → `c-direct.ca/acces?mode=conn` (garde d'authentification normale,
+  on reste bien sur le `.ca`)
+- aucune boucle
+
+**Les 4 domaines restent des domaines personnalisés actifs sur le projet Pages** — c'est ce
+qui permet au `.ca` de servir le site directement.
+
+**À faire un jour, pas urgent :** enregistrer `cdirect.ca` (la faute de frappe évidente du
+domaine) et le rediriger vers `c-direct.ca`.
