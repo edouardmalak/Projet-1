@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- C-Direct — sitemap.xml (T19, batch1) : pages publiques seulement -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://cdirect.quebec/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://cdirect.quebec/faq.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://cdirect.quebec/regles.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://cdirect.quebec/irremplacable.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://cdirect.quebec/acces.html</loc><changefreq>yearly</changefreq><priority>0.5</priority></url>
-  <url><loc>https://cdirect.quebec/conditions.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://cdirect.quebec/confidentialite.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://c-direct.ca/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://c-direct.ca/faq.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://c-direct.ca/regles.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://c-direct.ca/irremplacable.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://c-direct.ca/acces.html</loc><changefreq>yearly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://c-direct.ca/conditions.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://c-direct.ca/confidentialite.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
 </urlset>
