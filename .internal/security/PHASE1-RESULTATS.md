@@ -26,7 +26,7 @@ A clean static layer is necessary but **not sufficient** to declare Phase 1 PASS
 | 1.1 empirical — **anon layer** | 47 tables + 9 RPCs probed live, no session | **PASS — 0 leaks** (see §2b) |
 | 1.1 empirical — cross-user layer | Authenticated locum vs. everyone else's data | **PASS** — 0 leaks (§2e) |
 | 1.1 empirical — pharmacy side | Pharmacy P vs. other pharmacies + all users | **PASS** — 0 leaks (§2f) |
-| 1.2 | Storage bucket audit | **1 MEDIUM finding — fix identified** (§3) |
+| 1.2 | Storage bucket audit | ✅ **RESOLVED 22 Aug** — bucket privé + limites (§3) |
 | 1.3 | Public-asset sweep (/media/911/ class) | **FAIL → FIXED & VERIFIED 19 Aug** (§4) |
 | 1.4 | Secret hygiene, full git history (423 commits) | **PASS** (§5) |
 
@@ -523,3 +523,30 @@ Robert paused Phase 1 here. Block 2 (auto-accept) has NOT started and does not s
 Once #2 is fixed: log in as each of the four test accounts in a **normal** (non-Incognito) browser window, and the cross-user matrix can be completed in minutes. Then Phase 1 closes and Gate 1 can be signed off.
 
 **Note on tooling:** Chrome's Incognito windows are sealed from the automation tools — a session created there is invisible. Test logins must happen in a normal window.
+
+
+---
+
+## 10. Clôture des points ouverts — 22 août 2026
+
+| Point | État final | Preuve |
+|---|---|---|
+| Frais de plateforme | ✅ **9,99 $** (était 0) | `frais_plateforme()` et `reglages_paiement()` interrogés en production |
+| Téléversements avatars | ✅ 2 Mo + png/jpeg/webp | tableau de bord Supabase |
+| Bucket avatars public | ✅ **rendu PRIVÉ** (sql/94) | le chemin public répond `NoSuchBucket` alors que le bucket existe — impossible s'il était encore public. Affichage via URL signée 1 h (profil.html) |
+| Dispensaire invisible | ✅ **corrigé** (sql/93 + sql/95) | anon passe de 401 à **200**, aucun brouillon exposé |
+| Domaine canonique | ✅ **c-direct.ca** (tranché 2026-08-22) | Site URL Supabase déjà correct ; sitemap et og inchangés |
+| Réinitialisation mot de passe | ✅ corrigée et vérifiée | §2d |
+| Lien de courriel expiré | ✅ écran bilingue « LIEN EXPIRÉ » | vérifié FR/EN en production |
+
+### Reste à faire
+
+1. **Redirection inversée** — `c-direct.ca` redirige aujourd'hui vers `cdirect.quebec`, soit
+   l'inverse du domaine canonique retenu. Le domaine sur lequel la marque est bâtie cède donc
+   son trafic et son indexation à l'autre. À corriger côté Cloudflare : `cdirect.quebec` doit
+   rediriger vers `c-direct.ca`.
+2. **Test bout en bout de la photo** — téléverser une vraie photo depuis /profil et vérifier
+   qu'elle s'affiche après rechargement (URL signée). Le bucket est vide, donc ce chemin n'a
+   jamais été parcouru en conditions réelles.
+3. **Liens SMS** — restés sur `c-direct.ca` (3 caractères de moins que `cdirect.quebec`, ce qui
+   peut éviter un segment SMES supplémentaire). Cohérent avec le domaine canonique retenu.
