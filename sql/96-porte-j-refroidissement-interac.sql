@@ -287,9 +287,12 @@ $$;
 
 -- ---------------------------------------------------------------------
 -- VÉRIFICATION
---   1) la porte ne lit plus la table morte (doit renvoyer 0 ligne) :
---        select 1 from pg_get_functiondef('public.evaluer_quart_auto(uuid)'::regprocedure) d
---         where d like '%verification_interac%';
+--   1) la porte ne lit plus la table morte (doit renvoyer false, puis true) :
+--        select
+--          pg_get_functiondef('public.evaluer_quart_auto(uuid)'::regprocedure)
+--            like '%verification_interac%' as lit_encore_la_table_morte,
+--          pg_get_functiondef('public.evaluer_quart_auto(uuid)'::regprocedure)
+--            like '%courriel_interac_cooldown_jusqua%' as lit_la_bonne_colonne;
 --
 --   2) test fonctionnel, si on veut le prouver : poser un refroidissement
 --      sur un locum de test, puis vérifier que match_log journalise bien
