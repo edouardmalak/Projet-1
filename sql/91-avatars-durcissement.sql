@@ -75,3 +75,44 @@ update storage.buckets
 --      set file_size_limit = null, allowed_mime_types = null
 --    where id = 'avatars';
 -- ---------------------------------------------------------------------
+
+-- =====================================================================
+-- RÉSULTAT MESURÉ APRÈS EXÉCUTION (2026-08-22) — À LIRE
+-- ---------------------------------------------------------------------
+-- Les trois instructions ont bien été appliquées (tableau de bord Supabase) :
+--   · politiques du bucket : 4 -> 3 (la politique de lecture publique est partie)
+--   · taille max : 2 Mo
+--   · types autorisés : image/png, image/jpeg, image/webp
+--
+-- MAIS le listage anonyme répond TOUJOURS 200 :
+--   POST /storage/v1/object/list/avatars  (sans session)  ->  200
+--
+-- POURQUOI : le bucket est marqué `public = true`. Un bucket public court-
+-- circuite RLS pour la LECTURE — y compris le listage. Il ne reste aucune
+-- politique SELECT sur storage.objects (les 3 restantes sont insert/update/
+-- delete, limitées au dossier <uid>), et le listage fonctionne quand même :
+-- c'est la preuve que la politique n'était pas ce qui l'autorisait.
+--
+-- Retirer la politique n'était donc PAS inutile — elle était bien redondante,
+-- comme prévu, et l'affichage des photos n'en dépendait pas — mais elle ne
+-- ferme pas l'énumération. Le durcissement des téléversements (2 Mo + 3 types),
+-- lui, est bel et bien en vigueur.
+--
+-- CE QU'IL RESTE À DÉCIDER (hors périmètre de l'audit — changement de code) :
+-- pour empêcher réellement l'énumération, il faut passer le bucket en PRIVÉ et
+-- remplacer getPublicUrl() par des URL signées (createSignedUrl) partout où une
+-- photo s'affiche : profil.html et chaque écran montrant l'avatar d'autrui.
+-- C'est un changement multi-fichiers, à planifier — pas une retouche.
+--
+-- PORTÉE RÉELLE DE L'EXPOSITION, mesurée et non supposée :
+--   · le bucket est VIDE aujourd'hui : le listage renvoie [] — rien ne fuit
+--     pour l'instant, et rien ne presse avant le lancement
+--   · ce qu'un listage révélerait une fois des photos déposées : les noms de
+--     dossiers, c'est-à-dire les UUID des usagers ayant une photo, et donc leur
+--     nombre
+--   · un UUID seul n'ouvre rien : l'audit du 2026-08-21/22 a prouvé en
+--     production qu'un usager authentifié muni d'un UUID ne peut lire ni écrire
+--     AUCUNE ligne d'autrui (voir .internal/security/PHASE1-RESULTATS.md §2e/§2f)
+--   · reste donc : le décompte des usagers (intelligence concurrentielle) et la
+--     corrélation si un UUID fuit par ailleurs
+-- =====================================================================
