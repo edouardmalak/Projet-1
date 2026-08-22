@@ -348,6 +348,21 @@ const MOIS_FR = cdLang()==='en'
    photo, le profil s'enregistre normalement. `photoUrlNouvelle` vaut
    undefined = inchangé, '' = retirée, sinon = nouvelle URL. */
 let photoUrlNouvelle;
+/* URL d'affichage d'une photo de profil.
+   Le bucket « avatars » est PRIVÉ depuis sql/94 : une URL publique ne
+   fonctionne plus, il faut une URL signée (valable 1 h). profiles.photo_url
+   contient désormais le CHEMIN (« <uid>/photo.jpg ») et non plus une URL.
+   Les anciennes valeurs — des URL complètes — restent reconnues telles
+   quelles, pour qu'un profil enregistré avant ce changement continue
+   d'afficher sa photo sans migration de données. */
+async function cdUrlPhoto(v){
+  if(!v) return null;
+  if(/^https?:\/\//i.test(v)) return v;
+  try{
+    const { data, error } = await sb.storage.from('avatars').createSignedUrl(v, 3600);
+    return error ? null : data.signedUrl;
+  }catch(e){ return null; }
+}
 function brancherPhoto(){
   const inp = $('photo-fichier'); if(!inp) return;
   inp.addEventListener('change', async ()=>{
@@ -360,9 +375,10 @@ function brancherPhoto(){
       const chemin = profil.id + '/photo.' + ext;
       const { error } = await sb.storage.from('avatars').upload(chemin, f, { upsert:true, contentType:f.type });
       if(error) throw error;
-      const { data } = sb.storage.from('avatars').getPublicUrl(chemin);
-      photoUrlNouvelle = data.publicUrl + '?t=' + Date.now();
-      const ap = $('photo-apercu'); ap.src = photoUrlNouvelle; ap.style.display='block';
+      /* bucket privé : on mémorise le CHEMIN, pas une URL — l'affichage
+         demandera une URL signée au moment voulu. */
+      photoUrlNouvelle = chemin;
+      const ap = $('photo-apercu'); ap.src = (await cdUrlPhoto(chemin)) || ''; ap.style.display='block';
       $('photo-retirer').style.display='inline-block';
       msg.style.color='var(--vert)'; msg.textContent=cdT('Photo prête — cliquez « Enregistrer » en bas.','Photo ready — click "Save" at the bottom.');
     }catch(e){
@@ -576,7 +592,8 @@ async function remplirAside(){
     : profil.role==='admin' ? cdT('Administrateur','Administrator')
     : (profil.profession==='atp' ? cdT('ATP remplaçant(e)','Replacement technician') : cdT('Pharmacien(ne)','Pharmacist'));
   const ph = $('pf-photo');
-  if(profil.photo_url){ ph.innerHTML = '<img src="'+profil.photo_url+'" alt="">'; }
+  const urlPhotoAside = await cdUrlPhoto(profil.photo_url);
+  if(urlPhotoAside){ ph.innerHTML = '<img src="'+urlPhotoAside+'" alt="">'; }
   else { ph.textContent = initialesAside(nom); }
   try{
     const r = await sb.rpc('get_note_profil', { p_profil: profil.id });
@@ -682,7 +699,8 @@ async function remplirAside(){
     });
     appliquerMax3Universites();
     if(profil.photo_url && $('photo-apercu')){
-      $('photo-apercu').src = profil.photo_url; $('photo-apercu').style.display='block';
+      $('photo-apercu').src = (await cdUrlPhoto(profil.photo_url)) || '';
+      $('photo-apercu').style.display='block';
       $('photo-retirer').style.display='inline-block';
     }
     if(profil.diplome_annee) $('diplome_annee').value = profil.diplome_annee;
