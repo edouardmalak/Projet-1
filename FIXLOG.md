@@ -60,3 +60,68 @@ Aucune tâche sautée. Deux éléments hors périmètre consignés par le mandat
 - [ ] L-1. Retirer / restreindre Cloudflare Access 2–3 semaines avant le lancement de septembre pour que les pages publiques soient indexables.
 - [ ] L-2. Après le premier vrai évènement de paiement : vérifier que « Event deliveries » de la destination Stripe montre un 200.
 - [ ] L-3. Règle permanente : exécuter sql/verifier-acl.sql après CHAQUE future migration.
+
+---
+
+# Ce qui a CASSÉ pendant l'audit de sécurité (2026-08-19 au 2026-08-22)
+
+Ces pannes n'ont pas été trouvées en lisant du code : elles sont apparues en essayant
+réellement de se connecter. Elles auraient toutes frappé de vrais usagers.
+
+## 1. 🔴 Réinitialisation de mot de passe — CASSÉE en production — CORRIGÉ
+
+**Symptôme.** Demander une réinitialisation depuis `cdirect.quebec` envoyait bien le courriel,
+mais cliquer le lien renvoyait à l'accueil du site, sans formulaire. Le compte restait
+inaccessible. **Tout usager réel ayant oublié son mot de passe était bloqué dehors.**
+
+**Cause.** `cdirect.quebec` était absent de la liste blanche des URL de redirection Supabase
+(elle ne contenait que `c-direct.ca`, `www.c-direct.ca` et `pages.dev`). Quand `redirectTo` ne
+figure pas dans la liste, Supabase l'ignore **silencieusement** et retombe sur le Site URL :
+le jeton de récupération atterrissait donc sur l'accueil, page qui ne le traite pas.
+
+**Le code n'était PAS en cause.** `acces.html` construit correctement
+`location.origin + location.pathname + '?mode=reset'` et gère l'événement `PASSWORD_RECOVERY`
+(ligne 806). C'était uniquement de la configuration.
+
+**Correctif.** `https://cdirect.quebec/**` ajouté à Authentication → URL Configuration →
+Redirect URLs. **Vérifié de bout en bout** : courriel demandé, lien ouvert sur la vraie page
+« Nouveau mot de passe », mot de passe changé, session ouverte.
+
+**À surveiller.** Le Site URL reste `c-direct.ca` alors que le trafic aboutit sur
+`cdirect.quebec`. Ce Site URL est le repli de TOUS les courriels d'authentification —
+à aligner quand le domaine canonique sera tranché.
+
+## 2. 🟠 Liens de courriel expirés — comportement normal, mais trompeur
+
+**Symptôme.** `#error=access_denied&error_code=otp_expired` en cliquant un lien de
+réinitialisation ; et trois comptes de test restés « Waiting for verification » alors que les
+liens avaient été cliqués.
+
+**Cause.** Les liens de récupération et de confirmation Supabase sont à **usage unique** et
+expirent (~1 h pour la récupération, ~24 h pour la confirmation). Les courriels cliqués
+dataient de la veille. Rien n'était cassé — mais le message d'erreur brut, en anglais, sur
+une page d'accueil sans explication, est indistinguable d'une panne pour un usager.
+
+**À considérer avant le lancement.** Afficher un message lisible et bilingue quand
+`error_code=otp_expired` apparaît dans l'URL, avec un bouton « Renvoyer le lien ». Sinon
+chaque usager qui clique un vieux courriel croira que le site est brisé.
+(Non corrigé — hors périmètre de l'audit, à décider.)
+
+## 3. 🟡 Confirmation de compte : la session n'est pas conservée
+
+**Symptôme.** Cliquer le lien de confirmation renvoie sur `cdirect.quebec/#access_token=…`
+avec un jeton valide — mais l'usager n'est pas connecté pour autant.
+
+**Cause.** L'accueil ne charge pas le client Supabase, donc personne ne consomme le jeton
+présent dans le fragment d'URL. Il est simplement perdu.
+
+**Conséquence.** Après avoir confirmé son courriel, l'usager doit se connecter à nouveau,
+alors que Supabase venait de lui délivrer une session. Ce n'est pas une faille — juste une
+étape inutile au tout premier contact avec le produit.
+(Non corrigé — décision produit.)
+
+## 4. Note d'outillage
+
+Les fenêtres de **navigation privée** sont hermétiques aux outils d'automatisation : une
+session ouverte là est invisible. Toute connexion de test doit se faire dans une fenêtre
+Chrome **normale**.
